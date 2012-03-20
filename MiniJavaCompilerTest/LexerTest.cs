@@ -143,7 +143,18 @@ namespace LexerTest
         [Test]
         public void ShouldBeInvalid()
         {
-            Assert.Throws<LexicalError>(() => new Scanner("$"));
+            var scanner = new Scanner("$");
+            Assert.That(scanner.NextToken(), Is.InstanceOf<ErrorToken>());
+            scanner = new Scanner("&|");
+            Assert.That(scanner.NextToken(), Is.InstanceOf<ErrorToken>());
+            Assert.That(scanner.NextToken(), Is.InstanceOf<ErrorToken>());
+        }
+
+        [Test]
+        public void EndlessComment()
+        {
+            var scanner = new Scanner("/* ...");
+            Assert.That(scanner.NextToken(), Is.InstanceOf<ErrorToken>());
         }
     }
 }

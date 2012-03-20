@@ -11,9 +11,20 @@ namespace MiniJavaCompiler
         {
             namespace Compilation
             {
-                public class LexicalError : Exception
+                public class EndlessCommentError : Exception
                 {
-                    public LexicalError(string message)
+                    public int Row
+                    {
+                        get;
+                        private set;
+                    }
+                    public int Col
+                    {
+                        get;
+                        private set;
+                    }
+
+                    public EndlessCommentError(string message, int row, int col)
                         : base(message) { }
                 }
             }

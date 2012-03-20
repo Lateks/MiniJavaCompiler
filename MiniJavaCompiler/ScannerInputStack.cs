@@ -78,6 +78,8 @@ namespace MiniJavaCompiler
             // Returns true if something was skipped and false otherwise.
             private bool SkipComments()
             {
+                int startRow = Row;
+                int startCol = Col + 1;
                 try
                 {
                     if (!InputLeft() || !input.Peek().Equals('/'))
@@ -97,7 +99,8 @@ namespace MiniJavaCompiler
                 }
                 catch (InvalidOperationException)
                 {
-                    throw new LexicalError("Reached end of input while scanning for a comment.");
+                    throw new EndlessCommentError("Reached end of input while scanning for a comment " +
+                        "beginning on line " + startRow + ", column " + startCol + ".", startRow, startCol);
                 }
             }
 

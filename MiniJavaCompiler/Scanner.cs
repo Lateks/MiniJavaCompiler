@@ -60,7 +60,14 @@ namespace MiniJavaCompiler
 
             private Token MatchNextToken()
             {
-                input.SkipWhiteSpaceAndComments();
+                try
+                {
+                    input.SkipWhiteSpaceAndComments();
+                }
+                catch (EndlessCommentError e)
+                {
+                    return new ErrorToken("", e.Message, e.Row, e.Col);
+                }
                 if (!input.InputLeft())
                     return new EOF(input.Row, input.Col);
 
@@ -78,8 +85,12 @@ namespace MiniJavaCompiler
                 else if (Char.IsLetter(input.Peek()))
                     return MakeIdentifierOrKeywordToken();
                 else
-                    throw new LexicalError("Invalid token \"" + input.Pop() +
-                        "\" on row " + startRow + ", col " + startCol + ".");
+                {
+                    string token = input.Pop();
+                    return new ErrorToken(token, "Invalid token \"" + token +
+                        "\" on row " + startRow + ", col " + startCol + ".",
+                        startRow, startCol);
+                }
             }
 
             private Token MakeSingleCharOperatorToken()
@@ -103,8 +114,9 @@ namespace MiniJavaCompiler
                 else if (symbol.Equals("="))
                     return new AssignmentToken(startRow, startCol);
                 else
-                    throw new LexicalError("Unexpected token " + symbol +
-                        input.Pop() + " on row " + startRow + " col " + startCol + ".");
+                    return new ErrorToken(symbol, "Unexpected token " + symbol +
+                        " on row " + startRow + " col " + startCol + ".", startRow,
+                        startCol);
             }
 
             private Token MakeSymbolToken()

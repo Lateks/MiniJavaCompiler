@@ -29,6 +29,28 @@ namespace MiniJavaCompiler
                 }
             }
 
+            public class ErrorToken : Token
+            {
+                public string Message
+                {
+                    get;
+                    private set;
+                }
+
+                public string Lexeme
+                {
+                    get;
+                    private set;
+                }
+
+                public ErrorToken(string lexeme, string message, int row, int col)
+                    : base(row, col)
+                {
+                    Message = message;
+                    Lexeme = lexeme;
+                }
+            }
+
             public class StringToken : Token
             {
                 public string Value
