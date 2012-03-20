@@ -3,6 +3,7 @@ using NUnit.Framework;
 using MiniJavaCompiler.LexicalAnalysis;
 using MiniJavaCompiler.Support.TokenTypes;
 using MiniJavaCompiler.Support.Errors.Compilation;
+using System.IO;
 
 namespace LexerTest
 {
@@ -18,7 +19,7 @@ namespace LexerTest
         [Theory]
         public void Keywords(string keyword)
         {
-            var lexer = new Scanner(keyword);
+            var lexer = new Scanner(new StringReader(keyword));
             Token next = lexer.NextToken();
             Assert.That(next, Is.InstanceOf<KeywordToken>());
             Assert.That(((KeywordToken)next).Value, Is.EqualTo(keyword));
@@ -34,7 +35,7 @@ namespace LexerTest
         [Theory]
         public void BinaryOperators(string binop)
         {
-            var lexer = new Scanner(binop);
+            var lexer = new Scanner(new StringReader(binop));
             Token token = lexer.NextToken();
             Assert.That(token, Is.InstanceOf<BinaryOperator>());
             Assert.That(((BinaryOperator)token).Value, Is.EqualTo(binop));
@@ -43,7 +44,7 @@ namespace LexerTest
         [Test]
         public void UnaryNot()
         {
-            var lexer = new Scanner("!");
+            var lexer = new Scanner(new StringReader("!"));
             Assert.That(lexer.NextToken(), Is.InstanceOf<UnaryNotToken>());
         }
     }
@@ -54,9 +55,9 @@ namespace LexerTest
         [Test]
         public void IntegerConstants()
         {
-            var lexer = new Scanner("123");
+            var lexer = new Scanner(new StringReader("123"));
             Assert.That(((IntegerLiteralToken)lexer.NextToken()).Value, Is.EqualTo("123"));
-            lexer = new Scanner("1 23");
+            lexer = new Scanner(new StringReader("1 23"));
             var token = (IntegerLiteralToken)lexer.NextToken();
             Assert.That(token.Value, Is.EqualTo("1"));
             Assert.That(token.Row, Is.EqualTo(1));
@@ -67,9 +68,9 @@ namespace LexerTest
         [Test]
         public void TestEOF()
         {
-            var lexer = new Scanner("");
+            var lexer = new Scanner(new StringReader(""));
             Assert.That(lexer.NextToken(), Is.InstanceOf<EOF>());
-            lexer = new Scanner("123");
+            lexer = new Scanner(new StringReader("123"));
             lexer.NextToken();
             Assert.That(lexer.NextToken(), Is.InstanceOf<EOF>());
         }
@@ -77,75 +78,75 @@ namespace LexerTest
         [Test]
         public void Identifiers()
         {
-            var lexer = new Scanner("42foo");
+            var lexer = new Scanner(new StringReader("42foo"));
             Assert.That(((IntegerLiteralToken)lexer.NextToken()).Value, Is.EqualTo("42"));
             Token next = lexer.NextToken();
             Assert.That(next, Is.InstanceOf<Identifier>());
             Assert.That(((Identifier)next).Value, Is.EqualTo("foo"));
-            lexer = new Scanner("f_o12a");
+            lexer = new Scanner(new StringReader("f_o12a"));
             Assert.That(((Identifier)lexer.NextToken()).Value, Is.EqualTo("f_o12a"));
         }
 
         [Test]
         public void WhiteSpaceIsSkipped()
         {
-            var lexer = new Scanner("\n\t\v\n  foo");
+            var lexer = new Scanner(new StringReader("\n\t\v\n  foo"));
             Assert.That(((Identifier)lexer.NextToken()).Value, Is.EqualTo("foo"));
         }
 
         [Test]
         public void CommentsAreSkipped()
         {
-            var lexer = new Scanner("// ... \n // ... \n foo");
+            var lexer = new Scanner(new StringReader("// ... \n // ... \n foo"));
             var token = (Identifier)lexer.NextToken();
             Assert.That(token.Value, Is.EqualTo("foo"));
             Assert.That(token.Row, Is.EqualTo(3));
             Assert.That(token.Col, Is.EqualTo(2));
-            lexer = new Scanner("/* ... \n\n*/ \tfoo");
+            lexer = new Scanner(new StringReader("/* ... \n\n*/ \tfoo"));
             token = (Identifier)lexer.NextToken();
             Assert.That(token.Value, Is.EqualTo("foo"));
             Assert.That(token.Row, Is.EqualTo(3));
             Assert.That(token.Col, Is.EqualTo(5));
-            lexer = new Scanner("\n\n// ...//\n// ... \n\n/* ... */ foo");
+            lexer = new Scanner(new StringReader("\n\n// ...//\n// ... \n\n/* ... */ foo"));
             Assert.That(((Identifier)lexer.NextToken()).Value, Is.EqualTo("foo"));
         }
 
         [Test]
         public void CombinedWhiteSpaceAndComments()
         {
-            var lexer = new Scanner("\n\t\t// ... \n // ... \n     foo");
+            var lexer = new Scanner(new StringReader("\n\t\t// ... \n // ... \n     foo"));
             Assert.That(((Identifier)lexer.NextToken()).Value, Is.EqualTo("foo"));
         }
 
         [Test]
         public void InputConsistingOfWhitespaceOnly()
         {
-            var lexer = new Scanner("\n   ");
+            var lexer = new Scanner(new StringReader("\n   "));
             Assert.That(lexer.NextToken(), Is.InstanceOf<EOF>());
         }
 
         [Test]
         public void DivisionSymbolIsNotConfusedWithAComment()
         {
-            var lexer = new Scanner("/");
+            var lexer = new Scanner(new StringReader("/"));
             Assert.That(lexer.NextToken(), Is.InstanceOf<BinaryOperator>());
-            lexer = new Scanner("// .. / ..\n /");
+            lexer = new Scanner(new StringReader("// .. / ..\n /"));
             Assert.That(((BinaryOperator)lexer.NextToken()).Value, Is.EqualTo("/"));
         }
 
         [Test]
         public void AssignmentToken()
         {
-            var lexer = new Scanner("=");
+            var lexer = new Scanner(new StringReader("="));
             Assert.That(lexer.NextToken(), Is.InstanceOf<AssignmentToken>());
         }
 
         [Test]
         public void ShouldBeInvalid()
         {
-            var scanner = new Scanner("$");
+            var scanner = new Scanner(new StringReader("$"));
             Assert.That(scanner.NextToken(), Is.InstanceOf<ErrorToken>());
-            scanner = new Scanner("&|");
+            scanner = new Scanner(new StringReader("&|"));
             Assert.That(scanner.NextToken(), Is.InstanceOf<ErrorToken>());
             Assert.That(scanner.NextToken(), Is.InstanceOf<ErrorToken>());
         }
@@ -153,7 +154,9 @@ namespace LexerTest
         [Test]
         public void EndlessComment()
         {
-            var scanner = new Scanner("/* ...");
+            var scanner = new Scanner(new StringReader("/* ... "));
+            Assert.That(scanner.NextToken(), Is.InstanceOf<ErrorToken>());
+            scanner = new Scanner(new StringReader("/* ... /"));
             Assert.That(scanner.NextToken(), Is.InstanceOf<ErrorToken>());
         }
     }

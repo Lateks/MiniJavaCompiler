@@ -5,6 +5,7 @@ using System.Text;
 using System.Collections;
 using MiniJavaCompiler.Support.TokenTypes;
 using MiniJavaCompiler.Support.Errors.Compilation;
+using System.IO;
 
 namespace MiniJavaCompiler
 {
@@ -27,14 +28,14 @@ namespace MiniJavaCompiler
             private static HashSet<string> types =
                 new HashSet<string>(new string[] { "int", "boolean", "void" });
 
-            private ScannerInputStack input;
+            private ScannerInputReader input;
             private Queue<Token> tokens;
             private int startRow;
             private int startCol;
 
-            public Scanner(string input)
+            public Scanner(TextReader input)
             {
-                this.input = new ScannerInputStack(input);
+                this.input = new ScannerInputReader(input);
                 tokens = new Queue<Token>();
                 BuildTokenList();
             }
@@ -86,7 +87,7 @@ namespace MiniJavaCompiler
                     return MakeIdentifierOrKeywordToken();
                 else
                 {
-                    string token = input.Pop();
+                    string token = input.Read();
                     return new ErrorToken(token, "Invalid token \"" + token +
                         "\" on row " + startRow + ", col " + startCol + ".",
                         startRow, startCol);
@@ -97,18 +98,18 @@ namespace MiniJavaCompiler
             {
                 if (input.Peek().Equals('!'))
                 {
-                    input.Pop();
+                    input.Read();
                     return new UnaryNotToken(startRow, startCol);
                 }
-                return new BinaryOperator(input.Pop(), startRow, startCol);
+                return new BinaryOperator(input.Read(), startRow, startCol);
             }
 
             private Token MakeAssignmentOrMultiCharOperatorToken()
             {
-                string symbol = input.Pop();
+                string symbol = input.Read();
                 if (input.InputLeft() && input.Peek().ToString().Equals(symbol))
                 {
-                    symbol += input.Pop();
+                    symbol += input.Read();
                     return new BinaryOperator(symbol, startRow, startCol);
                 }
                 else if (symbol.Equals("="))
@@ -121,7 +122,7 @@ namespace MiniJavaCompiler
 
             private Token MakeSymbolToken()
             {
-                string token = input.Pop();
+                string token = input.Read();
                 if (token.Equals(ENDLINE.ToString()))
                     return new EndLine(startRow, startCol);
                 else if (token.Equals(LEFT_PAREN.ToString()))
@@ -134,7 +135,7 @@ namespace MiniJavaCompiler
             {
                 string token = "";
                 while (input.InputLeft() && Char.IsDigit(input.Peek()))
-                    token += input.Pop();
+                    token += input.Read();
                 return new IntegerLiteralToken(token, startRow, startCol);
             }
 
@@ -143,7 +144,7 @@ namespace MiniJavaCompiler
                 string token = "";
                 while (input.InputLeft() && (Char.IsLetterOrDigit(input.Peek()) ||
                                              input.Peek().Equals('_')))
-                    token += input.Pop();
+                    token += input.Read();
                 if (types.Contains(token))
                     return new MiniJavaType(token, startRow, startCol);
                 if (keywords.Contains(token))
