@@ -13,17 +13,16 @@ namespace MiniJavaCompiler
     {
         public class Scanner
         {
-            private static HashSet<char> symbols =
-                new HashSet<char>(new char[] { ';', '(', ')', '[', ']', '.' });
-            private static HashSet<char> singleCharOperators =
-                new HashSet<char>(new char[] { '/', '+', '-', '*', '<', '>', '!', '%' });
-            private static HashSet<char> multiCharOperatorSymbols =
-                new HashSet<char>(new char[] { '&', '=', '|' });
-            private static HashSet<string> keywords =
-                new HashSet<string>(new string[] { "this", "true", "false", "new", "length", "System", "out", "println",
-                    "if", "else", "while", "return", "assert", "public", "static", "main", "class", "extends" });
-            private static HashSet<string> types =
-                new HashSet<string>(new string[] { "int", "boolean", "void" });
+            private static HashSet<char>
+                symbols = new HashSet<char>(new char[] { ';', '(', ')', '[', ']', '.' }),
+                singleCharOperators = new HashSet<char>(new char[] { '/', '+', '-', '*', '<', '>', '!', '%' }),
+                multiCharOperatorSymbols = new HashSet<char>(new char[] { '&', '=', '|' });
+            private static HashSet<string>
+                keywords = new HashSet<string>(new string[] { "this", "true", "false", "new",
+                                                        "length", "System", "out", "println",
+                                                        "if", "else", "while", "return", "assert",
+                                                        "public", "static", "main", "class", "extends" }),
+                types = new HashSet<string>(new string[] { "int", "boolean", "void" });
 
             private ScannerInputReader input;
             private Queue<Token> tokens;
