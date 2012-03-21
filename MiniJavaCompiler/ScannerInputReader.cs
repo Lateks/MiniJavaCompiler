@@ -9,6 +9,11 @@ namespace MiniJavaCompiler
 {
     namespace LexicalAnalysis
     {
+        // Handles reading input from the given TextReader, skipping comments
+        // and whitespace, keeping track of row and column numbers in the
+        // source code and buffering input when a look-ahead of more than
+        // one character is needed (that is, when trying to tell division
+        // symbols from comment starter symbols).
         class ScannerInputReader
         {
             private TextReader input;
