@@ -81,8 +81,8 @@ namespace MiniJavaCompiler
                 while (InputLeft())
                 {
                     SkipWhiteSpace();
-                    bool no_comments_skipped = !SkipComments();
-                    if ((no_comments_skipped && !NextCharIsWhiteSpace()))
+                    bool no_comments_found = !SkipComments();
+                    if ((no_comments_found && !NextCharIsWhiteSpace()))
                         return;
                 }
             }
@@ -95,7 +95,7 @@ namespace MiniJavaCompiler
 
             private bool NextCharIsWhiteSpace()
             {
-                return (InputLeft() && Char.IsWhiteSpace((char) input.Peek()));
+                return (InputLeft() && Char.IsWhiteSpace(Peek()));
             }
 
             // Returns true if something was skipped and false otherwise.
@@ -106,10 +106,10 @@ namespace MiniJavaCompiler
 
                 commentStartRow = Row;
                 commentStartCol = Col + 1;
-                buffer = (char) input.Read();
-                if (InputLeft() && input.Peek().Equals('/'))
+                buffer = (char) input.Read(); // may be a division symbol, not a comment starter
+                if (input.Peek().Equals('/'))
                     SkipOneLineComment();
-                else if (InputLeft() && input.Peek().Equals('*'))
+                else if (input.Peek().Equals('*'))
                     SkipMultilineComment();
                 else
                     return false;
@@ -130,7 +130,7 @@ namespace MiniJavaCompiler
                         throw new EndlessCommentError("Reached end of input while scanning for a comment " +
                         "beginning on line " + commentStartRow + ", column " + commentStartCol + ".",
                         commentStartRow, commentStartCol);
-                    if (input.Peek().Equals('/'))
+                    if (Peek().Equals('/'))
                     {
                         Read();
                         return;
@@ -140,7 +140,7 @@ namespace MiniJavaCompiler
 
             private bool ReadUntil(char symbol)
             {
-                while (InputLeft() && !input.Peek().Equals(symbol))
+                while (InputLeft() && !Peek().Equals(symbol))
                     Read();
                 if (!InputLeft()) // reached end of input but did not see symbol
                     return false;
