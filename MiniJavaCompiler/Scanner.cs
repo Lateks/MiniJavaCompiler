@@ -72,15 +72,16 @@ namespace MiniJavaCompiler
                 startRow = input.Row;     // store starting row and column for the token object 
                 startCol = input.Col + 1;
 
-                if (singleCharOperators.Contains(input.Peek()))
+                char inputChar = input.Peek();
+                if (singleCharOperators.Contains(inputChar))
                     return MakeSingleCharOperatorToken();
-                else if (multiCharOperatorSymbols.Contains(input.Peek()))
+                else if (multiCharOperatorSymbols.Contains(inputChar))
                     return MakeAssignmentOrMultiCharOperatorToken();
-                else if (symbols.Contains(input.Peek()))
+                else if (symbols.Contains(inputChar))
                     return MakeSymbolToken();
-                else if (Char.IsDigit(input.Peek()))
+                else if (Char.IsDigit(inputChar))
                     return MakeIntegerLiteralToken();
-                else if (Char.IsLetter(input.Peek()))
+                else if (Char.IsLetter(inputChar))
                     return MakeIdentifierOrKeywordToken();
                 else
                 {

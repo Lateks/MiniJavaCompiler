@@ -53,7 +53,7 @@ namespace LexerTest
     public class TypeTests
     {
         [Datapoints]
-        public string[] types = { "int", "boolean" };
+        public string[] types = { "int", "boolean", "void" };
 
         [Theory]
         public void SimpleTypes(string type)
