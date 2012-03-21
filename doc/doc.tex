@@ -1,0 +1,109 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[top = 1.5 in, bottom = 1 in, left = 1 in, right = 1 in]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{csquotes}
+\usepackage[british]{babel}
+\usepackage{lmodern}
+\usepackage{url}
+\usepackage{color}
+\usepackage{graphicx}
+\usepackage{setspace}
+\usepackage{pdfpages}
+
+\begin{document}
+\title{Compiler project: MiniJava}
+\author{Laura Leppänen \\ Compilers, Spring 2012}
+\date{\today}
+\maketitle
+\thispagestyle{empty}
+
+\tableofcontents
+\onehalfspacing
+
+\newpage
+\setcounter{page}{1}
+
+\section{Compiler implementation}
+
+This section covers the general architecture of the compiler, testing, error handling as well as building and running instuctions.
+
+\subsection{Architecture}
+
+\subsection{Error handling}
+
+\subsection{Testing}
+
+\subsection{Building and running the compiler}
+
+\section{The MiniJava language}
+
+\subsection{LL(1) context-free grammar}
+
+\begin{verbatim}
+<program>              ::= <main class> <class declaration list>
+<main class>           ::= "class" <identifier> "{" "public" "static" "void" "main"
+                           "(" ")" "{" <statement list> "}" "}"
+<class declaration>    ::= "class" <identifier> <optional inheritance> "{"
+                           <declaration list> "}"
+<optional inheritance> ::= "extends" <identifier>
+                        |  epsilon
+<declaration>          ::= <variable declaration>
+                        |  <method declaration>
+
+<class declaration list> ::= <class declaration> <class declaration list>
+                          |  epsilon
+<declaration list>       ::= <declaration> <declaration list>
+                          |  epsilon
+<statement list>         ::= <statement> <statement list>
+                          |  epsilon
+
+<method declaration>   ::= "public" <type> <identifier> "(" <opt formals> ")"
+                           "{" <statement list> "}"
+<opt formals>          ::= <type> <identifier> <formals list>
+                        |  epsilon
+<formals list>         ::= "," <type> <identifier> <formals list>
+                        |  epsilon
+<variable declaration> ::= <type> <identifier> ";"
+<type>                 ::= <simple type><opt brackets>
+<simple type>          ::= "int" | "boolean" | "void" | <type identifier>
+<opt brackets>         ::= "[" "]" | epsilon
+<type identifier>      ::= <identifier>
+
+<statement>      ::= "assert" "(" <expr> ")"
+                  |  <local variable declaration>
+                  |  "{" <statement list> "}"
+                  |  "if" "(" <expr> ")" <statement> <opt else>
+                  |  "while" "(" <expr> ")" <statement>
+                  |  "System" "." "out" "." "println" "(" <expr> ")" ";"
+                  |  "return" <expr> ";"
+                  |  <expr> <opt assignment> ";"
+<opt else>       ::= "else" <statement> | epsilon
+<opt assignment> ::= "=" <expr> | epsilon
+<local variable declaration> ::= <variable declaration>
+
+<expr> ::= "new" <new type> <opt expr tail>
+        |  "!" <expr> <opt expr tail>
+        |  "(" <expr ")" <opt expr tail>
+        |  <identifier> <opt expr tail>
+        |  <integer literal> <opt expr tail>
+        |  "this" <opt expr tail>
+        |  "true" <opt expr tail>
+        |  "false" <opt expr tail>
+<new type>          ::= <simple type> "[" <expr> "]"
+                     |  <type identifier> "(" ")"
+<opt expr tail>     ::= <binary operator> <expr>
+                     |  "[" <expr> "]"
+                     |  "." <method invocation>
+                     |  epsilon
+<method invocation> ::= "length"
+                     |  <identifier> "(" <expr list> ")"
+<opt exprs>         ::= <expr list> | epsilon
+<expr list>         ::= <expr> <expr list tail>
+<expr list tail>    ::= "," <expr list> | epsilon
+
+\end{verbatim}
+
+\subsection{Abstract syntax trees}
+
+\end{document}
