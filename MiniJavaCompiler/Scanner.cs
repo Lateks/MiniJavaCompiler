@@ -13,11 +13,8 @@ namespace MiniJavaCompiler
     {
         public class Scanner
         {
-            private static char ENDLINE = ';';
-            private static char LEFT_PAREN = '(';
-            private static char RIGHT_PAREN = ')';
             private static HashSet<char> symbols =
-                new HashSet<char>(new char[] { ENDLINE, LEFT_PAREN, RIGHT_PAREN });
+                new HashSet<char>(new char[] { ';', '(', ')', '[', ']' });
             private static HashSet<char> singleCharOperators =
                 new HashSet<char>(new char[] { '/', '+', '-', '*', '<', '>', '!', '%' });
             private static HashSet<char> multiCharOperatorSymbols =
@@ -123,12 +120,18 @@ namespace MiniJavaCompiler
             private Token MakeSymbolToken()
             {
                 string token = input.Read();
-                if (token.Equals(ENDLINE.ToString()))
-                    return new EndLine(startRow, startCol);
-                else if (token.Equals(LEFT_PAREN.ToString()))
-                    return new LeftParenthesis(startRow, startCol);
-                else
-                    return new RightParenthesis(startRow, startCol);
+                switch (token) {
+                    case "(":
+                        return new LeftParenthesis(startRow, startCol);
+                    case ")":
+                        return new RightParenthesis(startRow, startCol);
+                    case "[":
+                        return new LeftBracket(startRow, startCol);
+                    case "]":
+                        return new RightBracket(startRow, startCol);
+                    default:
+                        return new EndLine(startRow, startCol);
+                }
             }
 
             private IntegerLiteralToken MakeIntegerLiteralToken()

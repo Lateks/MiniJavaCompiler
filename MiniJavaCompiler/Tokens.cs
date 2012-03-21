@@ -72,12 +72,6 @@ namespace MiniJavaCompiler
                     : base(value, row, col) { }
             }
 
-            public class StringLiteralToken : StringToken
-            {
-                public StringLiteralToken(string value, int row, int col)
-                    : base(value, row, col) { }
-            }
-
             public class Identifier : StringToken
             {
                 public Identifier(string name, int row, int col)
@@ -141,6 +135,18 @@ namespace MiniJavaCompiler
             public class TypeDeclaration : Token
             {
                 public TypeDeclaration(int row, int col)
+                    : base(row, col) { }
+            }
+
+            public class LeftBracket : Token
+            {
+                public LeftBracket(int row, int col)
+                    : base(row, col) { }
+            }
+
+            public class RightBracket : Token
+            {
+                public RightBracket(int row, int col)
                     : base(row, col) { }
             }
 

@@ -50,6 +50,29 @@ namespace LexerTest
     }
 
     [TestFixture]
+    public class TypeTests
+    {
+        [Datapoints]
+        public string[] types = { "int", "boolean" };
+
+        [Theory]
+        public void SimpleTypes(string type)
+        {
+            var lexer = new Scanner(new StringReader(type));
+            Assert.That(lexer.NextToken(), Is.InstanceOf<MiniJavaType>());
+        }
+
+        [Theory]
+        public void ArrayType(string type)
+        {
+            var lexer = new Scanner(new StringReader(type + "[]"));
+            Assert.That(lexer.NextToken(), Is.InstanceOf<MiniJavaType>());
+            Assert.That(lexer.NextToken(), Is.InstanceOf<LeftBracket>());
+            Assert.That(lexer.NextToken(), Is.InstanceOf<RightBracket>());
+        }
+    }
+
+    [TestFixture]
     public class LexerTests
     {
         [Test]
