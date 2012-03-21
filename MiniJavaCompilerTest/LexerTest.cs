@@ -76,6 +76,18 @@ namespace LexerTest
     public class LexerTests
     {
         [Test]
+        public void MethodInvocation()
+        {
+            var lexer = new Scanner(new StringReader("foo.bar()"));
+            Assert.That(lexer.NextToken(), Is.InstanceOf<Identifier>());
+            Assert.That(lexer.NextToken(), Is.InstanceOf<MethodInvocationToken>());
+            Assert.That(lexer.NextToken(), Is.InstanceOf<Identifier>());
+            Assert.That(lexer.NextToken(), Is.InstanceOf<LeftParenthesis>());
+            Assert.That(lexer.NextToken(), Is.InstanceOf<RightParenthesis>());
+            Assert.That(lexer.NextToken(), Is.InstanceOf<EOF>());
+        }
+
+        [Test]
         public void IntegerConstants()
         {
             var lexer = new Scanner(new StringReader("123"));

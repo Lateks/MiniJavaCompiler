@@ -150,6 +150,12 @@ namespace MiniJavaCompiler
                     : base(row, col) { }
             }
 
+            public class MethodInvocationToken : Token
+            {
+                public MethodInvocationToken(int row, int col)
+                    : base(row, col) { }
+            }
+
             public class EOF : Token
             {
                 public EOF(int row, int col) : base(row, col) { }
