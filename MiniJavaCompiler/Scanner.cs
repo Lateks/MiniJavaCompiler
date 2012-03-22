@@ -14,7 +14,7 @@ namespace MiniJavaCompiler
         public class Scanner
         {
             private static HashSet<char>
-                symbols = new HashSet<char>(new char[] { ';', '(', ')', '[', ']', '.' }),
+                symbols = new HashSet<char>(new char[] { ';', '(', ')', '[', ']', '.', '{', '}' }),
                 singleCharOperators = new HashSet<char>(new char[] { '/', '+', '-', '*', '<', '>', '!', '%' }),
                 multiCharOperatorSymbols = new HashSet<char>(new char[] { '&', '=', '|' });
             private static HashSet<string>
@@ -98,7 +98,7 @@ namespace MiniJavaCompiler
                     input.Read();
                     return new UnaryNotToken(startRow, startCol);
                 }
-                return new BinaryOperator(input.Read(), startRow, startCol);
+                return new BinaryOperatorToken(input.Read(), startRow, startCol);
             }
 
             private Token MakeAssignmentOrMultiCharOperatorToken()
@@ -107,7 +107,7 @@ namespace MiniJavaCompiler
                 if (input.InputLeft() && input.Peek().ToString().Equals(symbol))
                 {
                     symbol += input.Read();
-                    return new BinaryOperator(symbol, startRow, startCol);
+                    return new BinaryOperatorToken(symbol, startRow, startCol);
                 }
                 else if (symbol.Equals("="))
                     return new AssignmentToken(startRow, startCol);
@@ -129,6 +129,10 @@ namespace MiniJavaCompiler
                         return new LeftBracket(startRow, startCol);
                     case "]":
                         return new RightBracket(startRow, startCol);
+                    case "{":
+                        return new LeftCurlyBrace(startRow, startCol);
+                    case "}":
+                        return new RightCurlyBrace(startRow, startCol);
                     case ".":
                         return new MethodInvocationToken(startRow, startCol);
                     default:

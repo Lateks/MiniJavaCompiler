@@ -37,8 +37,8 @@ namespace LexerTest
         {
             var lexer = new Scanner(new StringReader(binop));
             Token token = lexer.NextToken();
-            Assert.That(token, Is.InstanceOf<BinaryOperator>());
-            Assert.That(((BinaryOperator)token).Value, Is.EqualTo(binop));
+            Assert.That(token, Is.InstanceOf<BinaryOperatorToken>());
+            Assert.That(((BinaryOperatorToken)token).Value, Is.EqualTo(binop));
         }
 
         [Test]
@@ -75,6 +75,14 @@ namespace LexerTest
     [TestFixture]
     public class LexerTests
     {
+        [Test]
+        public void CurlyBraces()
+        {
+            var lexer = new Scanner(new StringReader("{}"));
+            Assert.That(lexer.NextToken(), Is.InstanceOf<LeftCurlyBrace>());
+            Assert.That(lexer.NextToken(), Is.InstanceOf<RightCurlyBrace>());
+        }
+
         [Test]
         public void MethodInvocation()
         {
@@ -164,9 +172,9 @@ namespace LexerTest
         public void DivisionSymbolIsNotConfusedWithAComment()
         {
             var lexer = new Scanner(new StringReader("/"));
-            Assert.That(lexer.NextToken(), Is.InstanceOf<BinaryOperator>());
+            Assert.That(lexer.NextToken(), Is.InstanceOf<BinaryOperatorToken>());
             lexer = new Scanner(new StringReader("// .. / ..\n /"));
-            Assert.That(((BinaryOperator)lexer.NextToken()).Value, Is.EqualTo("/"));
+            Assert.That(((BinaryOperatorToken)lexer.NextToken()).Value, Is.EqualTo("/"));
         }
 
         [Test]
