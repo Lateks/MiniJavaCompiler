@@ -90,9 +90,9 @@ namespace MiniJavaCompiler
                     : base(name, row, col) { }
             }
 
-            public class BinaryOperator : StringToken
+            public class BinaryOperatorToken : StringToken
             {
-                public BinaryOperator(string symbol, int row, int col)
+                public BinaryOperatorToken(string symbol, int row, int col)
                     : base(symbol, row, col) { }
             }
 
@@ -147,6 +147,18 @@ namespace MiniJavaCompiler
             public class RightBracket : Token
             {
                 public RightBracket(int row, int col)
+                    : base(row, col) { }
+            }
+
+            public class LeftCurlyBrace : Token
+            {
+                public LeftCurlyBrace(int row, int col)
+                    : base(row, col) { }
+            }
+
+            public class RightCurlyBrace : Token
+            {
+                public RightCurlyBrace(int row, int col)
                     : base(row, col) { }
             }
 
