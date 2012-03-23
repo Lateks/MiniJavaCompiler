@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using MiniJavaCompiler.LexicalAnalysis;
 using MiniJavaCompiler.Support.TokenTypes;
+using MiniJavaCompiler.AbstractSyntaxTree;
 
 namespace MiniJavaCompiler
 {
@@ -50,34 +51,6 @@ namespace MiniJavaCompiler
                 Match<RightCurlyBrace>();
                 return new MainClassDeclaration(classIdent.Value,
                     main_statements, startToken.Row, startToken.Col);
-            }
-
-            private List<ClassDeclaration> ClassDeclarationList()
-            {
-                return NodeList<ClassDeclaration, EOF>(ClassDeclaration);
-            }
-
-            private List<Declaration> DeclarationList()
-            {
-                return NodeList<Declaration, RightCurlyBrace>(Declaration);
-            }
-
-            private List<Statement> StatementList()
-            {
-                return NodeList<Statement, RightCurlyBrace>(Statement);
-            }
-
-            private List<NodeType> NodeList<NodeType, FollowToken>(Func<NodeType> ParseNode)
-                where NodeType : SyntaxTreeNode
-                where FollowToken : Token
-            {
-                var nodeList = new List<NodeType>();
-                if (!(input_token is FollowToken))
-                {
-                    nodeList.Add(ParseNode());
-                    nodeList.AddRange(NodeList<NodeType, FollowToken>(ParseNode));
-                }
-                return nodeList;
             }
 
             private Statement Statement()
@@ -171,7 +144,116 @@ namespace MiniJavaCompiler
 
             private Expression Expression()
             {
+                if (input_token is KeywordToken)
+                {
+                    var token = (KeywordToken)input_token;
+                    switch (token.Value)
+                    {
+                        case "new":
+                            Match<KeywordToken>("new");
+                            var typeInfo = NewType();
+                            var type = (StringToken)typeInfo.Item1;
+                            return OptionalExpressionTail(new InstanceCreation(type.Value,
+                                token.Row, token.Col));
+                        case "this":
+                            Match<KeywordToken>("this");
+                            return OptionalExpressionTail(new ThisExpression(token.Row,
+                                token.Col));
+                        case "true":
+                            Match<KeywordToken>("true");
+                            return OptionalExpressionTail(new BooleanLiteral(true,
+                                token.Row, token.Col));
+                        case "false":
+                            Match<KeywordToken>("false");
+                            return OptionalExpressionTail(new BooleanLiteral(false,
+                                token.Row, token.Col));
+                        default: // error, invalid start token for expression
+                            throw new NotImplementedException();
+                    }
+                }
+                else if (input_token is Identifier)
+                {
+                    var identifier = Match<Identifier>();
+                    return OptionalExpressionTail(new VariableReference(
+                        identifier.Value, identifier.Row, identifier.Col));
+                }
+                else if (input_token is IntegerLiteralToken)
+                {
+                    var token = Match<IntegerLiteralToken>();
+                    return OptionalExpressionTail(new IntegerLiteral(token.Value,
+                        token.Row, token.Col));
+                }
+                else if (input_token is UnaryNotToken)
+                {
+                    var token = Match<UnaryNotToken>();
+                    Expression booleanExpression = Expression();
+                    return OptionalExpressionTail(new UnaryNot(booleanExpression,
+                        token.Row, token.Col));
+                }
+                else if (input_token is LeftParenthesis)
+                {
+                    var token = Match<LeftParenthesis>();
+                    Expression parenthesisedExpression = Expression();
+                    return OptionalExpressionTail(parenthesisedExpression);
+                }
                 throw new NotImplementedException();
+            }
+
+            private Expression OptionalExpressionTail(Expression lhs)
+            {
+                if (input_token is BinaryOperatorToken)
+                {
+                    var operatorToken = Match<BinaryOperatorToken>();
+                    var rhs = Expression();
+                    if (operatorToken is ArithmeticOperatorToken)
+                        return new ArithmeticOp(operatorToken.Value,
+                            lhs, rhs, operatorToken.Row, operatorToken.Col);
+                    else
+                        return new LogicalOp(operatorToken.Value,
+                            lhs, rhs, operatorToken.Row, operatorToken.Col);
+                }
+                else if (input_token is LeftBracket)
+                {
+                    var startToken = Match<LeftBracket>();
+                    var indexExpression = Expression();
+                    Match<RightBracket>();
+                    return new ArrayIndexExpression(lhs, indexExpression, startToken.Row,
+                        startToken.Col); // slightly dubious row and column numbers here
+                }
+                else if (input_token is MethodInvocationToken)
+                {
+                    var startToken = Match<MethodInvocationToken>();
+                    string methodname;
+                    List<Expression> parameters;
+                    if (input_token is KeywordToken)
+                    {
+                        methodname = Match<KeywordToken>("length").Value;
+                        parameters = new List<Expression>();
+                    }
+                    else
+                    {
+                        methodname = Match<Identifier>().Value;
+                        parameters = ExpressionList();
+                    }
+                    return new MethodInvocation(lhs, methodname, parameters,
+                        startToken.Row, startToken.Col);
+                }
+                else
+                    return lhs;
+            }
+
+            private Tuple<TypeToken, bool> NewType()
+            {
+                var typeInfo = Type();
+                if (!typeInfo.Item2) // type is not an array (did not match brackets)
+                {
+                    if (typeInfo.Item1 is MiniJavaType)
+                        throw new NotImplementedException();
+                        // error, should not be in a "new" statement
+                    Match<LeftParenthesis>();
+                    Match<RightParenthesis>();
+                }
+                return typeInfo;
             }
 
             private ClassDeclaration ClassDeclaration()
@@ -198,15 +280,15 @@ namespace MiniJavaCompiler
 
             private Declaration Declaration()
             {
-                if (input_token is KeywordToken)
-                {
-                    return MethodDeclaration();
-                }
-                else if (input_token is MiniJavaType || input_token is Identifier)
+                if (input_token is MiniJavaType || input_token is Identifier)
                 {
                     VariableDeclaration variable = VariableDeclaration();
                     Match<EndLine>();
                     return variable;
+                }
+                else if (input_token is KeywordToken)
+                {
+                    return MethodDeclaration();
                 }
                 else
                     throw new NotImplementedException();
@@ -236,19 +318,6 @@ namespace MiniJavaCompiler
                 return new MethodDeclaration(methodName.Value, type.Value,
                     typeInfo.Item2, parameters, methodBody, startToken.Row,
                     startToken.Col);
-            }
-
-            private List<VariableDeclaration> FormalParameters(bool isListTail = false)
-            {
-                var formals = new List<VariableDeclaration>();
-                if (!(input_token is RightParenthesis))
-                {
-                    if (isListTail) Match<ParameterSeparator>();
-                    VariableDeclaration firstParam = VariableDeclaration();
-                    formals.Add(firstParam);
-                    formals.AddRange(FormalParameters(true));
-                }
-                return formals;
             }
 
             // Returns a 2-tuple with the matched type token as the first element and
@@ -294,6 +363,62 @@ namespace MiniJavaCompiler
                     // return an error node or throw an exception?
                     throw new NotImplementedException();
                 }
+            }
+
+            // List parsers.
+
+            private List<ClassDeclaration> ClassDeclarationList()
+            {
+                return NodeList<ClassDeclaration, EOF>(ClassDeclaration);
+            }
+
+            private List<Declaration> DeclarationList()
+            {
+                return NodeList<Declaration, RightCurlyBrace>(Declaration);
+            }
+
+            private List<Statement> StatementList()
+            {
+                return NodeList<Statement, RightCurlyBrace>(Statement);
+            }
+
+            private List<NodeType> NodeList<NodeType, FollowToken>(Func<NodeType> ParseNode)
+                where NodeType : SyntaxTreeNode
+                where FollowToken : Token
+            {
+                var nodeList = new List<NodeType>();
+                if (!(input_token is FollowToken))
+                {
+                    nodeList.Add(ParseNode());
+                    nodeList.AddRange(NodeList<NodeType, FollowToken>(ParseNode));
+                }
+                return nodeList;
+            }
+
+            private List<VariableDeclaration> FormalParameters(bool isListTail = false)
+            {
+                return CommaSeparatedList<VariableDeclaration, RightParenthesis>(VariableDeclaration);
+            }
+
+            private List<Expression> ExpressionList(bool isListTail = false)
+            {
+                return CommaSeparatedList<Expression, RightParenthesis>(Expression);
+            }
+
+            private List<NodeType> CommaSeparatedList<NodeType, FollowToken>
+                (Func<NodeType> ParseNode, bool isListTail = false)
+                where NodeType : SyntaxTreeNode
+                where FollowToken : Token
+            {
+                var list = new List<NodeType>();
+                if (!(input_token is FollowToken))
+                {
+                    if (isListTail) Match<ParameterSeparator>();
+                    list.Add(ParseNode());
+                    list.AddRange(CommaSeparatedList<NodeType, FollowToken>(
+                        ParseNode, true));
+                }
+                return list;
             }
         }
     }
