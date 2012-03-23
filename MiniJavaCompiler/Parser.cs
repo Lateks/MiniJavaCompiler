@@ -82,6 +82,95 @@ namespace MiniJavaCompiler
 
             private Statement Statement()
             {
+                if (input_token is KeywordToken)
+                {
+                    KeywordToken token = (KeywordToken)input_token;
+                    switch (token.Value)
+                    {
+                        case "assert":
+                            Match<KeywordToken>("assert");
+                            Match<LeftParenthesis>(); // btw, Java asserts apparently do not use parentheses
+                            Expression expr = Expression();
+                            Match<RightParenthesis>();
+                            Match<EndLine>(); // not in the CFG, probably a bug?
+                            return new AssertStatement(expr, token.Row, token.Col);
+                        case "if":
+                            Match<KeywordToken>("if");
+                            Match<LeftParenthesis>();
+                            Expression booleanExpr = Expression();
+                            Match<RightParenthesis>();
+                            return new IfStatement(booleanExpr, Statement(), OptionalElseBranch(),
+                                token.Row, token.Col);
+                        case "while":
+                            Match<KeywordToken>("while");
+                            Match<LeftParenthesis>();
+                            booleanExpr = Expression();
+                            Match<RightParenthesis>();
+                            return new WhileStatement(booleanExpr, Statement(), token.Row, token.Col);
+                        case "System":
+                            Match<KeywordToken>("System");
+                            Match<MethodInvocationToken>();
+                            Match<KeywordToken>("out");
+                            Match<MethodInvocationToken>();
+                            Match<KeywordToken>("println");
+                            Match<LeftParenthesis>();
+                            var integerExpression = Expression();
+                            Match<RightParenthesis>();
+                            Match<EndLine>();
+                            return new PrintStatement(integerExpression, token.Row, token.Col);
+                        case "return":
+                            Match<KeywordToken>("return");
+                            var expression = Expression();
+                            Match<EndLine>();
+                            return new ReturnStatement(expression, token.Row, token.Col);
+                        default: // error
+                            throw new NotImplementedException();
+                    }
+                }
+                else if (input_token is LeftCurlyBrace)
+                {
+                    Token blockStart = Match<LeftCurlyBrace>();
+                    var statements = StatementList();
+                    Match<RightCurlyBrace>();
+                    return new BlockStatement(statements, blockStart.Row, blockStart.Col);
+                }
+                else
+                { // has to be an assignment or a method invocation
+                    var startToken = input_token;
+                    var expression = Expression();
+                    if (input_token is AssignmentToken)
+                    {
+                        Match<AssignmentToken>();
+                        Expression rhs = Expression();
+                        Match<EndLine>();
+                        return new AssignmentStatement(expression, rhs,
+                            startToken.Row, startToken.Col);
+                    }
+                    else
+                    {
+                        Match<EndLine>();
+                        if (expression is MethodInvocation)
+                            return (MethodInvocation)expression;
+                        else // error
+                            throw new NotImplementedException();
+                    }
+                }
+            }
+
+            private Statement OptionalElseBranch()
+            {
+                if (input_token is KeywordToken &&
+                    ((KeywordToken)input_token).Value == "else")
+                {
+                    Match<KeywordToken>("else");
+                    return Statement();
+                }
+                else
+                    return null;
+            }
+
+            private Expression Expression()
+            {
                 throw new NotImplementedException();
             }
 
@@ -114,20 +203,29 @@ namespace MiniJavaCompiler
                     return MethodDeclaration();
                 }
                 else if (input_token is MiniJavaType || input_token is Identifier)
-                    return VariableDeclaration();
+                {
+                    VariableDeclaration variable = VariableDeclaration();
+                    Match<EndLine>();
+                    return variable;
+                }
                 else
                     throw new NotImplementedException();
             }
 
-            private Declaration VariableDeclaration()
+            private VariableDeclaration VariableDeclaration()
             {
-                throw new NotImplementedException();
+                var typeInfo = Type();
+                var type = (StringToken)typeInfo.Item1;
+                Identifier variableIdent = Match<Identifier>();
+                return new VariableDeclaration(variableIdent.Value, type.Value,
+                    typeInfo.Item2, type.Row, type.Col);
             }
 
-            private Declaration MethodDeclaration()
+            private MethodDeclaration MethodDeclaration()
             {
                 Token startToken = Match<KeywordToken>("public");
-                string type = Type();
+                var typeInfo = Type();
+                var type = (StringToken)typeInfo.Item1;
                 Identifier methodName = Match<Identifier>();
                 Match<LeftParenthesis>();
                 List<VariableDeclaration> parameters = FormalParameters();
@@ -135,18 +233,37 @@ namespace MiniJavaCompiler
                 Match<LeftCurlyBrace>();
                 List<Statement> methodBody = StatementList();
                 Match<RightCurlyBrace>();
-                return new MethodDeclaration(methodName.Value, type, parameters,
-                    methodBody, startToken.Row, startToken.Col);
+                return new MethodDeclaration(methodName.Value, type.Value,
+                    typeInfo.Item2, parameters, methodBody, startToken.Row,
+                    startToken.Col);
             }
 
-            private List<VariableDeclaration> FormalParameters()
+            private List<VariableDeclaration> FormalParameters(bool isListTail = false)
             {
-                throw new NotImplementedException();
+                var formals = new List<VariableDeclaration>();
+                if (!(input_token is RightParenthesis))
+                {
+                    if (isListTail) Match<ParameterSeparator>();
+                    VariableDeclaration firstParam = VariableDeclaration();
+                    formals.Add(firstParam);
+                    formals.AddRange(FormalParameters(true));
+                }
+                return formals;
             }
 
-            private string Type()
+            // Returns a 2-tuple with the matched type token as the first element and
+            // a bool value indicating whether the type is an array or not as the
+            // second element.
+            private Tuple<TypeToken, bool> Type()
             {
-                throw new NotImplementedException();
+                var type = Match<TypeToken>();
+                if (input_token is LeftBracket)
+                {
+                    Match<LeftBracket>();
+                    Match<RightBracket>();
+                    return new Tuple<TypeToken, bool>(type, true);
+                }
+                return new Tuple<TypeToken, bool>(type, false);
             }
 
             private T Match<T>(string value = null) where T : Token

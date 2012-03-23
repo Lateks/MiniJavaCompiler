@@ -108,12 +108,18 @@ namespace MiniJavaCompiler
             get;
             private set;
         }
+        public bool IsArray
+        {
+            get;
+            private set;
+        }
 
-        public Declaration(string name, string type, int row, int col)
-            : base(row, col)
+        public Declaration(string name, string type, bool isArray,
+            int row, int col) : base(row, col)
         {
             Name = name;
             Type = type;
+            IsArray = isArray;
         }
     }
 
@@ -130,10 +136,10 @@ namespace MiniJavaCompiler
             private set;
         }
 
-        public MethodDeclaration(string name, string type,
+        public MethodDeclaration(string name, string type, bool returnTypeIsArray,
             List<VariableDeclaration> formals, List<Statement> methodBody,
             int row, int col)
-            : base(name, type, row, col)
+            : base(name, type, returnTypeIsArray, row, col)
         {
             Formals = formals;
             MethodBody = methodBody;
@@ -142,8 +148,8 @@ namespace MiniJavaCompiler
 
     public class VariableDeclaration : Declaration, Statement
     {
-        public VariableDeclaration(string name, string type, int row, int col)
-            : base(name, type, row, col) { }
+        public VariableDeclaration(string name, string type, bool isArray, int row, int col)
+            : base(name, type, isArray, row, col) { }
     }
 
     public class PrintStatement : SyntaxElement, Statement
@@ -252,6 +258,28 @@ namespace MiniJavaCompiler
             BooleanExpression = booleanExp;
             Then = thenBranch;
             Else = elseBranch;
+        }
+    }
+
+    public class WhileStatement : SyntaxElement, Statement
+    {
+        public Expression BooleanExpression
+        {
+            get;
+            private set;
+        }
+        public Statement LoopBody
+        {
+            get;
+            private set;
+        }
+
+        public WhileStatement(Expression booleanExp, Statement loopBody,
+            int row, int col)
+            : base(row, col)
+        {
+            BooleanExpression = booleanExp;
+            LoopBody = loopBody;
         }
     }
 
