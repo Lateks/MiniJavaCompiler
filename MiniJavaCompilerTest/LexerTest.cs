@@ -27,18 +27,34 @@ namespace LexerTest
     }
 
     [TestFixture]
-    public class OperatorTest
+    public class ArithmeticOperatorTest
     {
         [Datapoints]
-        public string[] binaryOperators = { "+", "-", "*", "/", "<", ">", "&&", "==", "||", "%" };
+        public string[] arithmeticOperators = { "+", "-", "*", "/", "%" };
 
         [Theory]
-        public void BinaryOperators(string binop)
+        public void ArithmeticOperators(string binop)
         {
             var lexer = new Scanner(new StringReader(binop));
             Token token = lexer.NextToken();
-            Assert.That(token, Is.InstanceOf<BinaryOperatorToken>());
-            Assert.That(((BinaryOperatorToken)token).Value, Is.EqualTo(binop));
+            Assert.That(token, Is.InstanceOf<ArithmeticOperatorToken>());
+            Assert.That(((ArithmeticOperatorToken)token).Value, Is.EqualTo(binop));
+        }
+    }
+
+    [TestFixture]
+    public class LogicalOperatorTest
+    {
+        [Datapoints]
+        public string[] logicalOperators = { "<", ">", "&&", "==", "||" };
+
+        [Theory]
+        public void LogicalOperators(string binop)
+        {
+            var lexer = new Scanner(new StringReader(binop));
+            Token token = lexer.NextToken();
+            Assert.That(token, Is.InstanceOf<LogicalOperatorToken>());
+            Assert.That(((LogicalOperatorToken)token).Value, Is.EqualTo(binop));
         }
 
         [Test]

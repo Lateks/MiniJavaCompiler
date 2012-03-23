@@ -13,11 +13,11 @@ namespace MiniJavaCompiler
     {
         public class Scanner
         {
-            private static HashSet<char>
+            public static HashSet<char>
                 symbols = new HashSet<char>(new char[] { ';', '(', ')', '[', ']', '.', '{', '}', ',' }),
                 singleCharOperators = new HashSet<char>(new char[] { '/', '+', '-', '*', '<', '>', '!', '%' }),
                 multiCharOperatorSymbols = new HashSet<char>(new char[] { '&', '=', '|' });
-            private static HashSet<string>
+            public static HashSet<string>
                 keywords = new HashSet<string>(new string[] { "this", "true", "false", "new",
                                                         "length", "System", "out", "println",
                                                         "if", "else", "while", "return", "assert",
@@ -98,7 +98,9 @@ namespace MiniJavaCompiler
                     input.Read();
                     return new UnaryNotToken(startRow, startCol);
                 }
-                return new BinaryOperatorToken(input.Read(), startRow, startCol);
+                else if (input.Peek().Equals('<') || input.Peek().Equals('>'))
+                    return new LogicalOperatorToken(input.Read(), startRow, startCol);
+                return new ArithmeticOperatorToken(input.Read(), startRow, startCol);
             }
 
             private Token MakeAssignmentOrMultiCharOperatorToken()
@@ -107,7 +109,7 @@ namespace MiniJavaCompiler
                 if (input.InputLeft() && input.Peek().ToString().Equals(symbol))
                 {
                     symbol += input.Read();
-                    return new BinaryOperatorToken(symbol, startRow, startCol);
+                    return new LogicalOperatorToken(symbol, startRow, startCol);
                 }
                 else if (symbol.Equals("="))
                     return new AssignmentToken(startRow, startCol);
