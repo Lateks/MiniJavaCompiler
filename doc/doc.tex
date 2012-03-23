@@ -65,12 +65,12 @@ This section covers the general architecture of the compiler, testing, error han
 <formals list>         ::= "," <type> <identifier> <formals list>
                         |  epsilon
 <variable declaration> ::= <type> <identifier> ";"
-<type>                 ::= <simple type><opt brackets>
+<type>                 ::= <simple type> <opt brackets>
 <simple type>          ::= "int" | "boolean" | "void" | <type identifier>
 <opt brackets>         ::= "[" "]" | epsilon
 <type identifier>      ::= <identifier>
 
-<statement>      ::= "assert" "(" <expr> ")"
+<statement>      ::= "assert" "(" <expr> ")" ";"
                   |  <local variable declaration>
                   |  "{" <statement list> "}"
                   |  "if" "(" <expr> ")" <statement> <opt else>
@@ -84,7 +84,7 @@ This section covers the general architecture of the compiler, testing, error han
 
 <expr> ::= "new" <new type> <opt expr tail>
         |  "!" <expr> <opt expr tail>
-        |  "(" <expr ")" <opt expr tail>
+        |  "(" <expr> ")" <opt expr tail>
         |  <identifier> <opt expr tail>
         |  <integer literal> <opt expr tail>
         |  "this" <opt expr tail>
@@ -97,7 +97,7 @@ This section covers the general architecture of the compiler, testing, error han
                      |  "." <method invocation>
                      |  epsilon
 <method invocation> ::= "length"
-                     |  <identifier> "(" <expr list> ")"
+                     |  <identifier> "(" <opt exprs> ")"
 <opt exprs>         ::= <expr list> | epsilon
 <expr list>         ::= <expr> <expr list tail>
 <expr list tail>    ::= "," <expr list> | epsilon
