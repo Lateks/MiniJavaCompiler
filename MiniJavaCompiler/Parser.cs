@@ -97,11 +97,6 @@ namespace MiniJavaCompiler
                     declarations, startToken.Row, startToken.Col);
             }
 
-            private Declaration Declaration()
-            {
-                throw new NotImplementedException();
-            }
-
             private string OptionalInheritance()
             {
                 if (!(input_token is LeftCurlyBrace))
@@ -110,6 +105,48 @@ namespace MiniJavaCompiler
                     return Match<Identifier>().Value;
                 }
                 return null;
+            }
+
+            private Declaration Declaration()
+            {
+                if (input_token is KeywordToken)
+                {
+                    return MethodDeclaration();
+                }
+                else if (input_token is MiniJavaType || input_token is Identifier)
+                    return VariableDeclaration();
+                else
+                    throw new NotImplementedException();
+            }
+
+            private Declaration VariableDeclaration()
+            {
+                throw new NotImplementedException();
+            }
+
+            private Declaration MethodDeclaration()
+            {
+                Token startToken = Match<KeywordToken>("public");
+                string type = Type();
+                Identifier methodName = Match<Identifier>();
+                Match<LeftParenthesis>();
+                List<VariableDeclaration> parameters = FormalParameters();
+                Match<RightParenthesis>();
+                Match<LeftCurlyBrace>();
+                List<Statement> methodBody = StatementList();
+                Match<RightCurlyBrace>();
+                return new MethodDeclaration(methodName.Value, type, parameters,
+                    methodBody, startToken.Row, startToken.Col);
+            }
+
+            private List<VariableDeclaration> FormalParameters()
+            {
+                throw new NotImplementedException();
+            }
+
+            private string Type()
+            {
+                throw new NotImplementedException();
             }
 
             private T Match<T>(string value = null) where T : Token
