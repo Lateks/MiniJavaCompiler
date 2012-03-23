@@ -54,13 +54,7 @@ namespace MiniJavaCompiler
 
             private List<ClassDeclaration> ClassDeclarationList()
             {
-                var classes = new List<ClassDeclaration>();
-                if (MatchWithoutAdvancing<KeywordToken>("public"))
-                { // produce an empty list (epsilon) otherwise
-                    classes.Add(ClassDeclaration());
-                    classes.AddRange(ClassDeclarationList());
-                }
-                return classes;
+                return NodeList<ClassDeclaration, EOF>(ClassDeclaration);
             }
 
             private List<Declaration> DeclarationList()
@@ -78,7 +72,7 @@ namespace MiniJavaCompiler
                 where FollowToken : Token
             {
                 var nodeList = new List<NodeType>();
-                if (!MatchWithoutAdvancing<FollowToken>())
+                if (!(input_token is FollowToken))
                 {
                     nodeList.Add(ParseNode());
                     nodeList.AddRange(NodeList<NodeType, FollowToken>(ParseNode));
