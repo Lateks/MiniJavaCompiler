@@ -14,7 +14,7 @@ namespace MiniJavaCompiler
         public class Scanner
         {
             private static HashSet<char>
-                symbols = new HashSet<char>(new char[] { ';', '(', ')', '[', ']', '.', '{', '}' }),
+                symbols = new HashSet<char>(new char[] { ';', '(', ')', '[', ']', '.', '{', '}', ',' }),
                 singleCharOperators = new HashSet<char>(new char[] { '/', '+', '-', '*', '<', '>', '!', '%' }),
                 multiCharOperatorSymbols = new HashSet<char>(new char[] { '&', '=', '|' });
             private static HashSet<string>
@@ -135,6 +135,8 @@ namespace MiniJavaCompiler
                         return new RightCurlyBrace(startRow, startCol);
                     case ".":
                         return new MethodInvocationToken(startRow, startCol);
+                    case ",":
+                        return new ParameterSeparator(startRow, startCol);
                     default:
                         return new EndLine(startRow, startCol);
                 }

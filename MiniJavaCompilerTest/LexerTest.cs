@@ -76,6 +76,13 @@ namespace LexerTest
     public class LexerTests
     {
         [Test]
+        public void ParameterSeparator()
+        {
+            var lexer = new Scanner(new StringReader(","));
+            Assert.That(lexer.NextToken(), Is.InstanceOf<ParameterSeparator>());
+        }
+
+        [Test]
         public void CurlyBraces()
         {
             var lexer = new Scanner(new StringReader("{}"));

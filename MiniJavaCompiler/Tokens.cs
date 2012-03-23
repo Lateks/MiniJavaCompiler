@@ -9,7 +9,15 @@ namespace MiniJavaCompiler
     {
         namespace TokenTypes
         {
-            public abstract class Token
+            public interface Token
+            {
+                int Row { get; }
+                int Col { get; }
+            }
+
+            public interface TypeToken : Token { }
+
+            public abstract class TokenElement : Token
             {
                 public int Row
                 {
@@ -22,14 +30,14 @@ namespace MiniJavaCompiler
                     private set;
                 }
 
-                public Token(int row, int col)
+                public TokenElement(int row, int col)
                 {
                     Row = row;
                     Col = col;
                 }
             }
 
-            public class ErrorToken : Token
+            public class ErrorToken : TokenElement
             {
                 public string Message
                 {
@@ -51,7 +59,7 @@ namespace MiniJavaCompiler
                 }
             }
 
-            public class StringToken : Token
+            public class StringToken : TokenElement
             {
                 public string Value
                 {
@@ -72,7 +80,7 @@ namespace MiniJavaCompiler
                     : base(value, row, col) { }
             }
 
-            public class Identifier : StringToken
+            public class Identifier : StringToken, TypeToken
             {
                 public Identifier(string name, int row, int col)
                     : base(name, row, col) { }
@@ -84,7 +92,7 @@ namespace MiniJavaCompiler
                     : base(name, row, col) { }
             }
 
-            public class MiniJavaType : KeywordToken
+            public class MiniJavaType : KeywordToken, TypeToken
             {
                 public MiniJavaType(string name, int row, int col)
                     : base(name, row, col) { }
@@ -96,79 +104,85 @@ namespace MiniJavaCompiler
                     : base(symbol, row, col) { }
             }
 
-            public class UnaryNotToken : Token
+            public class UnaryNotToken : TokenElement
             {
                 public UnaryNotToken(int row, int col)
                     : base(row, col) { }
             }
 
-            public class RangeOperator : Token
+            public class RangeOperator : TokenElement
             {
                 public RangeOperator(int row, int col)
                     : base(row, col) { }
             }
 
-            public class LeftParenthesis : Token
+            public class LeftParenthesis : TokenElement
             {
                 public LeftParenthesis(int row, int col)
                     : base(row, col) { }
             }
 
-            public class RightParenthesis : Token
+            public class RightParenthesis : TokenElement
             {
                 public RightParenthesis(int row, int col)
                     : base(row, col) { }
             }
 
-            public class EndLine : Token
+            public class EndLine : TokenElement
             {
                 public EndLine(int row, int col)
                     : base(row, col) { }
             }
 
-            public class AssignmentToken : Token
+            public class AssignmentToken : TokenElement
             {
                 public AssignmentToken(int row, int col)
                     : base(row, col) { }
             }
 
-            public class TypeDeclaration : Token
+            public class TypeDeclaration : TokenElement
             {
                 public TypeDeclaration(int row, int col)
                     : base(row, col) { }
             }
 
-            public class LeftBracket : Token
+            public class LeftBracket : TokenElement
             {
                 public LeftBracket(int row, int col)
                     : base(row, col) { }
             }
 
-            public class RightBracket : Token
+            public class RightBracket : TokenElement
             {
                 public RightBracket(int row, int col)
                     : base(row, col) { }
             }
 
-            public class LeftCurlyBrace : Token
+            public class LeftCurlyBrace : TokenElement
             {
                 public LeftCurlyBrace(int row, int col)
                     : base(row, col) { }
             }
 
-            public class RightCurlyBrace : Token
+            public class RightCurlyBrace : TokenElement
             {
                 public RightCurlyBrace(int row, int col)
                     : base(row, col) { }
             }
 
-            public class MethodInvocationToken : Token
+            public class MethodInvocationToken : TokenElement
             {
                 public MethodInvocationToken(int row, int col)
                     : base(row, col) { }
             }
 
-            public class EOF : Token
+            public class ParameterSeparator : TokenElement
+            {
+                public ParameterSeparator(int row, int col)
+                    : base(row, col) { }
+            }
+
+            public class EOF : TokenElement
             {
                 public EOF(int row, int col) : base(row, col) { }
             }
