@@ -104,21 +104,12 @@ namespace MiniJavaCompiler
 
             private string OptionalInheritance()
             {
-                if (MatchWithoutAdvancing<KeywordToken>("extends"))
+                if (!(input_token is LeftCurlyBrace))
                 {
                     Match<KeywordToken>("extends");
                     return Match<Identifier>().Value;
                 }
                 return null;
-            }
-
-            private bool MatchWithoutAdvancing<T>(string value = null) where T : Token
-            {
-                if (input_token is T &&
-                    (value == null ||
-                    ((StringToken)input_token).Value == value))
-                    return true;
-                return false;
             }
 
             private T Match<T>(string value = null) where T : Token
