@@ -57,7 +57,13 @@ namespace MiniJavaCompiler
 
             private Statement Statement()
             {
-                if (input_token is KeywordToken)
+                if (input_token is MiniJavaType)      // Local variable declaration for one of the base types.
+                {                                     // Variable declarations for user defined types are handled
+                    var decl = VariableDeclaration(); // separately.
+                    Match<EndLine>();
+                    return decl;
+                }
+                else if (input_token is KeywordToken)
                 {
                     KeywordToken token = (KeywordToken)input_token;
                     switch (token.Value)
@@ -110,9 +116,49 @@ namespace MiniJavaCompiler
                     return new BlockStatement(statements, blockStart.Row, blockStart.Col);
                 }
                 else
-                { // has to be an assignment or a method invocation
-                    var startToken = input_token;
-                    var expression = Expression();
+                { // Can be an assignment, a method invocation or a variable declaration for a user defined type.
+                  // This is really messy, must be refactored somehow.
+                    var startRow = input_token.Row;
+                    var startCol = input_token.Col;
+                    Expression expression;
+                    if (input_token is Identifier)
+                    {
+                        var ident1 = Match<Identifier>();
+                        if (input_token is LeftBracket)
+                        {
+                            Match<LeftBracket>();
+                            if (input_token is RightBracket)
+                            {
+                                Match<RightBracket>();
+                                var ident2 = Match<Identifier>();
+                                Match<EndLine>();
+                                return new VariableDeclaration(ident2.Value, ident1.Value, true,
+                                    startRow, startCol);
+                            }
+                            else
+                            {
+                                expression = Expression();
+                                Match<RightBracket>();
+                                expression = OptionalExpressionTail(expression);
+                            }
+                        }
+                        else if (input_token is Identifier)
+                        {
+                            var ident2 = Match<Identifier>();
+                            Match<EndLine>();
+                            return new VariableDeclaration(ident2.Value, ident1.Value, false,
+                                startRow, startCol);
+                        }
+                        else
+                        {
+                            expression = OptionalExpressionTail(new VariableReference(ident1.Value,
+                                startRow, startCol));
+                        }
+                    }
+                    else
+                    {
+                        expression = Expression();
+                    }
 
                     if (input_token is AssignmentToken)
                     {
@@ -120,14 +166,14 @@ namespace MiniJavaCompiler
                         Expression rhs = Expression();
                         Match<EndLine>();
                         return new AssignmentStatement(expression, rhs,
-                            startToken.Row, startToken.Col);
+                            startRow, startCol);
                     }
-                    else // should be a method invocation
+                    else // should be a method invocation according to the original grammar
                     {
                         Match<EndLine>();
                         if (expression is MethodInvocation)
                             return (MethodInvocation)expression;
-                        else // error
+                        else
                             throw new SyntaxError("Invalid token of type " +
                                 input_token.GetType() + " in statement.");
                     }
@@ -158,7 +204,7 @@ namespace MiniJavaCompiler
                             var typeInfo = NewType();
                             var type = (StringToken)typeInfo.Item1;
                             return OptionalExpressionTail(new InstanceCreation(type.Value,
-                                token.Row, token.Col));
+                                token.Row, token.Col, typeInfo.Item2));
                         case "this":
                             Match<KeywordToken>("this");
                             return OptionalExpressionTail(new ThisExpression(token.Row,
@@ -248,18 +294,22 @@ namespace MiniJavaCompiler
                     return lhs;
             }
 
-            private Tuple<TypeToken, bool> NewType()
+            private Tuple<TypeToken, Expression> NewType()
             {
-                var typeInfo = Type();
-                if (!typeInfo.Item2) // type is not an array (did not match brackets)
+                var type = Match<TypeToken>();
+                if (type is MiniJavaType || !(input_token is LeftParenthesis))
+                { // must be an array
+                    Match<LeftBracket>();
+                    var arraySize = Expression();
+                    Match<RightBracket>();
+                    return new Tuple<TypeToken, Expression>(type, arraySize);
+                }
+                else
                 {
-                    if (typeInfo.Item1 is MiniJavaType)
-                        throw new SyntaxError("Cannot create an instance of " +
-                            ((MiniJavaType)typeInfo.Item1).Value + " with a 'new' statement.");
                     Match<LeftParenthesis>();
                     Match<RightParenthesis>();
+                    return new Tuple<TypeToken, Expression>(type, null);
                 }
-                return typeInfo;
             }
 
             private ClassDeclaration ClassDeclaration()

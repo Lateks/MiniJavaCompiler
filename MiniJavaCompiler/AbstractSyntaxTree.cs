@@ -322,11 +322,17 @@ namespace MiniJavaCompiler
                 get;
                 private set;
             }
+            public Expression ArraySize
+            {
+                get;
+                private set;
+            }
 
-            public InstanceCreation(string type, int row, int col)
+            public InstanceCreation(string type, int row, int col, Expression arraySize = null)
                 : base(row, col)
             {
                 Type = type;
+                ArraySize = arraySize; 
             }
         }
 
