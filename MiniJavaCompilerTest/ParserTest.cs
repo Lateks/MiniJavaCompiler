@@ -77,13 +77,19 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new LeftParenthesis(0, 0));
             programTokens.Enqueue(new RightParenthesis(0, 0));
             programTokens.Enqueue(new LeftCurlyBrace(0, 0));
+
+            // Declare a variable.
             programTokens.Enqueue(new MiniJavaType("int", 0, 0));
             programTokens.Enqueue(new Identifier("foo", 0, 0));
             programTokens.Enqueue(new EndLine(0, 0));
+
+            // Assign value to variable.
             programTokens.Enqueue(new Identifier("foo", 0, 0));
             programTokens.Enqueue(new AssignmentToken(0, 0));
             programTokens.Enqueue(new IntegerLiteralToken("42", 0, 0));
             programTokens.Enqueue(new EndLine(0, 0));
+
+            // Print variable value.
             programTokens.Enqueue(new KeywordToken("System", 0, 0));
             programTokens.Enqueue(new MethodInvocationToken(0, 0));
             programTokens.Enqueue(new KeywordToken("out", 0, 0));
@@ -93,6 +99,7 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new Identifier("foo", 0, 0));
             programTokens.Enqueue(new RightParenthesis(0, 0));
             programTokens.Enqueue(new EndLine(0, 0));
+
             programTokens.Enqueue(new RightCurlyBrace(0, 0));
             programTokens.Enqueue(new RightCurlyBrace(0, 0));
             programTokens.Enqueue(new EOF(0, 0));
@@ -115,6 +122,61 @@ namespace MiniJavaCompilerTest
             Assert.That(((IntegerLiteral)assignment.RHS).Value, Is.EqualTo("42"));
             Assert.That(mainMethod[2], Is.InstanceOf<PrintStatement>());
             Assert.That(((PrintStatement)mainMethod[2]).Expression, Is.InstanceOf<VariableReference>());
+        }
+
+        [Test]
+        public void CreatingABaseTypeArray()
+        {
+            programTokens.Enqueue(new KeywordToken("class", 0, 0));
+            programTokens.Enqueue(new Identifier("ThisIsTheMainClass", 0, 0));
+            programTokens.Enqueue(new LeftCurlyBrace(0, 0));
+            programTokens.Enqueue(new KeywordToken("public", 0, 0));
+            programTokens.Enqueue(new KeywordToken("static", 0, 0));
+            programTokens.Enqueue(new MiniJavaType("void", 0, 0));
+            programTokens.Enqueue(new KeywordToken("main", 0, 0));
+            programTokens.Enqueue(new LeftParenthesis(0, 0));
+            programTokens.Enqueue(new RightParenthesis(0, 0));
+            programTokens.Enqueue(new LeftCurlyBrace(0, 0));
+
+            // Declare an array variable.
+            programTokens.Enqueue(new MiniJavaType("int", 0, 0));
+            programTokens.Enqueue(new LeftBracket(0, 0));
+            programTokens.Enqueue(new RightBracket(0, 0));
+            programTokens.Enqueue(new Identifier("foo", 0, 0));
+            programTokens.Enqueue(new EndLine(0, 0));
+
+            // Create an array and assign it to the variable.
+            programTokens.Enqueue(new Identifier("foo", 0, 0));
+            programTokens.Enqueue(new AssignmentToken(0, 0));
+            programTokens.Enqueue(new KeywordToken("new", 0, 0));
+            programTokens.Enqueue(new MiniJavaType("int", 0, 0));
+            programTokens.Enqueue(new LeftBracket(0, 0));
+            programTokens.Enqueue(new IntegerLiteralToken("10", 0, 0));
+            programTokens.Enqueue(new RightBracket(0, 0));
+            programTokens.Enqueue(new EndLine(0, 0));
+
+            programTokens.Enqueue(new RightCurlyBrace(0, 0));
+            programTokens.Enqueue(new RightCurlyBrace(0, 0));
+            programTokens.Enqueue(new EOF(0, 0));
+
+            var scanner = new StubScanner(programTokens);
+            var programTree = new Parser(scanner).Parse();
+            Assert.That(programTree.Classes.Count, Is.EqualTo(0));
+            var mainMethod = programTree.MainClass.MainMethod;
+            Assert.That(mainMethod.Count, Is.EqualTo(2));
+            Assert.That(mainMethod[0], Is.InstanceOf<VariableDeclaration>());
+            var decl = (VariableDeclaration)mainMethod[0];
+            Assert.That(decl.Name, Is.EqualTo("foo"));
+            Assert.That(decl.Type, Is.EqualTo("int"));
+            Assert.That(decl.IsArray, Is.EqualTo(true));
+            Assert.That(mainMethod[1], Is.InstanceOf<AssignmentStatement>());
+            var assignment = (AssignmentStatement)mainMethod[1];
+            Assert.That(assignment.LHS, Is.InstanceOf<VariableReference>());
+            Assert.That(assignment.RHS, Is.InstanceOf<InstanceCreation>());
+            var newinstance = (InstanceCreation)assignment.RHS;
+            Assert.That(newinstance.Type, Is.EqualTo("int"));
+            Assert.That(newinstance.ArraySize, Is.InstanceOf<IntegerLiteral>());
+            Assert.That(((IntegerLiteral)newinstance.ArraySize).Value, Is.EqualTo("10"));
         }
     }
 }
