@@ -27,6 +27,12 @@ namespace MiniJavaCompiler
                     public EndlessCommentError(string message, int row, int col)
                         : base(message) { }
                 }
+
+                public class SyntaxError : Exception
+                {
+                    public SyntaxError(string message)
+                        : base(message) { }
+                }
             }
         }
     }

@@ -5,6 +5,7 @@ using System.Text;
 using MiniJavaCompiler.LexicalAnalysis;
 using MiniJavaCompiler.Support.TokenTypes;
 using MiniJavaCompiler.AbstractSyntaxTree;
+using MiniJavaCompiler.Support.Errors.Compilation;
 
 namespace MiniJavaCompiler
 {
@@ -31,6 +32,7 @@ namespace MiniJavaCompiler
             {
                 var main = MainClass();
                 var declarations = ClassDeclarationList();
+                Match<EOF>();
                 return new Program(main, declarations);
             }
 
@@ -97,7 +99,7 @@ namespace MiniJavaCompiler
                             Match<EndLine>();
                             return new ReturnStatement(expression, token.Row, token.Col);
                         default: // error
-                            throw new NotImplementedException();
+                            throw new SyntaxError("Invalid keyword " + token.Value + " starting a statement.");
                     }
                 }
                 else if (input_token is LeftCurlyBrace)
@@ -111,6 +113,7 @@ namespace MiniJavaCompiler
                 { // has to be an assignment or a method invocation
                     var startToken = input_token;
                     var expression = Expression();
+
                     if (input_token is AssignmentToken)
                     {
                         Match<AssignmentToken>();
@@ -119,13 +122,14 @@ namespace MiniJavaCompiler
                         return new AssignmentStatement(expression, rhs,
                             startToken.Row, startToken.Col);
                     }
-                    else
+                    else // should be a method invocation
                     {
                         Match<EndLine>();
                         if (expression is MethodInvocation)
                             return (MethodInvocation)expression;
                         else // error
-                            throw new NotImplementedException();
+                            throw new SyntaxError("Invalid token of type " +
+                                input_token.GetType() + " in statement.");
                     }
                 }
             }
@@ -168,7 +172,8 @@ namespace MiniJavaCompiler
                             return OptionalExpressionTail(new BooleanLiteral(false,
                                 token.Row, token.Col));
                         default: // error, invalid start token for expression
-                            throw new NotImplementedException();
+                            throw new SyntaxError("Invalid start token " + token.Value +
+                                " for expression.");
                     }
                 }
                 else if (input_token is Identifier)
@@ -196,7 +201,8 @@ namespace MiniJavaCompiler
                     Expression parenthesisedExpression = Expression();
                     return OptionalExpressionTail(parenthesisedExpression);
                 }
-                throw new NotImplementedException();
+                throw new SyntaxError("Invalid start token of type " + input_token.GetType() +
+                    " for expression.");
             }
 
             private Expression OptionalExpressionTail(Expression lhs)
@@ -248,8 +254,8 @@ namespace MiniJavaCompiler
                 if (!typeInfo.Item2) // type is not an array (did not match brackets)
                 {
                     if (typeInfo.Item1 is MiniJavaType)
-                        throw new NotImplementedException();
-                        // error, should not be in a "new" statement
+                        throw new SyntaxError("Cannot create an instance of " +
+                            ((MiniJavaType)typeInfo.Item1).Value + " with a 'new' statement.");
                     Match<LeftParenthesis>();
                     Match<RightParenthesis>();
                 }
@@ -291,7 +297,8 @@ namespace MiniJavaCompiler
                     return MethodDeclaration();
                 }
                 else
-                    throw new NotImplementedException();
+                    throw new SyntaxError("Invalid token of type " + input_token.GetType() +
+                        " starting a declaration.");
             }
 
             private VariableDeclaration VariableDeclaration()
@@ -348,20 +355,18 @@ namespace MiniJavaCompiler
                     }
                     else
                     {
-                        // return an error node or throw an exception?
-                        throw new NotImplementedException();
+                        throw new SyntaxError("Expected value \"" + value + "\" but got " +
+                            ((StringToken)input_token).Value + ".");
                     }
                 }
                 else if (input_token is ErrorToken)
                 {
-                    // return an error node or throw an exception?
-                    // some recovery needs to be done at this point
-                    throw new NotImplementedException();
+                    throw new SyntaxError("Received an error token. Wat?");
                 }
                 else
                 {
-                    // return an error node or throw an exception?
-                    throw new NotImplementedException();
+                    throw new SyntaxError("Expected type " + typeof(T) +
+                        " but got " + input_token.GetType() + ".");
                 }
             }
 
