@@ -19,7 +19,7 @@ namespace LexerTest
         [Theory]
         public void Keywords(string keyword)
         {
-            var lexer = new Scanner(new StringReader(keyword));
+            var lexer = new MiniJavaScanner(new StringReader(keyword));
             Token next = lexer.NextToken();
             Assert.That(next, Is.InstanceOf<KeywordToken>());
             Assert.That(((KeywordToken)next).Value, Is.EqualTo(keyword));
@@ -35,7 +35,7 @@ namespace LexerTest
         [Theory]
         public void ArithmeticOperators(string binop)
         {
-            var lexer = new Scanner(new StringReader(binop));
+            var lexer = new MiniJavaScanner(new StringReader(binop));
             Token token = lexer.NextToken();
             Assert.That(token, Is.InstanceOf<ArithmeticOperatorToken>());
             Assert.That(((ArithmeticOperatorToken)token).Value, Is.EqualTo(binop));
@@ -51,7 +51,7 @@ namespace LexerTest
         [Theory]
         public void LogicalOperators(string binop)
         {
-            var lexer = new Scanner(new StringReader(binop));
+            var lexer = new MiniJavaScanner(new StringReader(binop));
             Token token = lexer.NextToken();
             Assert.That(token, Is.InstanceOf<LogicalOperatorToken>());
             Assert.That(((LogicalOperatorToken)token).Value, Is.EqualTo(binop));
@@ -60,7 +60,7 @@ namespace LexerTest
         [Test]
         public void UnaryNot()
         {
-            var lexer = new Scanner(new StringReader("!"));
+            var lexer = new MiniJavaScanner(new StringReader("!"));
             Assert.That(lexer.NextToken(), Is.InstanceOf<UnaryNotToken>());
         }
     }
@@ -74,14 +74,14 @@ namespace LexerTest
         [Theory]
         public void SimpleTypes(string type)
         {
-            var lexer = new Scanner(new StringReader(type));
+            var lexer = new MiniJavaScanner(new StringReader(type));
             Assert.That(lexer.NextToken(), Is.InstanceOf<MiniJavaType>());
         }
 
         [Theory]
         public void ArrayType(string type)
         {
-            var lexer = new Scanner(new StringReader(type + "[]"));
+            var lexer = new MiniJavaScanner(new StringReader(type + "[]"));
             Assert.That(lexer.NextToken(), Is.InstanceOf<MiniJavaType>());
             Assert.That(lexer.NextToken(), Is.InstanceOf<LeftBracket>());
             Assert.That(lexer.NextToken(), Is.InstanceOf<RightBracket>());
@@ -94,14 +94,14 @@ namespace LexerTest
         [Test]
         public void ParameterSeparator()
         {
-            var lexer = new Scanner(new StringReader(","));
+            var lexer = new MiniJavaScanner(new StringReader(","));
             Assert.That(lexer.NextToken(), Is.InstanceOf<ParameterSeparator>());
         }
 
         [Test]
         public void CurlyBraces()
         {
-            var lexer = new Scanner(new StringReader("{}"));
+            var lexer = new MiniJavaScanner(new StringReader("{}"));
             Assert.That(lexer.NextToken(), Is.InstanceOf<LeftCurlyBrace>());
             Assert.That(lexer.NextToken(), Is.InstanceOf<RightCurlyBrace>());
         }
@@ -109,7 +109,7 @@ namespace LexerTest
         [Test]
         public void MethodInvocation()
         {
-            var lexer = new Scanner(new StringReader("foo.bar()"));
+            var lexer = new MiniJavaScanner(new StringReader("foo.bar()"));
             Assert.That(lexer.NextToken(), Is.InstanceOf<Identifier>());
             Assert.That(lexer.NextToken(), Is.InstanceOf<MethodInvocationToken>());
             Assert.That(lexer.NextToken(), Is.InstanceOf<Identifier>());
@@ -121,9 +121,9 @@ namespace LexerTest
         [Test]
         public void IntegerConstants()
         {
-            var lexer = new Scanner(new StringReader("123"));
+            var lexer = new MiniJavaScanner(new StringReader("123"));
             Assert.That(((IntegerLiteralToken)lexer.NextToken()).Value, Is.EqualTo("123"));
-            lexer = new Scanner(new StringReader("1 23"));
+            lexer = new MiniJavaScanner(new StringReader("1 23"));
             var token = (IntegerLiteralToken)lexer.NextToken();
             Assert.That(token.Value, Is.EqualTo("1"));
             Assert.That(token.Row, Is.EqualTo(1));
@@ -134,9 +134,9 @@ namespace LexerTest
         [Test]
         public void TestEOF()
         {
-            var lexer = new Scanner(new StringReader(""));
+            var lexer = new MiniJavaScanner(new StringReader(""));
             Assert.That(lexer.NextToken(), Is.InstanceOf<EOF>());
-            lexer = new Scanner(new StringReader("123"));
+            lexer = new MiniJavaScanner(new StringReader("123"));
             lexer.NextToken();
             Assert.That(lexer.NextToken(), Is.InstanceOf<EOF>());
         }
@@ -144,75 +144,75 @@ namespace LexerTest
         [Test]
         public void Identifiers()
         {
-            var lexer = new Scanner(new StringReader("42foo"));
+            var lexer = new MiniJavaScanner(new StringReader("42foo"));
             Assert.That(((IntegerLiteralToken)lexer.NextToken()).Value, Is.EqualTo("42"));
             Token next = lexer.NextToken();
             Assert.That(next, Is.InstanceOf<Identifier>());
             Assert.That(((Identifier)next).Value, Is.EqualTo("foo"));
-            lexer = new Scanner(new StringReader("f_o12a"));
+            lexer = new MiniJavaScanner(new StringReader("f_o12a"));
             Assert.That(((Identifier)lexer.NextToken()).Value, Is.EqualTo("f_o12a"));
         }
 
         [Test]
         public void WhiteSpaceIsSkipped()
         {
-            var lexer = new Scanner(new StringReader("\n\t\v\n  foo"));
+            var lexer = new MiniJavaScanner(new StringReader("\n\t\v\n  foo"));
             Assert.That(((Identifier)lexer.NextToken()).Value, Is.EqualTo("foo"));
         }
 
         [Test]
         public void CommentsAreSkipped()
         {
-            var lexer = new Scanner(new StringReader("// ... \n // ... \n foo"));
+            var lexer = new MiniJavaScanner(new StringReader("// ... \n // ... \n foo"));
             var token = (Identifier)lexer.NextToken();
             Assert.That(token.Value, Is.EqualTo("foo"));
             Assert.That(token.Row, Is.EqualTo(3));
             Assert.That(token.Col, Is.EqualTo(2));
-            lexer = new Scanner(new StringReader("/* ... \n\n*/ \tfoo"));
+            lexer = new MiniJavaScanner(new StringReader("/* ... \n\n*/ \tfoo"));
             token = (Identifier)lexer.NextToken();
             Assert.That(token.Value, Is.EqualTo("foo"));
             Assert.That(token.Row, Is.EqualTo(3));
             Assert.That(token.Col, Is.EqualTo(5));
-            lexer = new Scanner(new StringReader("\n\n// ...//\n// ... \n\n/* ... */ foo"));
+            lexer = new MiniJavaScanner(new StringReader("\n\n// ...//\n// ... \n\n/* ... */ foo"));
             Assert.That(((Identifier)lexer.NextToken()).Value, Is.EqualTo("foo"));
         }
 
         [Test]
         public void CombinedWhiteSpaceAndComments()
         {
-            var lexer = new Scanner(new StringReader("\n\t\t// ... \n // ... \n     foo"));
+            var lexer = new MiniJavaScanner(new StringReader("\n\t\t// ... \n // ... \n     foo"));
             Assert.That(((Identifier)lexer.NextToken()).Value, Is.EqualTo("foo"));
         }
 
         [Test]
         public void InputConsistingOfWhitespaceOnly()
         {
-            var lexer = new Scanner(new StringReader("\n   "));
+            var lexer = new MiniJavaScanner(new StringReader("\n   "));
             Assert.That(lexer.NextToken(), Is.InstanceOf<EOF>());
         }
 
         [Test]
         public void DivisionSymbolIsNotConfusedWithAComment()
         {
-            var lexer = new Scanner(new StringReader("/"));
+            var lexer = new MiniJavaScanner(new StringReader("/"));
             Assert.That(lexer.NextToken(), Is.InstanceOf<BinaryOperatorToken>());
-            lexer = new Scanner(new StringReader("// .. / ..\n /"));
+            lexer = new MiniJavaScanner(new StringReader("// .. / ..\n /"));
             Assert.That(((BinaryOperatorToken)lexer.NextToken()).Value, Is.EqualTo("/"));
         }
 
         [Test]
         public void AssignmentToken()
         {
-            var lexer = new Scanner(new StringReader("="));
+            var lexer = new MiniJavaScanner(new StringReader("="));
             Assert.That(lexer.NextToken(), Is.InstanceOf<AssignmentToken>());
         }
 
         [Test]
         public void ShouldBeInvalid()
         {
-            var scanner = new Scanner(new StringReader("$"));
+            var scanner = new MiniJavaScanner(new StringReader("$"));
             Assert.That(scanner.NextToken(), Is.InstanceOf<ErrorToken>());
-            scanner = new Scanner(new StringReader("&|"));
+            scanner = new MiniJavaScanner(new StringReader("&|"));
             Assert.That(scanner.NextToken(), Is.InstanceOf<ErrorToken>());
             Assert.That(scanner.NextToken(), Is.InstanceOf<ErrorToken>());
         }
@@ -220,9 +220,9 @@ namespace LexerTest
         [Test]
         public void EndlessComment()
         {
-            var scanner = new Scanner(new StringReader("/* ... "));
+            var scanner = new MiniJavaScanner(new StringReader("/* ... "));
             Assert.That(scanner.NextToken(), Is.InstanceOf<ErrorToken>());
-            scanner = new Scanner(new StringReader("/* ... /"));
+            scanner = new MiniJavaScanner(new StringReader("/* ... /"));
             Assert.That(scanner.NextToken(), Is.InstanceOf<ErrorToken>());
         }
     }

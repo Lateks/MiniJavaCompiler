@@ -11,7 +11,12 @@ namespace MiniJavaCompiler
 {
     namespace LexicalAnalysis
     {
-        public class Scanner
+        public interface Scanner
+        {
+            Token NextToken();
+        }
+
+        public class MiniJavaScanner : Scanner
         {
             public static HashSet<char>
                 symbols = new HashSet<char>(new char[] { ';', '(', ')', '[', ']', '.', '{', '}', ',' }),
@@ -29,7 +34,7 @@ namespace MiniJavaCompiler
             private int startRow;
             private int startCol;
 
-            public Scanner(TextReader input)
+            public MiniJavaScanner(TextReader input)
             {
                 this.input = new ScannerInputReader(input);
                 tokens = new Queue<Token>();

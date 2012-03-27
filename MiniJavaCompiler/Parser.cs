@@ -62,7 +62,7 @@ namespace MiniJavaCompiler
                     {
                         case "assert":
                             Match<KeywordToken>("assert");
-                            Match<LeftParenthesis>(); // btw, Java asserts apparently do not use parentheses
+                            Match<LeftParenthesis>();
                             Expression expr = Expression();
                             Match<RightParenthesis>();
                             Match<EndLine>(); // not in the CFG, probably a bug?
