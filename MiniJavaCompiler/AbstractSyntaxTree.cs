@@ -74,7 +74,12 @@ namespace MiniJavaCompiler
 
             public ClassDeclaration(string name, string inherited,
                 List<Declaration> declarations, int row, int col)
-                : base(row, col) { }
+                : base(row, col)
+            {
+                Name = name;
+                InheritedClass = inherited;
+                Declarations = declarations;
+            }
         }
 
         public class MainClassDeclaration : SyntaxElement

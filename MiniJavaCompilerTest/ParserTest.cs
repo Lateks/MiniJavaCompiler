@@ -43,11 +43,11 @@ namespace MiniJavaCompilerTest
         public void SimpleMainClassWithEmptyMainMethod()
         {
             DeclareMainClassUntilMainMethod("ThisIsTheMainClass");
-            CloseMainMethodAndClass();
+            ClosingCurlyBrace(); ClosingCurlyBrace();
+            EndFile();
 
-            var scanner = new StubScanner(programTokens);
-            var parser = new Parser(scanner);
-            Program programTree = parser.Parse();
+            Program programTree = GetProgramTree();
+
             Assert.That(programTree.Classes.Count, Is.EqualTo(0));
             Assert.That(programTree.MainClass.Name, Is.EqualTo("ThisIsTheMainClass"));
             Assert.That(programTree.MainClass.MainMethod.Count, Is.EqualTo(0));
@@ -60,19 +60,24 @@ namespace MiniJavaCompilerTest
             DeclareBasicVariable("foo", "int");
             AssignIntegerToVariable("foo", "42");
             PrintVariableValue("foo");
-            CloseMainMethodAndClass();
+            ClosingCurlyBrace(); ClosingCurlyBrace();
+            EndFile();
 
-            var scanner = new StubScanner(programTokens);
-            var programTree = new Parser(scanner).Parse();
+            var programTree = GetProgramTree();
+
             Assert.That(programTree.Classes.Count, Is.EqualTo(0));
             Assert.That(programTree.MainClass.Name, Is.EqualTo("ThisIsTheMainClass"));
             Assert.That(programTree.MainClass.MainMethod.Count, Is.EqualTo(3));
+
             var mainMethod = programTree.MainClass.MainMethod;
             Assert.That(mainMethod[0], Is.InstanceOf<VariableDeclaration>());
+
             var fooDecl = (VariableDeclaration)mainMethod[0];
             Assert.That(fooDecl.Name, Is.EqualTo("foo"));
             Assert.That(fooDecl.IsArray, Is.EqualTo(false));
+
             Assert.That(mainMethod[1], Is.InstanceOf<AssignmentStatement>());
+
             var assignment = (AssignmentStatement)mainMethod[1];
             Assert.That(assignment.LHS, Is.InstanceOf<VariableReference>());
             Assert.That(((VariableReference)assignment.LHS).Name, Is.EqualTo("foo"));
@@ -88,33 +93,130 @@ namespace MiniJavaCompilerTest
             DeclareMainClassUntilMainMethod("ThisIsTheMainClass");
             DeclareBasicArrayVariable("foo", "int");
             AssignNewArrayToVariable("foo", "int", "10");
-            CloseMainMethodAndClass();
+            ClosingCurlyBrace(); ClosingCurlyBrace();
+            EndFile();
 
-            var scanner = new StubScanner(programTokens);
-            var programTree = new Parser(scanner).Parse();
+            var programTree = GetProgramTree();
 
             Assert.That(programTree.Classes.Count, Is.EqualTo(0));
+
             var mainMethod = programTree.MainClass.MainMethod;
             Assert.That(mainMethod.Count, Is.EqualTo(2));
             Assert.That(mainMethod[0], Is.InstanceOf<VariableDeclaration>());
+
             var decl = (VariableDeclaration)mainMethod[0];
             Assert.That(decl.Name, Is.EqualTo("foo"));
             Assert.That(decl.Type, Is.EqualTo("int"));
-            Assert.That(decl.IsArray, Is.EqualTo(true));
+            Assert.True(decl.IsArray);
             Assert.That(mainMethod[1], Is.InstanceOf<AssignmentStatement>());
+
             var assignment = (AssignmentStatement)mainMethod[1];
             Assert.That(assignment.LHS, Is.InstanceOf<VariableReference>());
             Assert.That(assignment.RHS, Is.InstanceOf<InstanceCreation>());
+
             var newinstance = (InstanceCreation)assignment.RHS;
             Assert.That(newinstance.Type, Is.EqualTo("int"));
             Assert.That(newinstance.ArraySize, Is.InstanceOf<IntegerLiteral>());
             Assert.That(((IntegerLiteral)newinstance.ArraySize).Value, Is.EqualTo("10"));
         }
 
-        private void CloseMainMethodAndClass()
+        [Test]
+        public void MainMethodWithFormalParametersCausesSyntaxError()
+        {
+        }
+
+        [Test]
+        public void MethodWithFormalParameters()
+        {
+            // empty main method and class
+            DeclareMainClassUntilMainMethod("MainClass");
+            ClosingCurlyBrace(); ClosingCurlyBrace();
+
+            BeginClassDeclaration("anotherClass");
+            BeginMethodDeclaration("someMethod", "int");
+            DefineBasicParameter("foo", "int");
+            programTokens.Enqueue(new ParameterSeparator(0, 0));
+            DefineOwnTypeParameter("bar", "myOwnType");
+            programTokens.Enqueue(new RightParenthesis(0, 0));
+            programTokens.Enqueue(new LeftCurlyBrace(0, 0));
+            ClosingCurlyBrace(); ClosingCurlyBrace();
+            EndFile();
+
+            var programTree = GetProgramTree();
+
+            Assert.That(programTree.Classes.Count, Is.EqualTo(1));
+            var testClass = (ClassDeclaration)programTree.Classes[0];
+            Assert.IsNull(testClass.InheritedClass);
+            Assert.NotNull(testClass.Declarations);
+            Assert.That(testClass.Declarations.Count, Is.EqualTo(1));
+            var methodDeclaration = (MethodDeclaration)testClass.Declarations[0];
+            Assert.That(methodDeclaration.Formals.Count, Is.EqualTo(2));
+            
+            var formal1 = methodDeclaration.Formals[0];
+            Assert.That(formal1.Name, Is.EqualTo("foo"));
+            Assert.That(formal1.Type, Is.EqualTo("int"));
+            Assert.False(formal1.IsArray);
+
+            var formal2 = methodDeclaration.Formals[1];
+            Assert.That(formal2.Name, Is.EqualTo("bar"));
+            Assert.That(formal2.Type, Is.EqualTo("myOwnType"));
+            Assert.False(formal2.IsArray);
+        }
+
+        private void DefineOwnTypeParameter(string name, string type)
+        {
+            programTokens.Enqueue(new Identifier(type, 0, 0));
+            programTokens.Enqueue(new Identifier(name, 0, 0));
+        }
+
+        private void DefineBasicParameter(string name, string type)
+        {
+            programTokens.Enqueue(new MiniJavaType(type, 0, 0));
+            programTokens.Enqueue(new Identifier(name, 0, 0));
+        }
+
+        private void BeginMethodDeclaration(string methodName, string type)
+        {
+            programTokens.Enqueue(new KeywordToken("public", 0, 0));
+            programTokens.Enqueue(new MiniJavaType(type, 0, 0));
+            programTokens.Enqueue(new Identifier(methodName, 0, 0));
+            programTokens.Enqueue(new LeftParenthesis(0, 0));
+        }
+
+        private void BeginClassDeclaration(string className)
+        {
+            programTokens.Enqueue(new KeywordToken("class", 0, 0));
+            programTokens.Enqueue(new Identifier(className, 0, 0));
+            programTokens.Enqueue(new LeftCurlyBrace(0, 0));
+        }
+
+        private Program GetProgramTree()
+        {
+            return new Parser(new StubScanner(programTokens)).Parse();
+        }
+
+        [Test]
+        public void MethodWithoutParameters()
+        {
+        }
+
+        [Test]
+        public void MethodInvocationWithParameters()
+        {
+        }
+
+        [Test]
+        public void MethodInvocationWithoutParameters()
+        {
+        }
+
+        private void ClosingCurlyBrace()
         {
             programTokens.Enqueue(new RightCurlyBrace(0, 0));
-            programTokens.Enqueue(new RightCurlyBrace(0, 0));
+        }
+
+        private void EndFile()
+        {
             programTokens.Enqueue(new EOF(0, 0));
         }
 
