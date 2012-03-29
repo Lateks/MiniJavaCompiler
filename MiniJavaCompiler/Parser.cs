@@ -175,7 +175,7 @@ namespace MiniJavaCompiler
                             return (MethodInvocation)expression;
                         else
                             throw new SyntaxError("Invalid token of type " +
-                                input_token.GetType() + " in statement.");
+                                input_token.GetType().Name + " in statement.");
                     }
                 }
             }
@@ -247,7 +247,7 @@ namespace MiniJavaCompiler
                     Expression parenthesisedExpression = Expression();
                     return OptionalExpressionTail(parenthesisedExpression);
                 }
-                throw new SyntaxError("Invalid start token of type " + input_token.GetType() +
+                throw new SyntaxError("Invalid start token of type " + input_token.GetType().Name +
                     " for expression.");
             }
 
@@ -349,7 +349,7 @@ namespace MiniJavaCompiler
                     return MethodDeclaration();
                 }
                 else
-                    throw new SyntaxError("Invalid token of type " + input_token.GetType() +
+                    throw new SyntaxError("Invalid token of type " + input_token.GetType().Name +
                         " starting a declaration.");
             }
 
@@ -417,8 +417,8 @@ namespace MiniJavaCompiler
                 }
                 else
                 {
-                    throw new SyntaxError("Expected type " + typeof(T) +
-                        " but got " + input_token.GetType() + ".");
+                    throw new SyntaxError("Expected type " + typeof(T).Name +
+                        " but got " + input_token.GetType().Name + ".");
                 }
             }
 
