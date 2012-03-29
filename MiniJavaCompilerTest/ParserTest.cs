@@ -281,6 +281,33 @@ namespace MiniJavaCompilerTest
             Assert.That(someMethodInvocation.MethodOwner, Is.InstanceOf<VariableReference>());
         }
 
+        [Test]
+        public void IfStatementWithoutElseBranch()
+        {
+            DeclareMainClassUntilMainMethod("MainClass");
+            programTokens.Enqueue(new KeywordToken("if", 0, 0));
+            programTokens.Enqueue(new LeftParenthesis(0, 0));
+            programTokens.Enqueue(new KeywordToken("true", 0, 0));
+            programTokens.Enqueue(new BinaryOperatorToken("&&", 0, 0));
+            programTokens.Enqueue(new KeywordToken("false", 0, 0));
+            programTokens.Enqueue(new RightParenthesis(0, 0));
+            AssignIntegerToVariable("foo", "42");
+            ClosingCurlyBrace(); ClosingCurlyBrace();
+            EndFile();
+
+            var mainMethod = GetProgramTree().MainClass.MainMethod;
+            Assert.That(mainMethod.Count, Is.EqualTo(1));
+            Assert.That(mainMethod[0], Is.InstanceOf<IfStatement>());
+            var ifStatement = (IfStatement)mainMethod[0];
+            Assert.That(ifStatement.Then, Is.InstanceOf<AssignmentStatement>());
+            Assert.That(ifStatement.BooleanExpression, Is.InstanceOf<BinaryOperator>());
+            var boolExpression = (BinaryOperator)ifStatement.BooleanExpression;
+            Assert.That(boolExpression.LHS, Is.InstanceOf<BooleanLiteral>());
+            Assert.IsTrue(((BooleanLiteral)boolExpression.LHS).Value);
+            Assert.That(boolExpression.RHS, Is.InstanceOf<BooleanLiteral>());
+            Assert.IsFalse(((BooleanLiteral)boolExpression.RHS).Value);
+        }
+
         private void InvokeMethod(string methodName)
         {
             programTokens.Enqueue(new MethodInvocationToken(0, 0));
