@@ -174,7 +174,7 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new ParameterSeparator(0, 0));
             programTokens.Enqueue(new Identifier("parameterVariable", 0, 0));
             programTokens.Enqueue(new RightParenthesis(0, 0));
-            programTokens.Enqueue(new EndLine(0, 0));
+            EndLine();
             ClosingCurlyBrace(); ClosingCurlyBrace();
             EndFile();
 
@@ -195,9 +195,8 @@ namespace MiniJavaCompilerTest
         {
             DeclareMainClassUntilMainMethod("MainClass");
             MakeMethodInvocationWithoutParentheses("someClass", "someMethod");
-            programTokens.Enqueue(new LeftParenthesis(0, 0));
-            programTokens.Enqueue(new RightParenthesis(0, 0));
-            programTokens.Enqueue(new EndLine(0, 0));
+            EmptyMethodInvocationParentheses();
+            EndLine();
             ClosingCurlyBrace(); ClosingCurlyBrace();
             EndFile();
 
@@ -261,7 +260,7 @@ namespace MiniJavaCompilerTest
             EmptyMethodInvocationParentheses();
             InvokeMethod("length");
             EmptyMethodInvocationParentheses();
-            programTokens.Enqueue(new EndLine(0, 0));
+            EndLine();
             ClosingCurlyBrace(); ClosingCurlyBrace();
             EndFile();
 
@@ -306,6 +305,11 @@ namespace MiniJavaCompilerTest
             Assert.IsTrue(((BooleanLiteral)boolExpression.LHS).Value);
             Assert.That(boolExpression.RHS, Is.InstanceOf<BooleanLiteral>());
             Assert.IsFalse(((BooleanLiteral)boolExpression.RHS).Value);
+        }
+
+        private void EndLine()
+        {
+            programTokens.Enqueue(new EndLine(0, 0));
         }
 
         private void InvokeMethod(string methodName)
@@ -379,7 +383,7 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new LeftParenthesis(0, 0));
             programTokens.Enqueue(new Identifier(variableName, 0, 0));
             programTokens.Enqueue(new RightParenthesis(0, 0));
-            programTokens.Enqueue(new EndLine(0, 0));
+            EndLine();
         }
 
         private void AssignIntegerToVariable(string variableName, string integerValue)
@@ -387,7 +391,7 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new Identifier(variableName, 0, 0));
             programTokens.Enqueue(new AssignmentToken(0, 0));
             programTokens.Enqueue(new IntegerLiteralToken(integerValue, 0, 0));
-            programTokens.Enqueue(new EndLine(0, 0));
+            EndLine();
         }
 
         private void DeclareMainClassUntilMainMethod(string className)
@@ -399,8 +403,7 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new KeywordToken("static", 0, 0));
             programTokens.Enqueue(new MiniJavaType("void", 0, 0));
             programTokens.Enqueue(new KeywordToken("main", 0, 0));
-            programTokens.Enqueue(new LeftParenthesis(0, 0));
-            programTokens.Enqueue(new RightParenthesis(0, 0));
+            EmptyMethodInvocationParentheses();
             programTokens.Enqueue(new LeftCurlyBrace(0, 0));
         }
 
@@ -408,7 +411,7 @@ namespace MiniJavaCompilerTest
         {
             programTokens.Enqueue(new MiniJavaType(type, 0, 0));
             programTokens.Enqueue(new Identifier(name, 0, 0));
-            programTokens.Enqueue(new EndLine(0, 0));
+            EndLine();
         }
 
         private void AssignNewArrayToVariable(string variableName, string arrayType, string arraySize)
@@ -420,7 +423,7 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new LeftBracket(0, 0));
             programTokens.Enqueue(new IntegerLiteralToken(arraySize, 0, 0));
             programTokens.Enqueue(new RightBracket(0, 0));
-            programTokens.Enqueue(new EndLine(0, 0));
+            EndLine();
         }
 
         private void DeclareBasicArrayVariable(string name, string type)
@@ -429,7 +432,7 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new LeftBracket(0, 0));
             programTokens.Enqueue(new RightBracket(0, 0));
             programTokens.Enqueue(new Identifier(name, 0, 0));
-            programTokens.Enqueue(new EndLine(0, 0));
+            EndLine();
         }
     }
 }
