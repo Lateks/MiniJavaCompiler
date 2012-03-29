@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Collections;
 using MiniJavaCompiler.Support.TokenTypes;
-using MiniJavaCompiler.Support.Errors.Compilation;
 using System.IO;
 
 namespace MiniJavaCompiler

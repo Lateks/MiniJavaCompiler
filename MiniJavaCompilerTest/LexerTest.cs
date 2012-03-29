@@ -2,7 +2,6 @@
 using NUnit.Framework;
 using MiniJavaCompiler.LexicalAnalysis;
 using MiniJavaCompiler.Support.TokenTypes;
-using MiniJavaCompiler.Support.Errors.Compilation;
 using System.IO;
 
 namespace LexerTest

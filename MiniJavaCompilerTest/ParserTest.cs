@@ -7,7 +7,6 @@ using MiniJavaCompiler.SyntaxAnalysis;
 using MiniJavaCompiler.AbstractSyntaxTree;
 using MiniJavaCompiler.Support.TokenTypes;
 using MiniJavaCompiler.LexicalAnalysis;
-using MiniJavaCompiler.Support.Errors.Compilation;
 
 namespace MiniJavaCompilerTest
 {

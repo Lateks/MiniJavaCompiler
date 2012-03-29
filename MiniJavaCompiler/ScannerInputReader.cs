@@ -2,13 +2,29 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using MiniJavaCompiler.Support.Errors.Compilation;
 using System.IO;
 
 namespace MiniJavaCompiler
 {
     namespace LexicalAnalysis
     {
+        public class EndlessCommentError : Exception
+        {
+            public int Row
+            {
+                get;
+                private set;
+            }
+            public int Col
+            {
+                get;
+                private set;
+            }
+
+            public EndlessCommentError(string message, int row, int col)
+                : base(message) { }
+        }
+
         // Handles reading input from the given TextReader, skipping comments
         // and whitespace, keeping track of row and column numbers in the
         // source code and buffering input when a look-ahead of more than

@@ -5,12 +5,17 @@ using System.Text;
 using MiniJavaCompiler.LexicalAnalysis;
 using MiniJavaCompiler.Support.TokenTypes;
 using MiniJavaCompiler.AbstractSyntaxTree;
-using MiniJavaCompiler.Support.Errors.Compilation;
 
 namespace MiniJavaCompiler
 {
     namespace SyntaxAnalysis
     {
+        public class SyntaxError : Exception
+        {
+            public SyntaxError(string message)
+                : base(message) { }
+        }
+
         public class Parser
         {
             private Scanner scanner;

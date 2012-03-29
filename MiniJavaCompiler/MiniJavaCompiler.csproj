@@ -44,7 +44,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AbstractSyntaxTree.cs" />
-    <Compile Include="Errors.cs" />
     <Compile Include="Compiler.cs" />
     <Compile Include="Parser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
