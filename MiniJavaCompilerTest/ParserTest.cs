@@ -190,16 +190,27 @@ namespace MiniJavaCompilerTest
             Assert.That(methodInvocation.CallParameters.Count, Is.EqualTo(2));
         }
 
-        private void MakeMethodInvocationWithoutParentheses(string className, string methodName)
-        {
-            programTokens.Enqueue(new Identifier(className, 0, 0));
-            programTokens.Enqueue(new MethodInvocationToken(0, 0));
-            programTokens.Enqueue(new Identifier(methodName, 0, 0));
-        }
-
         [Test]
         public void MethodInvocationWithoutParameters()
         {
+            DeclareMainClassUntilMainMethod("MainClass");
+            MakeMethodInvocationWithoutParentheses("someClass", "someMethod");
+            programTokens.Enqueue(new LeftParenthesis(0, 0));
+            programTokens.Enqueue(new RightParenthesis(0, 0));
+            programTokens.Enqueue(new EndLine(0, 0));
+            ClosingCurlyBrace(); ClosingCurlyBrace();
+            EndFile();
+
+            var programTree = GetProgramTree();
+
+            var mainMethod = programTree.MainClass.MainMethod;
+            Assert.That(mainMethod.Count, Is.EqualTo(1));
+            Assert.That(mainMethod[0], Is.InstanceOf<MethodInvocation>());
+            var methodInvocation = (MethodInvocation)mainMethod[0];
+            Assert.That(methodInvocation.MethodOwner, Is.InstanceOf<VariableReference>());
+            Assert.That(((VariableReference)methodInvocation.MethodOwner).Name, Is.EqualTo("someClass"));
+            Assert.That(methodInvocation.MethodName, Is.EqualTo("someMethod"));
+            Assert.That(methodInvocation.CallParameters.Count, Is.EqualTo(0));
         }
 
         [Test]
@@ -238,6 +249,13 @@ namespace MiniJavaCompilerTest
             Assert.That(formal2.Name, Is.EqualTo("bar"));
             Assert.That(formal2.Type, Is.EqualTo("myOwnType"));
             Assert.False(formal2.IsArray);
+        }
+
+        private void MakeMethodInvocationWithoutParentheses(string className, string methodName)
+        {
+            programTokens.Enqueue(new Identifier(className, 0, 0));
+            programTokens.Enqueue(new MethodInvocationToken(0, 0));
+            programTokens.Enqueue(new Identifier(methodName, 0, 0));
         }
 
         private void DefineOwnTypeParameter(string name, string type)
