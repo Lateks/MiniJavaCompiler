@@ -92,9 +92,9 @@ This section covers the general architecture of the compiler, testing, error han
         |  "false" <opt expr tail>
 <new type>          ::= <simple type> "[" <expr> "]"
                      |  <type identifier> "(" ")"
-<opt expr tail>     ::= <binary operator> <expr>
-                     |  "[" <expr> "]"
-                     |  "." <method invocation>
+<opt expr tail>     ::= <binary operator> <expr> <opt expr tail>
+                     |  "[" <expr> "]" <opt expr tail>
+                     |  "." <method invocation> <opt expr tail>
                      |  epsilon
 <method invocation> ::= "length"
                      |  <identifier> "(" <opt exprs> ")"
