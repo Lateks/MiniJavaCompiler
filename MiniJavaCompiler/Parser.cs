@@ -136,7 +136,7 @@ namespace MiniJavaCompiler
                                     startRow, startCol);
                             }
                             else
-                            {
+                            { // arrayindexing
                                 expression = Expression();
                                 Match<RightBracket>();
                                 expression = OptionalExpressionTail(expression);
@@ -285,7 +285,9 @@ namespace MiniJavaCompiler
                     else
                     {
                         methodname = Match<Identifier>().Value;
+                        Match<LeftParenthesis>();
                         parameters = ExpressionList();
+                        Match<RightParenthesis>();
                     }
                     return new MethodInvocation(lhs, methodname, parameters,
                         startToken.Row, startToken.Col);

@@ -7,6 +7,7 @@ using MiniJavaCompiler.SyntaxAnalysis;
 using MiniJavaCompiler.AbstractSyntaxTree;
 using MiniJavaCompiler.Support.TokenTypes;
 using MiniJavaCompiler.LexicalAnalysis;
+using MiniJavaCompiler.Support.Errors.Compilation;
 
 namespace MiniJavaCompilerTest
 {
@@ -123,6 +124,82 @@ namespace MiniJavaCompilerTest
         [Test]
         public void MainMethodWithFormalParametersCausesSyntaxError()
         {
+            programTokens.Enqueue(new KeywordToken("class", 0, 0));
+            programTokens.Enqueue(new Identifier("MainClass", 0, 0));
+            programTokens.Enqueue(new LeftCurlyBrace(0, 0));
+            programTokens.Enqueue(new KeywordToken("public", 0, 0));
+            programTokens.Enqueue(new KeywordToken("static", 0, 0));
+            programTokens.Enqueue(new MiniJavaType("void", 0, 0));
+            programTokens.Enqueue(new KeywordToken("main", 0, 0));
+            programTokens.Enqueue(new LeftParenthesis(0, 0));
+            programTokens.Enqueue(new MiniJavaType("int", 0, 0));
+            programTokens.Enqueue(new Identifier("foo", 0, 0));
+            programTokens.Enqueue(new RightParenthesis(0, 0));
+            programTokens.Enqueue(new LeftCurlyBrace(0, 0));
+            programTokens.Enqueue(new EOF(0, 0));
+
+            Assert.Throws<SyntaxError>(() => GetProgramTree());
+        }
+
+        [Test]
+        public void MethodWithoutParameters()
+        {
+            DeclareMainClassUntilMainMethod("MainClass");
+            ClosingCurlyBrace(); ClosingCurlyBrace();
+
+            BeginClassDeclaration("someClass");
+            BeginMethodDeclaration("someMethod", "int");
+            programTokens.Enqueue(new RightParenthesis(0, 0));
+            programTokens.Enqueue(new LeftCurlyBrace(0, 0));
+            ClosingCurlyBrace(); ClosingCurlyBrace();
+            EndFile();
+
+            var programTree = GetProgramTree();
+
+            Assert.That(programTree.Classes.Count, Is.EqualTo(1));
+            var testClass = (ClassDeclaration)programTree.Classes[0];
+            Assert.That(testClass.Declarations.Count, Is.EqualTo(1));
+            var declaration = (Declaration)testClass.Declarations[0];
+            Assert.That(declaration, Is.InstanceOf<MethodDeclaration>());
+            Assert.That(((MethodDeclaration)declaration).Formals.Count, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void MethodInvocationWithParameters()
+        {
+            DeclareMainClassUntilMainMethod("MainClass");
+            MakeMethodInvocationWithoutParentheses("someClass", "someMethod");
+            programTokens.Enqueue(new LeftParenthesis(0, 0));
+            programTokens.Enqueue(new IntegerLiteralToken("42", 0, 0));
+            programTokens.Enqueue(new ParameterSeparator(0, 0));
+            programTokens.Enqueue(new Identifier("parameterVariable", 0, 0));
+            programTokens.Enqueue(new RightParenthesis(0, 0));
+            programTokens.Enqueue(new EndLine(0, 0));
+            ClosingCurlyBrace(); ClosingCurlyBrace();
+            EndFile();
+
+            var programTree = GetProgramTree();
+
+            var mainMethod = programTree.MainClass.MainMethod;
+            Assert.That(mainMethod.Count, Is.EqualTo(1));
+            Assert.That(mainMethod[0], Is.InstanceOf<MethodInvocation>());
+            var methodInvocation = (MethodInvocation)mainMethod[0];
+            Assert.That(methodInvocation.MethodOwner, Is.InstanceOf<VariableReference>());
+            Assert.That(((VariableReference)methodInvocation.MethodOwner).Name, Is.EqualTo("someClass"));
+            Assert.That(methodInvocation.MethodName, Is.EqualTo("someMethod"));
+            Assert.That(methodInvocation.CallParameters.Count, Is.EqualTo(2));
+        }
+
+        private void MakeMethodInvocationWithoutParentheses(string className, string methodName)
+        {
+            programTokens.Enqueue(new Identifier(className, 0, 0));
+            programTokens.Enqueue(new MethodInvocationToken(0, 0));
+            programTokens.Enqueue(new Identifier(methodName, 0, 0));
+        }
+
+        [Test]
+        public void MethodInvocationWithoutParameters()
+        {
         }
 
         [Test]
@@ -193,21 +270,6 @@ namespace MiniJavaCompilerTest
         private Program GetProgramTree()
         {
             return new Parser(new StubScanner(programTokens)).Parse();
-        }
-
-        [Test]
-        public void MethodWithoutParameters()
-        {
-        }
-
-        [Test]
-        public void MethodInvocationWithParameters()
-        {
-        }
-
-        [Test]
-        public void MethodInvocationWithoutParameters()
-        {
         }
 
         private void ClosingCurlyBrace()
