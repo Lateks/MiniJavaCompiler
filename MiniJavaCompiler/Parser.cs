@@ -261,16 +261,16 @@ namespace MiniJavaCompiler
                         return new ArithmeticOp(operatorToken.Value,
                             lhs, rhs, operatorToken.Row, operatorToken.Col);
                     else
-                        return new LogicalOp(operatorToken.Value,
-                            lhs, rhs, operatorToken.Row, operatorToken.Col);
+                        return OptionalExpressionTail(new LogicalOp(operatorToken.Value,
+                            lhs, rhs, operatorToken.Row, operatorToken.Col));
                 }
                 else if (input_token is LeftBracket)
                 {
                     var startToken = Match<LeftBracket>();
                     var indexExpression = Expression();
                     Match<RightBracket>();
-                    return new ArrayIndexExpression(lhs, indexExpression, startToken.Row,
-                        startToken.Col); // slightly dubious row and column numbers here
+                    return OptionalExpressionTail(new ArrayIndexExpression(lhs, indexExpression, startToken.Row,
+                        startToken.Col)); // slightly dubious row and column numbers here
                 }
                 else if (input_token is MethodInvocationToken)
                 {
@@ -289,8 +289,8 @@ namespace MiniJavaCompiler
                         parameters = ExpressionList();
                         Match<RightParenthesis>();
                     }
-                    return new MethodInvocation(lhs, methodname, parameters,
-                        startToken.Row, startToken.Col);
+                    return OptionalExpressionTail(new MethodInvocation(lhs, methodname, parameters,
+                        startToken.Row, startToken.Col));
                 }
                 else
                     return lhs;

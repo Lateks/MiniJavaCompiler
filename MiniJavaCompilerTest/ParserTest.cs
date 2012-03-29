@@ -251,6 +251,48 @@ namespace MiniJavaCompilerTest
             Assert.False(formal2.IsArray);
         }
 
+        [Test]
+        public void ChainedMethodInvocation()
+        {
+            DeclareMainClassUntilMainMethod("MainClass");
+            MakeMethodInvocationWithoutParentheses("someObject", "someMethod");
+            EmptyMethodInvocationParentheses();
+            InvokeMethod("anotherMethod");
+            EmptyMethodInvocationParentheses();
+            InvokeMethod("length");
+            EmptyMethodInvocationParentheses();
+            programTokens.Enqueue(new EndLine(0, 0));
+            ClosingCurlyBrace(); ClosingCurlyBrace();
+            EndFile();
+
+            var programTree = GetProgramTree();
+
+            var mainMethod = programTree.MainClass.MainMethod;
+            Assert.That(mainMethod.Count, Is.EqualTo(1));
+            Assert.That(mainMethod[0], Is.InstanceOf<MethodInvocation>());
+            var lengthMethodInvocation = (MethodInvocation)mainMethod[0];
+            Assert.That(lengthMethodInvocation.MethodName, Is.EqualTo("length"));
+            Assert.That(lengthMethodInvocation.MethodOwner, Is.InstanceOf<MethodInvocation>());
+            var anotherMethodInvocation = (MethodInvocation)lengthMethodInvocation.MethodOwner;
+            Assert.That(anotherMethodInvocation.MethodName, Is.EqualTo("anotherMethod"));
+            Assert.That(anotherMethodInvocation.MethodOwner, Is.InstanceOf<MethodInvocation>());
+            var someMethodInvocation = (MethodInvocation)anotherMethodInvocation.MethodOwner;
+            Assert.That(someMethodInvocation.MethodName, Is.EqualTo("someMethod"));
+            Assert.That(someMethodInvocation.MethodOwner, Is.InstanceOf<VariableReference>());
+        }
+
+        private void InvokeMethod(string methodName)
+        {
+            programTokens.Enqueue(new MethodInvocationToken(0, 0));
+            programTokens.Enqueue(new Identifier(methodName, 0, 0));
+        }
+
+        private void EmptyMethodInvocationParentheses()
+        {
+            programTokens.Enqueue(new LeftParenthesis(0, 0));
+            programTokens.Enqueue(new RightParenthesis(0, 0));
+        }
+
         private void MakeMethodInvocationWithoutParentheses(string className, string methodName)
         {
             programTokens.Enqueue(new Identifier(className, 0, 0));
