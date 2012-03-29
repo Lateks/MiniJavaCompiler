@@ -136,7 +136,7 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new Identifier("foo", 0, 0));
             programTokens.Enqueue(new RightParenthesis(0, 0));
             programTokens.Enqueue(new LeftCurlyBrace(0, 0));
-            programTokens.Enqueue(new EOF(0, 0));
+            EndFile();
 
             Assert.Throws<SyntaxError>(() => GetProgramTree());
         }
@@ -299,12 +299,39 @@ namespace MiniJavaCompilerTest
             Assert.That(mainMethod[0], Is.InstanceOf<IfStatement>());
             var ifStatement = (IfStatement)mainMethod[0];
             Assert.That(ifStatement.Then, Is.InstanceOf<AssignmentStatement>());
+            Assert.IsNull(ifStatement.Else);
             Assert.That(ifStatement.BooleanExpression, Is.InstanceOf<BinaryOperator>());
             var boolExpression = (BinaryOperator)ifStatement.BooleanExpression;
             Assert.That(boolExpression.LHS, Is.InstanceOf<BooleanLiteral>());
             Assert.IsTrue(((BooleanLiteral)boolExpression.LHS).Value);
             Assert.That(boolExpression.RHS, Is.InstanceOf<BooleanLiteral>());
             Assert.IsFalse(((BooleanLiteral)boolExpression.RHS).Value);
+        }
+
+        [Test]
+        public void IfStatementWithElseBranch()
+        {
+            DeclareMainClassUntilMainMethod("MainClass");
+            programTokens.Enqueue(new KeywordToken("if", 0, 0));
+            programTokens.Enqueue(new LeftParenthesis(0, 0));
+            programTokens.Enqueue(new KeywordToken("true", 0, 0));
+            programTokens.Enqueue(new RightParenthesis(0, 0));
+            programTokens.Enqueue(new Identifier("foo", 0, 0));
+            programTokens.Enqueue(new MethodInvocationToken(0, 0));
+            programTokens.Enqueue(new Identifier("bar", 0, 0));
+            EmptyMethodInvocationParentheses();
+            EndLine();
+            programTokens.Enqueue(new KeywordToken("else", 0, 0));
+            AssignIntegerToVariable("foo", "42");
+            ClosingCurlyBrace(); ClosingCurlyBrace();
+            EndFile();
+
+            var mainMethod = GetProgramTree().MainClass.MainMethod;
+            Assert.That(mainMethod.Count, Is.EqualTo(1));
+            Assert.That(mainMethod[0], Is.InstanceOf<IfStatement>());
+            var ifStatement = (IfStatement)mainMethod[0];
+            Assert.That(ifStatement.Then, Is.InstanceOf<MethodInvocation>());
+            Assert.That(ifStatement.Else, Is.InstanceOf<AssignmentStatement>());
         }
 
         private void EndLine()
