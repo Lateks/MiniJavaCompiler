@@ -40,6 +40,124 @@ namespace MiniJavaCompilerTest
         }
 
         [Test]
+        public void ValidClassDeclarationWithExtension()
+        {
+            programTokens.Enqueue(new KeywordToken("class", 0, 0));
+            programTokens.Enqueue(new Identifier("ClassName", 0, 0));
+            programTokens.Enqueue(new KeywordToken("extends", 0, 0));
+            programTokens.Enqueue(new Identifier("OtherClass", 0, 0));
+            programTokens.Enqueue(new LeftCurlyBrace(0, 0));
+            programTokens.Enqueue(new RightCurlyBrace(0, 0));
+
+            var parser = new Parser(new StubScanner(programTokens));
+            var classDecl = parser.ClassDeclaration();
+            Assert.That(classDecl.InheritedClass, Is.EqualTo("OtherClass"));
+            Assert.That(classDecl.Name, Is.EqualTo("ClassName"));
+            Assert.NotNull(classDecl.Declarations);
+            Assert.That(classDecl.Declarations.Count, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void ValidClassDeclarationWithInternalDeclarations()
+        {
+            programTokens.Enqueue(new KeywordToken("class", 0, 0));
+            programTokens.Enqueue(new Identifier("ClassName", 0, 0));
+            programTokens.Enqueue(new LeftCurlyBrace(0, 0));
+            programTokens.Enqueue(new MiniJavaType("int", 0, 0));
+            programTokens.Enqueue(new Identifier("foo", 0, 0));
+            programTokens.Enqueue(new EndLine(0, 0));
+            programTokens.Enqueue(new KeywordToken("public", 0, 0));
+            programTokens.Enqueue(new MiniJavaType("void", 0, 0));
+            programTokens.Enqueue(new Identifier("bar", 0, 0));
+            programTokens.Enqueue(new LeftParenthesis(0, 0));
+            programTokens.Enqueue(new RightParenthesis(0, 0));
+            programTokens.Enqueue(new LeftCurlyBrace(0, 0));
+            programTokens.Enqueue(new RightCurlyBrace(0, 0));
+            programTokens.Enqueue(new RightCurlyBrace(0, 0));
+
+            var parser = new Parser(new StubScanner(programTokens));
+            var classDecl = parser.ClassDeclaration();
+            Assert.IsNull(classDecl.InheritedClass);
+            Assert.NotNull(classDecl.Declarations);
+            Assert.That(classDecl.Declarations.Count, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void BasicTypeVariableDeclaration()
+        {
+            programTokens.Enqueue(new MiniJavaType("int", 0, 0));
+            programTokens.Enqueue(new Identifier("foo", 0, 0));
+
+            var parser = new Parser(new StubScanner(programTokens));
+            var variableDecl = parser.VariableDeclaration();
+            Assert.False(variableDecl.IsArray);
+            Assert.That(variableDecl.Name, Is.EqualTo("foo"));
+            Assert.That(variableDecl.Type, Is.EqualTo("int"));
+        }
+
+        [Test]
+        public void UserDefinedTypeVariableDeclaration()
+        {
+            programTokens.Enqueue(new Identifier("SomeType", 0, 0));
+            programTokens.Enqueue(new Identifier("foo", 0, 0));
+
+            var parser = new Parser(new StubScanner(programTokens));
+            var variableDecl = parser.VariableDeclaration();
+            Assert.False(variableDecl.IsArray);
+            Assert.That(variableDecl.Name, Is.EqualTo("foo"));
+            Assert.That(variableDecl.Type, Is.EqualTo("SomeType"));
+        }
+
+        [Test]
+        public void ArrayVariableDeclaration()
+        {
+            programTokens.Enqueue(new MiniJavaType("int", 0, 0));
+            programTokens.Enqueue(new LeftBracket(0, 0));
+            programTokens.Enqueue(new RightBracket(0, 0));
+            programTokens.Enqueue(new Identifier("foo", 0, 0));
+
+            var parser = new Parser(new StubScanner(programTokens));
+            var variableDecl = parser.VariableDeclaration();
+            Assert.True(variableDecl.IsArray);
+            Assert.That(variableDecl.Name, Is.EqualTo("foo"));
+            Assert.That(variableDecl.Type, Is.EqualTo("int"));
+        }
+
+        [Test]
+        public void AssertStatement()
+        {
+            programTokens.Enqueue(new KeywordToken("assert", 0, 0));
+            programTokens.Enqueue(new LeftParenthesis(0, 0));
+            programTokens.Enqueue(new KeywordToken("true", 0, 0));
+            programTokens.Enqueue(new RightParenthesis(0, 0));
+            programTokens.Enqueue(new EndLine(0, 0));
+
+            var parser = new Parser(new StubScanner(programTokens));
+            var statement = parser.Statement();
+            Assert.That(statement, Is.InstanceOf<AssertStatement>());
+            Assert.That(((AssertStatement)statement).Expression, Is.InstanceOf<BooleanLiteral>());
+        }
+
+        [Test]
+        public void PrintStatement()
+        {
+            programTokens.Enqueue(new KeywordToken("System", 0, 0));
+            programTokens.Enqueue(new MethodInvocationToken(0, 0));
+            programTokens.Enqueue(new KeywordToken("out", 0, 0));
+            programTokens.Enqueue(new MethodInvocationToken(0, 0));
+            programTokens.Enqueue(new KeywordToken("println", 0, 0));
+            programTokens.Enqueue(new LeftParenthesis(0, 0));
+            programTokens.Enqueue(new IntegerLiteralToken("5", 0, 0));
+            programTokens.Enqueue(new RightParenthesis(0, 0));
+            programTokens.Enqueue(new EndLine(0, 0));
+
+            var parser = new Parser(new StubScanner(programTokens));
+            var statement = parser.Statement();
+            Assert.That(statement, Is.InstanceOf<PrintStatement>());
+            Assert.That(((PrintStatement)statement).Expression, Is.InstanceOf<IntegerLiteral>());
+        }
+
+        [Test]
         public void SimpleMainClassWithEmptyMainMethod()
         {
             DeclareMainClassUntilMainMethod("ThisIsTheMainClass");

@@ -24,16 +24,15 @@ namespace MiniJavaCompiler
             public Parser(Scanner scanner)
             {
                 this.scanner = scanner;
-                this.input_token = null;
+                this.input_token = scanner.NextToken();
             }
 
             public Program Parse()
             {
-                this.input_token = scanner.NextToken();
                 return Program();
             }
 
-            private Program Program()
+            public Program Program()
             {
                 var main = MainClass();
                 var declarations = ClassDeclarationList();
@@ -41,7 +40,7 @@ namespace MiniJavaCompiler
                 return new Program(main, declarations);
             }
 
-            private MainClassDeclaration MainClass()
+            public MainClassDeclaration MainClass()
             {
                 Token startToken = Match<KeywordToken>("class");
                 Identifier classIdent = Match<Identifier>();
@@ -60,7 +59,7 @@ namespace MiniJavaCompiler
                     main_statements, startToken.Row, startToken.Col);
             }
 
-            private Statement Statement()
+            public Statement Statement()
             {
                 if (input_token is MiniJavaType)      // Local variable declaration for one of the base types.
                 {                                     // Variable declarations for user defined types are handled
@@ -185,7 +184,7 @@ namespace MiniJavaCompiler
                 }
             }
 
-            private Statement OptionalElseBranch()
+            public Statement OptionalElseBranch()
             {
                 if (input_token is KeywordToken &&
                     ((KeywordToken)input_token).Value == "else")
@@ -197,7 +196,7 @@ namespace MiniJavaCompiler
                     return null;
             }
 
-            private Expression Expression()
+            public Expression Expression()
             {
                 if (input_token is KeywordToken)
                 {
@@ -256,7 +255,7 @@ namespace MiniJavaCompiler
                     " for expression.");
             }
 
-            private Expression OptionalExpressionTail(Expression lhs)
+            public Expression OptionalExpressionTail(Expression lhs)
             {
                 if (input_token is BinaryOperatorToken)
                 {
@@ -301,7 +300,7 @@ namespace MiniJavaCompiler
                     return lhs;
             }
 
-            private Tuple<TypeToken, Expression> NewType()
+            public Tuple<TypeToken, Expression> NewType()
             {
                 var type = Match<TypeToken>();
                 if (type is MiniJavaType || !(input_token is LeftParenthesis))
@@ -319,7 +318,7 @@ namespace MiniJavaCompiler
                 }
             }
 
-            private ClassDeclaration ClassDeclaration()
+            public ClassDeclaration ClassDeclaration()
             {
                 Token startToken = Match<KeywordToken>("class");
                 Identifier classIdent = Match<Identifier>();
@@ -331,7 +330,7 @@ namespace MiniJavaCompiler
                     declarations, startToken.Row, startToken.Col);
             }
 
-            private string OptionalInheritance()
+            public string OptionalInheritance()
             {
                 if (!(input_token is LeftCurlyBrace))
                 {
@@ -341,7 +340,7 @@ namespace MiniJavaCompiler
                 return null;
             }
 
-            private Declaration Declaration()
+            public Declaration Declaration()
             {
                 if (input_token is MiniJavaType || input_token is Identifier)
                 {
@@ -358,7 +357,7 @@ namespace MiniJavaCompiler
                         " starting a declaration.");
             }
 
-            private VariableDeclaration VariableDeclaration()
+            public VariableDeclaration VariableDeclaration()
             {
                 var typeInfo = Type();
                 var type = (StringToken)typeInfo.Item1;
@@ -367,7 +366,7 @@ namespace MiniJavaCompiler
                     typeInfo.Item2, type.Row, type.Col);
             }
 
-            private MethodDeclaration MethodDeclaration()
+            public MethodDeclaration MethodDeclaration()
             {
                 Token startToken = Match<KeywordToken>("public");
                 var typeInfo = Type();
@@ -387,7 +386,7 @@ namespace MiniJavaCompiler
             // Returns a 2-tuple with the matched type token as the first element and
             // a bool value indicating whether the type is an array or not as the
             // second element.
-            private Tuple<TypeToken, bool> Type()
+            public Tuple<TypeToken, bool> Type()
             {
                 var type = Match<TypeToken>();
                 if (input_token is LeftBracket)
