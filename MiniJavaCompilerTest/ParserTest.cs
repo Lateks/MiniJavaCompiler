@@ -158,6 +158,40 @@ namespace MiniJavaCompilerTest
         }
 
         [Test]
+        public void WhileStatement()
+        {
+            programTokens.Enqueue(new KeywordToken("while", 0, 0));
+            programTokens.Enqueue(new LeftParenthesis(0, 0));
+            programTokens.Enqueue(new KeywordToken("true", 0, 0));
+            programTokens.Enqueue(new RightParenthesis(0, 0));
+            programTokens.Enqueue(new KeywordToken("assert", 0, 0));
+            programTokens.Enqueue(new LeftParenthesis(0, 0));
+            programTokens.Enqueue(new KeywordToken("false", 0, 0));
+            programTokens.Enqueue(new RightParenthesis(0, 0));
+            programTokens.Enqueue(new EndLine(0, 0));
+
+            var parser = new Parser(new StubScanner(programTokens));
+            var statement = parser.Statement();
+            Assert.That(statement, Is.InstanceOf<WhileStatement>());
+            var whileStatement = (WhileStatement)statement;
+            Assert.That(whileStatement.BooleanExpression, Is.InstanceOf<BooleanLiteral>());
+            Assert.That(whileStatement.LoopBody, Is.InstanceOf<AssertStatement>());
+        }
+
+        [Test]
+        public void ReturnStatement()
+        {
+            programTokens.Enqueue(new KeywordToken("return", 0, 0));
+            programTokens.Enqueue(new Identifier("foo", 0, 0));
+            programTokens.Enqueue(new EndLine(0, 0));
+
+            var parser = new Parser(new StubScanner(programTokens));
+            var statement = parser.Statement();
+            Assert.That(statement, Is.InstanceOf<ReturnStatement>());
+            Assert.That(((ReturnStatement)statement).Expression, Is.InstanceOf<VariableReference>());
+        }
+
+        [Test]
         public void SimpleMainClassWithEmptyMainMethod()
         {
             DeclareMainClassUntilMainMethod("ThisIsTheMainClass");
