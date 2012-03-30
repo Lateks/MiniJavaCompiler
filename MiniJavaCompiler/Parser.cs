@@ -140,10 +140,13 @@ namespace MiniJavaCompiler
                                     startRow, startCol);
                             }
                             else
-                            { // arrayindexing
-                                expression = Expression();
+                            { // array indexing
+                                var variable = new VariableReference(ident1.Value, startRow, startCol);
+                                var indexExpression = Expression();
                                 Match<RightBracket>();
-                                expression = OptionalExpressionTail(expression);
+                                expression = OptionalExpressionTail(
+                                    new ArrayIndexExpression(variable, indexExpression,
+                                    startRow, startCol));
                             }
                         }
                         else if (input_token is Identifier)

@@ -192,6 +192,66 @@ namespace MiniJavaCompilerTest
         }
 
         [Test]
+        public void MethodInvocationStatement()
+        {
+            programTokens.Enqueue(new Identifier("foo", 0, 0));
+            programTokens.Enqueue(new MethodInvocationToken(0, 0));
+            programTokens.Enqueue(new Identifier("bar", 0, 0));
+            programTokens.Enqueue(new LeftParenthesis(0, 0));
+            programTokens.Enqueue(new RightParenthesis(0, 0));
+            programTokens.Enqueue(new EndLine(0, 0));
+
+            var parser = new Parser(new StubScanner(programTokens));
+            var statement = parser.Statement();
+            Assert.That(statement, Is.InstanceOf<MethodInvocation>());
+            var invocation = (MethodInvocation)statement;
+            Assert.That(invocation.MethodName, Is.EqualTo("bar"));
+            Assert.That(invocation.MethodOwner, Is.InstanceOf<VariableReference>());
+            Assert.That(((VariableReference)invocation.MethodOwner).Name, Is.EqualTo("foo"));
+            Assert.NotNull(invocation.CallParameters);
+            Assert.That(invocation.CallParameters.Count, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void VariableDeclarationStatement()
+        {
+            programTokens.Enqueue(new Identifier("foo", 0, 0));
+            programTokens.Enqueue(new LeftBracket(0, 0));
+            programTokens.Enqueue(new RightBracket(0, 0));
+            programTokens.Enqueue(new Identifier("bar", 0, 0));
+            programTokens.Enqueue(new EndLine(0, 0));
+
+            var parser = new Parser(new StubScanner(programTokens));
+            var statement = parser.Statement();
+            Assert.That(statement, Is.InstanceOf<VariableDeclaration>());
+            Assert.True(((VariableDeclaration)statement).IsArray);
+        }
+
+        [Test]
+        public void AssignmentToArrayStatement()
+        {
+            programTokens.Enqueue(new Identifier("foo", 0, 0));
+            programTokens.Enqueue(new LeftBracket(0, 0));
+            programTokens.Enqueue(new IntegerLiteralToken("5", 0, 0));
+            programTokens.Enqueue(new RightBracket(0, 0));
+            programTokens.Enqueue(new AssignmentToken(0, 0));
+            programTokens.Enqueue(new KeywordToken("true", 0, 0));
+            programTokens.Enqueue(new EndLine(0, 0));
+
+            var parser = new Parser(new StubScanner(programTokens));
+            var statement = parser.Statement();
+            Assert.That(statement, Is.InstanceOf<AssignmentStatement>());
+            var assignment = (AssignmentStatement)statement;
+            Assert.That(assignment.RHS, Is.InstanceOf<BooleanLiteral>());
+            Assert.That(assignment.LHS, Is.InstanceOf<ArrayIndexExpression>());
+        }
+
+        [Test]
+        public void TryingToAssignToArrayWithoutAnIndexExpression()
+        {
+        }
+
+        [Test]
         public void SimpleMainClassWithEmptyMainMethod()
         {
             DeclareMainClassUntilMainMethod("ThisIsTheMainClass");
