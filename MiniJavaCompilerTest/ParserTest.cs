@@ -261,6 +261,16 @@ namespace MiniJavaCompilerTest
         }
 
         [Test]
+        public void AnyExpressionDoesNotQualifyAsAStatement()
+        {
+            programTokens.Enqueue(new IntegerLiteralToken("42", 0, 0));
+            programTokens.Enqueue(new EndLine(0, 0));
+
+            var parser = new Parser(new StubScanner(programTokens));
+            Assert.Throws<SyntaxError>(() => parser.Statement());
+        }
+
+        [Test]
         public void SimpleMainClassWithEmptyMainMethod()
         {
             DeclareMainClassUntilMainMethod("ThisIsTheMainClass");

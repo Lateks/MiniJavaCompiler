@@ -181,8 +181,8 @@ namespace MiniJavaCompiler
                         if (expression is MethodInvocation)
                             return (MethodInvocation)expression;
                         else
-                            throw new SyntaxError("Invalid token of type " +
-                                input_token.GetType().Name + " in statement.");
+                            throw new SyntaxError("A " + expression.GetType().Name +
+                                " cannot form a statement on its own.");
                     }
                 }
             }
