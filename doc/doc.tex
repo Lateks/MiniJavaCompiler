@@ -82,19 +82,44 @@ This section covers the general architecture of the compiler, testing, error han
 <opt assignment> ::= "=" <expr> | epsilon
 <local variable declaration> ::= <variable declaration>
 
-<expr> ::= "new" <new type> <opt expr tail>
-        |  "!" <expr> <opt expr tail>
-        |  "(" <expr> ")" <opt expr tail>
-        |  <identifier> <opt expr tail>
-        |  <integer literal> <opt expr tail>
-        |  "this" <opt expr tail>
-        |  "true" <opt expr tail>
-        |  "false" <opt expr tail>
+<expr> ::= <or-operand> <or-operand-list>
+<or-operand> ::= <and-operand> <and-operand-list>
+<and-operand> ::= <eq-operand> <eq-operand-list>
+<eq-operand>  ::= <neq-operand> <neq-operand-list>
+<neq-operand> ::= <add-operand> <add-operand-list>
+<add-operand> ::= <mult-operand> <mult-operand-list>
+<mult-operand> ::= "!" <term>
+                |  <term>
+
+<or-operand-list> ::= "||" <or-operand> <or-operand-list>
+                   |  epsilon
+<and-operand-list> ::= "&&" <and-operand> <and-operand-list>
+                    |  epsilon
+<eq-operand-list> ::= "==" <eq-operand> <eq-operand-list>
+                   |  epsilon
+<neq-operand-list> ::= "<" <neq-operand> <neq-operand-list>
+                    |  ">" <neq-operand> <neq-operand-list>
+                    |  epsilon
+<add-operand-list> ::= "+" <add-operand> <add-operand-list>
+                    |  "-" <add-operand> <add-operand-list>
+                    |  epsilon
+<mult-operand-list> ::= "/" <mult-operand> <mult-operand-list>
+                     |  "*" <mult-operand> <mult-operand-list>
+                     |  "%" <mult-operand> <mult-operand-list>
+                     |  epsilon
+
+<term>    ::= "new" <new type> <opt term tail>
+           |  "(" <expr> ")" <opt term tail>
+           |  <identifier> <opt term tail>
+           |  <integer literal> <opt term tail>
+           |  "this" <opt term tail>
+           |  "true" <opt term tail>
+           |  "false" <opt term tail>
+
 <new type>          ::= <simple type> "[" <expr> "]"
                      |  <type identifier> "(" ")"
-<opt expr tail>     ::= <binary operator> <expr> <opt expr tail>
-                     |  "[" <expr> "]" <opt expr tail>
-                     |  "." <method invocation> <opt expr tail>
+<opt term tail>     ::= "[" <expr> "]" <opt term tail>
+                     |  "." <method invocation> <opt term tail>
                      |  epsilon
 <method invocation> ::= "length"
                      |  <identifier> "(" <opt exprs> ")"
