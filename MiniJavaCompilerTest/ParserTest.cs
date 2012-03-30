@@ -249,6 +249,15 @@ namespace MiniJavaCompilerTest
         [Test]
         public void TryingToAssignToArrayWithoutAnIndexExpression()
         {
+            programTokens.Enqueue(new Identifier("foo", 0, 0));
+            programTokens.Enqueue(new LeftBracket(0, 0));
+            programTokens.Enqueue(new RightBracket(0, 0));
+            programTokens.Enqueue(new AssignmentToken(0, 0));
+            programTokens.Enqueue(new IntegerLiteralToken("42", 0, 0));
+            programTokens.Enqueue(new EndLine(0, 0));
+
+            var parser = new Parser(new StubScanner(programTokens));
+            Assert.Throws<SyntaxError>(() => parser.Statement());
         }
 
         [Test]
