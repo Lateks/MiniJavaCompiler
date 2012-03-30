@@ -271,6 +271,29 @@ namespace MiniJavaCompilerTest
         }
 
         [Test]
+        public void BinaryOperatorExpression()
+        {
+            programTokens.Enqueue(new IntegerLiteralToken("7", 0, 0));
+            programTokens.Enqueue(new ArithmeticOperatorToken("%", 0, 0));
+            programTokens.Enqueue(new Identifier("foo", 0, 0));
+            programTokens.Enqueue(new LogicalOperatorToken("==", 0, 0));
+            programTokens.Enqueue(new IntegerLiteralToken("0", 0, 0));
+
+            var parser = new Parser(new StubScanner(programTokens));
+            var expression = parser.Expression();
+            Assert.That(expression, Is.InstanceOf<LogicalOp>());
+            var logicalOp = (LogicalOp)expression;
+            Assert.That(logicalOp.RHS, Is.InstanceOf<IntegerLiteralToken>());
+            Assert.That(((IntegerLiteralToken)logicalOp.RHS).Value, Is.EqualTo("0"));
+            Assert.That(logicalOp.LHS, Is.InstanceOf<ArithmeticOp>());
+            var arithmetic = (ArithmeticOp)logicalOp.LHS;
+            Assert.That(arithmetic.LHS, Is.InstanceOf<IntegerLiteralToken>());
+            Assert.That(((IntegerLiteralToken)arithmetic.LHS).Value, Is.EqualTo("7"));
+            Assert.That(arithmetic.RHS, Is.InstanceOf<VariableReference>());
+            Assert.That(((VariableReference)arithmetic.RHS).Name, Is.EqualTo("foo"));
+        }
+
+        [Test]
         public void SimpleMainClassWithEmptyMainMethod()
         {
             DeclareMainClassUntilMainMethod("ThisIsTheMainClass");

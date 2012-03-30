@@ -262,14 +262,7 @@ namespace MiniJavaCompiler
             {
                 if (input_token is BinaryOperatorToken)
                 {
-                    var operatorToken = Match<BinaryOperatorToken>();
-                    var rhs = Expression();
-                    if (operatorToken is ArithmeticOperatorToken)
-                        return new ArithmeticOp(operatorToken.Value,
-                            lhs, rhs, operatorToken.Row, operatorToken.Col);
-                    else
-                        return OptionalExpressionTail(new LogicalOp(operatorToken.Value,
-                            lhs, rhs, operatorToken.Row, operatorToken.Col));
+                    return BinaryOperation(lhs);
                 }
                 else if (input_token is LeftBracket)
                 {
@@ -301,6 +294,18 @@ namespace MiniJavaCompiler
                 }
                 else
                     return lhs;
+            }
+
+            private Expression BinaryOperation(Expression lhs)
+            {
+                var operatorToken = Match<BinaryOperatorToken>();
+                Expression rhs = Expression();
+                if (operatorToken is ArithmeticOperatorToken)
+                    return OptionalExpressionTail(new ArithmeticOp(operatorToken.Value,
+                        lhs, rhs, operatorToken.Row, operatorToken.Col));
+                else
+                    return OptionalExpressionTail(new LogicalOp(operatorToken.Value,
+                        lhs, rhs, operatorToken.Row, operatorToken.Col));
             }
 
             public Tuple<TypeToken, Expression> NewType()
