@@ -67,7 +67,7 @@ namespace MiniJavaCompiler
 
             public Statement Statement()
             {
-                if (InputToken is MiniJavaType)      // Local variable declaration for one of the base types.
+                if (InputToken is MiniJavaType) // Local variable declaration for one of the base types.
                 {                                     // Variable declarations for user defined types are handled
                     var decl = VariableDeclaration(); // separately.
                     Match<EndLine>();
@@ -79,42 +79,16 @@ namespace MiniJavaCompiler
                     switch (token.Value)
                     {
                         case "assert":
-                            Match<KeywordToken>("assert");
-                            Match<LeftParenthesis>();
-                            Expression expr = Expression();
-                            Match<RightParenthesis>();
-                            Match<EndLine>(); // not in the CFG, probably a bug?
-                            return new AssertStatement(expr, token.Row, token.Col);
+                            return MakeAssertStatement();
                         case "if":
-                            Match<KeywordToken>("if");
-                            Match<LeftParenthesis>();
-                            Expression booleanExpr = Expression();
-                            Match<RightParenthesis>();
-                            return new IfStatement(booleanExpr, Statement(), OptionalElseBranch(),
-                                token.Row, token.Col);
+                            return MakeIfStatement();
                         case "while":
-                            Match<KeywordToken>("while");
-                            Match<LeftParenthesis>();
-                            booleanExpr = Expression();
-                            Match<RightParenthesis>();
-                            return new WhileStatement(booleanExpr, Statement(), token.Row, token.Col);
+                            return MakeWhileStatement();
                         case "System":
-                            Match<KeywordToken>("System");
-                            Match<MethodInvocationToken>();
-                            Match<KeywordToken>("out");
-                            Match<MethodInvocationToken>();
-                            Match<KeywordToken>("println");
-                            Match<LeftParenthesis>();
-                            var integerExpression = Expression();
-                            Match<RightParenthesis>();
-                            Match<EndLine>();
-                            return new PrintStatement(integerExpression, token.Row, token.Col);
+                            return MakePrintStatement();
                         case "return":
-                            Match<KeywordToken>("return");
-                            var expression = Expression();
-                            Match<EndLine>();
-                            return new ReturnStatement(expression, token.Row, token.Col);
-                        default: // error
+                            return MakeReturnStatement();
+                        default:
                             throw new SyntaxError("Invalid keyword " + token.Value + " starting a statement.");
                     }
                 }
@@ -179,6 +153,63 @@ namespace MiniJavaCompiler
                                 " cannot form a statement on its own.");
                     }
                 }
+            }
+
+            private Statement MakeReturnStatement()
+            {
+                var returnToken = Consume<KeywordToken>();
+                var expression = Expression();
+                Match<EndLine>();
+                return new ReturnStatement(expression,
+                    returnToken.Row, returnToken.Col);
+            }
+
+            private Statement MakePrintStatement()
+            {
+                var systemToken = Consume<KeywordToken>();
+                Match<MethodInvocationToken>();
+                Match<KeywordToken>("out");
+                Match<MethodInvocationToken>();
+                Match<KeywordToken>("println");
+                Match<LeftParenthesis>();
+                var integerExpression = Expression();
+                Match<RightParenthesis>();
+                Match<EndLine>();
+                return new PrintStatement(integerExpression,
+                    systemToken.Row, systemToken.Col);
+            }
+
+            private Statement MakeWhileStatement()
+            {
+                var whileToken = Consume<KeywordToken>();
+                Match<LeftParenthesis>();
+                var booleanExpr = Expression();
+                Match<RightParenthesis>();
+                var whileBody = Statement();
+                return new WhileStatement(booleanExpr, whileBody,
+                    whileToken.Row, whileToken.Col);
+            }
+
+            private Statement MakeIfStatement()
+            {
+                var ifToken = Consume<KeywordToken>();
+                Match<LeftParenthesis>();
+                Expression booleanExpr = Expression();
+                Match<RightParenthesis>();
+                var thenBranch = Statement();
+                var elseBranch = OptionalElseBranch();
+                return new IfStatement(booleanExpr, thenBranch, elseBranch,
+                    ifToken.Row, ifToken.Col);
+            }
+
+            private Statement MakeAssertStatement()
+            {
+                var assertToken = Consume<KeywordToken>();
+                Match<LeftParenthesis>();
+                Expression expr = Expression();
+                Match<RightParenthesis>();
+                Match<EndLine>(); // not in the CFG, probably a bug?
+                return new AssertStatement(expr, assertToken.Row, assertToken.Col);
             }
 
             private void buffer(Token token)
