@@ -122,6 +122,8 @@ namespace MiniJavaCompiler
                 else
                 { // Can be an assignment, a method invocation or a variable declaration for a user defined type.
                   // This is really messy, must be refactored somehow.
+                    throw new NotImplementedException();
+
                     var startRow = input_token.Row;
                     var startCol = input_token.Col;
                     Expression expression;
@@ -144,9 +146,9 @@ namespace MiniJavaCompiler
                                 var variable = new VariableReference(ident1.Value, startRow, startCol);
                                 var indexExpression = Expression();
                                 Match<RightBracket>();
-                                expression = OptionalExpressionTail(
-                                    new ArrayIndexExpression(variable, indexExpression,
-                                    startRow, startCol));
+                                //expression = OptionalTermTail(
+                                //    new ArrayIndexExpression(variable, indexExpression,
+                                //    startRow, startCol));
                             }
                         }
                         else if (input_token is Identifier)
@@ -158,8 +160,8 @@ namespace MiniJavaCompiler
                         }
                         else
                         {
-                            expression = OptionalExpressionTail(new VariableReference(ident1.Value,
-                                startRow, startCol));
+                            //expression = OptionalTermTail(new VariableReference(ident1.Value,
+                            //    startRow, startCol));
                         }
                     }
                     else
@@ -201,128 +203,261 @@ namespace MiniJavaCompiler
 
             public Expression Expression()
             {
-                if (input_token is KeywordToken)
-                {
-                    var token = (KeywordToken)input_token;
-                    switch (token.Value)
-                    {
-                        case "new":
-                            Match<KeywordToken>("new");
-                            var typeInfo = NewType();
-                            var type = (StringToken)typeInfo.Item1;
-                            return OptionalExpressionTail(new InstanceCreation(type.Value,
-                                token.Row, token.Col, typeInfo.Item2));
-                        case "this":
-                            Match<KeywordToken>("this");
-                            return OptionalExpressionTail(new ThisExpression(token.Row,
-                                token.Col));
-                        case "true":
-                            Match<KeywordToken>("true");
-                            return OptionalExpressionTail(new BooleanLiteral(true,
-                                token.Row, token.Col));
-                        case "false":
-                            Match<KeywordToken>("false");
-                            return OptionalExpressionTail(new BooleanLiteral(false,
-                                token.Row, token.Col));
-                        default: // error, invalid start token for expression
-                            throw new SyntaxError("Invalid start token " + token.Value +
-                                " for expression.");
-                    }
-                }
-                else if (input_token is Identifier)
-                {
-                    var identifier = Match<Identifier>();
-                    return OptionalExpressionTail(new VariableReference(
-                        identifier.Value, identifier.Row, identifier.Col));
-                }
-                else if (input_token is IntegerLiteralToken)
-                {
-                    var token = Match<IntegerLiteralToken>();
-                    return OptionalExpressionTail(new IntegerLiteral(token.Value,
-                        token.Row, token.Col));
-                }
-                else if (input_token is UnaryNotToken)
-                {
-                    var token = Match<UnaryNotToken>();
-                    Expression booleanExpression = Expression();
-                    return OptionalExpressionTail(new UnaryNot(booleanExpression,
-                        token.Row, token.Col));
-                }
-                else if (input_token is LeftParenthesis)
-                {
-                    var token = Match<LeftParenthesis>();
-                    Expression parenthesisedExpression = Expression();
-                    return OptionalExpressionTail(parenthesisedExpression);
-                }
-                throw new SyntaxError("Invalid start token of type " + input_token.GetType().Name +
-                    " for expression.");
+                var binOpParser = new ExpressionParser(this);
+                return binOpParser.parse();
             }
 
-            public Expression OptionalExpressionTail(Expression lhs)
+            // An internal parser that solves operator precedences in expressions.
+            private class ExpressionParser
             {
-                if (input_token is BinaryOperatorToken)
+                Parser Parent
                 {
-                    return BinaryOperation(lhs);
+                    get;
+                    set;
                 }
-                else if (input_token is LeftBracket)
+
+                public ExpressionParser(Parser parent)
                 {
-                    var startToken = Match<LeftBracket>();
-                    var indexExpression = Expression();
-                    Match<RightBracket>();
-                    return OptionalExpressionTail(new ArrayIndexExpression(lhs, indexExpression, startToken.Row,
-                        startToken.Col)); // slightly dubious row and column numbers here
+                    Parent = parent;
                 }
-                else if (input_token is MethodInvocationToken)
+
+                public Expression parse()
                 {
-                    var startToken = Match<MethodInvocationToken>();
-                    string methodname;
-                    List<Expression> parameters;
-                    if (input_token is KeywordToken)
+                    return ParseExpression();
+                }
+
+                private Expression ParseExpression()
+                {
+                    var firstOp = OrOperand();
+                    return OrOperandList(firstOp);
+                }
+
+                private Expression OrOperandList(Expression lhs)
+                {
+                    if (Parent.MatchWithoutConsuming<BinaryOperatorToken>("||"))
                     {
-                        methodname = Match<KeywordToken>("length").Value;
-                        parameters = new List<Expression>();
+                        var opToken = Parent.Consume<BinaryOperatorToken>();
+                        var rhs = OrOperand();
+                        return OrOperandList(new LogicalOp(opToken.Value, lhs, rhs,
+                            opToken.Row, opToken.Col));
+                    }
+                    else
+                        return lhs;
+                }
+
+                private Expression OrOperand()
+                {
+                    var firstOp = AndOperand();
+                    return AndOperandList(firstOp);
+                }
+
+                private Expression AndOperandList(Expression lhs)
+                {
+                    if (Parent.MatchWithoutConsuming<BinaryOperatorToken>("&&"))
+                    {
+                        var opToken = Parent.Consume<BinaryOperatorToken>();
+                        var rhs = AndOperand();
+                        return AndOperandList(new LogicalOp(opToken.Value, lhs, rhs,
+                            opToken.Row, opToken.Col));
+                    }
+                    else
+                        return lhs;
+                }
+
+                private Expression AndOperand()
+                {
+                    var firstOp = EqOperand();
+                    return EqOperandList(firstOp);
+                }
+
+                private Expression EqOperandList(Expression lhs)
+                {
+                    if (Parent.MatchWithoutConsuming<BinaryOperatorToken>("=="))
+                    {
+                        var opToken = Parent.Consume<BinaryOperatorToken>();
+                        var rhs = EqOperand();
+                        return EqOperandList(new LogicalOp(opToken.Value, lhs, rhs,
+                            opToken.Row, opToken.Col));
+                    }
+                    else
+                        return lhs;
+                }
+
+                private Expression EqOperand()
+                {
+                    var firstOp = NotEqOperand();
+                    return NotEqOperandList(firstOp);
+                }
+
+                private Expression NotEqOperandList(Expression lhs)
+                {
+                    if (Parent.MatchWithoutConsuming<BinaryOperatorToken>("<") ||
+                        Parent.MatchWithoutConsuming<BinaryOperatorToken>(">"))
+                    {
+                        var opToken = Parent.Consume<BinaryOperatorToken>();
+                        var rhs = NotEqOperand();
+                        return NotEqOperandList(new LogicalOp(opToken.Value, lhs, rhs,
+                            opToken.Row, opToken.Col));
+                    }
+                    else
+                        return lhs;
+                }
+
+                private Expression NotEqOperand()
+                {
+                    var firstOp = AddOperand();
+                    return AddOperandList(firstOp);
+                }
+
+                private Expression AddOperandList(Expression lhs)
+                {
+                    if (Parent.MatchWithoutConsuming<BinaryOperatorToken>("+") ||
+                        Parent.MatchWithoutConsuming<BinaryOperatorToken>("-"))
+                    {
+                        var opToken = Parent.Consume<BinaryOperatorToken>();
+                        var rhs = NotEqOperand();
+                        return NotEqOperandList(new ArithmeticOp(opToken.Value, lhs, rhs,
+                            opToken.Row, opToken.Col));
+                    }
+                    else
+                        return lhs;
+                }
+
+                private Expression AddOperand()
+                {
+                    var firstOp = MultOperand();
+                    return MultOperandList(firstOp);
+                }
+
+                private Expression MultOperandList(Expression lhs)
+                {
+                    if (Parent.MatchWithoutConsuming<BinaryOperatorToken>("*") ||
+                        Parent.MatchWithoutConsuming<BinaryOperatorToken>("/") ||
+                        Parent.MatchWithoutConsuming<BinaryOperatorToken>("%"))
+                    {
+                        var opToken = Parent.Consume<BinaryOperatorToken>();
+                        var rhs = MultOperand();
+                        return MultOperandList(new ArithmeticOp(opToken.Value, lhs, rhs,
+                            opToken.Row, opToken.Col));
+                    }
+                    else
+                        return lhs;
+                }
+
+                private Expression MultOperand()
+                {
+                    if (Parent.MatchWithoutConsuming<UnaryNotToken>())
+                    {
+                        var token = Parent.Consume<UnaryNotToken>();
+                        var term = Term();
+                        return new UnaryNot(term, token.Row, token.Col);
+                    }
+                    else
+                        return Term();
+                }
+
+                public Expression Term()
+                {
+                    if (Parent.input_token is KeywordToken)
+                    {
+                        var token = (KeywordToken)Parent.input_token;
+                        switch (token.Value)
+                        {
+                            case "new":
+                                Parent.Match<KeywordToken>("new");
+                                var typeInfo = NewType();
+                                var type = (StringToken)typeInfo.Item1;
+                                return OptionalTermTail(new InstanceCreation(type.Value,
+                                    token.Row, token.Col, typeInfo.Item2));
+                            case "this":
+                                Parent.Match<KeywordToken>("this");
+                                return OptionalTermTail(new ThisExpression(token.Row,
+                                    token.Col));
+                            case "true":
+                                Parent.Match<KeywordToken>("true");
+                                return OptionalTermTail(new BooleanLiteral(true,
+                                    token.Row, token.Col));
+                            case "false":
+                                Parent.Match<KeywordToken>("false");
+                                return OptionalTermTail(new BooleanLiteral(false,
+                                    token.Row, token.Col));
+                            default: // error, invalid start token for expression
+                                throw new SyntaxError("Invalid start token " + token.Value +
+                                    " for expression.");
+                        }
+                    }
+                    else if (Parent.input_token is Identifier)
+                    {
+                        var identifier = Parent.Match<Identifier>();
+                        return OptionalTermTail(new VariableReference(
+                            identifier.Value, identifier.Row, identifier.Col));
+                    }
+                    else if (Parent.input_token is IntegerLiteralToken)
+                    {
+                        var token = Parent.Match<IntegerLiteralToken>();
+                        return OptionalTermTail(new IntegerLiteral(token.Value,
+                            token.Row, token.Col));
+                    }
+                    else if (Parent.input_token is LeftParenthesis)
+                    {
+                        var token = Parent.Match<LeftParenthesis>();
+                        Expression parenthesisedExpression = Parent.Expression();
+                        return OptionalTermTail(parenthesisedExpression);
+                    }
+                    throw new SyntaxError("Invalid start token of type " +
+                        Parent.input_token.GetType().Name + " for expression.");
+                }
+
+                public Expression OptionalTermTail(Expression lhs)
+                {
+                    if (Parent.input_token is LeftBracket)
+                    {
+                        var startToken = Parent.Match<LeftBracket>();
+                        var indexExpression = Parent.Expression();
+                        Parent.Match<RightBracket>();
+                        return OptionalTermTail(new ArrayIndexExpression(lhs, indexExpression, startToken.Row,
+                            startToken.Col)); // slightly dubious row and column numbers here
+                    }
+                    else if (Parent.input_token is MethodInvocationToken)
+                    {
+                        var startToken = Parent.Match<MethodInvocationToken>();
+                        string methodname;
+                        List<Expression> parameters;
+                        if (Parent.input_token is KeywordToken)
+                        {
+                            methodname = Parent.Match<KeywordToken>("length").Value;
+                            parameters = new List<Expression>();
+                        }
+                        else
+                        {
+                            methodname = Parent.Match<Identifier>().Value;
+                            Parent.Match<LeftParenthesis>();
+                            parameters = Parent.ExpressionList();
+                            Parent.Match<RightParenthesis>();
+                        }
+                        return OptionalTermTail(new MethodInvocation(lhs, methodname, parameters,
+                            startToken.Row, startToken.Col));
+                    }
+                    else
+                        return lhs;
+                }
+
+                public Tuple<TypeToken, Expression> NewType()
+                {
+                    var type = Parent.Match<TypeToken>();
+                    if (type is MiniJavaType || !(Parent.input_token is LeftParenthesis))
+                    { // must be an array
+                        Parent.Match<LeftBracket>();
+                        var arraySize = Parent.Expression();
+                        Parent.Match<RightBracket>();
+                        return new Tuple<TypeToken, Expression>(type, arraySize);
                     }
                     else
                     {
-                        methodname = Match<Identifier>().Value;
-                        Match<LeftParenthesis>();
-                        parameters = ExpressionList();
-                        Match<RightParenthesis>();
+                        Parent.Match<LeftParenthesis>();
+                        Parent.Match<RightParenthesis>();
+                        return new Tuple<TypeToken, Expression>(type, null);
                     }
-                    return OptionalExpressionTail(new MethodInvocation(lhs, methodname, parameters,
-                        startToken.Row, startToken.Col));
-                }
-                else
-                    return lhs;
-            }
-
-            private Expression BinaryOperation(Expression lhs)
-            {
-                var operatorToken = Match<BinaryOperatorToken>();
-                Expression rhs = Expression();
-                if (operatorToken is ArithmeticOperatorToken)
-                    return OptionalExpressionTail(new ArithmeticOp(operatorToken.Value,
-                        lhs, rhs, operatorToken.Row, operatorToken.Col));
-                else
-                    return OptionalExpressionTail(new LogicalOp(operatorToken.Value,
-                        lhs, rhs, operatorToken.Row, operatorToken.Col));
-            }
-
-            public Tuple<TypeToken, Expression> NewType()
-            {
-                var type = Match<TypeToken>();
-                if (type is MiniJavaType || !(input_token is LeftParenthesis))
-                { // must be an array
-                    Match<LeftBracket>();
-                    var arraySize = Expression();
-                    Match<RightBracket>();
-                    return new Tuple<TypeToken, Expression>(type, arraySize);
-                }
-                else
-                {
-                    Match<LeftParenthesis>();
-                    Match<RightParenthesis>();
-                    return new Tuple<TypeToken, Expression>(type, null);
                 }
             }
 
@@ -408,30 +543,37 @@ namespace MiniJavaCompiler
 
             private T Match<T>(string value = null) where T : Token
             {
-                if (input_token is T)
-                {
-                    if (value == null ||
-                        ((StringToken)input_token).Value == value)
-                    {
-                        var temp = (T)input_token;
-                        input_token = scanner.NextToken();
-                        return temp;
-                    }
-                    else
-                    {
-                        throw new SyntaxError("Expected value \"" + value + "\" but got " +
-                            ((StringToken)input_token).Value + ".");
-                    }
-                }
-                else if (input_token is ErrorToken)
-                {
-                    throw new SyntaxError("Received an error token. Wat?");
-                }
-                else
-                {
+                if (MatchWithoutConsuming<T>(value))
+                    return Consume<T>();
+                else if (value == null)
                     throw new SyntaxError("Expected type " + typeof(T).Name +
                         " but got " + input_token.GetType().Name + ".");
+                else
+                    throw new SyntaxError("Expected value \"" + value + "\" but got " +
+                        ((StringToken)input_token).Value + ".");
+            }
+
+            private T Consume<T>() where T : Token
+            {
+                var temp = (T)input_token;
+                input_token = scanner.NextToken();
+                return temp;
+            }
+
+            private bool MatchWithoutConsuming<T>(string value = null) where T : Token
+            {
+                if (input_token is ErrorToken)
+                    throw new SyntaxError("Received an error token."); // recovery must be done
+
+                if (input_token is T)
+                {
+                    if (value == null || ((StringToken)input_token).Value == value)
+                        return true;
+                    else
+                        return false;
                 }
+                else
+                    return false;
             }
 
             // List parsers.

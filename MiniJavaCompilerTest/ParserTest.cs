@@ -283,12 +283,12 @@ namespace MiniJavaCompilerTest
             var expression = parser.Expression();
             Assert.That(expression, Is.InstanceOf<LogicalOp>());
             var logicalOp = (LogicalOp)expression;
-            Assert.That(logicalOp.RHS, Is.InstanceOf<IntegerLiteralToken>());
-            Assert.That(((IntegerLiteralToken)logicalOp.RHS).Value, Is.EqualTo("0"));
+            Assert.That(logicalOp.RHS, Is.InstanceOf<IntegerLiteral>());
+            Assert.That(((IntegerLiteral)logicalOp.RHS).Value, Is.EqualTo("0"));
             Assert.That(logicalOp.LHS, Is.InstanceOf<ArithmeticOp>());
             var arithmetic = (ArithmeticOp)logicalOp.LHS;
-            Assert.That(arithmetic.LHS, Is.InstanceOf<IntegerLiteralToken>());
-            Assert.That(((IntegerLiteralToken)arithmetic.LHS).Value, Is.EqualTo("7"));
+            Assert.That(arithmetic.LHS, Is.InstanceOf<IntegerLiteral>());
+            Assert.That(((IntegerLiteral)arithmetic.LHS).Value, Is.EqualTo("7"));
             Assert.That(arithmetic.RHS, Is.InstanceOf<VariableReference>());
             Assert.That(((VariableReference)arithmetic.RHS).Name, Is.EqualTo("foo"));
         }

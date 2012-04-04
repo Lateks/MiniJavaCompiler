@@ -122,12 +122,6 @@ namespace MiniJavaCompiler
                     : base(row, col) { }
             }
 
-            public class RangeOperator : TokenElement
-            {
-                public RangeOperator(int row, int col)
-                    : base(row, col) { }
-            }
-
             public class LeftParenthesis : TokenElement
             {
                 public LeftParenthesis(int row, int col)
