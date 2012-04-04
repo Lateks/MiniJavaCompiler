@@ -26,6 +26,12 @@ namespace MiniJavaCompiler
                 set;
             }
 
+            private void buffer(Token token)
+            {
+                inputBuffer.Push(InputToken);
+                InputToken = token;
+            }
+
             public Parser(Scanner scanner)
             {
                 this.scanner = scanner;
@@ -55,11 +61,14 @@ namespace MiniJavaCompiler
                 Match<KeywordToken>("static");
                 Match<MiniJavaType>("void");
                 Match<KeywordToken>("main");
+
                 Match<LeftParenthesis>();
                 Match<RightParenthesis>();
+                
                 Match<LeftCurlyBrace>();
                 List<Statement> main_statements = StatementList();
                 Match<RightCurlyBrace>();
+                
                 Match<RightCurlyBrace>();
                 return new MainClassDeclaration(classIdent.Value,
                     main_statements, startToken.Row, startToken.Col);
@@ -67,91 +76,115 @@ namespace MiniJavaCompiler
 
             public Statement Statement()
             {
-                if (InputToken is MiniJavaType) // Local variable declaration for one of the base types.
-                {                                     // Variable declarations for user defined types are handled
-                    var decl = VariableDeclaration(); // separately.
-                    Match<EndLine>();
-                    return decl;
-                }
+                if (InputToken is MiniJavaType)
+                    return MakeLocalVariableDeclaration();
                 else if (InputToken is KeywordToken)
-                {
-                    KeywordToken token = (KeywordToken)InputToken;
-                    switch (token.Value)
-                    {
-                        case "assert":
-                            return MakeAssertStatement();
-                        case "if":
-                            return MakeIfStatement();
-                        case "while":
-                            return MakeWhileStatement();
-                        case "System":
-                            return MakePrintStatement();
-                        case "return":
-                            return MakeReturnStatement();
-                        default:
-                            throw new SyntaxError("Invalid keyword " + token.Value + " starting a statement.");
-                    }
-                }
+                    return MakeKeywordStatement();
                 else if (InputToken is LeftCurlyBrace)
-                {
-                    Token blockStart = Match<LeftCurlyBrace>();
-                    var statements = StatementList();
-                    Match<RightCurlyBrace>();
-                    return new BlockStatement(statements, blockStart.Row, blockStart.Col);
-                }
-                else
-                { // Can be an assignment, a method invocation or a variable declaration for a user defined type.
-                  // This is really messy, must be refactored somehow.
-                    Expression expression;
-                    if (InputToken is Identifier)
+                    return MakeBlockStatement();
+                else // Can be an assignment, a method invocation or a variable
+                     // declaration for a user defined type.
+                    return MakeExpressionStatementOrVariableDeclaration();
+            }
+
+            // This is a workaround method that is needed because the language is not LL(1).
+            // Some buffering is done because several tokens must be peeked at to decide
+            // which kind of statement should be parsed.
+            private Statement MakeExpressionStatementOrVariableDeclaration()
+            {
+                Expression expression;
+                if (InputToken is Identifier)
+                { 
+                    var ident = Consume<Identifier>();
+                    if (MatchWithoutConsuming<LeftBracket>())
                     {
-                        var ident = Consume<Identifier>();
-                        if (MatchWithoutConsuming<LeftBracket>())
-                        {
-                            var lBracket = Consume<LeftBracket>();
-                            if (MatchWithoutConsuming<RightBracket>())
-                            {
-                                Consume<RightBracket>();
-                                return MakeVariableDeclarationStatement(ident, true);
-                            }
-                            else
-                            { // Brackets are used to index into an array, beginning an expression.
-                              // Buffer the tokens that were already consumed for the expression parser.
-                                buffer(lBracket);
-                                buffer(ident);
-                                expression = Expression();
-                            }
+                        var lBracket = Consume<LeftBracket>();
+                        if (MatchWithoutConsuming<RightBracket>())
+                        { // The statement is a local array variable declaration.
+                            Consume<RightBracket>();
+                            return MakeVariableDeclarationStatement(ident, true);
                         }
-                        else if (MatchWithoutConsuming<Identifier>())
-                            return MakeVariableDeclarationStatement(ident, false);
                         else
-                        { // Input token is a reference to a variable and begins an expression.
+                        {   // Brackets are used to index into an array, beginning an expression.
+                            // Buffer the tokens that were already consumed for the expression parser.
+                            buffer(lBracket);
                             buffer(ident);
                             expression = Expression();
                         }
                     }
+                    else if (MatchWithoutConsuming<Identifier>())
+                        return MakeVariableDeclarationStatement(ident, false);
                     else
-                    {
+                    { // Input token is a reference to a variable and begins an expression.
+                        buffer(ident);
                         expression = Expression();
                     }
+                }
+                else
+                    expression = Expression();
 
-                    if (InputToken is AssignmentToken)
-                    {
-                        var assignment = Match<AssignmentToken>();
-                        Expression rhs = Expression();
-                        Match<EndLine>();
-                        return new AssignmentStatement(expression, rhs,
-                            assignment.Row, assignment.Col);
-                    }
-                    else // should be a method invocation according to the original grammar
-                    {
-                        Match<EndLine>();
-                        if (expression is MethodInvocation)
-                            return (MethodInvocation)expression;
-                        else
-                            throw new SyntaxError("Expression of type " + expression.GetType().Name +
-                                " cannot form a statement on its own.");
-                    }
+                return CompleteStatement(expression);
+            }
+
+            private Statement CompleteStatement(Expression expression)
+            {
+                if (InputToken is AssignmentToken)
+                    return MakeAssignmentStatement(expression);
+                else
+                    return MakeMethodInvocationStatement(expression);
+            }
+
+            private Statement MakeMethodInvocationStatement(Expression expression)
+            {
+                Match<EndLine>();
+                if (expression is MethodInvocation)
+                    return (MethodInvocation)expression;
+                else
+                    throw new SyntaxError("Expression of type " + expression.GetType().Name +
+                        " cannot form a statement on its own.");
+            }
+
+            private Statement MakeAssignmentStatement(Expression lhs)
+            {
+                var assignment = Match<AssignmentToken>();
+                Expression rhs = Expression();
+                Match<EndLine>();
+                return new AssignmentStatement(lhs, rhs,
+                    assignment.Row, assignment.Col);
+            }
+
+            private Statement MakeBlockStatement()
+            {
+                Token blockStart = Match<LeftCurlyBrace>();
+                var statements = StatementList();
+                Match<RightCurlyBrace>();
+                return new BlockStatement(statements, blockStart.Row, blockStart.Col);
+            }
+
+            private Statement MakeLocalVariableDeclaration()
+            {
+                var decl = VariableDeclaration();
+                Match<EndLine>();
+                return decl;
+            }
+
+            private Statement MakeKeywordStatement()
+            {
+                KeywordToken token = (KeywordToken)InputToken;
+                switch (token.Value)
+                {
+                    case "assert":
+                        return MakeAssertStatement();
+                    case "if":
+                        return MakeIfStatement();
+                    case "while":
+                        return MakeWhileStatement();
+                    case "System":
+                        return MakePrintStatement();
+                    case "return":
+                        return MakeReturnStatement();
+                    default:
+                        throw new SyntaxError("Invalid keyword " + token.Value + " starting a statement.");
                 }
             }
 
@@ -210,12 +243,6 @@ namespace MiniJavaCompiler
                 Match<RightParenthesis>();
                 Match<EndLine>(); // not in the CFG, probably a bug?
                 return new AssertStatement(expr, assertToken.Row, assertToken.Col);
-            }
-
-            private void buffer(Token token)
-            {
-                inputBuffer.Push(InputToken);
-                InputToken = token;
             }
 
             private Statement MakeVariableDeclarationStatement(Identifier variableTypeName, bool isArray)
