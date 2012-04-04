@@ -423,87 +423,126 @@ namespace MiniJavaCompiler
                 public Expression Term()
                 {
                     if (Parent.InputToken is KeywordToken)
-                    {
-                        var token = (KeywordToken)Parent.InputToken;
-                        switch (token.Value)
-                        {
-                            case "new":
-                                Parent.Match<KeywordToken>("new");
-                                var typeInfo = NewType();
-                                var type = (StringToken)typeInfo.Item1;
-                                return OptionalTermTail(new InstanceCreation(type.Value,
-                                    token.Row, token.Col, typeInfo.Item2));
-                            case "this":
-                                Parent.Match<KeywordToken>("this");
-                                return OptionalTermTail(new ThisExpression(token.Row,
-                                    token.Col));
-                            case "true":
-                                Parent.Match<KeywordToken>("true");
-                                return OptionalTermTail(new BooleanLiteral(true,
-                                    token.Row, token.Col));
-                            case "false":
-                                Parent.Match<KeywordToken>("false");
-                                return OptionalTermTail(new BooleanLiteral(false,
-                                    token.Row, token.Col));
-                            default: // error, invalid start token for expression
-                                throw new SyntaxError("Invalid start token " + token.Value +
-                                    " for expression.");
-                        }
-                    }
+                        return MakeKeywordExpression();
                     else if (Parent.InputToken is Identifier)
-                    {
-                        var identifier = Parent.Match<Identifier>();
-                        return OptionalTermTail(new VariableReference(
-                            identifier.Value, identifier.Row, identifier.Col));
-                    }
+                        return MakeVariableReferenceExpression();
                     else if (Parent.InputToken is IntegerLiteralToken)
-                    {
-                        var token = Parent.Match<IntegerLiteralToken>();
-                        return OptionalTermTail(new IntegerLiteral(token.Value,
-                            token.Row, token.Col));
-                    }
+                        return MakeIntegerLiteralExpression();
                     else if (Parent.InputToken is LeftParenthesis)
+                        return MakeParenthesisedExpression();
+                    else
+                        throw new SyntaxError("Invalid start token of type " +
+                            Parent.InputToken.GetType().Name + " for a term.");
+                }
+
+                private Expression MakeParenthesisedExpression()
+                {
+                    Parent.Consume<LeftParenthesis>();
+                    Expression parenthesisedExpression = Parent.Expression();
+                    Parent.Match<RightParenthesis>();
+                    return OptionalTermTail(parenthesisedExpression);
+                }
+
+                private Expression MakeIntegerLiteralExpression()
+                {
+                    var token = Parent.Match<IntegerLiteralToken>();
+                    return OptionalTermTail(new IntegerLiteral(token.Value,
+                        token.Row, token.Col));
+                }
+
+                private Expression MakeVariableReferenceExpression()
+                {
+                    var identifier = Parent.Match<Identifier>();
+                    return OptionalTermTail(new VariableReference(
+                        identifier.Value, identifier.Row, identifier.Col));
+                }
+
+                private Expression MakeKeywordExpression()
+                {
+                    var token = (KeywordToken)Parent.InputToken;
+                    switch (token.Value)
                     {
-                        var token = Parent.Match<LeftParenthesis>();
-                        Expression parenthesisedExpression = Parent.Expression();
-                        return OptionalTermTail(parenthesisedExpression);
+                        case "new":
+                            return MakeInstanceCreationExpression();
+                        case "this":
+                            return MakeThisExpression();
+                        case "true":
+                            return MakeBooleanLiteral(true);
+                        case "false":
+                            return MakeBooleanLiteral(false);
+                        default:
+                            throw new SyntaxError("Invalid start token " + token.Value +
+                                " for expression.");
                     }
-                    throw new SyntaxError("Invalid start token of type " +
-                        Parent.InputToken.GetType().Name + " for expression.");
+                }
+
+                private Expression MakeBooleanLiteral(bool value)
+                {
+                    var boolToken = Parent.Consume<KeywordToken>();
+                    return OptionalTermTail(new BooleanLiteral(value,
+                        boolToken.Row, boolToken.Col));
+                }
+
+                private Expression MakeThisExpression()
+                {
+                    var thisToken = Parent.Consume<KeywordToken>();
+                    return OptionalTermTail(new ThisExpression(thisToken.Row,
+                        thisToken.Col));
+                }
+
+                private Expression MakeInstanceCreationExpression()
+                {
+                    var newToken = Parent.Consume<KeywordToken>();
+                    var typeInfo = NewType();
+                    var type = (StringToken)typeInfo.Item1;
+                    return OptionalTermTail(new InstanceCreation(type.Value,
+                        newToken.Row, newToken.Col, typeInfo.Item2));
                 }
 
                 public Expression OptionalTermTail(Expression lhs)
                 {
-                    if (Parent.InputToken is LeftBracket)
-                    {
-                        var startToken = Parent.Match<LeftBracket>();
-                        var indexExpression = Parent.Expression();
-                        Parent.Match<RightBracket>();
-                        return OptionalTermTail(new ArrayIndexExpression(lhs, indexExpression, startToken.Row,
-                            startToken.Col)); // slightly dubious row and column numbers here
-                    }
-                    else if (Parent.InputToken is MethodInvocationToken)
-                    {
-                        var startToken = Parent.Match<MethodInvocationToken>();
-                        string methodname;
-                        List<Expression> parameters;
-                        if (Parent.InputToken is KeywordToken)
-                        {
-                            methodname = Parent.Match<KeywordToken>("length").Value;
-                            parameters = new List<Expression>();
-                        }
-                        else
-                        {
-                            methodname = Parent.Match<Identifier>().Value;
-                            Parent.Match<LeftParenthesis>();
-                            parameters = Parent.ExpressionList();
-                            Parent.Match<RightParenthesis>();
-                        }
-                        return OptionalTermTail(new MethodInvocation(lhs, methodname, parameters,
-                            startToken.Row, startToken.Col));
-                    }
+                    if (Parent.MatchWithoutConsuming<LeftBracket>())
+                        return MakeArrayIndexingExpression(lhs);
+                    else if (Parent.MatchWithoutConsuming<MethodInvocationToken>())
+                        return MakeMethodInvocationExpression(lhs);
                     else
                         return lhs;
+                }
+
+                private Expression MakeMethodInvocationExpression(Expression methodOwner)
+                {
+                    Parent.Consume<MethodInvocationToken>();
+                    if (Parent.InputToken is KeywordToken)
+                        return MakeLengthMethodInvocation(methodOwner);
+                    else
+                        return MakeUserDefinedMethodInvocation(methodOwner);
+                }
+
+                private Expression MakeUserDefinedMethodInvocation(Expression methodOwner)
+                {
+                    var methodName = Parent.Match<Identifier>();
+                    Parent.Match<LeftParenthesis>();
+                    var parameters = Parent.ExpressionList();
+                    Parent.Match<RightParenthesis>();
+                    return OptionalTermTail(new MethodInvocation(methodOwner,
+                        methodName.Value, parameters, methodName.Row, methodName.Col));
+                }
+
+                private Expression MakeLengthMethodInvocation(Expression methodOwner)
+                {
+                    var methodName = Parent.Match<KeywordToken>("length");
+                    var parameters = new List<Expression>();
+                    return OptionalTermTail(new MethodInvocation(methodOwner, methodName.Value,
+                        parameters, methodName.Row, methodName.Col));
+                }
+
+                private Expression MakeArrayIndexingExpression(Expression lhs)
+                {
+                    var startToken = Parent.Match<LeftBracket>();
+                    var indexExpression = Parent.Expression();
+                    Parent.Match<RightBracket>();
+                    return OptionalTermTail(new ArrayIndexExpression(lhs, indexExpression,
+                        startToken.Row, startToken.Col));
                 }
 
                 public Tuple<TypeToken, Expression> NewType()
