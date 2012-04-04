@@ -19,12 +19,18 @@ namespace MiniJavaCompiler
         public class Parser
         {
             private Scanner scanner;
-            private Token input_token;
+            private Stack<Token> inputBuffer;
+            Token InputToken
+            {
+                get;
+                set;
+            }
 
             public Parser(Scanner scanner)
             {
                 this.scanner = scanner;
-                this.input_token = scanner.NextToken();
+                this.inputBuffer = new Stack<Token>();
+                InputToken = scanner.NextToken();
             }
 
             public Program Parse()
@@ -61,15 +67,15 @@ namespace MiniJavaCompiler
 
             public Statement Statement()
             {
-                if (input_token is MiniJavaType)      // Local variable declaration for one of the base types.
+                if (InputToken is MiniJavaType)      // Local variable declaration for one of the base types.
                 {                                     // Variable declarations for user defined types are handled
                     var decl = VariableDeclaration(); // separately.
                     Match<EndLine>();
                     return decl;
                 }
-                else if (input_token is KeywordToken)
+                else if (InputToken is KeywordToken)
                 {
-                    KeywordToken token = (KeywordToken)input_token;
+                    KeywordToken token = (KeywordToken)InputToken;
                     switch (token.Value)
                     {
                         case "assert":
@@ -112,7 +118,7 @@ namespace MiniJavaCompiler
                             throw new SyntaxError("Invalid keyword " + token.Value + " starting a statement.");
                     }
                 }
-                else if (input_token is LeftCurlyBrace)
+                else if (InputToken is LeftCurlyBrace)
                 {
                     Token blockStart = Match<LeftCurlyBrace>();
                     var statements = StatementList();
@@ -122,46 +128,32 @@ namespace MiniJavaCompiler
                 else
                 { // Can be an assignment, a method invocation or a variable declaration for a user defined type.
                   // This is really messy, must be refactored somehow.
-                    throw new NotImplementedException();
-
-                    var startRow = input_token.Row;
-                    var startCol = input_token.Col;
                     Expression expression;
-                    if (input_token is Identifier)
+                    if (InputToken is Identifier)
                     {
-                        var ident1 = Match<Identifier>();
-                        if (input_token is LeftBracket)
+                        var ident = Consume<Identifier>();
+                        if (MatchWithoutConsuming<LeftBracket>())
                         {
-                            Match<LeftBracket>();
-                            if (input_token is RightBracket)
+                            var lBracket = Consume<LeftBracket>();
+                            if (MatchWithoutConsuming<RightBracket>())
                             {
-                                Match<RightBracket>();
-                                var ident2 = Match<Identifier>();
-                                Match<EndLine>();
-                                return new VariableDeclaration(ident2.Value, ident1.Value, true,
-                                    startRow, startCol);
+                                Consume<RightBracket>();
+                                return MakeVariableDeclarationStatement(ident, true);
                             }
                             else
-                            { // array indexing
-                                var variable = new VariableReference(ident1.Value, startRow, startCol);
-                                var indexExpression = Expression();
-                                Match<RightBracket>();
-                                //expression = OptionalTermTail(
-                                //    new ArrayIndexExpression(variable, indexExpression,
-                                //    startRow, startCol));
+                            { // Brackets are used to index into an array, beginning an expression.
+                              // Buffer the tokens that were already consumed for the expression parser.
+                                buffer(lBracket);
+                                buffer(ident);
+                                expression = Expression();
                             }
                         }
-                        else if (input_token is Identifier)
-                        {
-                            var ident2 = Match<Identifier>();
-                            Match<EndLine>();
-                            return new VariableDeclaration(ident2.Value, ident1.Value, false,
-                                startRow, startCol);
-                        }
+                        else if (MatchWithoutConsuming<Identifier>())
+                            return MakeVariableDeclarationStatement(ident, false);
                         else
-                        {
-                            //expression = OptionalTermTail(new VariableReference(ident1.Value,
-                            //    startRow, startCol));
+                        { // Input token is a reference to a variable and begins an expression.
+                            buffer(ident);
+                            expression = Expression();
                         }
                     }
                     else
@@ -169,13 +161,13 @@ namespace MiniJavaCompiler
                         expression = Expression();
                     }
 
-                    if (input_token is AssignmentToken)
+                    if (InputToken is AssignmentToken)
                     {
-                        Match<AssignmentToken>();
+                        var assignment = Match<AssignmentToken>();
                         Expression rhs = Expression();
                         Match<EndLine>();
                         return new AssignmentStatement(expression, rhs,
-                            startRow, startCol);
+                            assignment.Row, assignment.Col);
                     }
                     else // should be a method invocation according to the original grammar
                     {
@@ -183,16 +175,30 @@ namespace MiniJavaCompiler
                         if (expression is MethodInvocation)
                             return (MethodInvocation)expression;
                         else
-                            throw new SyntaxError("A " + expression.GetType().Name +
+                            throw new SyntaxError("Expression of type " + expression.GetType().Name +
                                 " cannot form a statement on its own.");
                     }
                 }
             }
 
+            private void buffer(Token token)
+            {
+                inputBuffer.Push(InputToken);
+                InputToken = token;
+            }
+
+            private Statement MakeVariableDeclarationStatement(Identifier variableTypeName, bool isArray)
+            {
+                var variableName = Match<Identifier>();
+                Match<EndLine>();
+                return new VariableDeclaration(variableName.Value, variableTypeName.Value, isArray,
+                    variableTypeName.Row, variableTypeName.Col);
+            }
+
             public Statement OptionalElseBranch()
             {
-                if (input_token is KeywordToken &&
-                    ((KeywordToken)input_token).Value == "else")
+                if (InputToken is KeywordToken &&
+                    ((KeywordToken)InputToken).Value == "else")
                 {
                     Match<KeywordToken>("else");
                     return Statement();
@@ -358,9 +364,9 @@ namespace MiniJavaCompiler
 
                 public Expression Term()
                 {
-                    if (Parent.input_token is KeywordToken)
+                    if (Parent.InputToken is KeywordToken)
                     {
-                        var token = (KeywordToken)Parent.input_token;
+                        var token = (KeywordToken)Parent.InputToken;
                         switch (token.Value)
                         {
                             case "new":
@@ -386,31 +392,31 @@ namespace MiniJavaCompiler
                                     " for expression.");
                         }
                     }
-                    else if (Parent.input_token is Identifier)
+                    else if (Parent.InputToken is Identifier)
                     {
                         var identifier = Parent.Match<Identifier>();
                         return OptionalTermTail(new VariableReference(
                             identifier.Value, identifier.Row, identifier.Col));
                     }
-                    else if (Parent.input_token is IntegerLiteralToken)
+                    else if (Parent.InputToken is IntegerLiteralToken)
                     {
                         var token = Parent.Match<IntegerLiteralToken>();
                         return OptionalTermTail(new IntegerLiteral(token.Value,
                             token.Row, token.Col));
                     }
-                    else if (Parent.input_token is LeftParenthesis)
+                    else if (Parent.InputToken is LeftParenthesis)
                     {
                         var token = Parent.Match<LeftParenthesis>();
                         Expression parenthesisedExpression = Parent.Expression();
                         return OptionalTermTail(parenthesisedExpression);
                     }
                     throw new SyntaxError("Invalid start token of type " +
-                        Parent.input_token.GetType().Name + " for expression.");
+                        Parent.InputToken.GetType().Name + " for expression.");
                 }
 
                 public Expression OptionalTermTail(Expression lhs)
                 {
-                    if (Parent.input_token is LeftBracket)
+                    if (Parent.InputToken is LeftBracket)
                     {
                         var startToken = Parent.Match<LeftBracket>();
                         var indexExpression = Parent.Expression();
@@ -418,12 +424,12 @@ namespace MiniJavaCompiler
                         return OptionalTermTail(new ArrayIndexExpression(lhs, indexExpression, startToken.Row,
                             startToken.Col)); // slightly dubious row and column numbers here
                     }
-                    else if (Parent.input_token is MethodInvocationToken)
+                    else if (Parent.InputToken is MethodInvocationToken)
                     {
                         var startToken = Parent.Match<MethodInvocationToken>();
                         string methodname;
                         List<Expression> parameters;
-                        if (Parent.input_token is KeywordToken)
+                        if (Parent.InputToken is KeywordToken)
                         {
                             methodname = Parent.Match<KeywordToken>("length").Value;
                             parameters = new List<Expression>();
@@ -445,7 +451,7 @@ namespace MiniJavaCompiler
                 public Tuple<TypeToken, Expression> NewType()
                 {
                     var type = Parent.Match<TypeToken>();
-                    if (type is MiniJavaType || !(Parent.input_token is LeftParenthesis))
+                    if (type is MiniJavaType || !(Parent.InputToken is LeftParenthesis))
                     { // must be an array
                         Parent.Match<LeftBracket>();
                         var arraySize = Parent.Expression();
@@ -475,7 +481,7 @@ namespace MiniJavaCompiler
 
             public string OptionalInheritance()
             {
-                if (!(input_token is LeftCurlyBrace))
+                if (!(InputToken is LeftCurlyBrace))
                 {
                     Match<KeywordToken>("extends");
                     return Match<Identifier>().Value;
@@ -485,18 +491,18 @@ namespace MiniJavaCompiler
 
             public Declaration Declaration()
             {
-                if (input_token is MiniJavaType || input_token is Identifier)
+                if (InputToken is MiniJavaType || InputToken is Identifier)
                 {
                     VariableDeclaration variable = VariableDeclaration();
                     Match<EndLine>();
                     return variable;
                 }
-                else if (input_token is KeywordToken)
+                else if (InputToken is KeywordToken)
                 {
                     return MethodDeclaration();
                 }
                 else
-                    throw new SyntaxError("Invalid token of type " + input_token.GetType().Name +
+                    throw new SyntaxError("Invalid token of type " + InputToken.GetType().Name +
                         " starting a declaration.");
             }
 
@@ -532,7 +538,7 @@ namespace MiniJavaCompiler
             public Tuple<TypeToken, bool> Type()
             {
                 var type = Match<TypeToken>();
-                if (input_token is LeftBracket)
+                if (InputToken is LeftBracket)
                 {
                     Match<LeftBracket>();
                     Match<RightBracket>();
@@ -547,27 +553,27 @@ namespace MiniJavaCompiler
                     return Consume<T>();
                 else if (value == null)
                     throw new SyntaxError("Expected type " + typeof(T).Name +
-                        " but got " + input_token.GetType().Name + ".");
+                        " but got " + InputToken.GetType().Name + ".");
                 else
                     throw new SyntaxError("Expected value \"" + value + "\" but got " +
-                        ((StringToken)input_token).Value + ".");
+                        ((StringToken)InputToken).Value + ".");
             }
 
             private T Consume<T>() where T : Token
             {
-                var temp = (T)input_token;
-                input_token = scanner.NextToken();
+                var temp = (T)InputToken;
+                InputToken = inputBuffer.Count > 0 ? inputBuffer.Pop() : scanner.NextToken();
                 return temp;
             }
 
             private bool MatchWithoutConsuming<T>(string value = null) where T : Token
             {
-                if (input_token is ErrorToken)
+                if (InputToken is ErrorToken)
                     throw new SyntaxError("Received an error token."); // recovery must be done
 
-                if (input_token is T)
+                if (InputToken is T)
                 {
-                    if (value == null || ((StringToken)input_token).Value == value)
+                    if (value == null || ((StringToken)InputToken).Value == value)
                         return true;
                     else
                         return false;
@@ -598,7 +604,7 @@ namespace MiniJavaCompiler
                 where FollowToken : Token
             {
                 var nodeList = new List<NodeType>();
-                if (!(input_token is FollowToken))
+                if (!(InputToken is FollowToken))
                 {
                     nodeList.Add(ParseNode());
                     nodeList.AddRange(NodeList<NodeType, FollowToken>(ParseNode));
@@ -622,7 +628,7 @@ namespace MiniJavaCompiler
                 where FollowToken : Token
             {
                 var list = new List<NodeType>();
-                if (!(input_token is FollowToken))
+                if (!(InputToken is FollowToken))
                 {
                     if (isListTail) Match<ParameterSeparator>();
                     list.Add(ParseNode());
