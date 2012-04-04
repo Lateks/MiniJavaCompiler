@@ -293,119 +293,53 @@ namespace MiniJavaCompiler
                 private Expression ParseExpression()
                 {
                     var firstOp = OrOperand();
-                    return OrOperandList(firstOp);
-                }
-
-                private Expression OrOperandList(Expression lhs)
-                {
-                    if (Parent.MatchWithoutConsuming<BinaryOperatorToken>("||"))
-                    {
-                        var opToken = Parent.Consume<BinaryOperatorToken>();
-                        var rhs = OrOperand();
-                        return OrOperandList(new LogicalOp(opToken.Value, lhs, rhs,
-                            opToken.Row, opToken.Col));
-                    }
-                    else
-                        return lhs;
+                    Func<bool> orMatcher =
+                        () => Parent.MatchWithoutConsuming<BinaryOperatorToken>("||");
+                    return BinaryOpTail<LogicalOp>(firstOp, orMatcher, OrOperand);
                 }
 
                 private Expression OrOperand()
                 {
                     var firstOp = AndOperand();
-                    return AndOperandList(firstOp);
-                }
-
-                private Expression AndOperandList(Expression lhs)
-                {
-                    if (Parent.MatchWithoutConsuming<BinaryOperatorToken>("&&"))
-                    {
-                        var opToken = Parent.Consume<BinaryOperatorToken>();
-                        var rhs = AndOperand();
-                        return AndOperandList(new LogicalOp(opToken.Value, lhs, rhs,
-                            opToken.Row, opToken.Col));
-                    }
-                    else
-                        return lhs;
+                    Func<bool> andMatcher =
+                        () => Parent.MatchWithoutConsuming<BinaryOperatorToken>("&&");
+                    return BinaryOpTail<LogicalOp>(firstOp, andMatcher, AndOperand);
                 }
 
                 private Expression AndOperand()
                 {
                     var firstOp = EqOperand();
-                    return EqOperandList(firstOp);
-                }
-
-                private Expression EqOperandList(Expression lhs)
-                {
-                    if (Parent.MatchWithoutConsuming<BinaryOperatorToken>("=="))
-                    {
-                        var opToken = Parent.Consume<BinaryOperatorToken>();
-                        var rhs = EqOperand();
-                        return EqOperandList(new LogicalOp(opToken.Value, lhs, rhs,
-                            opToken.Row, opToken.Col));
-                    }
-                    else
-                        return lhs;
+                    Func<bool> eqMatcher =
+                        () => Parent.MatchWithoutConsuming<BinaryOperatorToken>("==");
+                    return BinaryOpTail<LogicalOp>(firstOp, eqMatcher, EqOperand);
                 }
 
                 private Expression EqOperand()
                 {
                     var firstOp = NotEqOperand();
-                    return NotEqOperandList(firstOp);
-                }
-
-                private Expression NotEqOperandList(Expression lhs)
-                {
-                    if (Parent.MatchWithoutConsuming<BinaryOperatorToken>("<") ||
-                        Parent.MatchWithoutConsuming<BinaryOperatorToken>(">"))
-                    {
-                        var opToken = Parent.Consume<BinaryOperatorToken>();
-                        var rhs = NotEqOperand();
-                        return NotEqOperandList(new LogicalOp(opToken.Value, lhs, rhs,
-                            opToken.Row, opToken.Col));
-                    }
-                    else
-                        return lhs;
+                    Func<bool> neqMatcher =
+                        () => Parent.MatchWithoutConsuming<BinaryOperatorToken>("<") ||
+                              Parent.MatchWithoutConsuming<BinaryOperatorToken>(">");
+                    return BinaryOpTail<LogicalOp>(firstOp, neqMatcher, NotEqOperand);
                 }
 
                 private Expression NotEqOperand()
                 {
                     var firstOp = AddOperand();
-                    return AddOperandList(firstOp);
-                }
-
-                private Expression AddOperandList(Expression lhs)
-                {
-                    if (Parent.MatchWithoutConsuming<BinaryOperatorToken>("+") ||
-                        Parent.MatchWithoutConsuming<BinaryOperatorToken>("-"))
-                    {
-                        var opToken = Parent.Consume<BinaryOperatorToken>();
-                        var rhs = NotEqOperand();
-                        return NotEqOperandList(new ArithmeticOp(opToken.Value, lhs, rhs,
-                            opToken.Row, opToken.Col));
-                    }
-                    else
-                        return lhs;
+                    Func<bool> addMatcher =
+                        () => Parent.MatchWithoutConsuming<BinaryOperatorToken>("+") ||
+                              Parent.MatchWithoutConsuming<BinaryOperatorToken>("-");
+                    return BinaryOpTail<ArithmeticOp>(firstOp, addMatcher, AddOperand);
                 }
 
                 private Expression AddOperand()
                 {
                     var firstOp = MultOperand();
-                    return MultOperandList(firstOp);
-                }
-
-                private Expression MultOperandList(Expression lhs)
-                {
-                    if (Parent.MatchWithoutConsuming<BinaryOperatorToken>("*") ||
-                        Parent.MatchWithoutConsuming<BinaryOperatorToken>("/") ||
-                        Parent.MatchWithoutConsuming<BinaryOperatorToken>("%"))
-                    {
-                        var opToken = Parent.Consume<BinaryOperatorToken>();
-                        var rhs = MultOperand();
-                        return MultOperandList(new ArithmeticOp(opToken.Value, lhs, rhs,
-                            opToken.Row, opToken.Col));
-                    }
-                    else
-                        return lhs;
+                    Func<bool> multMatcher =
+                        () => Parent.MatchWithoutConsuming<BinaryOperatorToken>("*") ||
+                              Parent.MatchWithoutConsuming<BinaryOperatorToken>("/") ||
+                              Parent.MatchWithoutConsuming<BinaryOperatorToken>("%");
+                    return BinaryOpTail<ArithmeticOp>(firstOp, multMatcher, MultOperand);
                 }
 
                 private Expression MultOperand()
@@ -418,6 +352,23 @@ namespace MiniJavaCompiler
                     }
                     else
                         return Term();
+                }
+
+                private Expression BinaryOpTail<OperatorType>(Expression lhs,
+                    Func<bool> matchOperator, Func<Expression> operandParser)
+                    where OperatorType : BinaryOperator
+                {
+                    if (matchOperator())
+                    {
+                        var opToken = Parent.Consume<BinaryOperatorToken>();
+                        var rhs = operandParser();
+                        var operatorExp = (Expression)System.Activator.CreateInstance(
+                            typeof(OperatorType), new Object[] { opToken.Value, lhs, rhs, opToken.Row, opToken.Col });
+                        return BinaryOpTail<OperatorType>(operatorExp, matchOperator,
+                            operandParser);
+                    }
+                    else
+                        return lhs;
                 }
 
                 public Expression Term()
@@ -643,6 +594,8 @@ namespace MiniJavaCompiler
                 }
                 return new Tuple<TypeToken, bool>(type, false);
             }
+
+            // Matcher functions.
 
             private T Match<T>(string value = null) where T : Token
             {
