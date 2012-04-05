@@ -39,9 +39,14 @@ namespace MiniJavaCompilerTest
             programTokens = new Queue<Token>();
         }
 
+        private Program GetProgramTree()
+        {
+            return new Parser(new StubScanner(programTokens)).Parse();
+        }
+
         [Test]
         public void ValidClassDeclarationWithExtension()
-        {
+        { // class ClassName extends OtherClass { }
             programTokens.Enqueue(new KeywordToken("class", 0, 0));
             programTokens.Enqueue(new Identifier("ClassName", 0, 0));
             programTokens.Enqueue(new KeywordToken("extends", 0, 0));
@@ -59,7 +64,7 @@ namespace MiniJavaCompilerTest
 
         [Test]
         public void ValidClassDeclarationWithInternalDeclarations()
-        {
+        { // class ClassName { int foo; public void bar() { } }
             programTokens.Enqueue(new KeywordToken("class", 0, 0));
             programTokens.Enqueue(new Identifier("ClassName", 0, 0));
             programTokens.Enqueue(new LeftCurlyBrace(0, 0));
@@ -84,7 +89,7 @@ namespace MiniJavaCompilerTest
 
         [Test]
         public void BasicTypeVariableDeclaration()
-        {
+        { // int foo
             programTokens.Enqueue(new MiniJavaType("int", 0, 0));
             programTokens.Enqueue(new Identifier("foo", 0, 0));
 
@@ -97,7 +102,7 @@ namespace MiniJavaCompilerTest
 
         [Test]
         public void UserDefinedTypeVariableDeclaration()
-        {
+        { // someType foo
             programTokens.Enqueue(new Identifier("SomeType", 0, 0));
             programTokens.Enqueue(new Identifier("foo", 0, 0));
 
@@ -110,7 +115,7 @@ namespace MiniJavaCompilerTest
 
         [Test]
         public void ArrayVariableDeclaration()
-        {
+        { // int[] foo
             programTokens.Enqueue(new MiniJavaType("int", 0, 0));
             programTokens.Enqueue(new LeftBracket(0, 0));
             programTokens.Enqueue(new RightBracket(0, 0));
@@ -125,7 +130,7 @@ namespace MiniJavaCompilerTest
 
         [Test]
         public void AssertStatement()
-        {
+        { // assert(true);
             programTokens.Enqueue(new KeywordToken("assert", 0, 0));
             programTokens.Enqueue(new LeftParenthesis(0, 0));
             programTokens.Enqueue(new KeywordToken("true", 0, 0));
@@ -140,7 +145,7 @@ namespace MiniJavaCompilerTest
 
         [Test]
         public void PrintStatement()
-        {
+        { // System.out.println(5);
             programTokens.Enqueue(new KeywordToken("System", 0, 0));
             programTokens.Enqueue(new MethodInvocationToken(0, 0));
             programTokens.Enqueue(new KeywordToken("out", 0, 0));
@@ -159,7 +164,7 @@ namespace MiniJavaCompilerTest
 
         [Test]
         public void WhileStatement()
-        {
+        { // while (true) assert(false);
             programTokens.Enqueue(new KeywordToken("while", 0, 0));
             programTokens.Enqueue(new LeftParenthesis(0, 0));
             programTokens.Enqueue(new KeywordToken("true", 0, 0));
@@ -180,7 +185,7 @@ namespace MiniJavaCompilerTest
 
         [Test]
         public void ReturnStatement()
-        {
+        { // return foo;
             programTokens.Enqueue(new KeywordToken("return", 0, 0));
             programTokens.Enqueue(new Identifier("foo", 0, 0));
             programTokens.Enqueue(new EndLine(0, 0));
@@ -193,7 +198,7 @@ namespace MiniJavaCompilerTest
 
         [Test]
         public void MethodInvocationStatement()
-        {
+        { // foo.bar();
             programTokens.Enqueue(new Identifier("foo", 0, 0));
             programTokens.Enqueue(new MethodInvocationToken(0, 0));
             programTokens.Enqueue(new Identifier("bar", 0, 0));
@@ -214,7 +219,7 @@ namespace MiniJavaCompilerTest
 
         [Test]
         public void VariableDeclarationStatement()
-        {
+        { // foo[] bar;
             programTokens.Enqueue(new Identifier("foo", 0, 0));
             programTokens.Enqueue(new LeftBracket(0, 0));
             programTokens.Enqueue(new RightBracket(0, 0));
@@ -229,7 +234,7 @@ namespace MiniJavaCompilerTest
 
         [Test]
         public void AssignmentToArrayStatement()
-        {
+        { // foo[5] = true;
             programTokens.Enqueue(new Identifier("foo", 0, 0));
             programTokens.Enqueue(new LeftBracket(0, 0));
             programTokens.Enqueue(new IntegerLiteralToken("5", 0, 0));
@@ -248,7 +253,7 @@ namespace MiniJavaCompilerTest
 
         [Test]
         public void TryingToAssignToArrayWithoutAnIndexExpression()
-        {
+        { // foo[] = 42;
             programTokens.Enqueue(new Identifier("foo", 0, 0));
             programTokens.Enqueue(new LeftBracket(0, 0));
             programTokens.Enqueue(new RightBracket(0, 0));
@@ -262,7 +267,7 @@ namespace MiniJavaCompilerTest
 
         [Test]
         public void AnyExpressionDoesNotQualifyAsAStatement()
-        {
+        { // 42;
             programTokens.Enqueue(new IntegerLiteralToken("42", 0, 0));
             programTokens.Enqueue(new EndLine(0, 0));
 
@@ -272,7 +277,7 @@ namespace MiniJavaCompilerTest
 
         [Test]
         public void BinaryOperatorExpression()
-        {
+        { // 7 % foo == 0
             programTokens.Enqueue(new IntegerLiteralToken("7", 0, 0));
             programTokens.Enqueue(new ArithmeticOperatorToken("%", 0, 0));
             programTokens.Enqueue(new Identifier("foo", 0, 0));
@@ -294,8 +299,54 @@ namespace MiniJavaCompilerTest
         }
 
         [Test]
+        public void OperatorPrecedences()
+        { // 4 + 9 * (7 - 2 % 3) - 2
+            programTokens.Enqueue(new IntegerLiteralToken("4", 0, 0));
+            programTokens.Enqueue(new ArithmeticOperatorToken("+", 0, 0));
+            programTokens.Enqueue(new IntegerLiteralToken("9", 0, 0));
+            programTokens.Enqueue(new ArithmeticOperatorToken("*", 0, 0));
+            programTokens.Enqueue(new LeftParenthesis(0, 0));
+            programTokens.Enqueue(new IntegerLiteralToken("7", 0, 0));
+            programTokens.Enqueue(new ArithmeticOperatorToken("-", 0, 0));
+            programTokens.Enqueue(new IntegerLiteralToken("2", 0, 0));
+            programTokens.Enqueue(new ArithmeticOperatorToken("%", 0, 0));
+            programTokens.Enqueue(new IntegerLiteralToken("3", 0, 0));
+            programTokens.Enqueue(new RightParenthesis(0, 0));
+            programTokens.Enqueue(new ArithmeticOperatorToken("-", 0, 0));
+            programTokens.Enqueue(new IntegerLiteralToken("2", 0, 0));
+
+            var parser = new Parser(new StubScanner(programTokens));
+            var expression = parser.Expression();
+            Assert.That(expression, Is.InstanceOf<ArithmeticOp>());
+            var minusOp = (ArithmeticOp)expression;
+            Assert.That(minusOp.Symbol, Is.EqualTo("-"));
+            Assert.That(minusOp.RHS, Is.InstanceOf<IntegerLiteral>());
+            Assert.That(minusOp.LHS, Is.InstanceOf<ArithmeticOp>());
+            var plusOp = (ArithmeticOp)minusOp.LHS;
+            Assert.That(plusOp.Symbol, Is.EqualTo("+"));
+            Assert.That(plusOp.LHS, Is.InstanceOf<IntegerLiteral>());
+            Assert.That(plusOp.RHS, Is.InstanceOf<ArithmeticOp>());
+            var timesOp = (ArithmeticOp)plusOp.RHS;
+            Assert.That(timesOp.Symbol, Is.EqualTo("*"));
+            Assert.That(timesOp.LHS, Is.InstanceOf<IntegerLiteral>());
+            Assert.That(timesOp.RHS, Is.InstanceOf<ArithmeticOp>());
+            var parenthesisedMinusOp = (ArithmeticOp)timesOp.RHS;
+            Assert.That(parenthesisedMinusOp.Symbol, Is.EqualTo("-"));
+            Assert.That(parenthesisedMinusOp.LHS, Is.InstanceOf<IntegerLiteral>());
+            Assert.That(parenthesisedMinusOp.RHS, Is.InstanceOf<ArithmeticOp>());
+            var moduloOp = (ArithmeticOp)parenthesisedMinusOp.RHS;
+            Assert.That(moduloOp.Symbol, Is.EqualTo("%"));
+            Assert.That(moduloOp.LHS, Is.InstanceOf<IntegerLiteral>());
+            Assert.That(moduloOp.RHS, Is.InstanceOf<IntegerLiteral>());
+        }
+
+        [Test]
         public void SimpleMainClassWithEmptyMainMethod()
-        {
+        {   /* class ThisIsTheMainClass {
+             *     public static void main() { }
+             * }
+             * <EOF>
+             */
             DeclareMainClassUntilMainMethod("ThisIsTheMainClass");
             ClosingCurlyBrace(); ClosingCurlyBrace();
             EndFile();
@@ -309,7 +360,15 @@ namespace MiniJavaCompilerTest
 
         [Test]
         public void SimpleMainClassWithArithmeticAndPrinting()
-        {
+        {   /* class ThisIsTheMainClass {
+             *     public static void main() {
+             *         int foo;
+             *         foo = 42;
+             *         System.out.println(foo);
+             *     }
+             * }
+             * <EOF>
+             */
             DeclareMainClassUntilMainMethod("ThisIsTheMainClass");
             DeclareBasicVariable("foo", "int");
             AssignIntegerToVariable("foo", "42");
@@ -343,7 +402,14 @@ namespace MiniJavaCompilerTest
 
         [Test]
         public void CreatingABaseTypeArray()
-        {
+        {   /* class ThisIsTheMainClass {
+             *     public static void main() {
+             *         int[] foo;
+             *         foo = new int[10];
+             *     }
+             * }
+             * <EOF>
+             */
             DeclareMainClassUntilMainMethod("ThisIsTheMainClass");
             DeclareBasicArrayVariable("foo", "int");
             AssignNewArrayToVariable("foo", "int", "10");
@@ -376,7 +442,11 @@ namespace MiniJavaCompilerTest
 
         [Test]
         public void MainMethodWithFormalParametersCausesSyntaxError()
-        {
+        {   /* class MainClass {
+             *     public static void main(int foo) { }
+             * }
+             * <EOF>
+             */
             programTokens.Enqueue(new KeywordToken("class", 0, 0));
             programTokens.Enqueue(new Identifier("MainClass", 0, 0));
             programTokens.Enqueue(new LeftCurlyBrace(0, 0));
@@ -396,7 +466,14 @@ namespace MiniJavaCompilerTest
 
         [Test]
         public void MethodWithoutParameters()
-        {
+        {   /* class MainClass {
+             *     public static void main() { }
+             * }
+             * class someClass {
+             *     public int someMethod() { }
+             * }
+             * <EOF>
+             */
             DeclareMainClassUntilMainMethod("MainClass");
             ClosingCurlyBrace(); ClosingCurlyBrace();
 
@@ -419,7 +496,13 @@ namespace MiniJavaCompilerTest
 
         [Test]
         public void MethodInvocationWithParameters()
-        {
+        {   /* class MainClass {
+             *     public static void main() {
+             *         someClass.someMethod(42, parameterVariable);
+             *     }
+             * }
+             * <EOF>
+             */
             DeclareMainClassUntilMainMethod("MainClass");
             MakeMethodInvocationWithoutParentheses("someClass", "someMethod");
             programTokens.Enqueue(new LeftParenthesis(0, 0));
@@ -445,7 +528,13 @@ namespace MiniJavaCompilerTest
 
         [Test]
         public void MethodInvocationWithoutParameters()
-        {
+        {   /* class MainClass {
+             *     public static void main() {
+             *         someClass.someMethod();
+             *     }
+             * }
+             * <EOF>
+             */
             DeclareMainClassUntilMainMethod("MainClass");
             MakeMethodInvocationWithoutParentheses("someClass", "someMethod");
             EmptyMethodInvocationParentheses();
@@ -467,8 +556,14 @@ namespace MiniJavaCompilerTest
 
         [Test]
         public void MethodWithFormalParameters()
-        {
-            // empty main method and class
+        {   /* class MainClass {
+             *     public static void main() { }
+             * }
+             * class anotherClass {
+             *     public int someMethod(int foo, myOwnType bar) { }
+             * }
+             * <EOF>
+             */
             DeclareMainClassUntilMainMethod("MainClass");
             ClosingCurlyBrace(); ClosingCurlyBrace();
 
@@ -505,7 +600,13 @@ namespace MiniJavaCompilerTest
 
         [Test]
         public void ChainedMethodInvocation()
-        {
+        {   /* class MainClass {
+             *     public static void main() {
+             *         someObject.someMethod().anotherMethod().length();
+             *     }
+             * }
+             * <EOF>
+             */
             DeclareMainClassUntilMainMethod("MainClass");
             MakeMethodInvocationWithoutParentheses("someObject", "someMethod");
             EmptyMethodInvocationParentheses();
@@ -535,7 +636,14 @@ namespace MiniJavaCompilerTest
 
         [Test]
         public void IfStatementWithoutElseBranch()
-        {
+        {   /* class MainClass {
+             *     public static void main() {
+             *         if (true && false)
+             *             foo = 42;
+             *     }
+             * }
+             * <EOF>
+             */
             DeclareMainClassUntilMainMethod("MainClass");
             programTokens.Enqueue(new KeywordToken("if", 0, 0));
             programTokens.Enqueue(new LeftParenthesis(0, 0));
@@ -563,7 +671,16 @@ namespace MiniJavaCompilerTest
 
         [Test]
         public void IfStatementWithElseBranch()
-        {
+        {   /* class MainClass {
+             *     public static void main() {
+             *         if (true)
+             *             foo.bar();
+             *         else
+             *             foo = 42;
+             *     }
+             * }
+             * <EOF>
+             */
             DeclareMainClassUntilMainMethod("MainClass");
             programTokens.Enqueue(new KeywordToken("if", 0, 0));
             programTokens.Enqueue(new LeftParenthesis(0, 0));
@@ -636,11 +753,6 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new KeywordToken("class", 0, 0));
             programTokens.Enqueue(new Identifier(className, 0, 0));
             programTokens.Enqueue(new LeftCurlyBrace(0, 0));
-        }
-
-        private Program GetProgramTree()
-        {
-            return new Parser(new StubScanner(programTokens)).Parse();
         }
 
         private void ClosingCurlyBrace()
