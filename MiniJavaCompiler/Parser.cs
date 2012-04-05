@@ -597,33 +597,35 @@ namespace MiniJavaCompiler
 
             // Matcher functions.
 
-            private T Match<T>(string value = null) where T : Token
+            private ExpectedType Match<ExpectedType>(string expectedValue = null)
+                where ExpectedType : Token
             {
-                if (MatchWithoutConsuming<T>(value))
-                    return Consume<T>();
-                else if (value == null)
-                    throw new SyntaxError("Expected type " + typeof(T).Name +
+                if (MatchWithoutConsuming<ExpectedType>(expectedValue))
+                    return Consume<ExpectedType>();
+                else if (expectedValue == null)
+                    throw new SyntaxError("Expected type " + typeof(ExpectedType).Name +
                         " but got " + InputToken.GetType().Name + ".");
                 else
-                    throw new SyntaxError("Expected value \"" + value + "\" but got " +
+                    throw new SyntaxError("Expected value \"" + expectedValue + "\" but got " +
                         ((StringToken)InputToken).Value + ".");
             }
 
-            private T Consume<T>() where T : Token
+            private TokenType Consume<TokenType>() where TokenType : Token
             {
-                var temp = (T)InputToken;
+                var temp = (TokenType)InputToken;
                 InputToken = inputBuffer.Count > 0 ? inputBuffer.Pop() : scanner.NextToken();
                 return temp;
             }
 
-            private bool MatchWithoutConsuming<T>(string value = null) where T : Token
+            private bool MatchWithoutConsuming<ExpectedType>(string expectedValue = null)
+                where ExpectedType : Token
             {
                 if (InputToken is ErrorToken)
                     throw new SyntaxError("Received an error token."); // recovery must be done
 
-                if (InputToken is T)
+                if (InputToken is ExpectedType)
                 {
-                    if (value == null || ((StringToken)InputToken).Value == value)
+                    if (expectedValue == null || ((StringToken)InputToken).Value == expectedValue)
                         return true;
                     else
                         return false;
