@@ -52,6 +52,11 @@ namespace MiniJavaCompiler
                 InputToken = token;
             }
 
+            private void reportError(string errorMsg)
+            {
+                errorMessages.Add(errorMsg);
+            }
+
             public Parser(Scanner scanner)
             {
                 this.scanner = scanner;
@@ -114,7 +119,7 @@ namespace MiniJavaCompiler
                 }
                 catch (SyntaxError e)
                 {
-                    errorMessages.Add(e.Message);
+                    reportError(e.Message);
                     RecoverFromClassMatching();
                     return null;
                 }
@@ -142,7 +147,7 @@ namespace MiniJavaCompiler
                 }
                 catch (SyntaxError e)
                 {
-                    errorMessages.Add(e.Message);
+                    reportError(e.Message);
                     while (!MatchWithoutConsuming<EOF>())
                     {
                         var token = Consume<Token>();
@@ -347,7 +352,7 @@ namespace MiniJavaCompiler
                 }
                 catch (SyntaxError e)
                 {
-                    errorMessages.Add(e.Message);
+                    reportError(e.Message);
                     RecoverFromClassMatching();
                     return null;
                 }
@@ -381,7 +386,7 @@ namespace MiniJavaCompiler
                 }
                 catch (SyntaxError e)
                 {
-                    errorMessages.Add(e.Message);
+                    reportError(e.Message);
                     RecoverFromDeclarationMatching();
                     return null;
                 }
@@ -402,16 +407,28 @@ namespace MiniJavaCompiler
                 var variableDecl = VariableOrFormalParameterDeclaration();
                 Match<EndLine>();
                 return variableDecl;
-                
             }
 
             private VariableDeclaration VariableOrFormalParameterDeclaration()
             {
-                var typeInfo = Type();
-                var type = (StringToken)typeInfo.Item1;
-                var variableIdent = Match<Identifier>();
-                return new VariableDeclaration(variableIdent.Value, type.Value,
-                    typeInfo.Item2, type.Row, type.Col);
+                try
+                {
+                    var typeInfo = Type();
+                    var type = (StringToken)typeInfo.Item1;
+                    var variableIdent = Match<Identifier>();
+                    return new VariableDeclaration(variableIdent.Value, type.Value,
+                        typeInfo.Item2, type.Row, type.Col);
+                }
+                catch (SyntaxError e)
+                {
+                    reportError(e.Message);
+                    while (!(MatchWithoutConsuming<EOF>()
+                        || MatchWithoutConsuming<EndLine>()
+                        || MatchWithoutConsuming<ParameterSeparator>()
+                        || MatchWithoutConsuming<RightParenthesis>()))
+                        Consume<Token>();
+                    return null;
+                }
             }
 
             public MethodDeclaration MethodDeclaration()
@@ -462,7 +479,19 @@ namespace MiniJavaCompiler
 
                 public Expression parse()
                 {
-                    return ParseExpression();
+                    try
+                    {
+                        return ParseExpression();
+                    }
+                    catch (SyntaxError e)
+                    {
+                        Parent.reportError(e.Message);
+                        while (!(Parent.MatchWithoutConsuming<EOF>()
+                            || Parent.MatchWithoutConsuming<RightParenthesis>()
+                            || Parent.MatchWithoutConsuming<EndLine>()))
+                            Parent.Consume<Token>();
+                        return null;
+                    }
                 }
 
                 private Expression ParseExpression()
@@ -548,17 +577,30 @@ namespace MiniJavaCompiler
 
                 public Expression Term()
                 {
-                    if (Parent.InputToken is KeywordToken)
-                        return MakeKeywordExpression();
-                    else if (Parent.InputToken is Identifier)
-                        return MakeVariableReferenceExpression();
-                    else if (Parent.InputToken is IntegerLiteralToken)
-                        return MakeIntegerLiteralExpression();
-                    else if (Parent.InputToken is LeftParenthesis)
-                        return MakeParenthesisedExpression();
-                    else
-                        throw new SyntaxError("Invalid start token of type " +
-                            Parent.InputToken.GetType().Name + " for a term.");
+                    try
+                    {
+                        if (Parent.InputToken is KeywordToken)
+                            return MakeKeywordExpression();
+                        else if (Parent.InputToken is Identifier)
+                            return MakeVariableReferenceExpression();
+                        else if (Parent.InputToken is IntegerLiteralToken)
+                            return MakeIntegerLiteralExpression();
+                        else if (Parent.InputToken is LeftParenthesis)
+                            return MakeParenthesisedExpression();
+                        else
+                            throw new SyntaxError("Invalid start token of type " +
+                                Parent.InputToken.GetType().Name + " for a term in an expression.");
+                    }
+                    catch (SyntaxError e)
+                    { // this one should probably be parameterised on follow set
+                        Parent.reportError(e.Message);
+                        while (!(Parent.MatchWithoutConsuming<EOF>()
+                            || Parent.MatchWithoutConsuming<RightParenthesis>()
+                            || Parent.MatchWithoutConsuming<EndLine>()
+                            || Parent.MatchWithoutConsuming<BinaryOperatorToken>()))
+                            Parent.Consume<Token>();
+                        return null;
+                    }
                 }
 
                 private Expression MakeParenthesisedExpression()
@@ -700,6 +742,11 @@ namespace MiniJavaCompiler
             {
                 if (MatchWithoutConsuming<ExpectedType>(expectedValue))
                     return Consume<ExpectedType>();
+                else if (InputToken is ErrorToken)
+                {
+                    var error = Consume<ErrorToken>();
+                    throw new SyntaxError(error.Message);
+                }
                 else if (expectedValue == null)
                     throw new SyntaxError("Expected type " + typeof(ExpectedType).Name +
                         " but got " + InputToken.GetType().Name + ".");
@@ -723,9 +770,6 @@ namespace MiniJavaCompiler
             private bool MatchWithoutConsuming<ExpectedType>(string expectedValue = null)
                 where ExpectedType : Token
             {
-                if (InputToken is ErrorToken)
-                    throw new SyntaxError("Received an error token."); // recovery must be done
-
                 if (InputToken is ExpectedType)
                 {
                     if (expectedValue == null || ((StringToken)InputToken).Value == expectedValue)
