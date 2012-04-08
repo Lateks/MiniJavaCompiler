@@ -106,7 +106,8 @@ namespace MiniJavaCompiler
                         }
                         else
                         {   // Brackets are used to index into an array, beginning an expression.
-                            // Buffer the tokens that were already consumed for the expression parser.
+                            // Buffer the tokens that were already consumed so the expression parser
+                            // can match them again.
                             buffer(lBracket);
                             buffer(ident);
                             expression = Expression();
@@ -115,7 +116,8 @@ namespace MiniJavaCompiler
                     else if (MatchWithoutConsuming<Identifier>())
                         return MakeVariableDeclarationStatement(ident, false);
                     else
-                    { // Input token is a reference to a variable and begins an expression.
+                    { // The consumed identifier token is a reference to a variable
+                      // and begins an expression.
                         buffer(ident);
                         expression = Expression();
                     }
@@ -269,6 +271,86 @@ namespace MiniJavaCompiler
             {
                 var binOpParser = new ExpressionParser(this);
                 return binOpParser.parse();
+            }
+
+            public ClassDeclaration ClassDeclaration()
+            {
+                Token startToken = Match<KeywordToken>("class");
+                Identifier classIdent = Match<Identifier>();
+                string inheritedClass = OptionalInheritance();
+                Match<LeftCurlyBrace>();
+                List<Declaration> declarations = DeclarationList();
+                Match<RightCurlyBrace>();
+                return new ClassDeclaration(classIdent.Value, inheritedClass,
+                    declarations, startToken.Row, startToken.Col);
+            }
+
+            public string OptionalInheritance()
+            {
+                if (!(InputToken is LeftCurlyBrace))
+                {
+                    Match<KeywordToken>("extends");
+                    return Match<Identifier>().Value;
+                }
+                return null;
+            }
+
+            public Declaration Declaration()
+            {
+                if (InputToken is MiniJavaType || InputToken is Identifier)
+                {
+                    VariableDeclaration variable = VariableDeclaration();
+                    Match<EndLine>();
+                    return variable;
+                }
+                else if (InputToken is KeywordToken)
+                {
+                    return MethodDeclaration();
+                }
+                else
+                    throw new SyntaxError("Invalid token of type " + InputToken.GetType().Name +
+                        " starting a declaration.");
+            }
+
+            public VariableDeclaration VariableDeclaration()
+            {
+                var typeInfo = Type();
+                var type = (StringToken)typeInfo.Item1;
+                Identifier variableIdent = Match<Identifier>();
+                return new VariableDeclaration(variableIdent.Value, type.Value,
+                    typeInfo.Item2, type.Row, type.Col);
+            }
+
+            public MethodDeclaration MethodDeclaration()
+            {
+                Token startToken = Match<KeywordToken>("public");
+                var typeInfo = Type();
+                var type = (StringToken)typeInfo.Item1;
+                Identifier methodName = Match<Identifier>();
+                Match<LeftParenthesis>();
+                List<VariableDeclaration> parameters = FormalParameters();
+                Match<RightParenthesis>();
+                Match<LeftCurlyBrace>();
+                List<Statement> methodBody = StatementList();
+                Match<RightCurlyBrace>();
+                return new MethodDeclaration(methodName.Value, type.Value,
+                    typeInfo.Item2, parameters, methodBody, startToken.Row,
+                    startToken.Col);
+            }
+
+            // Returns a 2-tuple with the matched type token as the first element and
+            // a bool value indicating whether the type is an array or not as the
+            // second element.
+            public Tuple<TypeToken, bool> Type()
+            {
+                var type = Match<TypeToken>();
+                if (InputToken is LeftBracket)
+                {
+                    Match<LeftBracket>();
+                    Match<RightBracket>();
+                    return new Tuple<TypeToken, bool>(type, true);
+                }
+                return new Tuple<TypeToken, bool>(type, false);
             }
 
             // An internal parser that solves operator precedences in expressions.
@@ -515,88 +597,11 @@ namespace MiniJavaCompiler
                 }
             }
 
-            public ClassDeclaration ClassDeclaration()
-            {
-                Token startToken = Match<KeywordToken>("class");
-                Identifier classIdent = Match<Identifier>();
-                string inheritedClass = OptionalInheritance();
-                Match<LeftCurlyBrace>();
-                List<Declaration> declarations = DeclarationList();
-                Match<RightCurlyBrace>();
-                return new ClassDeclaration(classIdent.Value, inheritedClass,
-                    declarations, startToken.Row, startToken.Col);
-            }
-
-            public string OptionalInheritance()
-            {
-                if (!(InputToken is LeftCurlyBrace))
-                {
-                    Match<KeywordToken>("extends");
-                    return Match<Identifier>().Value;
-                }
-                return null;
-            }
-
-            public Declaration Declaration()
-            {
-                if (InputToken is MiniJavaType || InputToken is Identifier)
-                {
-                    VariableDeclaration variable = VariableDeclaration();
-                    Match<EndLine>();
-                    return variable;
-                }
-                else if (InputToken is KeywordToken)
-                {
-                    return MethodDeclaration();
-                }
-                else
-                    throw new SyntaxError("Invalid token of type " + InputToken.GetType().Name +
-                        " starting a declaration.");
-            }
-
-            public VariableDeclaration VariableDeclaration()
-            {
-                var typeInfo = Type();
-                var type = (StringToken)typeInfo.Item1;
-                Identifier variableIdent = Match<Identifier>();
-                return new VariableDeclaration(variableIdent.Value, type.Value,
-                    typeInfo.Item2, type.Row, type.Col);
-            }
-
-            public MethodDeclaration MethodDeclaration()
-            {
-                Token startToken = Match<KeywordToken>("public");
-                var typeInfo = Type();
-                var type = (StringToken)typeInfo.Item1;
-                Identifier methodName = Match<Identifier>();
-                Match<LeftParenthesis>();
-                List<VariableDeclaration> parameters = FormalParameters();
-                Match<RightParenthesis>();
-                Match<LeftCurlyBrace>();
-                List<Statement> methodBody = StatementList();
-                Match<RightCurlyBrace>();
-                return new MethodDeclaration(methodName.Value, type.Value,
-                    typeInfo.Item2, parameters, methodBody, startToken.Row,
-                    startToken.Col);
-            }
-
-            // Returns a 2-tuple with the matched type token as the first element and
-            // a bool value indicating whether the type is an array or not as the
-            // second element.
-            public Tuple<TypeToken, bool> Type()
-            {
-                var type = Match<TypeToken>();
-                if (InputToken is LeftBracket)
-                {
-                    Match<LeftBracket>();
-                    Match<RightBracket>();
-                    return new Tuple<TypeToken, bool>(type, true);
-                }
-                return new Tuple<TypeToken, bool>(type, false);
-            }
-
             // Matcher functions.
 
+            // Checks that the input token is of the expected type and matches the
+            // expected value. If the input token matches, it is returned and
+            // cast to the expected type. Otherwise an error is reported.
             private ExpectedType Match<ExpectedType>(string expectedValue = null)
                 where ExpectedType : Token
             {
@@ -610,6 +615,8 @@ namespace MiniJavaCompiler
                         ((StringToken)InputToken).Value + ".");
             }
 
+            // Consumes a token from input and returns it after casting to the
+            // given type.
             private TokenType Consume<TokenType>() where TokenType : Token
             {
                 var temp = (TokenType)InputToken;
@@ -617,6 +624,9 @@ namespace MiniJavaCompiler
                 return temp;
             }
 
+            // Checks whether the input token matches the expected type and value or not.
+            // Either returns a boolean value or reports an error if input token is an
+            // error token.
             private bool MatchWithoutConsuming<ExpectedType>(string expectedValue = null)
                 where ExpectedType : Token
             {
