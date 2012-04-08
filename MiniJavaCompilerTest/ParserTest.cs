@@ -24,7 +24,7 @@ namespace MiniJavaCompilerTest
             if (tokens.Count > 0)
                 return tokens.Dequeue();
             else
-                return null;
+                return new EOF(0, 0);
         }
     }
 
@@ -89,9 +89,10 @@ namespace MiniJavaCompilerTest
 
         [Test]
         public void BasicTypeVariableDeclaration()
-        { // int foo
+        { // int foo;
             programTokens.Enqueue(new MiniJavaType("int", 0, 0));
             programTokens.Enqueue(new Identifier("foo", 0, 0));
+            EndLine();
 
             var parser = new Parser(new StubScanner(programTokens));
             var variableDecl = parser.VariableDeclaration();
@@ -102,9 +103,10 @@ namespace MiniJavaCompilerTest
 
         [Test]
         public void UserDefinedTypeVariableDeclaration()
-        { // someType foo
+        { // someType foo;
             programTokens.Enqueue(new Identifier("SomeType", 0, 0));
             programTokens.Enqueue(new Identifier("foo", 0, 0));
+            EndLine();
 
             var parser = new Parser(new StubScanner(programTokens));
             var variableDecl = parser.VariableDeclaration();
@@ -115,11 +117,12 @@ namespace MiniJavaCompilerTest
 
         [Test]
         public void ArrayVariableDeclaration()
-        { // int[] foo
+        { // int[] foo;
             programTokens.Enqueue(new MiniJavaType("int", 0, 0));
             programTokens.Enqueue(new LeftBracket(0, 0));
             programTokens.Enqueue(new RightBracket(0, 0));
             programTokens.Enqueue(new Identifier("foo", 0, 0));
+            EndLine();
 
             var parser = new Parser(new StubScanner(programTokens));
             var variableDecl = parser.VariableDeclaration();
@@ -135,7 +138,7 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new LeftParenthesis(0, 0));
             programTokens.Enqueue(new KeywordToken("true", 0, 0));
             programTokens.Enqueue(new RightParenthesis(0, 0));
-            programTokens.Enqueue(new EndLine(0, 0));
+            EndLine();
 
             var parser = new Parser(new StubScanner(programTokens));
             var statement = parser.Statement();
@@ -262,7 +265,8 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new EndLine(0, 0));
 
             var parser = new Parser(new StubScanner(programTokens));
-            Assert.Throws<SyntaxError>(() => parser.Statement());
+            Assert.Null(parser.Statement());
+            Assert.That(parser.errorMessages.Count, Is.GreaterThan(0));
         }
 
         [Test]
@@ -272,7 +276,8 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new EndLine(0, 0));
 
             var parser = new Parser(new StubScanner(programTokens));
-            Assert.Throws<SyntaxError>(() => parser.Statement());
+            Assert.Null(parser.Statement());
+            Assert.That(parser.errorMessages.Count, Is.GreaterThan(0));
         }
 
         [Test]
@@ -461,7 +466,7 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new LeftCurlyBrace(0, 0));
             EndFile();
 
-            Assert.Throws<SyntaxError>(() => GetProgramTree());
+            Assert.Throws<BackEndError>(() => GetProgramTree());
         }
 
         [Test]

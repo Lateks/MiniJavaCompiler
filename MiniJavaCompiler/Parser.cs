@@ -16,16 +16,36 @@ namespace MiniJavaCompiler
                 : base(message) { }
         }
 
+        public class BackEndError : Exception
+        {
+            public List<String> ErrorMsgs
+            {
+                get;
+                private set;
+            }
+
+            public BackEndError(List<String> messages)
+            {
+                ErrorMsgs = messages;
+            }
+        }
+
         public class Parser
         {
             private Scanner scanner;
             private Stack<Token> inputBuffer;
+            public List<String> errorMessages
+            {
+                get;
+                set;
+            }
             Token InputToken
             {
                 get;
                 set;
             }
 
+            // "Pushes" an already consumed token back into the input.
             private void buffer(Token token)
             {
                 inputBuffer.Push(InputToken);
@@ -36,6 +56,7 @@ namespace MiniJavaCompiler
             {
                 this.scanner = scanner;
                 this.inputBuffer = new Stack<Token>();
+                errorMessages = new List<String>();
                 InputToken = scanner.NextToken();
             }
 
@@ -48,43 +69,88 @@ namespace MiniJavaCompiler
             {
                 var main = MainClass();
                 var declarations = ClassDeclarationList();
-                Match<EOF>();
-                return new Program(main, declarations);
+                try
+                {
+                    Match<EOF>();
+                    ReportErrors();
+                    return new Program(main, declarations);
+                }
+                catch (SyntaxError e)
+                {
+                    errorMessages.Add(e.Message);
+                    throw new BackEndError(errorMessages);
+                }
+            }
+
+            private void ReportErrors()
+            {
+                if (errorMessages.Count > 0)
+                    throw new BackEndError(errorMessages);
+                return;
             }
 
             public MainClassDeclaration MainClass()
             {
-                Token startToken = Match<KeywordToken>("class");
-                Identifier classIdent = Match<Identifier>();
-                Match<LeftCurlyBrace>();
-                Match<KeywordToken>("public");
-                Match<KeywordToken>("static");
-                Match<MiniJavaType>("void");
-                Match<KeywordToken>("main");
+                try
+                {
+                    Token startToken = Match<KeywordToken>("class");
+                    Identifier classIdent = Match<Identifier>();
+                    Match<LeftCurlyBrace>();
+                    Match<KeywordToken>("public");
+                    Match<KeywordToken>("static");
+                    Match<MiniJavaType>("void");
+                    Match<KeywordToken>("main");
 
-                Match<LeftParenthesis>();
-                Match<RightParenthesis>();
-                
-                Match<LeftCurlyBrace>();
-                List<Statement> main_statements = StatementList();
-                Match<RightCurlyBrace>();
-                
-                Match<RightCurlyBrace>();
-                return new MainClassDeclaration(classIdent.Value,
-                    main_statements, startToken.Row, startToken.Col);
+                    Match<LeftParenthesis>();
+                    Match<RightParenthesis>();
+
+                    Match<LeftCurlyBrace>();
+                    List<Statement> main_statements = StatementList();
+                    Match<RightCurlyBrace>();
+
+                    Match<RightCurlyBrace>();
+                    return new MainClassDeclaration(classIdent.Value,
+                        main_statements, startToken.Row, startToken.Col);
+                }
+                catch (SyntaxError e)
+                {
+                    errorMessages.Add(e.Message);
+                    RecoverFromClassMatching();
+                    return null;
+                }
+            }
+
+            private void RecoverFromClassMatching()
+            {
+                while (!(MatchWithoutConsuming<EOF>() || MatchWithoutConsuming<KeywordToken>("class")))
+                    Consume<Token>();
             }
 
             public Statement Statement()
             {
-                if (InputToken is MiniJavaType)
-                    return MakeLocalVariableDeclaration();
-                else if (InputToken is KeywordToken)
-                    return MakeKeywordStatement();
-                else if (InputToken is LeftCurlyBrace)
-                    return MakeBlockStatement();
-                else // Can be an assignment, a method invocation or a variable
-                     // declaration for a user defined type.
-                    return MakeExpressionStatementOrVariableDeclaration();
+                try
+                {
+                    if (InputToken is MiniJavaType)
+                        return VariableDeclaration();
+                    else if (InputToken is KeywordToken)
+                        return MakeKeywordStatement();
+                    else if (InputToken is LeftCurlyBrace)
+                        return MakeBlockStatement();
+                    else // Can be an assignment, a method invocation or a variable
+                        // declaration for a user defined type.
+                        return MakeExpressionStatementOrVariableDeclaration();
+                }
+                catch (SyntaxError e)
+                {
+                    errorMessages.Add(e.Message);
+                    while (!MatchWithoutConsuming<EOF>())
+                    {
+                        var token = Consume<Token>();
+                        if (token is EndLine)
+                            break;
+                    }
+                    return null;
+                }
             }
 
             // This is a workaround method that is needed because the language is not LL(1).
@@ -102,7 +168,7 @@ namespace MiniJavaCompiler
                         if (MatchWithoutConsuming<RightBracket>())
                         { // The statement is a local array variable declaration.
                             Consume<RightBracket>();
-                            return MakeVariableDeclarationStatement(ident, true);
+                            return FinishParsingLocalVariableDeclaration(ident, true);
                         }
                         else
                         {   // Brackets are used to index into an array, beginning an expression.
@@ -114,7 +180,7 @@ namespace MiniJavaCompiler
                         }
                     }
                     else if (MatchWithoutConsuming<Identifier>())
-                        return MakeVariableDeclarationStatement(ident, false);
+                        return FinishParsingLocalVariableDeclaration(ident, false);
                     else
                     { // The consumed identifier token is a reference to a variable
                       // and begins an expression.
@@ -161,13 +227,6 @@ namespace MiniJavaCompiler
                 var statements = StatementList();
                 Match<RightCurlyBrace>();
                 return new BlockStatement(statements, blockStart.Row, blockStart.Col);
-            }
-
-            private Statement MakeLocalVariableDeclaration()
-            {
-                var decl = VariableDeclaration();
-                Match<EndLine>();
-                return decl;
             }
 
             private Statement MakeKeywordStatement()
@@ -247,7 +306,7 @@ namespace MiniJavaCompiler
                 return new AssertStatement(expr, assertToken.Row, assertToken.Col);
             }
 
-            private Statement MakeVariableDeclarationStatement(Identifier variableTypeName, bool isArray)
+            private Statement FinishParsingLocalVariableDeclaration(Identifier variableTypeName, bool isArray)
             {
                 var variableName = Match<Identifier>();
                 Match<EndLine>();
@@ -269,20 +328,29 @@ namespace MiniJavaCompiler
 
             public Expression Expression()
             {
-                var binOpParser = new ExpressionParser(this);
-                return binOpParser.parse();
+                var expressionParser = new ExpressionParser(this);
+                return expressionParser.parse();
             }
 
             public ClassDeclaration ClassDeclaration()
             {
-                Token startToken = Match<KeywordToken>("class");
-                Identifier classIdent = Match<Identifier>();
-                string inheritedClass = OptionalInheritance();
-                Match<LeftCurlyBrace>();
-                List<Declaration> declarations = DeclarationList();
-                Match<RightCurlyBrace>();
-                return new ClassDeclaration(classIdent.Value, inheritedClass,
-                    declarations, startToken.Row, startToken.Col);
+                try
+                {
+                    Token startToken = Match<KeywordToken>("class");
+                    Identifier classIdent = Match<Identifier>();
+                    string inheritedClass = OptionalInheritance();
+                    Match<LeftCurlyBrace>();
+                    List<Declaration> declarations = DeclarationList();
+                    Match<RightCurlyBrace>();
+                    return new ClassDeclaration(classIdent.Value, inheritedClass,
+                        declarations, startToken.Row, startToken.Col);
+                }
+                catch (SyntaxError e)
+                {
+                    errorMessages.Add(e.Message);
+                    RecoverFromClassMatching();
+                    return null;
+                }
             }
 
             public string OptionalInheritance()
@@ -297,26 +365,51 @@ namespace MiniJavaCompiler
 
             public Declaration Declaration()
             {
-                if (InputToken is MiniJavaType || InputToken is Identifier)
+                try
                 {
-                    VariableDeclaration variable = VariableDeclaration();
-                    Match<EndLine>();
-                    return variable;
+                    if (InputToken is MiniJavaType || InputToken is Identifier)
+                    {
+                        return VariableDeclaration();
+                    }
+                    else if (InputToken is KeywordToken)
+                    {
+                        return MethodDeclaration();
+                    }
+                    else
+                        throw new SyntaxError("Invalid token of type " + InputToken.GetType().Name +
+                            " starting a declaration.");
                 }
-                else if (InputToken is KeywordToken)
+                catch (SyntaxError e)
                 {
-                    return MethodDeclaration();
+                    errorMessages.Add(e.Message);
+                    RecoverFromDeclarationMatching();
+                    return null;
                 }
-                else
-                    throw new SyntaxError("Invalid token of type " + InputToken.GetType().Name +
-                        " starting a declaration.");
+            }
+
+            private void RecoverFromDeclarationMatching()
+            {
+                while (!MatchWithoutConsuming<EOF>())
+                {
+                    var token = Consume<Token>();
+                    if (token is LeftCurlyBrace)
+                        break;
+                }
             }
 
             public VariableDeclaration VariableDeclaration()
             {
+                var variableDecl = VariableOrFormalParameterDeclaration();
+                Match<EndLine>();
+                return variableDecl;
+                
+            }
+
+            private VariableDeclaration VariableOrFormalParameterDeclaration()
+            {
                 var typeInfo = Type();
                 var type = (StringToken)typeInfo.Item1;
-                Identifier variableIdent = Match<Identifier>();
+                var variableIdent = Match<Identifier>();
                 return new VariableDeclaration(variableIdent.Value, type.Value,
                     typeInfo.Item2, type.Row, type.Col);
             }
@@ -676,7 +769,8 @@ namespace MiniJavaCompiler
 
             private List<VariableDeclaration> FormalParameters(bool isListTail = false)
             {
-                return CommaSeparatedList<VariableDeclaration, RightParenthesis>(VariableDeclaration);
+                return CommaSeparatedList<VariableDeclaration, RightParenthesis>(
+                    VariableOrFormalParameterDeclaration);
             }
 
             private List<Expression> ExpressionList(bool isListTail = false)

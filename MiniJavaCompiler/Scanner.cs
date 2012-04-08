@@ -45,7 +45,7 @@ namespace MiniJavaCompiler
             {
                 if (tokens.Count > 0)
                     return tokens.Dequeue();
-                return null;
+                return new EOF(input.Row, input.Col);
             }
 
             // Passes through the code once and builds a queue of tokens.
