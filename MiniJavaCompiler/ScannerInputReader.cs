@@ -148,8 +148,7 @@ namespace MiniJavaCompiler
                 while (true)
                 {
                     if (!ReadUntil('*'))
-                        throw new EndlessCommentError("Reached end of input while scanning for a comment " +
-                        "beginning on line " + commentStartRow + ", column " + commentStartCol + ".",
+                        throw new EndlessCommentError("Reached end of input while scanning for a comment.",
                         commentStartRow, commentStartCol);
                     if (Peek().Equals('/'))
                     {

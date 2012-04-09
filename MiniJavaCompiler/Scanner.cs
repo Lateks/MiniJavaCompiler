@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Collections;
-using MiniJavaCompiler.Support.TokenTypes;
 using System.IO;
 
 namespace MiniJavaCompiler
@@ -89,8 +88,7 @@ namespace MiniJavaCompiler
                 else
                 {
                     string token = input.Read();
-                    return new ErrorToken(token, "Invalid token \"" + token +
-                        "\" on row " + startRow + ", col " + startCol + ".",
+                    return new ErrorToken(token, "Invalid token \"" + token + ".",
                         startRow, startCol);
                 }
             }
@@ -118,9 +116,8 @@ namespace MiniJavaCompiler
                 else if (symbol.Equals("="))
                     return new AssignmentToken(startRow, startCol);
                 else
-                    return new ErrorToken(symbol, "Unexpected token " + symbol +
-                        " on row " + startRow + " col " + startCol + ".", startRow,
-                        startCol);
+                    return new ErrorToken(symbol, "Unexpected token " + symbol + ".",
+                        startRow, startCol);
             }
 
             private Token MakeSymbolToken()

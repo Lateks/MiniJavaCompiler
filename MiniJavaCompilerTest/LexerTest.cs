@@ -1,7 +1,6 @@
 ﻿using System;
 using NUnit.Framework;
 using MiniJavaCompiler.LexicalAnalysis;
-using MiniJavaCompiler.Support.TokenTypes;
 using System.IO;
 
 namespace LexerTest

@@ -5,7 +5,6 @@ using System.Text;
 using NUnit.Framework;
 using MiniJavaCompiler.SyntaxAnalysis;
 using MiniJavaCompiler.AbstractSyntaxTree;
-using MiniJavaCompiler.Support.TokenTypes;
 using MiniJavaCompiler.LexicalAnalysis;
 
 namespace MiniJavaCompilerTest

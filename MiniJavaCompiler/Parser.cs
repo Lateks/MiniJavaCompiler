@@ -3,46 +3,20 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using MiniJavaCompiler.LexicalAnalysis;
-using MiniJavaCompiler.Support.TokenTypes;
 using MiniJavaCompiler.AbstractSyntaxTree;
 
 namespace MiniJavaCompiler
 {
     namespace SyntaxAnalysis
     {
-        public class SyntaxError : Exception
-        {
-            public SyntaxError(string message)
-                : base(message) { }
-        }
-
-        public class LexicalErrorEncountered : Exception
-        {
-            public LexicalErrorEncountered() { }
-        }
-
-        public class BackEndError : Exception
-        {
-            public List<String> ErrorMsgs
-            {
-                get;
-                private set;
-            }
-
-            public BackEndError(List<String> messages)
-            {
-                ErrorMsgs = messages;
-            }
-        }
-
         public class Parser
         {
             private Scanner scanner;
             private Stack<Token> inputBuffer;
-            public List<String> errorMessages
+            public List<ErrorMessage> errorMessages
             {
                 get;
-                set;
+                private set;
             }
             Token InputToken
             {
@@ -57,16 +31,16 @@ namespace MiniJavaCompiler
                 InputToken = token;
             }
 
-            private void reportError(string errorMsg)
+            private void reportError(string errorMsg, int row, int col)
             {
-                errorMessages.Add(errorMsg);
+                errorMessages.Add(new ErrorMessage(errorMsg, row, col));
             }
 
             public Parser(Scanner scanner)
             {
                 this.scanner = scanner;
                 this.inputBuffer = new Stack<Token>();
-                errorMessages = new List<String>();
+                errorMessages = new List<ErrorMessage>();
                 InputToken = scanner.NextToken();
             }
 
@@ -87,7 +61,7 @@ namespace MiniJavaCompiler
                 }
                 catch (SyntaxError e)
                 {
-                    errorMessages.Add(e.Message);
+                    reportError(e.Message, e.Row, e.Col);
                     throw new BackEndError(errorMessages);
                 }
             }
@@ -124,7 +98,7 @@ namespace MiniJavaCompiler
                 }
                 catch (SyntaxError e)
                 {
-                    reportError(e.Message);
+                    reportError(e.Message, e.Row, e.Col);
                     RecoverFromClassMatching();
                     return null;
                 }
@@ -157,7 +131,7 @@ namespace MiniJavaCompiler
                 }
                 catch (SyntaxError e)
                 {
-                    reportError(e.Message);
+                    reportError(e.Message, e.Col, e.Row);
                     return RecoverFromStatementMatching();
                 }
                 catch (LexicalErrorEncountered)
@@ -232,8 +206,11 @@ namespace MiniJavaCompiler
                 if (expression is MethodInvocation)
                     return (MethodInvocation)expression;
                 else
+                {
+                    var expr = (SyntaxElement)expression;
                     throw new SyntaxError("Expression of type " + expression.GetType().Name +
-                        " cannot form a statement on its own.");
+                        " cannot form a statement on its own.", expr.Row, expr.Col);
+                }
             }
 
             private Statement MakeAssignmentStatement(Expression lhs)
@@ -269,7 +246,8 @@ namespace MiniJavaCompiler
                     case "return":
                         return MakeReturnStatement();
                     default:
-                        throw new SyntaxError("Invalid keyword " + token.Value + " starting a statement.");
+                        throw new SyntaxError("Invalid keyword " + token.Value + " starting a statement.",
+                            token.Row, token.Col);
                 }
             }
 
@@ -371,7 +349,7 @@ namespace MiniJavaCompiler
                 }
                 catch (SyntaxError e)
                 {
-                    reportError(e.Message);
+                    reportError(e.Message, e.Row, e.Col);
                     RecoverFromClassMatching();
                     return null;
                 }
@@ -405,12 +383,15 @@ namespace MiniJavaCompiler
                         return MethodDeclaration();
                     }
                     else
-                        throw new SyntaxError("Invalid token of type " + InputToken.GetType().Name +
-                            " starting a declaration.");
+                    {
+                        var token = Consume<Token>();
+                        throw new SyntaxError("Invalid token of type " + token.GetType().Name +
+                            " starting a declaration.", token.Row, token.Col);
+                    }
                 }
                 catch (SyntaxError e)
                 {
-                    reportError(e.Message);
+                    reportError(e.Message, e.Row, e.Col);
                     return RecoverFromDeclarationMatching();
                 }
                 catch (LexicalErrorEncountered)
@@ -449,7 +430,7 @@ namespace MiniJavaCompiler
                 }
                 catch (SyntaxError e)
                 {
-                    reportError(e.Message);
+                    reportError(e.Message, e.Row, e.Col);
                     return RecoverFromVariableDeclarationMatching();
                 }
                 catch (LexicalErrorEncountered)
@@ -522,7 +503,7 @@ namespace MiniJavaCompiler
                     }
                     catch (SyntaxError e)
                     {
-                        Parent.reportError(e.Message);
+                        Parent.reportError(e.Message, e.Row, e.Col);
                         return RecoverFromExpressionParsing();
                     }
                     catch (LexicalErrorEncountered)
@@ -634,12 +615,16 @@ namespace MiniJavaCompiler
                         else if (Parent.InputToken is LeftParenthesis)
                             return MakeParenthesisedExpression();
                         else
+                        {
+                            var token = Parent.Consume<Token>();
                             throw new SyntaxError("Invalid start token of type " +
-                                Parent.InputToken.GetType().Name + " for a term in an expression.");
+                                token.GetType().Name + " for a term in an expression.",
+                                token.Row, token.Col);
+                        }
                     }
                     catch (SyntaxError e)
                     {
-                        Parent.reportError(e.Message);
+                        Parent.reportError(e.Message, e.Row, e.Col);
                         return RecoverFromTermMatching();
                     }
                     catch (LexicalErrorEncountered)
@@ -695,7 +680,7 @@ namespace MiniJavaCompiler
                             return MakeBooleanLiteral(false);
                         default:
                             throw new SyntaxError("Invalid start token " + token.Value +
-                                " for expression.");
+                                " for expression.", token.Row, token.Col);
                     }
                 }
 
@@ -804,10 +789,10 @@ namespace MiniJavaCompiler
                         throw new LexicalErrorEncountered();
                     else if (expectedValue == null)
                         throw new SyntaxError("Expected type " + typeof(ExpectedType).Name +
-                            " but got " + token.GetType().Name + ".");
+                            " but got " + token.GetType().Name + ".", token.Row, token.Col);
                     else
                         throw new SyntaxError("Expected value \"" + expectedValue + "\" but got " +
-                            ((StringToken)token).Value + ".");
+                            ((StringToken)token).Value + ".", token.Row, token.Col);
                 }
             }
 
@@ -830,7 +815,7 @@ namespace MiniJavaCompiler
                 { // Lexical errors are reported here, so no errors are left unreported
                   // when consuming tokens because of recovery.
                     var temp = (ErrorToken)InputToken;
-                    reportError(temp.Message);
+                    reportError(temp.Message, temp.Row, temp.Col);
                     return temp;
                 }
                 else
