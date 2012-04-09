@@ -16,6 +16,11 @@ namespace MiniJavaCompiler
                 : base(message) { }
         }
 
+        public class LexicalErrorEncountered : Exception
+        {
+            public LexicalErrorEncountered() { }
+        }
+
         public class BackEndError : Exception
         {
             public List<String> ErrorMsgs
@@ -123,6 +128,11 @@ namespace MiniJavaCompiler
                     RecoverFromClassMatching();
                     return null;
                 }
+                catch (LexicalErrorEncountered)
+                {
+                    RecoverFromClassMatching();
+                    return null;
+                }
             }
 
             private void RecoverFromClassMatching()
@@ -148,14 +158,23 @@ namespace MiniJavaCompiler
                 catch (SyntaxError e)
                 {
                     reportError(e.Message);
-                    while (!MatchWithoutConsuming<EOF>())
-                    {
-                        var token = Consume<Token>();
-                        if (token is EndLine)
-                            break;
-                    }
-                    return null;
+                    return RecoverFromStatementMatching();
                 }
+                catch (LexicalErrorEncountered)
+                {
+                    return RecoverFromStatementMatching();
+                }
+            }
+
+            private Statement RecoverFromStatementMatching()
+            {
+                while (!MatchWithoutConsuming<EOF>())
+                {
+                    var token = Consume<Token>();
+                    if (token is EndLine)
+                        break;
+                }
+                return null;
             }
 
             // This is a workaround method that is needed because the language is not LL(1).
@@ -307,7 +326,7 @@ namespace MiniJavaCompiler
                 Match<LeftParenthesis>();
                 Expression expr = Expression();
                 Match<RightParenthesis>();
-                Match<EndLine>(); // not in the CFG, probably a bug?
+                Match<EndLine>(); // not in the original CFG, probably a bug?
                 return new AssertStatement(expr, assertToken.Row, assertToken.Col);
             }
 
@@ -356,6 +375,11 @@ namespace MiniJavaCompiler
                     RecoverFromClassMatching();
                     return null;
                 }
+                catch (LexicalErrorEncountered)
+                {
+                    RecoverFromClassMatching();
+                    return null;
+                }
             }
 
             public string OptionalInheritance()
@@ -387,12 +411,15 @@ namespace MiniJavaCompiler
                 catch (SyntaxError e)
                 {
                     reportError(e.Message);
-                    RecoverFromDeclarationMatching();
-                    return null;
+                    return RecoverFromDeclarationMatching();
+                }
+                catch (LexicalErrorEncountered)
+                {
+                    return RecoverFromDeclarationMatching();
                 }
             }
 
-            private void RecoverFromDeclarationMatching()
+            private Declaration RecoverFromDeclarationMatching()
             {
                 while (!MatchWithoutConsuming<EOF>())
                 {
@@ -400,6 +427,7 @@ namespace MiniJavaCompiler
                     if (token is LeftCurlyBrace)
                         break;
                 }
+                return null;
             }
 
             public VariableDeclaration VariableDeclaration()
@@ -422,13 +450,22 @@ namespace MiniJavaCompiler
                 catch (SyntaxError e)
                 {
                     reportError(e.Message);
-                    while (!(MatchWithoutConsuming<EOF>()
-                        || MatchWithoutConsuming<EndLine>()
-                        || MatchWithoutConsuming<ParameterSeparator>()
-                        || MatchWithoutConsuming<RightParenthesis>()))
-                        Consume<Token>();
-                    return null;
+                    return RecoverFromVariableDeclarationMatching();
                 }
+                catch (LexicalErrorEncountered)
+                {
+                    return RecoverFromVariableDeclarationMatching();
+                }
+            }
+
+            private VariableDeclaration RecoverFromVariableDeclarationMatching()
+            { // could be parameterised on follow set
+                while (!(MatchWithoutConsuming<EOF>()
+                    || MatchWithoutConsuming<EndLine>()
+                    || MatchWithoutConsuming<ParameterSeparator>()
+                    || MatchWithoutConsuming<RightParenthesis>()))
+                    Consume<Token>();
+                return null;
             }
 
             public MethodDeclaration MethodDeclaration()
@@ -486,12 +523,21 @@ namespace MiniJavaCompiler
                     catch (SyntaxError e)
                     {
                         Parent.reportError(e.Message);
-                        while (!(Parent.MatchWithoutConsuming<EOF>()
-                            || Parent.MatchWithoutConsuming<RightParenthesis>()
-                            || Parent.MatchWithoutConsuming<EndLine>()))
-                            Parent.Consume<Token>();
-                        return null;
+                        return RecoverFromExpressionParsing();
                     }
+                    catch (LexicalErrorEncountered)
+                    {
+                        return RecoverFromExpressionParsing();
+                    }
+                }
+
+                private Expression RecoverFromExpressionParsing()
+                {
+                    while (!(Parent.MatchWithoutConsuming<EOF>()
+                        || Parent.MatchWithoutConsuming<RightParenthesis>()
+                        || Parent.MatchWithoutConsuming<EndLine>()))
+                        Parent.Consume<Token>();
+                    return null;
                 }
 
                 private Expression ParseExpression()
@@ -592,15 +638,24 @@ namespace MiniJavaCompiler
                                 Parent.InputToken.GetType().Name + " for a term in an expression.");
                     }
                     catch (SyntaxError e)
-                    { // this one should probably be parameterised on follow set
+                    {
                         Parent.reportError(e.Message);
-                        while (!(Parent.MatchWithoutConsuming<EOF>()
-                            || Parent.MatchWithoutConsuming<RightParenthesis>()
-                            || Parent.MatchWithoutConsuming<EndLine>()
-                            || Parent.MatchWithoutConsuming<BinaryOperatorToken>()))
-                            Parent.Consume<Token>();
-                        return null;
+                        return RecoverFromTermMatching();
                     }
+                    catch (LexicalErrorEncountered)
+                    {
+                        return RecoverFromTermMatching();
+                    }
+                }
+
+                private Expression RecoverFromTermMatching()
+                { // could be parameterised on follow set
+                    while (!(Parent.MatchWithoutConsuming<EOF>()
+                        || Parent.MatchWithoutConsuming<RightParenthesis>()
+                        || Parent.MatchWithoutConsuming<EndLine>()
+                        || Parent.MatchWithoutConsuming<BinaryOperatorToken>()))
+                        Parent.Consume<Token>();
+                    return null;
                 }
 
                 private Expression MakeParenthesisedExpression()
@@ -742,26 +797,44 @@ namespace MiniJavaCompiler
             {
                 if (MatchWithoutConsuming<ExpectedType>(expectedValue))
                     return Consume<ExpectedType>();
-                else if (InputToken is ErrorToken)
-                {
-                    var error = Consume<ErrorToken>();
-                    throw new SyntaxError(error.Message);
-                }
-                else if (expectedValue == null)
-                    throw new SyntaxError("Expected type " + typeof(ExpectedType).Name +
-                        " but got " + InputToken.GetType().Name + ".");
                 else
-                    throw new SyntaxError("Expected value \"" + expectedValue + "\" but got " +
-                        ((StringToken)InputToken).Value + ".");
+                { // The token is consumed even when it does not match expectations.
+                    var token = Consume<Token>();
+                    if (token is ErrorToken)
+                        throw new LexicalErrorEncountered();
+                    else if (expectedValue == null)
+                        throw new SyntaxError("Expected type " + typeof(ExpectedType).Name +
+                            " but got " + token.GetType().Name + ".");
+                    else
+                        throw new SyntaxError("Expected value \"" + expectedValue + "\" but got " +
+                            ((StringToken)token).Value + ".");
+                }
             }
 
             // Consumes a token from input and returns it after casting to the
             // given type.
+            //
+            // This method should only be called when the input token's type
+            // has already been verified. (Unless consuming tokens as type Token
+            // for e.g. recovery purposes.)
             private TokenType Consume<TokenType>() where TokenType : Token
             {
-                var temp = (TokenType)InputToken;
+                dynamic temp = GetTokenOrReportError<TokenType>();
                 InputToken = inputBuffer.Count > 0 ? inputBuffer.Pop() : scanner.NextToken();
                 return temp;
+            }
+
+            private dynamic GetTokenOrReportError<TokenType>() where TokenType : Token
+            {
+                if (InputToken is ErrorToken)
+                { // Lexical errors are reported here, so no errors are left unreported
+                  // when consuming tokens because of recovery.
+                    var temp = (ErrorToken)InputToken;
+                    reportError(temp.Message);
+                    return temp;
+                }
+                else
+                    return (TokenType)InputToken;
             }
 
             // Checks whether the input token matches the expected type and value or not.
