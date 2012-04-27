@@ -320,7 +320,7 @@ namespace MiniJavaCompiler
             }
         }
 
-        public class InstanceCreation : SyntaxElement, Expression
+        public class InstanceCreationExpression : SyntaxElement, Expression
         {
             public string Type
             {
@@ -333,7 +333,7 @@ namespace MiniJavaCompiler
                 private set;
             }
 
-            public InstanceCreation(string type, int row, int col, Expression arraySize = null)
+            public InstanceCreationExpression(string type, int row, int col, Expression arraySize = null)
                 : base(row, col)
             {
                 Type = type;
@@ -341,7 +341,7 @@ namespace MiniJavaCompiler
             }
         }
 
-        public class UnaryNot : SyntaxElement, Expression
+        public class UnaryNotExpression : SyntaxElement, Expression
         {
             public Expression BooleanExpression
             {
@@ -349,14 +349,14 @@ namespace MiniJavaCompiler
                 private set;
             }
 
-            public UnaryNot(Expression booleanExp, int row, int col)
+            public UnaryNotExpression(Expression booleanExp, int row, int col)
                 : base(row, col)
             {
                 BooleanExpression = booleanExp;
             }
         }
 
-        public abstract class BinaryOperator : SyntaxElement, Expression
+        public abstract class BinaryOpExpression : SyntaxElement, Expression
         {
             public string Symbol
             {
@@ -374,7 +374,7 @@ namespace MiniJavaCompiler
                 private set;
             }
 
-            public BinaryOperator(string opsymbol, Expression lhs, Expression rhs,
+            public BinaryOpExpression(string opsymbol, Expression lhs, Expression rhs,
                 int row, int col) : base(row, col)
             {
                 Symbol = opsymbol;
@@ -383,21 +383,21 @@ namespace MiniJavaCompiler
             }
         }
 
-        public class ArithmeticOp : BinaryOperator
+        public class ArithmeticOpExpression : BinaryOpExpression
         {
-            public ArithmeticOp(string opsymbol, Expression lhs, Expression rhs,
+            public ArithmeticOpExpression(string opsymbol, Expression lhs, Expression rhs,
                 int row, int col)
                 : base(opsymbol, lhs, rhs, row, col) { }
         }
 
-        public class LogicalOp : BinaryOperator
+        public class LogicalOpExpression : BinaryOpExpression
         {
-            public LogicalOp(string opsymbol, Expression lhs, Expression rhs,
+            public LogicalOpExpression(string opsymbol, Expression lhs, Expression rhs,
                 int row, int col)
                 : base(opsymbol, lhs, rhs, row, col) { }
         }
 
-        public class BooleanLiteral : SyntaxElement, Expression
+        public class BooleanLiteralExpression : SyntaxElement, Expression
         {
             public bool Value
             {
@@ -405,7 +405,7 @@ namespace MiniJavaCompiler
                 private set;
             }
 
-            public BooleanLiteral(bool value, int row, int col)
+            public BooleanLiteralExpression(bool value, int row, int col)
                 : base(row, col)
             {
                 Value = value;
@@ -418,7 +418,7 @@ namespace MiniJavaCompiler
                 : base(row, col) { }
         }
 
-        public class ArrayIndexExpression : SyntaxElement, Expression
+        public class ArrayIndexingExpression : SyntaxElement, Expression
         {
             public Expression Array
             {
@@ -431,7 +431,7 @@ namespace MiniJavaCompiler
                 private set;
             }
 
-            public ArrayIndexExpression(Expression arrayReference,
+            public ArrayIndexingExpression(Expression arrayReference,
                 Expression arrayIndex, int row, int col)
                 : base(row, col)
             {
@@ -440,7 +440,7 @@ namespace MiniJavaCompiler
             }
         }
 
-        public class VariableReference : SyntaxElement, Expression
+        public class VariableReferenceExpression : SyntaxElement, Expression
         {
             public string Name
             {
@@ -448,14 +448,14 @@ namespace MiniJavaCompiler
                 private set;
             }
 
-            public VariableReference(string name, int row, int col)
+            public VariableReferenceExpression(string name, int row, int col)
                 : base(row, col)
             {
                 Name = name;
             }
         }
 
-        public class IntegerLiteral : SyntaxElement, Expression
+        public class IntegerLiteralExpression : SyntaxElement, Expression
         {
             public string Value
             {
@@ -463,7 +463,7 @@ namespace MiniJavaCompiler
                 private set;
             }
 
-            public IntegerLiteral(string value, int row, int col)
+            public IntegerLiteralExpression(string value, int row, int col)
                 : base(row, col)
             {
                 Value = value;

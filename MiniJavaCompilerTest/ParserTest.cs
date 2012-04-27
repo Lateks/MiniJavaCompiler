@@ -142,7 +142,7 @@ namespace MiniJavaCompilerTest
             var parser = new Parser(new StubScanner(programTokens));
             var statement = parser.Statement();
             Assert.That(statement, Is.InstanceOf<AssertStatement>());
-            Assert.That(((AssertStatement)statement).Expression, Is.InstanceOf<BooleanLiteral>());
+            Assert.That(((AssertStatement)statement).Expression, Is.InstanceOf<BooleanLiteralExpression>());
         }
 
         [Test]
@@ -161,7 +161,7 @@ namespace MiniJavaCompilerTest
             var parser = new Parser(new StubScanner(programTokens));
             var statement = parser.Statement();
             Assert.That(statement, Is.InstanceOf<PrintStatement>());
-            Assert.That(((PrintStatement)statement).Expression, Is.InstanceOf<IntegerLiteral>());
+            Assert.That(((PrintStatement)statement).Expression, Is.InstanceOf<IntegerLiteralExpression>());
         }
 
         [Test]
@@ -181,7 +181,7 @@ namespace MiniJavaCompilerTest
             var statement = parser.Statement();
             Assert.That(statement, Is.InstanceOf<WhileStatement>());
             var whileStatement = (WhileStatement)statement;
-            Assert.That(whileStatement.BooleanExpression, Is.InstanceOf<BooleanLiteral>());
+            Assert.That(whileStatement.BooleanExpression, Is.InstanceOf<BooleanLiteralExpression>());
             Assert.That(whileStatement.LoopBody, Is.InstanceOf<AssertStatement>());
         }
 
@@ -195,7 +195,7 @@ namespace MiniJavaCompilerTest
             var parser = new Parser(new StubScanner(programTokens));
             var statement = parser.Statement();
             Assert.That(statement, Is.InstanceOf<ReturnStatement>());
-            Assert.That(((ReturnStatement)statement).Expression, Is.InstanceOf<VariableReference>());
+            Assert.That(((ReturnStatement)statement).Expression, Is.InstanceOf<VariableReferenceExpression>());
         }
 
         [Test]
@@ -213,8 +213,8 @@ namespace MiniJavaCompilerTest
             Assert.That(statement, Is.InstanceOf<MethodInvocation>());
             var invocation = (MethodInvocation)statement;
             Assert.That(invocation.MethodName, Is.EqualTo("bar"));
-            Assert.That(invocation.MethodOwner, Is.InstanceOf<VariableReference>());
-            Assert.That(((VariableReference)invocation.MethodOwner).Name, Is.EqualTo("foo"));
+            Assert.That(invocation.MethodOwner, Is.InstanceOf<VariableReferenceExpression>());
+            Assert.That(((VariableReferenceExpression)invocation.MethodOwner).Name, Is.EqualTo("foo"));
             Assert.NotNull(invocation.CallParameters);
             Assert.That(invocation.CallParameters.Count, Is.EqualTo(0));
         }
@@ -249,8 +249,8 @@ namespace MiniJavaCompilerTest
             var statement = parser.Statement();
             Assert.That(statement, Is.InstanceOf<AssignmentStatement>());
             var assignment = (AssignmentStatement)statement;
-            Assert.That(assignment.RHS, Is.InstanceOf<BooleanLiteral>());
-            Assert.That(assignment.LHS, Is.InstanceOf<ArrayIndexExpression>());
+            Assert.That(assignment.RHS, Is.InstanceOf<BooleanLiteralExpression>());
+            Assert.That(assignment.LHS, Is.InstanceOf<ArrayIndexingExpression>());
         }
 
         [Test]
@@ -290,16 +290,16 @@ namespace MiniJavaCompilerTest
 
             var parser = new Parser(new StubScanner(programTokens));
             var expression = parser.Expression();
-            Assert.That(expression, Is.InstanceOf<LogicalOp>());
-            var logicalOp = (LogicalOp)expression;
-            Assert.That(logicalOp.RHS, Is.InstanceOf<IntegerLiteral>());
-            Assert.That(((IntegerLiteral)logicalOp.RHS).Value, Is.EqualTo("0"));
-            Assert.That(logicalOp.LHS, Is.InstanceOf<ArithmeticOp>());
-            var arithmetic = (ArithmeticOp)logicalOp.LHS;
-            Assert.That(arithmetic.LHS, Is.InstanceOf<IntegerLiteral>());
-            Assert.That(((IntegerLiteral)arithmetic.LHS).Value, Is.EqualTo("7"));
-            Assert.That(arithmetic.RHS, Is.InstanceOf<VariableReference>());
-            Assert.That(((VariableReference)arithmetic.RHS).Name, Is.EqualTo("foo"));
+            Assert.That(expression, Is.InstanceOf<LogicalOpExpression>());
+            var logicalOp = (LogicalOpExpression)expression;
+            Assert.That(logicalOp.RHS, Is.InstanceOf<IntegerLiteralExpression>());
+            Assert.That(((IntegerLiteralExpression)logicalOp.RHS).Value, Is.EqualTo("0"));
+            Assert.That(logicalOp.LHS, Is.InstanceOf<ArithmeticOpExpression>());
+            var arithmetic = (ArithmeticOpExpression)logicalOp.LHS;
+            Assert.That(arithmetic.LHS, Is.InstanceOf<IntegerLiteralExpression>());
+            Assert.That(((IntegerLiteralExpression)arithmetic.LHS).Value, Is.EqualTo("7"));
+            Assert.That(arithmetic.RHS, Is.InstanceOf<VariableReferenceExpression>());
+            Assert.That(((VariableReferenceExpression)arithmetic.RHS).Name, Is.EqualTo("foo"));
         }
 
         [Test]
@@ -321,27 +321,27 @@ namespace MiniJavaCompilerTest
 
             var parser = new Parser(new StubScanner(programTokens));
             var expression = parser.Expression();
-            Assert.That(expression, Is.InstanceOf<ArithmeticOp>());
-            var minusOp = (ArithmeticOp)expression;
+            Assert.That(expression, Is.InstanceOf<ArithmeticOpExpression>());
+            var minusOp = (ArithmeticOpExpression)expression;
             Assert.That(minusOp.Symbol, Is.EqualTo("-"));
-            Assert.That(minusOp.RHS, Is.InstanceOf<IntegerLiteral>());
-            Assert.That(minusOp.LHS, Is.InstanceOf<ArithmeticOp>());
-            var plusOp = (ArithmeticOp)minusOp.LHS;
+            Assert.That(minusOp.RHS, Is.InstanceOf<IntegerLiteralExpression>());
+            Assert.That(minusOp.LHS, Is.InstanceOf<ArithmeticOpExpression>());
+            var plusOp = (ArithmeticOpExpression)minusOp.LHS;
             Assert.That(plusOp.Symbol, Is.EqualTo("+"));
-            Assert.That(plusOp.LHS, Is.InstanceOf<IntegerLiteral>());
-            Assert.That(plusOp.RHS, Is.InstanceOf<ArithmeticOp>());
-            var timesOp = (ArithmeticOp)plusOp.RHS;
+            Assert.That(plusOp.LHS, Is.InstanceOf<IntegerLiteralExpression>());
+            Assert.That(plusOp.RHS, Is.InstanceOf<ArithmeticOpExpression>());
+            var timesOp = (ArithmeticOpExpression)plusOp.RHS;
             Assert.That(timesOp.Symbol, Is.EqualTo("*"));
-            Assert.That(timesOp.LHS, Is.InstanceOf<IntegerLiteral>());
-            Assert.That(timesOp.RHS, Is.InstanceOf<ArithmeticOp>());
-            var parenthesisedMinusOp = (ArithmeticOp)timesOp.RHS;
+            Assert.That(timesOp.LHS, Is.InstanceOf<IntegerLiteralExpression>());
+            Assert.That(timesOp.RHS, Is.InstanceOf<ArithmeticOpExpression>());
+            var parenthesisedMinusOp = (ArithmeticOpExpression)timesOp.RHS;
             Assert.That(parenthesisedMinusOp.Symbol, Is.EqualTo("-"));
-            Assert.That(parenthesisedMinusOp.LHS, Is.InstanceOf<IntegerLiteral>());
-            Assert.That(parenthesisedMinusOp.RHS, Is.InstanceOf<ArithmeticOp>());
-            var moduloOp = (ArithmeticOp)parenthesisedMinusOp.RHS;
+            Assert.That(parenthesisedMinusOp.LHS, Is.InstanceOf<IntegerLiteralExpression>());
+            Assert.That(parenthesisedMinusOp.RHS, Is.InstanceOf<ArithmeticOpExpression>());
+            var moduloOp = (ArithmeticOpExpression)parenthesisedMinusOp.RHS;
             Assert.That(moduloOp.Symbol, Is.EqualTo("%"));
-            Assert.That(moduloOp.LHS, Is.InstanceOf<IntegerLiteral>());
-            Assert.That(moduloOp.RHS, Is.InstanceOf<IntegerLiteral>());
+            Assert.That(moduloOp.LHS, Is.InstanceOf<IntegerLiteralExpression>());
+            Assert.That(moduloOp.RHS, Is.InstanceOf<IntegerLiteralExpression>());
         }
 
         [Test]
@@ -396,12 +396,12 @@ namespace MiniJavaCompilerTest
             Assert.That(mainMethod[1], Is.InstanceOf<AssignmentStatement>());
 
             var assignment = (AssignmentStatement)mainMethod[1];
-            Assert.That(assignment.LHS, Is.InstanceOf<VariableReference>());
-            Assert.That(((VariableReference)assignment.LHS).Name, Is.EqualTo("foo"));
-            Assert.That(assignment.RHS, Is.InstanceOf<IntegerLiteral>());
-            Assert.That(((IntegerLiteral)assignment.RHS).Value, Is.EqualTo("42"));
+            Assert.That(assignment.LHS, Is.InstanceOf<VariableReferenceExpression>());
+            Assert.That(((VariableReferenceExpression)assignment.LHS).Name, Is.EqualTo("foo"));
+            Assert.That(assignment.RHS, Is.InstanceOf<IntegerLiteralExpression>());
+            Assert.That(((IntegerLiteralExpression)assignment.RHS).Value, Is.EqualTo("42"));
             Assert.That(mainMethod[2], Is.InstanceOf<PrintStatement>());
-            Assert.That(((PrintStatement)mainMethod[2]).Expression, Is.InstanceOf<VariableReference>());
+            Assert.That(((PrintStatement)mainMethod[2]).Expression, Is.InstanceOf<VariableReferenceExpression>());
         }
 
         [Test]
@@ -435,13 +435,13 @@ namespace MiniJavaCompilerTest
             Assert.That(mainMethod[1], Is.InstanceOf<AssignmentStatement>());
 
             var assignment = (AssignmentStatement)mainMethod[1];
-            Assert.That(assignment.LHS, Is.InstanceOf<VariableReference>());
-            Assert.That(assignment.RHS, Is.InstanceOf<InstanceCreation>());
+            Assert.That(assignment.LHS, Is.InstanceOf<VariableReferenceExpression>());
+            Assert.That(assignment.RHS, Is.InstanceOf<InstanceCreationExpression>());
 
-            var newinstance = (InstanceCreation)assignment.RHS;
+            var newinstance = (InstanceCreationExpression)assignment.RHS;
             Assert.That(newinstance.Type, Is.EqualTo("int"));
-            Assert.That(newinstance.ArraySize, Is.InstanceOf<IntegerLiteral>());
-            Assert.That(((IntegerLiteral)newinstance.ArraySize).Value, Is.EqualTo("10"));
+            Assert.That(newinstance.ArraySize, Is.InstanceOf<IntegerLiteralExpression>());
+            Assert.That(((IntegerLiteralExpression)newinstance.ArraySize).Value, Is.EqualTo("10"));
         }
 
         [Test]
@@ -524,8 +524,8 @@ namespace MiniJavaCompilerTest
             Assert.That(mainMethod.Count, Is.EqualTo(1));
             Assert.That(mainMethod[0], Is.InstanceOf<MethodInvocation>());
             var methodInvocation = (MethodInvocation)mainMethod[0];
-            Assert.That(methodInvocation.MethodOwner, Is.InstanceOf<VariableReference>());
-            Assert.That(((VariableReference)methodInvocation.MethodOwner).Name, Is.EqualTo("someClass"));
+            Assert.That(methodInvocation.MethodOwner, Is.InstanceOf<VariableReferenceExpression>());
+            Assert.That(((VariableReferenceExpression)methodInvocation.MethodOwner).Name, Is.EqualTo("someClass"));
             Assert.That(methodInvocation.MethodName, Is.EqualTo("someMethod"));
             Assert.That(methodInvocation.CallParameters.Count, Is.EqualTo(2));
         }
@@ -552,8 +552,8 @@ namespace MiniJavaCompilerTest
             Assert.That(mainMethod.Count, Is.EqualTo(1));
             Assert.That(mainMethod[0], Is.InstanceOf<MethodInvocation>());
             var methodInvocation = (MethodInvocation)mainMethod[0];
-            Assert.That(methodInvocation.MethodOwner, Is.InstanceOf<VariableReference>());
-            Assert.That(((VariableReference)methodInvocation.MethodOwner).Name, Is.EqualTo("someClass"));
+            Assert.That(methodInvocation.MethodOwner, Is.InstanceOf<VariableReferenceExpression>());
+            Assert.That(((VariableReferenceExpression)methodInvocation.MethodOwner).Name, Is.EqualTo("someClass"));
             Assert.That(methodInvocation.MethodName, Is.EqualTo("someMethod"));
             Assert.That(methodInvocation.CallParameters.Count, Is.EqualTo(0));
         }
@@ -635,7 +635,7 @@ namespace MiniJavaCompilerTest
             Assert.That(anotherMethodInvocation.MethodOwner, Is.InstanceOf<MethodInvocation>());
             var someMethodInvocation = (MethodInvocation)anotherMethodInvocation.MethodOwner;
             Assert.That(someMethodInvocation.MethodName, Is.EqualTo("someMethod"));
-            Assert.That(someMethodInvocation.MethodOwner, Is.InstanceOf<VariableReference>());
+            Assert.That(someMethodInvocation.MethodOwner, Is.InstanceOf<VariableReferenceExpression>());
         }
 
         [Test]
@@ -665,12 +665,12 @@ namespace MiniJavaCompilerTest
             var ifStatement = (IfStatement)mainMethod[0];
             Assert.That(ifStatement.Then, Is.InstanceOf<AssignmentStatement>());
             Assert.IsNull(ifStatement.Else);
-            Assert.That(ifStatement.BooleanExpression, Is.InstanceOf<BinaryOperator>());
-            var boolExpression = (BinaryOperator)ifStatement.BooleanExpression;
-            Assert.That(boolExpression.LHS, Is.InstanceOf<BooleanLiteral>());
-            Assert.IsTrue(((BooleanLiteral)boolExpression.LHS).Value);
-            Assert.That(boolExpression.RHS, Is.InstanceOf<BooleanLiteral>());
-            Assert.IsFalse(((BooleanLiteral)boolExpression.RHS).Value);
+            Assert.That(ifStatement.BooleanExpression, Is.InstanceOf<BinaryOpExpression>());
+            var boolExpression = (BinaryOpExpression)ifStatement.BooleanExpression;
+            Assert.That(boolExpression.LHS, Is.InstanceOf<BooleanLiteralExpression>());
+            Assert.IsTrue(((BooleanLiteralExpression)boolExpression.LHS).Value);
+            Assert.That(boolExpression.RHS, Is.InstanceOf<BooleanLiteralExpression>());
+            Assert.IsFalse(((BooleanLiteralExpression)boolExpression.RHS).Value);
         }
 
         [Test]

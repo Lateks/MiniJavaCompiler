@@ -526,7 +526,7 @@ namespace MiniJavaCompiler
                     var firstOp = OrOperand();
                     Func<bool> orMatcher =
                         () => Parent.MatchWithoutConsuming<BinaryOperatorToken>("||");
-                    return BinaryOpTail<LogicalOp>(firstOp, orMatcher, OrOperand);
+                    return BinaryOpTail<LogicalOpExpression>(firstOp, orMatcher, OrOperand);
                 }
 
                 private Expression OrOperand()
@@ -534,7 +534,7 @@ namespace MiniJavaCompiler
                     var firstOp = AndOperand();
                     Func<bool> andMatcher =
                         () => Parent.MatchWithoutConsuming<BinaryOperatorToken>("&&");
-                    return BinaryOpTail<LogicalOp>(firstOp, andMatcher, AndOperand);
+                    return BinaryOpTail<LogicalOpExpression>(firstOp, andMatcher, AndOperand);
                 }
 
                 private Expression AndOperand()
@@ -542,7 +542,7 @@ namespace MiniJavaCompiler
                     var firstOp = EqOperand();
                     Func<bool> eqMatcher =
                         () => Parent.MatchWithoutConsuming<BinaryOperatorToken>("==");
-                    return BinaryOpTail<LogicalOp>(firstOp, eqMatcher, EqOperand);
+                    return BinaryOpTail<LogicalOpExpression>(firstOp, eqMatcher, EqOperand);
                 }
 
                 private Expression EqOperand()
@@ -551,7 +551,7 @@ namespace MiniJavaCompiler
                     Func<bool> neqMatcher =
                         () => Parent.MatchWithoutConsuming<BinaryOperatorToken>("<") ||
                               Parent.MatchWithoutConsuming<BinaryOperatorToken>(">");
-                    return BinaryOpTail<LogicalOp>(firstOp, neqMatcher, NotEqOperand);
+                    return BinaryOpTail<LogicalOpExpression>(firstOp, neqMatcher, NotEqOperand);
                 }
 
                 private Expression NotEqOperand()
@@ -560,7 +560,7 @@ namespace MiniJavaCompiler
                     Func<bool> addMatcher =
                         () => Parent.MatchWithoutConsuming<BinaryOperatorToken>("+") ||
                               Parent.MatchWithoutConsuming<BinaryOperatorToken>("-");
-                    return BinaryOpTail<ArithmeticOp>(firstOp, addMatcher, AddOperand);
+                    return BinaryOpTail<ArithmeticOpExpression>(firstOp, addMatcher, AddOperand);
                 }
 
                 private Expression AddOperand()
@@ -570,7 +570,7 @@ namespace MiniJavaCompiler
                         () => Parent.MatchWithoutConsuming<BinaryOperatorToken>("*") ||
                               Parent.MatchWithoutConsuming<BinaryOperatorToken>("/") ||
                               Parent.MatchWithoutConsuming<BinaryOperatorToken>("%");
-                    return BinaryOpTail<ArithmeticOp>(firstOp, multMatcher, MultOperand);
+                    return BinaryOpTail<ArithmeticOpExpression>(firstOp, multMatcher, MultOperand);
                 }
 
                 private Expression MultOperand()
@@ -579,7 +579,7 @@ namespace MiniJavaCompiler
                     {
                         var token = Parent.Consume<UnaryNotToken>();
                         var term = Term();
-                        return new UnaryNot(term, token.Row, token.Col);
+                        return new UnaryNotExpression(term, token.Row, token.Col);
                     }
                     else
                         return Term();
@@ -587,7 +587,7 @@ namespace MiniJavaCompiler
 
                 private Expression BinaryOpTail<OperatorType>(Expression lhs,
                     Func<bool> matchOperator, Func<Expression> operandParser)
-                    where OperatorType : BinaryOperator
+                    where OperatorType : BinaryOpExpression
                 {
                     if (matchOperator())
                     {
@@ -654,14 +654,14 @@ namespace MiniJavaCompiler
                 private Expression MakeIntegerLiteralExpression()
                 {
                     var token = Parent.Match<IntegerLiteralToken>();
-                    return OptionalTermTail(new IntegerLiteral(token.Value,
+                    return OptionalTermTail(new IntegerLiteralExpression(token.Value,
                         token.Row, token.Col));
                 }
 
                 private Expression MakeVariableReferenceExpression()
                 {
                     var identifier = Parent.Match<Identifier>();
-                    return OptionalTermTail(new VariableReference(
+                    return OptionalTermTail(new VariableReferenceExpression(
                         identifier.Value, identifier.Row, identifier.Col));
                 }
 
@@ -687,7 +687,7 @@ namespace MiniJavaCompiler
                 private Expression MakeBooleanLiteral(bool value)
                 {
                     var boolToken = Parent.Consume<KeywordToken>();
-                    return OptionalTermTail(new BooleanLiteral(value,
+                    return OptionalTermTail(new BooleanLiteralExpression(value,
                         boolToken.Row, boolToken.Col));
                 }
 
@@ -703,7 +703,7 @@ namespace MiniJavaCompiler
                     var newToken = Parent.Consume<KeywordToken>();
                     var typeInfo = NewType();
                     var type = (StringToken)typeInfo.Item1;
-                    return OptionalTermTail(new InstanceCreation(type.Value,
+                    return OptionalTermTail(new InstanceCreationExpression(type.Value,
                         newToken.Row, newToken.Col, typeInfo.Item2));
                 }
 
@@ -749,7 +749,7 @@ namespace MiniJavaCompiler
                     var startToken = Parent.Match<LeftBracket>();
                     var indexExpression = Parent.Expression();
                     Parent.Match<RightBracket>();
-                    return OptionalTermTail(new ArrayIndexExpression(lhs, indexExpression,
+                    return OptionalTermTail(new ArrayIndexingExpression(lhs, indexExpression,
                         startToken.Row, startToken.Col));
                 }
 
