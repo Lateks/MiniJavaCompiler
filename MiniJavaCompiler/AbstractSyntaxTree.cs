@@ -2,18 +2,22 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using MiniJavaCompiler.SemanticAnalysis;
 
 namespace MiniJavaCompiler
 {
     namespace AbstractSyntaxTree
     {
-        public interface SyntaxTreeNode { }
+        public interface SyntaxTreeNode
+        {
+            void accept(NodeVisitor visitor);
+        }
 
         public interface Statement : SyntaxTreeNode { }
 
         public interface Expression : SyntaxTreeNode { }
 
-        public class SyntaxElement : SyntaxTreeNode
+        public abstract class SyntaxElement : SyntaxTreeNode
         {
             public int Row
             {
@@ -31,6 +35,8 @@ namespace MiniJavaCompiler
                 Row = row;
                 Col = col;
             }
+
+            public abstract void accept(NodeVisitor visitor);
         }
 
         public class Program : SyntaxTreeNode
@@ -51,6 +57,16 @@ namespace MiniJavaCompiler
             {
                 MainClass = main_class;
                 Classes = class_declarations;
+            }
+
+            public void accept(NodeVisitor visitor)
+            {
+                visitor.visit(MainClass);
+                foreach (ClassDeclaration aClass in Classes)
+                {
+                    aClass.accept(visitor);
+                }
+                visitor.visit(this);
             }
         }
 
@@ -80,6 +96,15 @@ namespace MiniJavaCompiler
                 InheritedClass = inherited;
                 Declarations = declarations;
             }
+
+            public override void accept(NodeVisitor visitor)
+            {
+                foreach (Declaration decl in Declarations)
+                {
+                    decl.accept(visitor);
+                }
+                visitor.visit(this);
+            }
         }
 
         public class MainClassDeclaration : SyntaxElement
@@ -101,6 +126,15 @@ namespace MiniJavaCompiler
             {
                 Name = name;
                 MainMethod = mainMethod;
+            }
+
+            public override void accept(NodeVisitor visitor)
+            {
+                foreach (Statement statement in MainMethod)
+                {
+                    statement.accept(visitor);
+                }
+                visitor.visit(this);
             }
         }
 
@@ -153,12 +187,30 @@ namespace MiniJavaCompiler
                 Formals = formals;
                 MethodBody = methodBody;
             }
+
+            public override void accept(NodeVisitor visitor)
+            {
+                foreach (VariableDeclaration decl in Formals)
+                {
+                    decl.accept(visitor);
+                }
+                foreach (Statement statement in MethodBody)
+                {
+                    statement.accept(visitor);
+                }
+                visitor.visit(this);
+            }
         }
 
         public class VariableDeclaration : Declaration, Statement
         {
             public VariableDeclaration(string name, string type, bool isArray, int row, int col)
                 : base(name, type, isArray, row, col) { }
+
+            public override void accept(NodeVisitor visitor)
+            {
+                visitor.visit(this);
+            }
         }
 
         public class PrintStatement : SyntaxElement, Statement
@@ -173,6 +225,12 @@ namespace MiniJavaCompiler
                 : base(row, col)
             {
                 Expression = expression;
+            }
+
+            public override void accept(NodeVisitor visitor)
+            {
+                Expression.accept(visitor);
+                visitor.visit(this);
             }
         }
 
@@ -189,6 +247,12 @@ namespace MiniJavaCompiler
             {
                 Expression = expression;
             }
+
+            public override void accept(NodeVisitor visitor)
+            {
+                Expression.accept(visitor);
+                visitor.visit(this);
+            }
         }
 
         public class BlockStatement : SyntaxElement, Statement
@@ -204,6 +268,15 @@ namespace MiniJavaCompiler
             {
                 Statements = statements;
             }
+
+            public override void accept(NodeVisitor visitor)
+            {
+                foreach (Statement statement in Statements)
+                {
+                    statement.accept(visitor);
+                }
+                visitor.visit(this);
+            }
         }
 
         public class AssertStatement : SyntaxElement, Statement
@@ -218,6 +291,12 @@ namespace MiniJavaCompiler
                 : base(row, col)
             {
                 Expression = expression;
+            }
+
+            public override void accept(NodeVisitor visitor)
+            {
+                Expression.accept(visitor);
+                visitor.visit(this);
             }
         }
 
@@ -239,6 +318,13 @@ namespace MiniJavaCompiler
             {
                 LHS = lhs;
                 RHS = rhs;
+            }
+
+            public override void accept(NodeVisitor visitor)
+            {
+                RHS.accept(visitor);
+                LHS.accept(visitor);
+                visitor.visit(this);
             }
         }
 
@@ -268,6 +354,14 @@ namespace MiniJavaCompiler
                 Then = thenBranch;
                 Else = elseBranch;
             }
+
+            public override void accept(NodeVisitor visitor)
+            {
+                BooleanExpression.accept(visitor);
+                Then.accept(visitor);
+                Else.accept(visitor);
+                visitor.visit(this);
+            }
         }
 
         public class WhileStatement : SyntaxElement, Statement
@@ -289,6 +383,13 @@ namespace MiniJavaCompiler
             {
                 BooleanExpression = booleanExp;
                 LoopBody = loopBody;
+            }
+
+            public override void accept(NodeVisitor visitor)
+            {
+                BooleanExpression.accept(visitor);
+                LoopBody.accept(visitor);
+                visitor.visit(this);
             }
         }
 
@@ -318,6 +419,16 @@ namespace MiniJavaCompiler
                 MethodName = methodName;
                 CallParameters = callParameters;
             }
+
+            public override void accept(NodeVisitor visitor)
+            {
+                MethodOwner.accept(visitor);
+                foreach (Expression expr in CallParameters)
+                {
+                    expr.accept(visitor);
+                }
+                visitor.visit(this);
+            }
         }
 
         public class InstanceCreationExpression : SyntaxElement, Expression
@@ -339,6 +450,12 @@ namespace MiniJavaCompiler
                 Type = type;
                 ArraySize = arraySize; 
             }
+
+            public override void accept(NodeVisitor visitor)
+            {
+                ArraySize.accept(visitor);
+                visitor.visit(this);
+            }
         }
 
         public class UnaryNotExpression : SyntaxElement, Expression
@@ -353,6 +470,12 @@ namespace MiniJavaCompiler
                 : base(row, col)
             {
                 BooleanExpression = booleanExp;
+            }
+
+            public override void accept(NodeVisitor visitor)
+            {
+                BooleanExpression.accept(visitor);
+                visitor.visit(this);
             }
         }
 
@@ -388,6 +511,13 @@ namespace MiniJavaCompiler
             public ArithmeticOpExpression(string opsymbol, Expression lhs, Expression rhs,
                 int row, int col)
                 : base(opsymbol, lhs, rhs, row, col) { }
+
+            public override void accept(NodeVisitor visitor)
+            {
+                RHS.accept(visitor);
+                LHS.accept(visitor);
+                visitor.visit(this);
+            }
         }
 
         public class LogicalOpExpression : BinaryOpExpression
@@ -395,6 +525,13 @@ namespace MiniJavaCompiler
             public LogicalOpExpression(string opsymbol, Expression lhs, Expression rhs,
                 int row, int col)
                 : base(opsymbol, lhs, rhs, row, col) { }
+
+            public override void accept(NodeVisitor visitor)
+            {
+                RHS.accept(visitor);
+                LHS.accept(visitor);
+                visitor.visit(this);
+            }
         }
 
         public class BooleanLiteralExpression : SyntaxElement, Expression
@@ -410,12 +547,22 @@ namespace MiniJavaCompiler
             {
                 Value = value;
             }
+
+            public override void accept(NodeVisitor visitor)
+            {
+                visitor.visit(this);
+            }
         }
 
         public class ThisExpression : SyntaxElement, Expression
         {
             public ThisExpression(int row, int col)
                 : base(row, col) { }
+
+            public override void accept(NodeVisitor visitor)
+            {
+                visitor.visit(this);
+            }
         }
 
         public class ArrayIndexingExpression : SyntaxElement, Expression
@@ -438,6 +585,13 @@ namespace MiniJavaCompiler
                 Array = arrayReference;
                 Index = arrayIndex;
             }
+
+            public override void accept(NodeVisitor visitor)
+            {
+                Index.accept(visitor);
+                Array.accept(visitor);
+                visitor.visit(this);
+            }
         }
 
         public class VariableReferenceExpression : SyntaxElement, Expression
@@ -453,6 +607,11 @@ namespace MiniJavaCompiler
             {
                 Name = name;
             }
+
+            public override void accept(NodeVisitor visitor)
+            {
+                visitor.visit(this);
+            }
         }
 
         public class IntegerLiteralExpression : SyntaxElement, Expression
@@ -467,6 +626,11 @@ namespace MiniJavaCompiler
                 : base(row, col)
             {
                 Value = value;
+            }
+
+            public override void accept(NodeVisitor visitor)
+            {
+                visitor.visit(this);
             }
         }
     }
