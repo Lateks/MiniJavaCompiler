@@ -12,6 +12,11 @@ namespace MiniJavaCompiler
             private Dictionary<string, Symbol> symbolTable;
             private SymbolTable outerScope;
 
+            public SymbolTable()
+            {
+                new SymbolTable(null);
+            }
+
             public SymbolTable(SymbolTable outerScope)
             {
                 symbolTable = new Dictionary<string, Symbol>();
@@ -46,13 +51,13 @@ namespace MiniJavaCompiler
                 get;
                 private set;
             }
-            public string Type
+            public Symbol Type
             {
                 get;
                 private set;
             }
 
-            public Symbol(string name, string type)
+            public Symbol(string name, Symbol type)
             {
                 Name = name;
                 Type = type;
