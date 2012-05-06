@@ -45,6 +45,7 @@
   <ItemGroup>
     <Compile Include="AbstractSyntaxTree.cs" />
     <Compile Include="Compiler.cs" />
+    <Compile Include="Errors.cs" />
     <Compile Include="NodeVisitor.cs" />
     <Compile Include="Parser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -54,7 +55,7 @@
     <Compile Include="SyntaxAnalysisErrors.cs" />
     <Compile Include="Tokens.cs" />
     <Compile Include="TypeChecker.cs" />
-    <Compile Include="TypeListBuilder.cs" />
+    <Compile Include="TypeSetBuilder.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

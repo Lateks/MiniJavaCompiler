@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using MiniJavaCompiler.LexicalAnalysis;
 using MiniJavaCompiler.AbstractSyntaxTree;
+using MiniJavaCompiler.Support;
 
 namespace MiniJavaCompiler
 {
@@ -62,14 +63,14 @@ namespace MiniJavaCompiler
                 catch (SyntaxError e)
                 {
                     reportError(e.Message, e.Row, e.Col);
-                    throw new BackEndError(errorMessages);
+                    throw new ErrorReport(errorMessages);
                 }
             }
 
             private void ReportErrors()
             {
                 if (errorMessages.Count > 0)
-                    throw new BackEndError(errorMessages);
+                    throw new ErrorReport(errorMessages);
                 return;
             }
 

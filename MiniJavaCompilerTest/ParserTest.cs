@@ -6,6 +6,7 @@ using NUnit.Framework;
 using MiniJavaCompiler.SyntaxAnalysis;
 using MiniJavaCompiler.AbstractSyntaxTree;
 using MiniJavaCompiler.LexicalAnalysis;
+using MiniJavaCompiler.Support;
 
 namespace MiniJavaCompilerTest
 {
@@ -465,7 +466,7 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new LeftCurlyBrace(0, 0));
             EndFile();
 
-            Assert.Throws<BackEndError>(() => GetProgramTree());
+            Assert.Throws<ErrorReport>(() => GetProgramTree());
         }
 
         [Test]
