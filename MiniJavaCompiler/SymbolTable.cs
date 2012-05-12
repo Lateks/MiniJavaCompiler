@@ -78,7 +78,7 @@ namespace MiniJavaCompiler
                 get;
                 private set;
             }
-            public SyntaxTreeNode Definition
+            public SyntaxElement Definition
             {
                 get;
                 set;

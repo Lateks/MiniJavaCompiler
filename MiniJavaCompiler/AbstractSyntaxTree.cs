@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using MiniJavaCompiler.SemanticAnalysis;
+using MiniJavaCompiler.Support;
 
 namespace MiniJavaCompiler
 {
@@ -28,6 +29,11 @@ namespace MiniJavaCompiler
             {
                 get;
                 private set;
+            }
+            public Symbol Symbol
+            {
+                get;
+                set;
             }
 
             public SyntaxElement(int row, int col)
