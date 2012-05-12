@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using MiniJavaCompiler.AbstractSyntaxTree;
 
 namespace MiniJavaCompiler
 {
@@ -9,9 +10,8 @@ namespace MiniJavaCompiler
     {
         public interface Scope
         {
-            Symbol resolve(string name);
-            Scope GetEnclosingScope();
-            void define(Symbol sym);
+            Symbol Resolve(string name);
+            void Define(Symbol sym);
         }
 
         public interface Type { }
@@ -19,7 +19,11 @@ namespace MiniJavaCompiler
         public class BaseScope : Scope
         {
             private Dictionary<string, Symbol> symbolTable;
-            private BaseScope enclosingScope;
+            public BaseScope EnclosingScope
+            {
+                get;
+                private set;
+            }
 
             public BaseScope()
             {
@@ -29,20 +33,15 @@ namespace MiniJavaCompiler
             public BaseScope(BaseScope enclosingScope)
             {
                 symbolTable = new Dictionary<string, Symbol>();
-                this.enclosingScope = enclosingScope;
+                EnclosingScope = enclosingScope;
             }
 
-            public Scope GetEnclosingScope()
-            {
-                return enclosingScope;
-            }
-
-            public void define(Symbol sym)
+            public void Define(Symbol sym)
             {
                 symbolTable.Add(sym.Name, sym);
             }
 
-            public Symbol resolve(string name)
+            public Symbol Resolve(string name)
             {
                 try
                 {
@@ -50,10 +49,10 @@ namespace MiniJavaCompiler
                 }
                 catch (KeyNotFoundException)
                 {
-                    if (enclosingScope == null)
+                    if (EnclosingScope == null)
                         return null;
                     else
-                        return enclosingScope.resolve(name);
+                        return EnclosingScope.Resolve(name);
                 }
             }
         }
@@ -69,45 +68,59 @@ namespace MiniJavaCompiler
                 get;
                 private set;
             }
-
-            public Symbol(string name)
-            {
-                Name = name;
-            }
-        }
-
-        public class VariableSymbol : Symbol
-        {
             public Type Type
             {
                 get;
                 private set;
             }
-
-            public VariableSymbol(string name, Type type)
-                : base(name)
+            public Scope EnclosingScope
             {
-                Type = type;
+                get;
+                private set;
             }
+            public SyntaxTreeNode Definition
+            {
+                get;
+                set;
+            }
+
+            public Symbol(string name, Scope enclosingScope)
+            {
+                Name = name;
+            }
+
+            public Symbol(string name, Type type, Scope enclosingScope)
+            {
+                Name = name;
+                Type = type;
+                EnclosingScope = enclosingScope;
+            }
+        }
+
+        public class VariableSymbol : Symbol
+        {
+
+            public VariableSymbol(string name, Type type, Scope enclosingScope)
+                : base(name, type, enclosingScope) { }
         }
 
         public class BuiltinTypeSymbol : Symbol, Type
         {
-            public BuiltinTypeSymbol(string name) : base(name) { }
+            public BuiltinTypeSymbol(string name, Scope enclosingScope)
+                : base(name, enclosingScope) { }
         }
 
         public class ScopedSymbol : Symbol, Scope, Type
         {
             protected Dictionary<string, Symbol> symbolTable;
-            private Scope enclosingScope;
 
             public ScopedSymbol(string name, Scope enclosingScope)
-                : base(name)
-            {
-                this.enclosingScope = enclosingScope;
-            }
+                : base(name, enclosingScope) { }
 
-            public virtual Symbol resolve(string name)
+            public ScopedSymbol(string name, Type type, Scope enclosingScope)
+                : base(name, type, enclosingScope) { }
+
+            public virtual Symbol Resolve(string name)
             {
                 try
                 {
@@ -115,16 +128,16 @@ namespace MiniJavaCompiler
                 }
                 catch (KeyNotFoundException)
                 {
-                    return enclosingScope.resolve(name);
+                    return EnclosingScope.Resolve(name);
                 }
             }
 
-            public Scope GetEnclosingScope()
+            public virtual Scope GetParentScope()
             {
-                return enclosingScope;
+                return EnclosingScope;
             }
 
-            public void define(Symbol sym)
+            public void Define(Symbol sym)
             {
                 symbolTable.Add(sym.Name, sym);
             }
@@ -132,17 +145,8 @@ namespace MiniJavaCompiler
 
         public class MethodSymbol : ScopedSymbol
         {
-            public Type Type
-            {
-                get;
-                private set;
-            }
-
             public MethodSymbol(string name, Type returnType, ClassSymbol enclosingScope)
-                : base(name, enclosingScope)
-            {
-                Type = returnType;
-            }
+                : base(name, returnType, enclosingScope) { }
         }
 
         public class ClassSymbol : ScopedSymbol, Type
@@ -155,14 +159,14 @@ namespace MiniJavaCompiler
                 this.superClass = superClass;
             }
 
-            public Scope getParentScope()
+            public override Scope GetParentScope()
             {
-                if (superClass != null)
-                    return superClass;
-                return GetEnclosingScope();
+                if (superClass == null)
+                    return EnclosingScope;
+                return superClass;
             }
 
-            public override Symbol resolve(string name)
+            public override Symbol Resolve(string name)
             {
                 try
                 {
@@ -170,7 +174,7 @@ namespace MiniJavaCompiler
                 }
                 catch (KeyNotFoundException)
                 {
-                    return getParentScope().resolve(name);
+                    return GetParentScope().Resolve(name);
                 }
             }
         }
