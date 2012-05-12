@@ -7,20 +7,34 @@ namespace MiniJavaCompiler
 {
     namespace Support
     {
-        public class SymbolTable
+        public interface Scope
+        {
+            Symbol resolve(string name);
+            Scope GetEnclosingScope();
+            void define(Symbol sym);
+        }
+
+        public interface Type { }
+
+        public class BaseScope : Scope
         {
             private Dictionary<string, Symbol> symbolTable;
-            private SymbolTable outerScope;
+            private BaseScope enclosingScope;
 
-            public SymbolTable()
+            public BaseScope()
             {
-                new SymbolTable(null);
+                new BaseScope(null);
             }
 
-            public SymbolTable(SymbolTable outerScope)
+            public BaseScope(BaseScope enclosingScope)
             {
                 symbolTable = new Dictionary<string, Symbol>();
-                this.outerScope = outerScope;
+                this.enclosingScope = enclosingScope;
+            }
+
+            public Scope GetEnclosingScope()
+            {
+                return enclosingScope;
             }
 
             public void define(Symbol sym)
@@ -34,15 +48,19 @@ namespace MiniJavaCompiler
                 {
                     return symbolTable[name];
                 }
-                catch
+                catch (KeyNotFoundException)
                 {
-                    if (outerScope == null)
+                    if (enclosingScope == null)
                         return null;
                     else
-                        return outerScope.resolve(name);
+                        return enclosingScope.resolve(name);
                 }
             }
         }
+
+        public class GlobalScope : BaseScope { }
+
+        public class LocalScope : BaseScope { }
 
         public class Symbol
         {
@@ -51,16 +69,109 @@ namespace MiniJavaCompiler
                 get;
                 private set;
             }
-            public Symbol Type
+
+            public Symbol(string name)
+            {
+                Name = name;
+            }
+        }
+
+        public class VariableSymbol : Symbol
+        {
+            public Type Type
             {
                 get;
                 private set;
             }
 
-            public Symbol(string name, Symbol type)
+            public VariableSymbol(string name, Type type)
+                : base(name)
             {
-                Name = name;
                 Type = type;
+            }
+        }
+
+        public class BuiltinTypeSymbol : Symbol, Type
+        {
+            public BuiltinTypeSymbol(string name) : base(name) { }
+        }
+
+        public class ScopedSymbol : Symbol, Scope, Type
+        {
+            protected Dictionary<string, Symbol> symbolTable;
+            private Scope enclosingScope;
+
+            public ScopedSymbol(string name, Scope enclosingScope)
+                : base(name)
+            {
+                this.enclosingScope = enclosingScope;
+            }
+
+            public virtual Symbol resolve(string name)
+            {
+                try
+                {
+                    return symbolTable[name];
+                }
+                catch (KeyNotFoundException)
+                {
+                    return enclosingScope.resolve(name);
+                }
+            }
+
+            public Scope GetEnclosingScope()
+            {
+                return enclosingScope;
+            }
+
+            public void define(Symbol sym)
+            {
+                symbolTable.Add(sym.Name, sym);
+            }
+        }
+
+        public class MethodSymbol : ScopedSymbol
+        {
+            public Type Type
+            {
+                get;
+                private set;
+            }
+
+            public MethodSymbol(string name, Type returnType, ClassSymbol enclosingScope)
+                : base(name, enclosingScope)
+            {
+                Type = returnType;
+            }
+        }
+
+        public class ClassSymbol : ScopedSymbol, Type
+        {
+            private ClassSymbol superClass;
+
+            public ClassSymbol(string name, Scope enclosingScope, ClassSymbol superClass = null)
+                : base(name, enclosingScope)
+            {
+                this.superClass = superClass;
+            }
+
+            public Scope getParentScope()
+            {
+                if (superClass != null)
+                    return superClass;
+                return GetEnclosingScope();
+            }
+
+            public override Symbol resolve(string name)
+            {
+                try
+                {
+                    return symbolTable[name];
+                }
+                catch (KeyNotFoundException)
+                {
+                    return getParentScope().resolve(name);
+                }
             }
         }
     }

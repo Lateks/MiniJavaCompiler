@@ -51,6 +51,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Scanner.cs" />
     <Compile Include="ScannerInputReader.cs" />
+    <Compile Include="SymbolTable.cs" />
     <Compile Include="SymbolTableBuilder.cs" />
     <Compile Include="SyntaxAnalysisErrors.cs" />
     <Compile Include="Tokens.cs" />

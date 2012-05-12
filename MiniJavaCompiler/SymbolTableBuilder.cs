@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using MiniJavaCompiler.AbstractSyntaxTree;
+using MiniJavaCompiler.Support;
 
 namespace MiniJavaCompiler
 {
@@ -10,15 +11,33 @@ namespace MiniJavaCompiler
     {
         public class SymbolTableBuilder : NodeVisitor
         {
-            public void visit(Program node)
+            private Program syntaxTree;
+            private GlobalScope symbolTable;
+            private BaseScope currentScope;
+            private Dictionary<SyntaxTreeNode, Scope> scopes;
+
+            public SymbolTableBuilder(Program node, List<string> types)
             {
-                throw new NotImplementedException();
+                syntaxTree = node;
+                symbolTable = new GlobalScope();
+                currentScope = symbolTable;
+                scopes = new Dictionary<SyntaxTreeNode, Scope>();
             }
 
-            public void visit(ClassDeclaration node)
+            public BaseScope BuildSymbolTable()
             {
-                throw new NotImplementedException();
+                syntaxTree.accept(this);
+                return symbolTable;
             }
+
+            public Dictionary<SyntaxTreeNode, Scope> GetScopeMapping()
+            {
+                return scopes;
+            }
+
+            public void visit(Program node) { }
+
+            public void visit(ClassDeclaration node) { }
 
             public void visit(MainClassDeclaration node)
             {
