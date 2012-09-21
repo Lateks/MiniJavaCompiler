@@ -10,28 +10,28 @@ namespace MiniJavaCompiler
     {
         public interface NodeVisitor
         {
-            void visit(Program node);
-            void visit(ClassDeclaration node);
-            void visit(MainClassDeclaration node);
-            void visit(VariableDeclaration node);
-            void visit(MethodDeclaration node);
-            void visit(PrintStatement node);
-            void visit(ReturnStatement node);
-            void visit(BlockStatement node);
-            void visit(AssertStatement node);
-            void visit(AssignmentStatement node);
-            void visit(IfStatement node);
-            void visit(WhileStatement node);
-            void visit(MethodInvocation node);
-            void visit(InstanceCreationExpression node);
-            void visit(UnaryNotExpression node);
-            void visit(ArithmeticOpExpression node);
-            void visit(LogicalOpExpression node);
-            void visit(BooleanLiteralExpression node);
-            void visit(ThisExpression node);
-            void visit(ArrayIndexingExpression node);
-            void visit(VariableReferenceExpression node);
-            void visit(IntegerLiteralExpression node);
+            void Visit(Program node);
+            void Visit(ClassDeclaration node);
+            void Visit(MainClassDeclaration node);
+            void Visit(VariableDeclaration node);
+            void Visit(MethodDeclaration node);
+            void Visit(PrintStatement node);
+            void Visit(ReturnStatement node);
+            void Visit(BlockStatement node);
+            void Visit(AssertStatement node);
+            void Visit(AssignmentStatement node);
+            void Visit(IfStatement node);
+            void Visit(WhileStatement node);
+            void Visit(MethodInvocation node);
+            void Visit(InstanceCreationExpression node);
+            void Visit(UnaryNotExpression node);
+            void Visit(ArithmeticOpExpression node);
+            void Visit(LogicalOpExpression node);
+            void Visit(BooleanLiteralExpression node);
+            void Visit(ThisExpression node);
+            void Visit(ArrayIndexingExpression node);
+            void Visit(VariableReferenceExpression node);
+            void Visit(IntegerLiteralExpression node);
         }
     }
 }

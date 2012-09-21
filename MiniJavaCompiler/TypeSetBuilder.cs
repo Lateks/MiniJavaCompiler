@@ -24,7 +24,7 @@ namespace MiniJavaCompiler
 
             public HashSet<string> BuildTypeSet()
             {
-                syntaxTree.accept(this);
+                syntaxTree.Accept(this);
                 if (errorMessages.Count > 0)
                     throw new ErrorReport(errorMessages);
                 return types;
@@ -36,9 +36,9 @@ namespace MiniJavaCompiler
                         typeName + ".", row, col));
             }
 
-            public void visit(Program node) { }
+            public void Visit(Program node) { }
 
-            public void visit(ClassDeclaration node)
+            public void Visit(ClassDeclaration node)
             {
                 if (types.Contains(node.Name))
                 {
@@ -50,7 +50,7 @@ namespace MiniJavaCompiler
                 }
             }
 
-            public void visit(MainClassDeclaration node)
+            public void Visit(MainClassDeclaration node)
             {
                 if (types.Contains(node.Name))
                 {
@@ -62,43 +62,43 @@ namespace MiniJavaCompiler
                 }
             }
 
-            public void visit(VariableDeclaration node) { }
+            public void Visit(VariableDeclaration node) { }
 
-            public void visit(MethodDeclaration node) { }
+            public void Visit(MethodDeclaration node) { }
 
-            public void visit(PrintStatement node) { }
+            public void Visit(PrintStatement node) { }
 
-            public void visit(ReturnStatement node) { }
+            public void Visit(ReturnStatement node) { }
 
-            public void visit(BlockStatement node) { }
+            public void Visit(BlockStatement node) { }
 
-            public void visit(AssertStatement node) { }
+            public void Visit(AssertStatement node) { }
 
-            public void visit(AssignmentStatement node) { }
+            public void Visit(AssignmentStatement node) { }
 
-            public void visit(IfStatement node) { }
+            public void Visit(IfStatement node) { }
 
-            public void visit(WhileStatement node) { }
+            public void Visit(WhileStatement node) { }
 
-            public void visit(MethodInvocation node) { }
+            public void Visit(MethodInvocation node) { }
 
-            public void visit(InstanceCreationExpression node) { }
+            public void Visit(InstanceCreationExpression node) { }
 
-            public void visit(UnaryNotExpression node) { }
+            public void Visit(UnaryNotExpression node) { }
 
-            public void visit(ArithmeticOpExpression node) { }
+            public void Visit(ArithmeticOpExpression node) { }
 
-            public void visit(LogicalOpExpression node) { }
+            public void Visit(LogicalOpExpression node) { }
 
-            public void visit(BooleanLiteralExpression node) { }
+            public void Visit(BooleanLiteralExpression node) { }
 
-            public void visit(ThisExpression node) { }
+            public void Visit(ThisExpression node) { }
 
-            public void visit(ArrayIndexingExpression node) { }
+            public void Visit(ArrayIndexingExpression node) { }
 
-            public void visit(VariableReferenceExpression node) { }
+            public void Visit(VariableReferenceExpression node) { }
 
-            public void visit(IntegerLiteralExpression node) { }
+            public void Visit(IntegerLiteralExpression node) { }
         }
     }
 }

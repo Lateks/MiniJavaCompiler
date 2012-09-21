@@ -10,112 +10,112 @@ namespace MiniJavaCompiler
     {
         public class TypeChecker : NodeVisitor
         {
-            public void visit(Program node)
+            public void Visit(Program node)
             {
                 throw new NotImplementedException();
             }
 
-            public void visit(ClassDeclaration node)
+            public void Visit(ClassDeclaration node)
             {
                 throw new NotImplementedException();
             }
 
-            public void visit(MainClassDeclaration node)
+            public void Visit(MainClassDeclaration node)
             {
                 throw new NotImplementedException();
             }
 
-            public void visit(VariableDeclaration node)
+            public void Visit(VariableDeclaration node)
             {
                 throw new NotImplementedException();
             }
 
-            public void visit(MethodDeclaration node)
+            public void Visit(MethodDeclaration node)
             {
                 throw new NotImplementedException();
             }
 
-            public void visit(PrintStatement node)
+            public void Visit(PrintStatement node)
             {
                 throw new NotImplementedException();
             }
 
-            public void visit(ReturnStatement node)
+            public void Visit(ReturnStatement node)
             {
                 throw new NotImplementedException();
             }
 
-            public void visit(BlockStatement node)
+            public void Visit(BlockStatement node)
             {
                 throw new NotImplementedException();
             }
 
-            public void visit(AssertStatement node)
+            public void Visit(AssertStatement node)
             {
                 throw new NotImplementedException();
             }
 
-            public void visit(AssignmentStatement node)
+            public void Visit(AssignmentStatement node)
             {
                 throw new NotImplementedException();
             }
 
-            public void visit(IfStatement node)
+            public void Visit(IfStatement node)
             {
                 throw new NotImplementedException();
             }
 
-            public void visit(WhileStatement node)
+            public void Visit(WhileStatement node)
             {
                 throw new NotImplementedException();
             }
 
-            public void visit(MethodInvocation node)
+            public void Visit(MethodInvocation node)
             {
                 throw new NotImplementedException();
             }
 
-            public void visit(InstanceCreationExpression node)
+            public void Visit(InstanceCreationExpression node)
             {
                 throw new NotImplementedException();
             }
 
-            public void visit(UnaryNotExpression node)
+            public void Visit(UnaryNotExpression node)
             {
                 throw new NotImplementedException();
             }
 
-            public void visit(ArithmeticOpExpression node)
+            public void Visit(ArithmeticOpExpression node)
             {
                 throw new NotImplementedException();
             }
 
-            public void visit(LogicalOpExpression node)
+            public void Visit(LogicalOpExpression node)
             {
                 throw new NotImplementedException();
             }
 
-            public void visit(BooleanLiteralExpression node)
+            public void Visit(BooleanLiteralExpression node)
             {
                 throw new NotImplementedException();
             }
 
-            public void visit(ThisExpression node)
+            public void Visit(ThisExpression node)
             {
                 throw new NotImplementedException();
             }
 
-            public void visit(ArrayIndexingExpression node)
+            public void Visit(ArrayIndexingExpression node)
             {
                 throw new NotImplementedException();
             }
 
-            public void visit(VariableReferenceExpression node)
+            public void Visit(VariableReferenceExpression node)
             {
                 throw new NotImplementedException();
             }
 
-            public void visit(IntegerLiteralExpression node)
+            public void Visit(IntegerLiteralExpression node)
             {
                 throw new NotImplementedException();
             }

@@ -11,7 +11,7 @@ namespace MiniJavaCompiler
     {
         public interface SyntaxTreeNode
         {
-            void accept(NodeVisitor visitor);
+            void Accept(NodeVisitor visitor);
         }
 
         public interface Statement : SyntaxTreeNode { }
@@ -36,13 +36,13 @@ namespace MiniJavaCompiler
                 set;
             }
 
-            public SyntaxElement(int row, int col)
+            protected SyntaxElement(int row, int col)
             {
                 Row = row;
                 Col = col;
             }
 
-            public abstract void accept(NodeVisitor visitor);
+            public abstract void Accept(NodeVisitor visitor);
         }
 
         public class Program : SyntaxTreeNode
@@ -65,14 +65,14 @@ namespace MiniJavaCompiler
                 Classes = class_declarations;
             }
 
-            public void accept(NodeVisitor visitor)
+            public void Accept(NodeVisitor visitor)
             {
-                visitor.visit(MainClass);
+                visitor.Visit(MainClass);
                 foreach (ClassDeclaration aClass in Classes)
                 {
-                    aClass.accept(visitor);
+                    aClass.Accept(visitor);
                 }
-                visitor.visit(this);
+                visitor.Visit(this);
             }
         }
 
@@ -103,13 +103,13 @@ namespace MiniJavaCompiler
                 Declarations = declarations;
             }
 
-            public override void accept(NodeVisitor visitor)
+            public override void Accept(NodeVisitor visitor)
             {
                 foreach (Declaration decl in Declarations)
                 {
-                    decl.accept(visitor);
+                    decl.Accept(visitor);
                 }
-                visitor.visit(this);
+                visitor.Visit(this);
             }
         }
 
@@ -134,13 +134,13 @@ namespace MiniJavaCompiler
                 MainMethod = mainMethod;
             }
 
-            public override void accept(NodeVisitor visitor)
+            public override void Accept(NodeVisitor visitor)
             {
                 foreach (Statement statement in MainMethod)
                 {
-                    statement.accept(visitor);
+                    statement.Accept(visitor);
                 }
-                visitor.visit(this);
+                visitor.Visit(this);
             }
         }
 
@@ -162,7 +162,7 @@ namespace MiniJavaCompiler
                 private set;
             }
 
-            public Declaration(string name, string type, bool isArray,
+            protected Declaration(string name, string type, bool isArray,
                 int row, int col)
                 : base(row, col)
             {
@@ -194,17 +194,17 @@ namespace MiniJavaCompiler
                 MethodBody = methodBody;
             }
 
-            public override void accept(NodeVisitor visitor)
+            public override void Accept(NodeVisitor visitor)
             {
                 foreach (VariableDeclaration decl in Formals)
                 {
-                    decl.accept(visitor);
+                    decl.Accept(visitor);
                 }
                 foreach (Statement statement in MethodBody)
                 {
-                    statement.accept(visitor);
+                    statement.Accept(visitor);
                 }
-                visitor.visit(this);
+                visitor.Visit(this);
             }
         }
 
@@ -213,9 +213,9 @@ namespace MiniJavaCompiler
             public VariableDeclaration(string name, string type, bool isArray, int row, int col)
                 : base(name, type, isArray, row, col) { }
 
-            public override void accept(NodeVisitor visitor)
+            public override void Accept(NodeVisitor visitor)
             {
-                visitor.visit(this);
+                visitor.Visit(this);
             }
         }
 
@@ -233,10 +233,10 @@ namespace MiniJavaCompiler
                 Expression = expression;
             }
 
-            public override void accept(NodeVisitor visitor)
+            public override void Accept(NodeVisitor visitor)
             {
-                Expression.accept(visitor);
-                visitor.visit(this);
+                Expression.Accept(visitor);
+                visitor.Visit(this);
             }
         }
 
@@ -254,10 +254,10 @@ namespace MiniJavaCompiler
                 Expression = expression;
             }
 
-            public override void accept(NodeVisitor visitor)
+            public override void Accept(NodeVisitor visitor)
             {
-                Expression.accept(visitor);
-                visitor.visit(this);
+                Expression.Accept(visitor);
+                visitor.Visit(this);
             }
         }
 
@@ -275,13 +275,13 @@ namespace MiniJavaCompiler
                 Statements = statements;
             }
 
-            public override void accept(NodeVisitor visitor)
+            public override void Accept(NodeVisitor visitor)
             {
                 foreach (Statement statement in Statements)
                 {
-                    statement.accept(visitor);
+                    statement.Accept(visitor);
                 }
-                visitor.visit(this);
+                visitor.Visit(this);
             }
         }
 
@@ -299,10 +299,10 @@ namespace MiniJavaCompiler
                 Expression = expression;
             }
 
-            public override void accept(NodeVisitor visitor)
+            public override void Accept(NodeVisitor visitor)
             {
-                Expression.accept(visitor);
-                visitor.visit(this);
+                Expression.Accept(visitor);
+                visitor.Visit(this);
             }
         }
 
@@ -326,11 +326,11 @@ namespace MiniJavaCompiler
                 RHS = rhs;
             }
 
-            public override void accept(NodeVisitor visitor)
+            public override void Accept(NodeVisitor visitor)
             {
-                RHS.accept(visitor);
-                LHS.accept(visitor);
-                visitor.visit(this);
+                RHS.Accept(visitor);
+                LHS.Accept(visitor);
+                visitor.Visit(this);
             }
         }
 
@@ -361,12 +361,12 @@ namespace MiniJavaCompiler
                 Else = elseBranch;
             }
 
-            public override void accept(NodeVisitor visitor)
+            public override void Accept(NodeVisitor visitor)
             {
-                BooleanExpression.accept(visitor);
-                Then.accept(visitor);
-                Else.accept(visitor);
-                visitor.visit(this);
+                BooleanExpression.Accept(visitor);
+                Then.Accept(visitor);
+                Else.Accept(visitor);
+                visitor.Visit(this);
             }
         }
 
@@ -391,11 +391,11 @@ namespace MiniJavaCompiler
                 LoopBody = loopBody;
             }
 
-            public override void accept(NodeVisitor visitor)
+            public override void Accept(NodeVisitor visitor)
             {
-                BooleanExpression.accept(visitor);
-                LoopBody.accept(visitor);
-                visitor.visit(this);
+                BooleanExpression.Accept(visitor);
+                LoopBody.Accept(visitor);
+                visitor.Visit(this);
             }
         }
 
@@ -426,14 +426,14 @@ namespace MiniJavaCompiler
                 CallParameters = callParameters;
             }
 
-            public override void accept(NodeVisitor visitor)
+            public override void Accept(NodeVisitor visitor)
             {
-                MethodOwner.accept(visitor);
+                MethodOwner.Accept(visitor);
                 foreach (Expression expr in CallParameters)
                 {
-                    expr.accept(visitor);
+                    expr.Accept(visitor);
                 }
-                visitor.visit(this);
+                visitor.Visit(this);
             }
         }
 
@@ -457,10 +457,10 @@ namespace MiniJavaCompiler
                 ArraySize = arraySize; 
             }
 
-            public override void accept(NodeVisitor visitor)
+            public override void Accept(NodeVisitor visitor)
             {
-                ArraySize.accept(visitor);
-                visitor.visit(this);
+                ArraySize.Accept(visitor);
+                visitor.Visit(this);
             }
         }
 
@@ -478,37 +478,37 @@ namespace MiniJavaCompiler
                 BooleanExpression = booleanExp;
             }
 
-            public override void accept(NodeVisitor visitor)
+            public override void Accept(NodeVisitor visitor)
             {
-                BooleanExpression.accept(visitor);
-                visitor.visit(this);
+                BooleanExpression.Accept(visitor);
+                visitor.Visit(this);
             }
         }
 
         public abstract class BinaryOpExpression : SyntaxElement, Expression
         {
-            public string Symbol
+            public string Operator
             {
                 get;
                 private set;
             }
-            public Expression LHS
+            public Expression LeftOperand
             {
                 get;
                 private set;
             }
-            public Expression RHS
+            public Expression RightOperand
             {
                 get;
                 private set;
             }
 
-            public BinaryOpExpression(string opsymbol, Expression lhs, Expression rhs,
+            protected BinaryOpExpression(string opsymbol, Expression lhs, Expression rhs,
                 int row, int col) : base(row, col)
             {
-                Symbol = opsymbol;
-                LHS = lhs;
-                RHS = rhs;
+                Operator = opsymbol;
+                LeftOperand = lhs;
+                RightOperand = rhs;
             }
         }
 
@@ -518,11 +518,11 @@ namespace MiniJavaCompiler
                 int row, int col)
                 : base(opsymbol, lhs, rhs, row, col) { }
 
-            public override void accept(NodeVisitor visitor)
+            public override void Accept(NodeVisitor visitor)
             {
-                RHS.accept(visitor);
-                LHS.accept(visitor);
-                visitor.visit(this);
+                RightOperand.Accept(visitor);
+                LeftOperand.Accept(visitor);
+                visitor.Visit(this);
             }
         }
 
@@ -532,11 +532,11 @@ namespace MiniJavaCompiler
                 int row, int col)
                 : base(opsymbol, lhs, rhs, row, col) { }
 
-            public override void accept(NodeVisitor visitor)
+            public override void Accept(NodeVisitor visitor)
             {
-                RHS.accept(visitor);
-                LHS.accept(visitor);
-                visitor.visit(this);
+                RightOperand.Accept(visitor);
+                LeftOperand.Accept(visitor);
+                visitor.Visit(this);
             }
         }
 
@@ -554,9 +554,9 @@ namespace MiniJavaCompiler
                 Value = value;
             }
 
-            public override void accept(NodeVisitor visitor)
+            public override void Accept(NodeVisitor visitor)
             {
-                visitor.visit(this);
+                visitor.Visit(this);
             }
         }
 
@@ -565,9 +565,9 @@ namespace MiniJavaCompiler
             public ThisExpression(int row, int col)
                 : base(row, col) { }
 
-            public override void accept(NodeVisitor visitor)
+            public override void Accept(NodeVisitor visitor)
             {
-                visitor.visit(this);
+                visitor.Visit(this);
             }
         }
 
@@ -592,11 +592,11 @@ namespace MiniJavaCompiler
                 Index = arrayIndex;
             }
 
-            public override void accept(NodeVisitor visitor)
+            public override void Accept(NodeVisitor visitor)
             {
-                Index.accept(visitor);
-                Array.accept(visitor);
-                visitor.visit(this);
+                Index.Accept(visitor);
+                Array.Accept(visitor);
+                visitor.Visit(this);
             }
         }
 
@@ -614,9 +614,9 @@ namespace MiniJavaCompiler
                 Name = name;
             }
 
-            public override void accept(NodeVisitor visitor)
+            public override void Accept(NodeVisitor visitor)
             {
-                visitor.visit(this);
+                visitor.Visit(this);
             }
         }
 
@@ -634,9 +634,9 @@ namespace MiniJavaCompiler
                 Value = value;
             }
 
-            public override void accept(NodeVisitor visitor)
+            public override void Accept(NodeVisitor visitor)
             {
-                visitor.visit(this);
+                visitor.Visit(this);
             }
         }
     }
