@@ -41,7 +41,9 @@ namespace MiniJavaCompilerTest
 
         private Program GetProgramTree()
         {
-            return new Parser(new StubScanner(programTokens)).Parse();
+            var errorReporter = new ErrorLogger();
+            var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
+            return parser.Parse();
         }
 
         [Test]
@@ -54,7 +56,8 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new LeftCurlyBrace(0, 0));
             programTokens.Enqueue(new RightCurlyBrace(0, 0));
 
-            var parser = new Parser(new StubScanner(programTokens));
+            var errorReporter = new ErrorLogger();
+            var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
             var classDecl = parser.ClassDeclaration();
             Assert.That(classDecl.InheritedClass, Is.EqualTo("OtherClass"));
             Assert.That(classDecl.Name, Is.EqualTo("ClassName"));
@@ -80,7 +83,8 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new RightCurlyBrace(0, 0));
             programTokens.Enqueue(new RightCurlyBrace(0, 0));
 
-            var parser = new Parser(new StubScanner(programTokens));
+            var errorReporter = new ErrorLogger();
+            var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
             var classDecl = parser.ClassDeclaration();
             Assert.IsNull(classDecl.InheritedClass);
             Assert.NotNull(classDecl.Declarations);
@@ -94,7 +98,8 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new Identifier("foo", 0, 0));
             EndLine();
 
-            var parser = new Parser(new StubScanner(programTokens));
+            var errorReporter = new ErrorLogger();
+            var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
             var variableDecl = parser.VariableDeclaration();
             Assert.False(variableDecl.IsArray);
             Assert.That(variableDecl.Name, Is.EqualTo("foo"));
@@ -108,7 +113,8 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new Identifier("foo", 0, 0));
             EndLine();
 
-            var parser = new Parser(new StubScanner(programTokens));
+            var errorReporter = new ErrorLogger();
+            var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
             var variableDecl = parser.VariableDeclaration();
             Assert.False(variableDecl.IsArray);
             Assert.That(variableDecl.Name, Is.EqualTo("foo"));
@@ -124,7 +130,8 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new Identifier("foo", 0, 0));
             EndLine();
 
-            var parser = new Parser(new StubScanner(programTokens));
+            var errorReporter = new ErrorLogger();
+            var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
             var variableDecl = parser.VariableDeclaration();
             Assert.True(variableDecl.IsArray);
             Assert.That(variableDecl.Name, Is.EqualTo("foo"));
@@ -140,7 +147,8 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new RightParenthesis(0, 0));
             EndLine();
 
-            var parser = new Parser(new StubScanner(programTokens));
+            var errorReporter = new ErrorLogger();
+            var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
             var statement = parser.Statement();
             Assert.That(statement, Is.InstanceOf<AssertStatement>());
             Assert.That(((AssertStatement)statement).Expression, Is.InstanceOf<BooleanLiteralExpression>());
@@ -159,7 +167,8 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new RightParenthesis(0, 0));
             programTokens.Enqueue(new EndLine(0, 0));
 
-            var parser = new Parser(new StubScanner(programTokens));
+            var errorReporter = new ErrorLogger();
+            var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
             var statement = parser.Statement();
             Assert.That(statement, Is.InstanceOf<PrintStatement>());
             Assert.That(((PrintStatement)statement).Expression, Is.InstanceOf<IntegerLiteralExpression>());
@@ -178,7 +187,8 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new RightParenthesis(0, 0));
             programTokens.Enqueue(new EndLine(0, 0));
 
-            var parser = new Parser(new StubScanner(programTokens));
+            var errorReporter = new ErrorLogger();
+            var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
             var statement = parser.Statement();
             Assert.That(statement, Is.InstanceOf<WhileStatement>());
             var whileStatement = (WhileStatement)statement;
@@ -193,7 +203,8 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new Identifier("foo", 0, 0));
             programTokens.Enqueue(new EndLine(0, 0));
 
-            var parser = new Parser(new StubScanner(programTokens));
+            var errorReporter = new ErrorLogger();
+            var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
             var statement = parser.Statement();
             Assert.That(statement, Is.InstanceOf<ReturnStatement>());
             Assert.That(((ReturnStatement)statement).Expression, Is.InstanceOf<VariableReferenceExpression>());
@@ -209,7 +220,8 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new RightParenthesis(0, 0));
             programTokens.Enqueue(new EndLine(0, 0));
 
-            var parser = new Parser(new StubScanner(programTokens));
+            var errorReporter = new ErrorLogger();
+            var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
             var statement = parser.Statement();
             Assert.That(statement, Is.InstanceOf<MethodInvocation>());
             var invocation = (MethodInvocation)statement;
@@ -229,7 +241,8 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new Identifier("bar", 0, 0));
             programTokens.Enqueue(new EndLine(0, 0));
 
-            var parser = new Parser(new StubScanner(programTokens));
+            var errorReporter = new ErrorLogger();
+            var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
             var statement = parser.Statement();
             Assert.That(statement, Is.InstanceOf<VariableDeclaration>());
             Assert.True(((VariableDeclaration)statement).IsArray);
@@ -246,7 +259,8 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new KeywordToken("true", 0, 0));
             programTokens.Enqueue(new EndLine(0, 0));
 
-            var parser = new Parser(new StubScanner(programTokens));
+            var errorReporter = new ErrorLogger();
+            var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
             var statement = parser.Statement();
             Assert.That(statement, Is.InstanceOf<AssignmentStatement>());
             var assignment = (AssignmentStatement)statement;
@@ -264,9 +278,10 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new IntegerLiteralToken("42", 0, 0));
             programTokens.Enqueue(new EndLine(0, 0));
 
-            var parser = new Parser(new StubScanner(programTokens));
+            var errorReporter = new ErrorLogger();
+            var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
             Assert.Null(parser.Statement());
-            Assert.That(parser.ErrorMessages.Count, Is.GreaterThan(0));
+            Assert.That(errorReporter.Errors(), Is.Not.Empty);
         }
 
         [Test]
@@ -275,9 +290,10 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new IntegerLiteralToken("42", 0, 0));
             programTokens.Enqueue(new EndLine(0, 0));
 
-            var parser = new Parser(new StubScanner(programTokens));
+            var errorReporter = new ErrorLogger();
+            var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
             Assert.Null(parser.Statement());
-            Assert.That(parser.ErrorMessages.Count, Is.GreaterThan(0));
+            Assert.That(errorReporter.Errors(), Is.Not.Empty);
         }
 
         [Test]
@@ -289,7 +305,8 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new LogicalOperatorToken("==", 0, 0));
             programTokens.Enqueue(new IntegerLiteralToken("0", 0, 0));
 
-            var parser = new Parser(new StubScanner(programTokens));
+            var errorReporter = new ErrorLogger();
+            var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
             var expression = parser.Expression();
             Assert.That(expression, Is.InstanceOf<LogicalOpExpression>());
             var logicalOp = (LogicalOpExpression)expression;
@@ -320,7 +337,8 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new ArithmeticOperatorToken("-", 0, 0));
             programTokens.Enqueue(new IntegerLiteralToken("2", 0, 0));
 
-            var parser = new Parser(new StubScanner(programTokens));
+            var errorReporter = new ErrorLogger();
+            var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
             var expression = parser.Expression();
             Assert.That(expression, Is.InstanceOf<ArithmeticOpExpression>());
             var minusOp = (ArithmeticOpExpression)expression;

@@ -10,38 +10,13 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 {
     public class Parser
     {
-        private IScanner scanner;
-        private Stack<IToken> inputBuffer; // This stack is used for buffering when we need to peek forward.
-        public List<ErrorMessage> ErrorMessages
-        {
-            get;
-            private set;
-        }
-        IToken InputToken
-        {
-            get;
-            set;
-        }
+        protected IParserInputReader Input { get; set; }
+        protected readonly IErrorReporter errorReporter;
 
-        public Parser(IScanner scanner)
+        public Parser(IParserInputReader input, IErrorReporter reporter)
         {
-            this.scanner = scanner;
-            this.inputBuffer = new Stack<IToken>();
-            ErrorMessages = new List<ErrorMessage>();
-            InputToken = scanner.NextToken();
-        }
-
-        // "Pushes" an already consumed token back into the input.
-        private void Buffer(IToken token)
-        {
-            inputBuffer.Push(InputToken);
-            InputToken = token;
-        }
-
-        // TODO: extract error reporting to an external, reusable class.
-        private void ReportError(string errorMsg, int row, int col)
-        {
-            ErrorMessages.Add(new ErrorMessage(errorMsg, row, col));
+            errorReporter = reporter;
+            Input = input;
         }
 
         public Program Parse()
@@ -55,49 +30,51 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             var declarations = ClassDeclarationList();
             try
             {
-                Match<EndOfFile>();
-                ReportErrors();
+                Input.MatchAndConsume<EndOfFile>();
+                ReportErrors(); // TODO: Instead return an error token if any errors found.
                 return new Program(main, declarations);
             }
             catch (SyntaxError e)
-            { // Found something other than EndOfFile.
-                ReportError(e.Message, e.Row, e.Col);
-                throw new ErrorReport(ErrorMessages);
+            { // Found something other than end of file.
+                errorReporter.ReportError(e.Message, e.Row, e.Col);
+                // TODO: Instead return an error token if any errors found.
+                throw new ErrorReport(errorReporter.Errors());
             }
         }
 
         private void ReportErrors()
-        {
-            if (ErrorMessages.Count > 0)
-                throw new ErrorReport(ErrorMessages);
+        { // TODO: Parser should not handle this. The caller should check the error log.
+            var errors = errorReporter.Errors();
+            if (errors.Any())
+                throw new ErrorReport(errors);
         }
 
         public MainClassDeclaration MainClass()
         {
             try
             {
-                IToken startToken = Match<KeywordToken>("class");
-                var classIdent = Match<Identifier>();
-                Match<LeftCurlyBrace>();
-                Match<KeywordToken>("public");
-                Match<KeywordToken>("static");
-                Match<MiniJavaType>("void");
-                Match<KeywordToken>("main");
+                IToken startToken = Input.MatchAndConsume<KeywordToken>("class");
+                var classIdent = Input.MatchAndConsume<Identifier>();
+                Input.MatchAndConsume<LeftCurlyBrace>();
+                Input.MatchAndConsume<KeywordToken>("public");
+                Input.MatchAndConsume<KeywordToken>("static");
+                Input.MatchAndConsume<MiniJavaType>("void");
+                Input.MatchAndConsume<KeywordToken>("main");
 
-                Match<LeftParenthesis>();
-                Match<RightParenthesis>();
+                Input.MatchAndConsume<LeftParenthesis>();
+                Input.MatchAndConsume<RightParenthesis>();
 
-                Match<LeftCurlyBrace>();
+                Input.MatchAndConsume<LeftCurlyBrace>();
                 var mainStatements = StatementList();
-                Match<RightCurlyBrace>();
+                Input.MatchAndConsume<RightCurlyBrace>();
 
-                Match<RightCurlyBrace>();
+                Input.MatchAndConsume<RightCurlyBrace>();
                 return new MainClassDeclaration(classIdent.Value,
                     mainStatements, startToken.Row, startToken.Col);
             }
             catch (SyntaxError e)
             {
-                ReportError(e.Message, e.Row, e.Col);
+                errorReporter.ReportError(e.Message, e.Row, e.Col);
                 RecoverFromClassMatching();
                 return null;
             }
@@ -110,19 +87,19 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
         private void RecoverFromClassMatching()
         {
-            while (!(MatchWithoutConsuming<EndOfFile>() || MatchWithoutConsuming<KeywordToken>("class")))
-                Consume<IToken>();
+            while (!(Input.NextTokenIs<EndOfFile>() || Input.NextTokenIs<KeywordToken>("class")))
+                Input.Consume<IToken>();
         }
 
         public IStatement Statement()
         {
             try
             {
-                if (InputToken is MiniJavaType)
+                if (Input.NextTokenIs<MiniJavaType>())
                     return VariableDeclaration();
-                else if (InputToken is KeywordToken)
+                else if (Input.NextTokenIs<KeywordToken>())
                     return MakeKeywordStatement();
-                else if (InputToken is LeftCurlyBrace)
+                else if (Input.NextTokenIs<LeftCurlyBrace>())
                     return MakeBlockStatement();
                 else // Can be an assignment, a method invocation or a variable
                     // declaration for a user defined type.
@@ -130,24 +107,24 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             }
             catch (SyntaxError e)
             {
-                ReportError(e.Message, e.Col, e.Row);
-                return RecoverFromStatementMatching();
+                errorReporter.ReportError(e.Message, e.Col, e.Row);
+                RecoverFromStatementMatching();
             }
             catch (LexicalErrorEncountered)
             {
-                return RecoverFromStatementMatching();
+                RecoverFromStatementMatching();
             }
+            return null;
         }
 
-        private IStatement RecoverFromStatementMatching()
+        private void RecoverFromStatementMatching()
         {
-            while (!MatchWithoutConsuming<EndOfFile>())
+            while (!Input.NextTokenIs<EndOfFile>())
             {
-                var token = Consume<IToken>();
+                var token = Input.Consume<IToken>();
                 if (token is EndLine)
                     break;
             }
-            return null;
         }
 
         // This is a workaround method that is needed because the language is not LL(1).
@@ -156,32 +133,32 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         private IStatement MakeExpressionStatementOrVariableDeclaration()
         {
             IExpression expression;
-            if (InputToken is Identifier)
+            if (Input.NextTokenIs<Identifier>())
             {
-                var ident = Consume<Identifier>();
-                if (MatchWithoutConsuming<LeftBracket>())
+                var ident = Input.Consume<Identifier>();
+                if (Input.NextTokenIs<LeftBracket>())
                 {
-                    var leftBracket = Consume<LeftBracket>();
-                    if (MatchWithoutConsuming<RightBracket>())
+                    var leftBracket = Input.Consume<LeftBracket>();
+                    if (Input.NextTokenIs<RightBracket>())
                     { // The statement is a local array variable declaration.
-                        Consume<RightBracket>();
+                        Input.Consume<RightBracket>();
                         return FinishParsingLocalVariableDeclaration(ident, true);
                     }
                     else
                     {   // Brackets are used to index into an array, beginning an expression.
-                        // Buffer the tokens that were already consumed so the expression parser
+                        // Push back the tokens that were already consumed so the expression parser
                         // can match them again.
-                        Buffer(leftBracket);
-                        Buffer(ident);
+                        Input.PushBack(leftBracket);
+                        Input.PushBack(ident);
                         expression = Expression();
                     }
                 }
-                else if (MatchWithoutConsuming<Identifier>())
+                else if (Input.NextTokenIs<Identifier>())
                     return FinishParsingLocalVariableDeclaration(ident, false);
                 else
-                { // The consumed identifier token is a reference to a variable
+                {   // The consumed identifier token is a reference to a variable
                     // and begins an expression.
-                    Buffer(ident);
+                    Input.PushBack(ident);
                     expression = Expression();
                 }
             }
@@ -193,7 +170,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
         private IStatement CompleteStatement(IExpression expression)
         {
-            if (InputToken is AssignmentToken)
+            if (Input.NextTokenIs<AssignmentToken>())
                 return MakeAssignmentStatement(expression);
             else
                 return MakeMethodInvocationStatement(expression);
@@ -201,7 +178,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
         private IStatement MakeMethodInvocationStatement(IExpression expression)
         {
-            Match<EndLine>();
+            Input.MatchAndConsume<EndLine>();
             if (expression is MethodInvocation)
                 return (MethodInvocation)expression;
             else
@@ -214,25 +191,25 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
         private IStatement MakeAssignmentStatement(IExpression lhs)
         {
-            var assignment = Match<AssignmentToken>();
+            var assignment = Input.MatchAndConsume<AssignmentToken>();
             IExpression rhs = Expression();
-            Match<EndLine>();
+            Input.MatchAndConsume<EndLine>();
             return new AssignmentStatement(lhs, rhs,
                 assignment.Row, assignment.Col);
         }
 
         private IStatement MakeBlockStatement()
         {
-            IToken blockStart = Match<LeftCurlyBrace>();
+            IToken blockStart = Input.MatchAndConsume<LeftCurlyBrace>();
             var statements = StatementList();
-            Match<RightCurlyBrace>();
+            Input.MatchAndConsume<RightCurlyBrace>();
             return new BlockStatement(statements, blockStart.Row, blockStart.Col);
         }
 
         // Keyword statements are statements starting with a keyword.
         private IStatement MakeKeywordStatement()
         {
-            var token = (KeywordToken)InputToken;
+            var token = (KeywordToken) Input.Peek();
             switch (token.Value)
             {
                 case "assert":
@@ -253,34 +230,34 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
         private IStatement MakeReturnStatement()
         {
-            var returnToken = Consume<KeywordToken>();
+            var returnToken = Input.Consume<KeywordToken>();
             var expression = Expression();
-            Match<EndLine>();
+            Input.MatchAndConsume<EndLine>();
             return new ReturnStatement(expression,
                 returnToken.Row, returnToken.Col);
         }
 
         private IStatement MakePrintStatement()
         {
-            var systemToken = Consume<KeywordToken>();
-            Match<MethodInvocationToken>();
-            Match<KeywordToken>("out");
-            Match<MethodInvocationToken>();
-            Match<KeywordToken>("println");
-            Match<LeftParenthesis>();
+            var systemToken = Input.Consume<KeywordToken>();
+            Input.MatchAndConsume<MethodInvocationToken>();
+            Input.MatchAndConsume<KeywordToken>("out");
+            Input.MatchAndConsume<MethodInvocationToken>();
+            Input.MatchAndConsume<KeywordToken>("println");
+            Input.MatchAndConsume<LeftParenthesis>();
             var integerExpression = Expression();
-            Match<RightParenthesis>();
-            Match<EndLine>();
+            Input.MatchAndConsume<RightParenthesis>();
+            Input.MatchAndConsume<EndLine>();
             return new PrintStatement(integerExpression,
                 systemToken.Row, systemToken.Col);
         }
 
         private IStatement MakeWhileStatement()
         {
-            var whileToken = Consume<KeywordToken>();
-            Match<LeftParenthesis>();
+            var whileToken = Input.Consume<KeywordToken>();
+            Input.MatchAndConsume<LeftParenthesis>();
             var booleanExpr = Expression();
-            Match<RightParenthesis>();
+            Input.MatchAndConsume<RightParenthesis>();
             var whileBody = Statement();
             return new WhileStatement(booleanExpr, whileBody,
                 whileToken.Row, whileToken.Col);
@@ -288,10 +265,10 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
         private IStatement MakeIfStatement()
         {
-            var ifToken = Consume<KeywordToken>();
-            Match<LeftParenthesis>();
+            var ifToken = Input.Consume<KeywordToken>();
+            Input.MatchAndConsume<LeftParenthesis>();
             IExpression booleanExpr = Expression();
-            Match<RightParenthesis>();
+            Input.MatchAndConsume<RightParenthesis>();
             var thenBranch = Statement();
             var elseBranch = OptionalElseBranch();
             return new IfStatement(booleanExpr, thenBranch, elseBranch,
@@ -300,28 +277,27 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
         private IStatement MakeAssertStatement()
         {
-            var assertToken = Consume<KeywordToken>();
-            Match<LeftParenthesis>();
+            var assertToken = Input.Consume<KeywordToken>();
+            Input.MatchAndConsume<LeftParenthesis>();
             IExpression expr = Expression();
-            Match<RightParenthesis>();
-            Match<EndLine>(); // not in the original CFG, probably a bug?
+            Input.MatchAndConsume<RightParenthesis>();
+            Input.MatchAndConsume<EndLine>(); // not in the original CFG, probably a bug?
             return new AssertStatement(expr, assertToken.Row, assertToken.Col);
         }
 
         private IStatement FinishParsingLocalVariableDeclaration(Identifier variableTypeName, bool isArray)
         {
-            var variableName = Match<Identifier>();
-            Match<EndLine>();
+            var variableName = Input.MatchAndConsume<Identifier>();
+            Input.MatchAndConsume<EndLine>();
             return new VariableDeclaration(variableName.Value, variableTypeName.Value, isArray,
                 variableTypeName.Row, variableTypeName.Col);
         }
 
         public IStatement OptionalElseBranch()
         {
-            if (InputToken is KeywordToken &&
-                ((KeywordToken)InputToken).Value == "else")
+            if (Input.NextTokenIs<KeywordToken>("else"))
             {
-                Match<KeywordToken>("else");
+                Input.MatchAndConsume<KeywordToken>();
                 return Statement();
             }
             else
@@ -330,26 +306,26 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
         public IExpression Expression()
         {
-            var expressionParser = new ExpressionParser(this);
-            return expressionParser.parse();
+            var expressionParser = new ExpressionParser(Input, errorReporter);
+            return expressionParser.Parse();
         }
 
         public ClassDeclaration ClassDeclaration()
         {
             try
             {
-                IToken startToken = Match<KeywordToken>("class");
-                var classIdent = Match<Identifier>();
+                IToken startToken = Input.MatchAndConsume<KeywordToken>("class");
+                var classIdent = Input.MatchAndConsume<Identifier>();
                 var inheritedClass = OptionalInheritance();
-                Match<LeftCurlyBrace>();
+                Input.MatchAndConsume<LeftCurlyBrace>();
                 var declarations = DeclarationList();
-                Match<RightCurlyBrace>();
+                Input.MatchAndConsume<RightCurlyBrace>();
                 return new ClassDeclaration(classIdent.Value, inheritedClass,
                     declarations, startToken.Row, startToken.Col);
             }
             catch (SyntaxError e)
             {
-                ReportError(e.Message, e.Row, e.Col);
+                errorReporter.ReportError(e.Message, e.Row, e.Col);
                 RecoverFromClassMatching();
                 return null;
             }
@@ -362,10 +338,10 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
         public string OptionalInheritance()
         {
-            if (!(InputToken is LeftCurlyBrace))
+            if (!(Input.NextTokenIs<LeftCurlyBrace>()))
             {
-                Match<KeywordToken>("extends");
-                return Match<Identifier>().Value;
+                Input.MatchAndConsume<KeywordToken>("extends");
+                return Input.MatchAndConsume<Identifier>().Value;
             }
             return null;
         }
@@ -374,47 +350,47 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         {
             try
             {
-                if (InputToken is MiniJavaType || InputToken is Identifier)
+                if (Input.NextTokenIs<MiniJavaType>() || Input.NextTokenIs<Identifier>())
                 {
                     return VariableDeclaration();
                 }
-                else if (InputToken is KeywordToken)
+                else if (Input.NextTokenIs<KeywordToken>())
                 {
                     return MethodDeclaration();
                 }
                 else
                 {
-                    var token = Consume<IToken>();
+                    var token = Input.Consume<IToken>();
                     throw new SyntaxError("Invalid token of type " + token.GetType().Name +
                         " starting a declaration.", token.Row, token.Col);
                 }
             }
             catch (SyntaxError e)
             {
-                ReportError(e.Message, e.Row, e.Col);
-                return RecoverFromDeclarationMatching();
+                errorReporter.ReportError(e.Message, e.Row, e.Col);
+                RecoverFromDeclarationMatching();
             }
             catch (LexicalErrorEncountered)
             {
-                return RecoverFromDeclarationMatching();
+                RecoverFromDeclarationMatching();
             }
+            return null;
         }
 
-        private Declaration RecoverFromDeclarationMatching()
+        private void RecoverFromDeclarationMatching()
         {
-            while (!MatchWithoutConsuming<EndOfFile>())
+            while (!Input.NextTokenIs<EndOfFile>())
             {
-                var token = Consume<IToken>();
+                var token = Input.Consume<IToken>();
                 if (token is LeftCurlyBrace)
                     break;
             }
-            return null;
         }
 
         public VariableDeclaration VariableDeclaration()
         {
             var variableDecl = VariableOrFormalParameterDeclaration();
-            Match<EndLine>();
+            Input.MatchAndConsume<EndLine>();
             return variableDecl;
         }
 
@@ -424,13 +400,13 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             {
                 var typeInfo = Type();
                 var type = (StringToken)typeInfo.Item1;
-                var variableIdent = Match<Identifier>();
+                var variableIdent = Input.MatchAndConsume<Identifier>();
                 return new VariableDeclaration(variableIdent.Value, type.Value,
                     typeInfo.Item2, type.Row, type.Col);
             }
             catch (SyntaxError e)
             {
-                ReportError(e.Message, e.Row, e.Col);
+                errorReporter.ReportError(e.Message, e.Row, e.Col);
                 RecoverFromVariableDeclarationMatching();
             }
             catch (LexicalErrorEncountered)
@@ -442,25 +418,25 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
         private void RecoverFromVariableDeclarationMatching()
         { // This could be parameterised on follow set.
-            while (!(MatchWithoutConsuming<EndOfFile>()
-                || MatchWithoutConsuming<EndLine>()
-                || MatchWithoutConsuming<ParameterSeparator>()
-                || MatchWithoutConsuming<RightParenthesis>()))
-                Consume<IToken>();
+            while (!(Input.NextTokenIs<EndOfFile>()
+                || Input.NextTokenIs<EndLine>()
+                || Input.NextTokenIs<ParameterSeparator>()
+                || Input.NextTokenIs<RightParenthesis>()))
+                Input.Consume<IToken>();
         }
 
         public MethodDeclaration MethodDeclaration()
         {
-            IToken startToken = Match<KeywordToken>("public");
+            IToken startToken = Input.MatchAndConsume<KeywordToken>("public");
             var typeInfo = Type();
             var type = (StringToken)typeInfo.Item1;
-            Identifier methodName = Match<Identifier>();
-            Match<LeftParenthesis>();
+            Identifier methodName = Input.MatchAndConsume<Identifier>();
+            Input.MatchAndConsume<LeftParenthesis>();
             List<VariableDeclaration> parameters = FormalParameters();
-            Match<RightParenthesis>();
-            Match<LeftCurlyBrace>();
+            Input.MatchAndConsume<RightParenthesis>();
+            Input.MatchAndConsume<LeftCurlyBrace>();
             List<IStatement> methodBody = StatementList();
-            Match<RightCurlyBrace>();
+            Input.MatchAndConsume<RightCurlyBrace>();
             return new MethodDeclaration(methodName.Value, type.Value,
                 typeInfo.Item2, parameters, methodBody, startToken.Row,
                 startToken.Col);
@@ -471,451 +447,41 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         // second element.
         public Tuple<ITypeToken, bool> Type()
         {
-            var type = Match<ITypeToken>();
-            if (InputToken is LeftBracket)
+            var type = Input.MatchAndConsume<ITypeToken>();
+            if (Input.NextTokenIs<LeftBracket>())
             {
-                Match<LeftBracket>();
-                Match<RightBracket>();
+                Input.MatchAndConsume<LeftBracket>();
+                Input.MatchAndConsume<RightBracket>();
                 return new Tuple<ITypeToken, bool>(type, true);
             }
             return new Tuple<ITypeToken, bool>(type, false);
         }
 
-        // An internal parser that solves operator precedences in expressions.
-        private class ExpressionParser
-        {
-            Parser Parent
-            {
-                get;
-                set;
-            }
-
-            public ExpressionParser(Parser parent)
-            {
-                Parent = parent;
-            }
-
-            public IExpression parse()
-            {
-                try
-                {
-                    return ParseExpression();
-                }
-                catch (SyntaxError e)
-                {
-                    Parent.ReportError(e.Message, e.Row, e.Col);
-                    return RecoverFromExpressionParsing();
-                }
-                catch (LexicalErrorEncountered)
-                {
-                    return RecoverFromExpressionParsing();
-                }
-            }
-
-            private IExpression RecoverFromExpressionParsing()
-            {
-                while (!(Parent.MatchWithoutConsuming<EndOfFile>()
-                    || Parent.MatchWithoutConsuming<RightParenthesis>()
-                    || Parent.MatchWithoutConsuming<EndLine>()))
-                    Parent.Consume<IToken>();
-                return null;
-            }
-
-            private IExpression ParseExpression()
-            {
-                var firstOp = OrOperand();
-                Func<bool> orMatcher =
-                    () => Parent.MatchWithoutConsuming<BinaryOperatorToken>("||");
-                return BinaryOpTail<LogicalOpExpression>(firstOp, orMatcher, OrOperand);
-            }
-
-            private IExpression OrOperand()
-            {
-                var firstOp = AndOperand();
-                Func<bool> andMatcher =
-                    () => Parent.MatchWithoutConsuming<BinaryOperatorToken>("&&");
-                return BinaryOpTail<LogicalOpExpression>(firstOp, andMatcher, AndOperand);
-            }
-
-            private IExpression AndOperand()
-            {
-                var firstOp = EqOperand();
-                Func<bool> eqMatcher =
-                    () => Parent.MatchWithoutConsuming<BinaryOperatorToken>("==");
-                return BinaryOpTail<LogicalOpExpression>(firstOp, eqMatcher, EqOperand);
-            }
-
-            private IExpression EqOperand()
-            {
-                var firstOp = NotEqOperand();
-                Func<bool> neqMatcher =
-                    () => Parent.MatchWithoutConsuming<BinaryOperatorToken>("<") ||
-                          Parent.MatchWithoutConsuming<BinaryOperatorToken>(">");
-                return BinaryOpTail<LogicalOpExpression>(firstOp, neqMatcher, NotEqOperand);
-            }
-
-            private IExpression NotEqOperand()
-            {
-                var firstOp = AddOperand();
-                Func<bool> addMatcher =
-                    () => Parent.MatchWithoutConsuming<BinaryOperatorToken>("+") ||
-                          Parent.MatchWithoutConsuming<BinaryOperatorToken>("-");
-                return BinaryOpTail<ArithmeticOpExpression>(firstOp, addMatcher, AddOperand);
-            }
-
-            private IExpression AddOperand()
-            {
-                var firstOp = MultOperand();
-                Func<bool> multMatcher =
-                    () => Parent.MatchWithoutConsuming<BinaryOperatorToken>("*") ||
-                          Parent.MatchWithoutConsuming<BinaryOperatorToken>("/") ||
-                          Parent.MatchWithoutConsuming<BinaryOperatorToken>("%");
-                return BinaryOpTail<ArithmeticOpExpression>(firstOp, multMatcher, MultOperand);
-            }
-
-            private IExpression MultOperand()
-            {
-                if (Parent.MatchWithoutConsuming<UnaryNotToken>())
-                {
-                    var token = Parent.Consume<UnaryNotToken>();
-                    var term = Term();
-                    return new UnaryNotExpression(term, token.Row, token.Col);
-                }
-                else
-                    return Term();
-            }
-
-            private IExpression BinaryOpTail<OperatorType>(IExpression lhs,
-                Func<bool> matchOperator, Func<IExpression> operandParser)
-                where OperatorType : BinaryOpExpression
-            {
-                if (matchOperator())
-                {
-                    var opToken = Parent.Consume<BinaryOperatorToken>();
-                    var rhs = operandParser();
-                    var operatorExp = (IExpression)System.Activator.CreateInstance(
-                        typeof(OperatorType), new Object[] { opToken.Value, lhs, rhs, opToken.Row, opToken.Col });
-                    return BinaryOpTail<OperatorType>(operatorExp, matchOperator,
-                        operandParser);
-                }
-                else
-                    return lhs;
-            }
-
-            public IExpression Term()
-            {
-                try
-                {
-                    if (Parent.InputToken is KeywordToken)
-                        return MakeKeywordExpression();
-                    else if (Parent.InputToken is Identifier)
-                        return MakeVariableReferenceExpression();
-                    else if (Parent.InputToken is IntegerLiteralToken)
-                        return MakeIntegerLiteralExpression();
-                    else if (Parent.InputToken is LeftParenthesis)
-                        return MakeParenthesisedExpression();
-                    else
-                    {
-                        var token = Parent.Consume<IToken>();
-                        throw new SyntaxError("Invalid start token of type " +
-                            token.GetType().Name + " for a term in an expression.",
-                            token.Row, token.Col);
-                    }
-                }
-                catch (SyntaxError e)
-                {
-                    Parent.ReportError(e.Message, e.Row, e.Col);
-                    return RecoverFromTermMatching();
-                }
-                catch (LexicalErrorEncountered)
-                {
-                    return RecoverFromTermMatching();
-                }
-            }
-
-            private IExpression RecoverFromTermMatching()
-            { // could be parameterised on follow set
-                while (!(Parent.MatchWithoutConsuming<EndOfFile>()
-                    || Parent.MatchWithoutConsuming<RightParenthesis>()
-                    || Parent.MatchWithoutConsuming<EndLine>()
-                    || Parent.MatchWithoutConsuming<BinaryOperatorToken>()))
-                    Parent.Consume<IToken>();
-                return null;
-            }
-
-            private IExpression MakeParenthesisedExpression()
-            {
-                Parent.Consume<LeftParenthesis>();
-                IExpression parenthesisedExpression = Parent.Expression();
-                Parent.Match<RightParenthesis>();
-                return OptionalTermTail(parenthesisedExpression);
-            }
-
-            private IExpression MakeIntegerLiteralExpression()
-            {
-                var token = Parent.Match<IntegerLiteralToken>();
-                return OptionalTermTail(new IntegerLiteralExpression(token.Value,
-                    token.Row, token.Col));
-            }
-
-            private IExpression MakeVariableReferenceExpression()
-            {
-                var identifier = Parent.Match<Identifier>();
-                return OptionalTermTail(new VariableReferenceExpression(
-                    identifier.Value, identifier.Row, identifier.Col));
-            }
-
-            // Similarly to keyword statements, keyword expressions are expressions
-            // that start with a keyword.
-            private IExpression MakeKeywordExpression()
-            {
-                var token = (KeywordToken)Parent.InputToken;
-                switch (token.Value)
-                {
-                    case "new":
-                        return MakeInstanceCreationExpression();
-                    case "this":
-                        return MakeThisExpression();
-                    case "true":
-                        return MakeBooleanLiteral(true);
-                    case "false":
-                        return MakeBooleanLiteral(false);
-                    default:
-                        throw new SyntaxError("Invalid start token " + token.Value +
-                            " for expression.", token.Row, token.Col);
-                }
-            }
-
-            private IExpression MakeBooleanLiteral(bool value)
-            {
-                var boolToken = Parent.Consume<KeywordToken>();
-                return OptionalTermTail(new BooleanLiteralExpression(value,
-                    boolToken.Row, boolToken.Col));
-            }
-
-            private IExpression MakeThisExpression()
-            {
-                var thisToken = Parent.Consume<KeywordToken>();
-                return OptionalTermTail(new ThisExpression(thisToken.Row,
-                    thisToken.Col));
-            }
-
-            private IExpression MakeInstanceCreationExpression()
-            {
-                var newToken = Parent.Consume<KeywordToken>();
-                var typeInfo = NewType();
-                var type = (StringToken)typeInfo.Item1;
-                return OptionalTermTail(new InstanceCreationExpression(type.Value,
-                    newToken.Row, newToken.Col, typeInfo.Item2));
-            }
-
-            public IExpression OptionalTermTail(IExpression lhs)
-            {
-                if (Parent.MatchWithoutConsuming<LeftBracket>())
-                    return MakeArrayIndexingExpression(lhs);
-                else if (Parent.MatchWithoutConsuming<MethodInvocationToken>())
-                    return MakeMethodInvocationExpression(lhs);
-                else
-                    return lhs;
-            }
-
-            private IExpression MakeMethodInvocationExpression(IExpression methodOwner)
-            {
-                Parent.Consume<MethodInvocationToken>();
-                if (Parent.InputToken is KeywordToken)
-                    return MakeLengthMethodInvocation(methodOwner);
-                else
-                    return MakeUserDefinedMethodInvocation(methodOwner);
-            }
-
-            private IExpression MakeUserDefinedMethodInvocation(IExpression methodOwner)
-            {
-                var methodName = Parent.Match<Identifier>();
-                Parent.Match<LeftParenthesis>();
-                var parameters = Parent.ExpressionList();
-                Parent.Match<RightParenthesis>();
-                return OptionalTermTail(new MethodInvocation(methodOwner,
-                    methodName.Value, parameters, methodName.Row, methodName.Col));
-            }
-
-            private IExpression MakeLengthMethodInvocation(IExpression methodOwner)
-            {
-                var methodName = Parent.Match<KeywordToken>("length");
-                var parameters = new List<IExpression>();
-                return OptionalTermTail(new MethodInvocation(methodOwner, methodName.Value,
-                    parameters, methodName.Row, methodName.Col));
-            }
-
-            private IExpression MakeArrayIndexingExpression(IExpression lhs)
-            {
-                var startToken = Parent.Match<LeftBracket>();
-                var indexExpression = Parent.Expression();
-                Parent.Match<RightBracket>();
-                return OptionalTermTail(new ArrayIndexingExpression(lhs, indexExpression,
-                    startToken.Row, startToken.Col));
-            }
-
-            public Tuple<ITypeToken, IExpression> NewType()
-            {
-                var type = Parent.Match<ITypeToken>();
-                if (type is MiniJavaType || !(Parent.InputToken is LeftParenthesis))
-                { // must be an array
-                    Parent.Match<LeftBracket>();
-                    var arraySize = Parent.Expression();
-                    Parent.Match<RightBracket>();
-                    return new Tuple<ITypeToken, IExpression>(type, arraySize);
-                }
-                else
-                {
-                    Parent.Match<LeftParenthesis>();
-                    Parent.Match<RightParenthesis>();
-                    return new Tuple<ITypeToken, IExpression>(type, null);
-                }
-            }
-        }
-
-        // Matcher functions.
-
-        // Checks that the input token is of the expected type and matches the
-        // expected value. If the input token matches, it is returned and
-        // cast to the expected type. Otherwise an error is reported.
-        // The token is consumed even when it does not match expectations.
-        private ExpectedType Match<ExpectedType>(string expectedValue)
-            where ExpectedType : StringToken
-        {
-            if (InputToken is ExpectedType)
-            {
-                if (((StringToken)InputToken).Value == expectedValue)
-                {
-                    return Consume<ExpectedType>();
-                }
-                else
-                {
-                    var token = Consume<StringToken>();
-                    throw new SyntaxError("Expected value \"" + expectedValue + "\" but got " +
-                        token.Value + ".", token.Row, token.Col);
-                }
-            }
-            else
-            {
-                throw ConstructMatchException<ExpectedType>(Consume<IToken>());
-            }
-        }
-
-        private ExpectedType Match<ExpectedType>()
-            where ExpectedType : IToken
-        {
-            if (MatchWithoutConsuming<ExpectedType>())
-                return Consume<ExpectedType>();
-            else
-            {
-                throw ConstructMatchException<ExpectedType>(Consume<IToken>());
-            }
-        }
-
-        private Exception ConstructMatchException<ExpectedType>(IToken token)
-        {
-            if (token is ErrorToken)
-                return new LexicalErrorEncountered();
-            else
-                return new SyntaxError("Expected type " + typeof(ExpectedType).Name +
-                    " but got " + token.GetType().Name + ".", token.Row, token.Col);
-        }
-
-        // Consumes a token from input and returns it after casting to the
-        // given type.
-        //
-        // This method should only be called when the input token's type
-        // has already been verified. (Unless consuming tokens as type Token
-        // for e.g. recovery purposes.)
-        private TokenType Consume<TokenType>() where TokenType : IToken
-        {
-            var temp = GetTokenOrReportError<TokenType>();
-            InputToken = inputBuffer.Count > 0 ? inputBuffer.Pop() : scanner.NextToken();
-            return temp;
-        }
-
-        private dynamic GetTokenOrReportError<TokenType>() where TokenType : IToken
-        {
-            if (InputToken is ErrorToken)
-            { // Lexical errors are reported here, so no errors are left unreported
-                // when consuming tokens because of recovery.
-                var temp = (ErrorToken)InputToken;
-                ReportError(temp.Message, temp.Row, temp.Col);
-                return temp;
-            }
-            else
-                return (TokenType)InputToken;
-        }
-
-        // Checks whether the input token matches the expected type and value or not.
-        private bool MatchWithoutConsuming<ExpectedType>(string expectedValue)
-            where ExpectedType : StringToken
-        {
-            return MatchWithoutConsuming<ExpectedType>() && ((StringToken)InputToken).Value == expectedValue;
-        }
-
-        private bool MatchWithoutConsuming<ExpectedType>()
-            where ExpectedType : IToken
-        {
-            return InputToken is ExpectedType;
-        }
-
-        // List parsers.
+        // List parsing with sub-parsers.
 
         private List<ClassDeclaration> ClassDeclarationList()
         {
-            return NodeList<ClassDeclaration, EndOfFile>(ClassDeclaration);
+            var parser = new ListParser(Input, errorReporter);
+            return parser.ParseList<ClassDeclaration, EndOfFile>(ClassDeclaration);
         }
 
         private List<Declaration> DeclarationList()
         {
-            return NodeList<Declaration, RightCurlyBrace>(Declaration);
+            var parser = new ListParser(Input, errorReporter);
+            return parser.ParseList<Declaration, RightCurlyBrace>(Declaration);
         }
 
         private List<IStatement> StatementList()
         {
-            return NodeList<IStatement, RightCurlyBrace>(Statement);
+            var parser = new ListParser(Input, errorReporter);
+            return parser.ParseList<IStatement, RightCurlyBrace>(Statement);
         }
 
-        private List<NodeType> NodeList<NodeType, FollowToken>(Func<NodeType> ParseNode)
-            where NodeType : ISyntaxTreeNode
-            where FollowToken : IToken
+        private List<VariableDeclaration> FormalParameters()
         {
-            var nodeList = new List<NodeType>();
-            if (!(InputToken is FollowToken))
-            {
-                nodeList.Add(ParseNode());
-                nodeList.AddRange(NodeList<NodeType, FollowToken>(ParseNode));
-            }
-            return nodeList;
-        }
-
-        private List<VariableDeclaration> FormalParameters(bool isListTail = false)
-        {
-            return CommaSeparatedList<VariableDeclaration, RightParenthesis>(
+            var parser = new CommaSeparatedListParser(Input, errorReporter);
+            return parser.ParseList<VariableDeclaration, RightParenthesis>(
                 VariableOrFormalParameterDeclaration);
-        }
-
-        private List<IExpression> ExpressionList(bool isListTail = false)
-        {
-            return CommaSeparatedList<IExpression, RightParenthesis>(Expression);
-        }
-
-        private List<NodeType> CommaSeparatedList<NodeType, FollowToken>
-            (Func<NodeType> ParseNode, bool isListTail = false)
-            where NodeType : ISyntaxTreeNode
-            where FollowToken : IToken
-        {
-            var list = new List<NodeType>();
-            if (!(InputToken is FollowToken))
-            {
-                if (isListTail) Match<ParameterSeparator>();
-                list.Add(ParseNode());
-                list.AddRange(CommaSeparatedList<NodeType, FollowToken>(
-                    ParseNode, true));
-            }
-            return list;
         }
     }
 }
