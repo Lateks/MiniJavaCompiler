@@ -14,19 +14,19 @@ namespace MiniJavaCompiler.Support
 
     public interface IType { }
 
-    public abstract class BaseScope : IScope
+    public abstract class ScopeBase : IScope
     {
         private readonly Dictionary<string, Symbol> symbolTable;
-        public BaseScope EnclosingScope
+        public ScopeBase EnclosingScope
         {
             get;
             private set;
         }
 
-        // TODO: Replace null with a valid BaseScope (constant?)
-        protected BaseScope() : this(null) { }
+        // TODO: Replace null with a valid scope (constant?)
+        protected ScopeBase() : this(null) { }
 
-        protected BaseScope(BaseScope enclosingScope)
+        protected ScopeBase(ScopeBase enclosingScope)
         {
             symbolTable = new Dictionary<string, Symbol>();
             EnclosingScope = enclosingScope;
@@ -50,9 +50,9 @@ namespace MiniJavaCompiler.Support
         }
     }
 
-    public class GlobalScope : BaseScope { }
+    public class GlobalScope : ScopeBase { }
 
-    public class LocalScope : BaseScope { }
+    public class LocalScope : ScopeBase { }
 
     public abstract class Symbol
     {

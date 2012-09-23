@@ -15,7 +15,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             where TFollowToken : IToken;
     }
 
-    internal class ListParser : Parser, IListParser
+    internal class ListParser : ParserBase, IListParser
     {
         public ListParser(IParserInputReader input, IErrorReporter errorReporter)
             : base(input, errorReporter) { }
@@ -34,7 +34,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         }
     }
 
-    internal class CommaSeparatedListParser : Parser, IListParser
+    internal class CommaSeparatedListParser : ParserBase, IListParser
     {
         public CommaSeparatedListParser(IParserInputReader input, IErrorReporter errorReporter)
             : base(input, errorReporter) { }

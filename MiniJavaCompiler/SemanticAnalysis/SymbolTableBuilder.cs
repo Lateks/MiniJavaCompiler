@@ -11,7 +11,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
     {
         private Program syntaxTree;
         private GlobalScope symbolTable;
-        private BaseScope currentScope;
+        private ScopeBase currentScope;
         private Dictionary<ISyntaxTreeNode, IScope> scopes;
 
         public SymbolTableBuilder(Program node, IEnumerable<string> types)
@@ -22,7 +22,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
             scopes = new Dictionary<ISyntaxTreeNode, IScope>();
         }
 
-        public BaseScope BuildSymbolTable()
+        public ScopeBase BuildSymbolTable()
         {
             syntaxTree.Accept(this);
             return symbolTable;

@@ -9,7 +9,7 @@ using MiniJavaCompiler.LexicalAnalysis;
 namespace MiniJavaCompiler.SyntaxAnalysis
 {
     // A sub-parser that solves operator precedences in expressions.
-    internal class ExpressionParser : Parser
+    internal class ExpressionParser : ParserBase
     {
         public ExpressionParser(IParserInputReader input, IErrorReporter reporter)
             : base(input, reporter) { }

@@ -8,16 +8,21 @@ using MiniJavaCompiler.Support;
 
 namespace MiniJavaCompiler.SyntaxAnalysis
 {
-    public class Parser
+    public abstract class ParserBase
     {
         protected IParserInputReader Input { get; set; }
         protected readonly IErrorReporter errorReporter;
 
-        public Parser(IParserInputReader input, IErrorReporter reporter)
+        protected ParserBase(IParserInputReader input, IErrorReporter reporter)
         {
             errorReporter = reporter;
             Input = input;
         }
+    }
+
+    public class Parser : ParserBase
+    {
+        public Parser(IParserInputReader input, IErrorReporter reporter) : base(input, reporter) { }
 
         public Program Parse()
         {
