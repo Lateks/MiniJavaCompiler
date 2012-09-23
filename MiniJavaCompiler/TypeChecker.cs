@@ -8,7 +8,7 @@ namespace MiniJavaCompiler
 {
     namespace SemanticAnalysis
     {
-        public class TypeChecker : NodeVisitor
+        public class TypeChecker : INodeVisitor
         {
             public void Visit(Program node)
             {

@@ -90,7 +90,7 @@ namespace MiniJavaCompiler
                     Match<RightParenthesis>();
 
                     Match<LeftCurlyBrace>();
-                    List<Statement> main_statements = StatementList();
+                    List<IStatement> main_statements = StatementList();
                     Match<RightCurlyBrace>();
 
                     Match<RightCurlyBrace>();
@@ -116,7 +116,7 @@ namespace MiniJavaCompiler
                     Consume<Token>();
             }
 
-            public Statement Statement()
+            public IStatement Statement()
             {
                 try
                 {
@@ -141,7 +141,7 @@ namespace MiniJavaCompiler
                 }
             }
 
-            private Statement RecoverFromStatementMatching()
+            private IStatement RecoverFromStatementMatching()
             {
                 while (!MatchWithoutConsuming<EOF>())
                 {
@@ -155,9 +155,9 @@ namespace MiniJavaCompiler
             // This is a workaround method that is needed because the language is not LL(1).
             // Some buffering is done because several tokens must be peeked at to decide
             // which kind of statement should be parsed.
-            private Statement MakeExpressionStatementOrVariableDeclaration()
+            private IStatement MakeExpressionStatementOrVariableDeclaration()
             {
-                Expression expression;
+                IExpression expression;
                 if (InputToken is Identifier)
                 { 
                     var ident = Consume<Identifier>();
@@ -193,7 +193,7 @@ namespace MiniJavaCompiler
                 return CompleteStatement(expression);
             }
 
-            private Statement CompleteStatement(Expression expression)
+            private IStatement CompleteStatement(IExpression expression)
             {
                 if (InputToken is AssignmentToken)
                     return MakeAssignmentStatement(expression);
@@ -201,7 +201,7 @@ namespace MiniJavaCompiler
                     return MakeMethodInvocationStatement(expression);
             }
 
-            private Statement MakeMethodInvocationStatement(Expression expression)
+            private IStatement MakeMethodInvocationStatement(IExpression expression)
             {
                 Match<EndLine>();
                 if (expression is MethodInvocation)
@@ -214,16 +214,16 @@ namespace MiniJavaCompiler
                 }
             }
 
-            private Statement MakeAssignmentStatement(Expression lhs)
+            private IStatement MakeAssignmentStatement(IExpression lhs)
             {
                 var assignment = Match<AssignmentToken>();
-                Expression rhs = Expression();
+                IExpression rhs = Expression();
                 Match<EndLine>();
                 return new AssignmentStatement(lhs, rhs,
                     assignment.Row, assignment.Col);
             }
 
-            private Statement MakeBlockStatement()
+            private IStatement MakeBlockStatement()
             {
                 Token blockStart = Match<LeftCurlyBrace>();
                 var statements = StatementList();
@@ -231,7 +231,7 @@ namespace MiniJavaCompiler
                 return new BlockStatement(statements, blockStart.Row, blockStart.Col);
             }
 
-            private Statement MakeKeywordStatement()
+            private IStatement MakeKeywordStatement()
             {
                 KeywordToken token = (KeywordToken)InputToken;
                 switch (token.Value)
@@ -252,7 +252,7 @@ namespace MiniJavaCompiler
                 }
             }
 
-            private Statement MakeReturnStatement()
+            private IStatement MakeReturnStatement()
             {
                 var returnToken = Consume<KeywordToken>();
                 var expression = Expression();
@@ -261,7 +261,7 @@ namespace MiniJavaCompiler
                     returnToken.Row, returnToken.Col);
             }
 
-            private Statement MakePrintStatement()
+            private IStatement MakePrintStatement()
             {
                 var systemToken = Consume<KeywordToken>();
                 Match<MethodInvocationToken>();
@@ -276,7 +276,7 @@ namespace MiniJavaCompiler
                     systemToken.Row, systemToken.Col);
             }
 
-            private Statement MakeWhileStatement()
+            private IStatement MakeWhileStatement()
             {
                 var whileToken = Consume<KeywordToken>();
                 Match<LeftParenthesis>();
@@ -287,11 +287,11 @@ namespace MiniJavaCompiler
                     whileToken.Row, whileToken.Col);
             }
 
-            private Statement MakeIfStatement()
+            private IStatement MakeIfStatement()
             {
                 var ifToken = Consume<KeywordToken>();
                 Match<LeftParenthesis>();
-                Expression booleanExpr = Expression();
+                IExpression booleanExpr = Expression();
                 Match<RightParenthesis>();
                 var thenBranch = Statement();
                 var elseBranch = OptionalElseBranch();
@@ -299,17 +299,17 @@ namespace MiniJavaCompiler
                     ifToken.Row, ifToken.Col);
             }
 
-            private Statement MakeAssertStatement()
+            private IStatement MakeAssertStatement()
             {
                 var assertToken = Consume<KeywordToken>();
                 Match<LeftParenthesis>();
-                Expression expr = Expression();
+                IExpression expr = Expression();
                 Match<RightParenthesis>();
                 Match<EndLine>(); // not in the original CFG, probably a bug?
                 return new AssertStatement(expr, assertToken.Row, assertToken.Col);
             }
 
-            private Statement FinishParsingLocalVariableDeclaration(Identifier variableTypeName, bool isArray)
+            private IStatement FinishParsingLocalVariableDeclaration(Identifier variableTypeName, bool isArray)
             {
                 var variableName = Match<Identifier>();
                 Match<EndLine>();
@@ -317,7 +317,7 @@ namespace MiniJavaCompiler
                     variableTypeName.Row, variableTypeName.Col);
             }
 
-            public Statement OptionalElseBranch()
+            public IStatement OptionalElseBranch()
             {
                 if (InputToken is KeywordToken &&
                     ((KeywordToken)InputToken).Value == "else")
@@ -329,7 +329,7 @@ namespace MiniJavaCompiler
                     return null;
             }
 
-            public Expression Expression()
+            public IExpression Expression()
             {
                 var expressionParser = new ExpressionParser(this);
                 return expressionParser.parse();
@@ -460,7 +460,7 @@ namespace MiniJavaCompiler
                 List<VariableDeclaration> parameters = FormalParameters();
                 Match<RightParenthesis>();
                 Match<LeftCurlyBrace>();
-                List<Statement> methodBody = StatementList();
+                List<IStatement> methodBody = StatementList();
                 Match<RightCurlyBrace>();
                 return new MethodDeclaration(methodName.Value, type.Value,
                     typeInfo.Item2, parameters, methodBody, startToken.Row,
@@ -496,7 +496,7 @@ namespace MiniJavaCompiler
                     Parent = parent;
                 }
 
-                public Expression parse()
+                public IExpression parse()
                 {
                     try
                     {
@@ -513,7 +513,7 @@ namespace MiniJavaCompiler
                     }
                 }
 
-                private Expression RecoverFromExpressionParsing()
+                private IExpression RecoverFromExpressionParsing()
                 {
                     while (!(Parent.MatchWithoutConsuming<EOF>()
                         || Parent.MatchWithoutConsuming<RightParenthesis>()
@@ -522,7 +522,7 @@ namespace MiniJavaCompiler
                     return null;
                 }
 
-                private Expression ParseExpression()
+                private IExpression ParseExpression()
                 {
                     var firstOp = OrOperand();
                     Func<bool> orMatcher =
@@ -530,7 +530,7 @@ namespace MiniJavaCompiler
                     return BinaryOpTail<LogicalOpExpression>(firstOp, orMatcher, OrOperand);
                 }
 
-                private Expression OrOperand()
+                private IExpression OrOperand()
                 {
                     var firstOp = AndOperand();
                     Func<bool> andMatcher =
@@ -538,7 +538,7 @@ namespace MiniJavaCompiler
                     return BinaryOpTail<LogicalOpExpression>(firstOp, andMatcher, AndOperand);
                 }
 
-                private Expression AndOperand()
+                private IExpression AndOperand()
                 {
                     var firstOp = EqOperand();
                     Func<bool> eqMatcher =
@@ -546,7 +546,7 @@ namespace MiniJavaCompiler
                     return BinaryOpTail<LogicalOpExpression>(firstOp, eqMatcher, EqOperand);
                 }
 
-                private Expression EqOperand()
+                private IExpression EqOperand()
                 {
                     var firstOp = NotEqOperand();
                     Func<bool> neqMatcher =
@@ -555,7 +555,7 @@ namespace MiniJavaCompiler
                     return BinaryOpTail<LogicalOpExpression>(firstOp, neqMatcher, NotEqOperand);
                 }
 
-                private Expression NotEqOperand()
+                private IExpression NotEqOperand()
                 {
                     var firstOp = AddOperand();
                     Func<bool> addMatcher =
@@ -564,7 +564,7 @@ namespace MiniJavaCompiler
                     return BinaryOpTail<ArithmeticOpExpression>(firstOp, addMatcher, AddOperand);
                 }
 
-                private Expression AddOperand()
+                private IExpression AddOperand()
                 {
                     var firstOp = MultOperand();
                     Func<bool> multMatcher =
@@ -574,7 +574,7 @@ namespace MiniJavaCompiler
                     return BinaryOpTail<ArithmeticOpExpression>(firstOp, multMatcher, MultOperand);
                 }
 
-                private Expression MultOperand()
+                private IExpression MultOperand()
                 {
                     if (Parent.MatchWithoutConsuming<UnaryNotToken>())
                     {
@@ -586,15 +586,15 @@ namespace MiniJavaCompiler
                         return Term();
                 }
 
-                private Expression BinaryOpTail<OperatorType>(Expression lhs,
-                    Func<bool> matchOperator, Func<Expression> operandParser)
+                private IExpression BinaryOpTail<OperatorType>(IExpression lhs,
+                    Func<bool> matchOperator, Func<IExpression> operandParser)
                     where OperatorType : BinaryOpExpression
                 {
                     if (matchOperator())
                     {
                         var opToken = Parent.Consume<BinaryOperatorToken>();
                         var rhs = operandParser();
-                        var operatorExp = (Expression)System.Activator.CreateInstance(
+                        var operatorExp = (IExpression)System.Activator.CreateInstance(
                             typeof(OperatorType), new Object[] { opToken.Value, lhs, rhs, opToken.Row, opToken.Col });
                         return BinaryOpTail<OperatorType>(operatorExp, matchOperator,
                             operandParser);
@@ -603,7 +603,7 @@ namespace MiniJavaCompiler
                         return lhs;
                 }
 
-                public Expression Term()
+                public IExpression Term()
                 {
                     try
                     {
@@ -634,7 +634,7 @@ namespace MiniJavaCompiler
                     }
                 }
 
-                private Expression RecoverFromTermMatching()
+                private IExpression RecoverFromTermMatching()
                 { // could be parameterised on follow set
                     while (!(Parent.MatchWithoutConsuming<EOF>()
                         || Parent.MatchWithoutConsuming<RightParenthesis>()
@@ -644,29 +644,29 @@ namespace MiniJavaCompiler
                     return null;
                 }
 
-                private Expression MakeParenthesisedExpression()
+                private IExpression MakeParenthesisedExpression()
                 {
                     Parent.Consume<LeftParenthesis>();
-                    Expression parenthesisedExpression = Parent.Expression();
+                    IExpression parenthesisedExpression = Parent.Expression();
                     Parent.Match<RightParenthesis>();
                     return OptionalTermTail(parenthesisedExpression);
                 }
 
-                private Expression MakeIntegerLiteralExpression()
+                private IExpression MakeIntegerLiteralExpression()
                 {
                     var token = Parent.Match<IntegerLiteralToken>();
                     return OptionalTermTail(new IntegerLiteralExpression(token.Value,
                         token.Row, token.Col));
                 }
 
-                private Expression MakeVariableReferenceExpression()
+                private IExpression MakeVariableReferenceExpression()
                 {
                     var identifier = Parent.Match<Identifier>();
                     return OptionalTermTail(new VariableReferenceExpression(
                         identifier.Value, identifier.Row, identifier.Col));
                 }
 
-                private Expression MakeKeywordExpression()
+                private IExpression MakeKeywordExpression()
                 {
                     var token = (KeywordToken)Parent.InputToken;
                     switch (token.Value)
@@ -685,21 +685,21 @@ namespace MiniJavaCompiler
                     }
                 }
 
-                private Expression MakeBooleanLiteral(bool value)
+                private IExpression MakeBooleanLiteral(bool value)
                 {
                     var boolToken = Parent.Consume<KeywordToken>();
                     return OptionalTermTail(new BooleanLiteralExpression(value,
                         boolToken.Row, boolToken.Col));
                 }
 
-                private Expression MakeThisExpression()
+                private IExpression MakeThisExpression()
                 {
                     var thisToken = Parent.Consume<KeywordToken>();
                     return OptionalTermTail(new ThisExpression(thisToken.Row,
                         thisToken.Col));
                 }
 
-                private Expression MakeInstanceCreationExpression()
+                private IExpression MakeInstanceCreationExpression()
                 {
                     var newToken = Parent.Consume<KeywordToken>();
                     var typeInfo = NewType();
@@ -708,7 +708,7 @@ namespace MiniJavaCompiler
                         newToken.Row, newToken.Col, typeInfo.Item2));
                 }
 
-                public Expression OptionalTermTail(Expression lhs)
+                public IExpression OptionalTermTail(IExpression lhs)
                 {
                     if (Parent.MatchWithoutConsuming<LeftBracket>())
                         return MakeArrayIndexingExpression(lhs);
@@ -718,7 +718,7 @@ namespace MiniJavaCompiler
                         return lhs;
                 }
 
-                private Expression MakeMethodInvocationExpression(Expression methodOwner)
+                private IExpression MakeMethodInvocationExpression(IExpression methodOwner)
                 {
                     Parent.Consume<MethodInvocationToken>();
                     if (Parent.InputToken is KeywordToken)
@@ -727,7 +727,7 @@ namespace MiniJavaCompiler
                         return MakeUserDefinedMethodInvocation(methodOwner);
                 }
 
-                private Expression MakeUserDefinedMethodInvocation(Expression methodOwner)
+                private IExpression MakeUserDefinedMethodInvocation(IExpression methodOwner)
                 {
                     var methodName = Parent.Match<Identifier>();
                     Parent.Match<LeftParenthesis>();
@@ -737,15 +737,15 @@ namespace MiniJavaCompiler
                         methodName.Value, parameters, methodName.Row, methodName.Col));
                 }
 
-                private Expression MakeLengthMethodInvocation(Expression methodOwner)
+                private IExpression MakeLengthMethodInvocation(IExpression methodOwner)
                 {
                     var methodName = Parent.Match<KeywordToken>("length");
-                    var parameters = new List<Expression>();
+                    var parameters = new List<IExpression>();
                     return OptionalTermTail(new MethodInvocation(methodOwner, methodName.Value,
                         parameters, methodName.Row, methodName.Col));
                 }
 
-                private Expression MakeArrayIndexingExpression(Expression lhs)
+                private IExpression MakeArrayIndexingExpression(IExpression lhs)
                 {
                     var startToken = Parent.Match<LeftBracket>();
                     var indexExpression = Parent.Expression();
@@ -754,7 +754,7 @@ namespace MiniJavaCompiler
                         startToken.Row, startToken.Col));
                 }
 
-                public Tuple<TypeToken, Expression> NewType()
+                public Tuple<TypeToken, IExpression> NewType()
                 {
                     var type = Parent.Match<TypeToken>();
                     if (type is MiniJavaType || !(Parent.InputToken is LeftParenthesis))
@@ -762,13 +762,13 @@ namespace MiniJavaCompiler
                         Parent.Match<LeftBracket>();
                         var arraySize = Parent.Expression();
                         Parent.Match<RightBracket>();
-                        return new Tuple<TypeToken, Expression>(type, arraySize);
+                        return new Tuple<TypeToken, IExpression>(type, arraySize);
                     }
                     else
                     {
                         Parent.Match<LeftParenthesis>();
                         Parent.Match<RightParenthesis>();
-                        return new Tuple<TypeToken, Expression>(type, null);
+                        return new Tuple<TypeToken, IExpression>(type, null);
                     }
                 }
             }
@@ -852,13 +852,13 @@ namespace MiniJavaCompiler
                 return NodeList<Declaration, RightCurlyBrace>(Declaration);
             }
 
-            private List<Statement> StatementList()
+            private List<IStatement> StatementList()
             {
-                return NodeList<Statement, RightCurlyBrace>(Statement);
+                return NodeList<IStatement, RightCurlyBrace>(Statement);
             }
 
             private List<NodeType> NodeList<NodeType, FollowToken>(Func<NodeType> ParseNode)
-                where NodeType : SyntaxTreeNode
+                where NodeType : ISyntaxTreeNode
                 where FollowToken : Token
             {
                 var nodeList = new List<NodeType>();
@@ -876,14 +876,14 @@ namespace MiniJavaCompiler
                     VariableOrFormalParameterDeclaration);
             }
 
-            private List<Expression> ExpressionList(bool isListTail = false)
+            private List<IExpression> ExpressionList(bool isListTail = false)
             {
-                return CommaSeparatedList<Expression, RightParenthesis>(Expression);
+                return CommaSeparatedList<IExpression, RightParenthesis>(Expression);
             }
 
             private List<NodeType> CommaSeparatedList<NodeType, FollowToken>
                 (Func<NodeType> ParseNode, bool isListTail = false)
-                where NodeType : SyntaxTreeNode
+                where NodeType : ISyntaxTreeNode
                 where FollowToken : Token
             {
                 var list = new List<NodeType>();

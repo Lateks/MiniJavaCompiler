@@ -8,29 +8,27 @@ namespace MiniJavaCompiler
 {
     namespace Support
     {
-        public interface Scope
+        public interface IScope
         {
             Symbol Resolve(string name);
             void Define(Symbol sym);
         }
 
-        public interface Type { }
+        public interface IType { }
 
-        public class BaseScope : Scope
+        public abstract class BaseScope : IScope
         {
-            private Dictionary<string, Symbol> symbolTable;
+            private readonly Dictionary<string, Symbol> symbolTable;
             public BaseScope EnclosingScope
             {
                 get;
                 private set;
             }
 
-            public BaseScope()
-            {
-                new BaseScope(null);
-            }
+            // TODO: Replace null with a valid BaseScope (constant?)
+            protected BaseScope() : this(null) { }
 
-            public BaseScope(BaseScope enclosingScope)
+            protected BaseScope(BaseScope enclosingScope)
             {
                 symbolTable = new Dictionary<string, Symbol>();
                 EnclosingScope = enclosingScope;
@@ -49,10 +47,7 @@ namespace MiniJavaCompiler
                 }
                 catch (KeyNotFoundException)
                 {
-                    if (EnclosingScope == null)
-                        return null;
-                    else
-                        return EnclosingScope.Resolve(name);
+                    return EnclosingScope == null ? null : EnclosingScope.Resolve(name);
                 }
             }
         }
@@ -61,19 +56,19 @@ namespace MiniJavaCompiler
 
         public class LocalScope : BaseScope { }
 
-        public class Symbol
+        public abstract class Symbol
         {
             public string Name
             {
                 get;
                 private set;
             }
-            public Type Type
+            public IType Type
             {
                 get;
                 private set;
             }
-            public Scope EnclosingScope
+            public IScope EnclosingScope
             {
                 get;
                 private set;
@@ -84,12 +79,12 @@ namespace MiniJavaCompiler
                 set;
             }
 
-            public Symbol(string name, Scope enclosingScope)
+            protected Symbol(string name, IScope enclosingScope)
             {
                 Name = name;
             }
 
-            public Symbol(string name, Type type, Scope enclosingScope)
+            protected Symbol(string name, IType type, IScope enclosingScope)
             {
                 Name = name;
                 Type = type;
@@ -99,25 +94,24 @@ namespace MiniJavaCompiler
 
         public class VariableSymbol : Symbol
         {
-
-            public VariableSymbol(string name, Type type, Scope enclosingScope)
+            public VariableSymbol(string name, IType type, IScope enclosingScope)
                 : base(name, type, enclosingScope) { }
         }
 
-        public class BuiltinTypeSymbol : Symbol, Type
+        public class BuiltinTypeSymbol : Symbol, IType
         {
-            public BuiltinTypeSymbol(string name, Scope enclosingScope)
+            public BuiltinTypeSymbol(string name, IScope enclosingScope)
                 : base(name, enclosingScope) { }
         }
 
-        public class ScopedSymbol : Symbol, Scope, Type
+        public abstract class ScopedSymbol : Symbol, IScope
         {
             protected Dictionary<string, Symbol> symbolTable;
 
-            public ScopedSymbol(string name, Scope enclosingScope)
+            protected ScopedSymbol(string name, IScope enclosingScope)
                 : base(name, enclosingScope) { }
 
-            public ScopedSymbol(string name, Type type, Scope enclosingScope)
+            protected ScopedSymbol(string name, IType type, IScope enclosingScope)
                 : base(name, type, enclosingScope) { }
 
             public virtual Symbol Resolve(string name)
@@ -132,7 +126,7 @@ namespace MiniJavaCompiler
                 }
             }
 
-            public virtual Scope GetParentScope()
+            public virtual IScope GetParentScope()
             {
                 return EnclosingScope;
             }
@@ -145,25 +139,23 @@ namespace MiniJavaCompiler
 
         public class MethodSymbol : ScopedSymbol
         {
-            public MethodSymbol(string name, Type returnType, ClassSymbol enclosingScope)
+            public MethodSymbol(string name, IType returnType, ClassSymbol enclosingScope)
                 : base(name, returnType, enclosingScope) { }
         }
 
-        public class ClassSymbol : ScopedSymbol, Type
+        public class ClassSymbol : ScopedSymbol, IType
         {
-            private ClassSymbol superClass;
+            private readonly ClassSymbol superClass;
 
-            public ClassSymbol(string name, Scope enclosingScope, ClassSymbol superClass = null)
+            public ClassSymbol(string name, IScope enclosingScope, ClassSymbol superClass = null)
                 : base(name, enclosingScope)
             {
                 this.superClass = superClass;
             }
 
-            public override Scope GetParentScope()
+            public override IScope GetParentScope()
             {
-                if (superClass == null)
-                    return EnclosingScope;
-                return superClass;
+                return superClass ?? EnclosingScope;
             }
 
             public override Symbol Resolve(string name)

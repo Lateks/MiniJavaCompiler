@@ -9,16 +9,16 @@ namespace MiniJavaCompiler
 {
     namespace AbstractSyntaxTree
     {
-        public interface SyntaxTreeNode
+        public interface ISyntaxTreeNode
         {
-            void Accept(NodeVisitor visitor);
+            void Accept(INodeVisitor visitor);
         }
 
-        public interface Statement : SyntaxTreeNode { }
+        public interface IStatement : ISyntaxTreeNode { }
 
-        public interface Expression : SyntaxTreeNode { }
+        public interface IExpression : ISyntaxTreeNode { }
 
-        public abstract class SyntaxElement : SyntaxTreeNode
+        public abstract class SyntaxElement : ISyntaxTreeNode
         {
             public int Row
             {
@@ -42,10 +42,10 @@ namespace MiniJavaCompiler
                 Col = col;
             }
 
-            public abstract void Accept(NodeVisitor visitor);
+            public abstract void Accept(INodeVisitor visitor);
         }
 
-        public class Program : SyntaxTreeNode
+        public class Program : ISyntaxTreeNode
         {
             public MainClassDeclaration MainClass
             {
@@ -65,7 +65,7 @@ namespace MiniJavaCompiler
                 Classes = class_declarations;
             }
 
-            public void Accept(NodeVisitor visitor)
+            public void Accept(INodeVisitor visitor)
             {
                 visitor.Visit(MainClass);
                 foreach (ClassDeclaration aClass in Classes)
@@ -103,7 +103,7 @@ namespace MiniJavaCompiler
                 Declarations = declarations;
             }
 
-            public override void Accept(NodeVisitor visitor)
+            public override void Accept(INodeVisitor visitor)
             {
                 foreach (Declaration decl in Declarations)
                 {
@@ -120,13 +120,13 @@ namespace MiniJavaCompiler
                 get;
                 private set;
             }
-            public List<Statement> MainMethod
+            public List<IStatement> MainMethod
             {
                 get;
                 private set;
             }
 
-            public MainClassDeclaration(string name, List<Statement> mainMethod,
+            public MainClassDeclaration(string name, List<IStatement> mainMethod,
                 int row, int col)
                 : base(row, col)
             {
@@ -134,9 +134,9 @@ namespace MiniJavaCompiler
                 MainMethod = mainMethod;
             }
 
-            public override void Accept(NodeVisitor visitor)
+            public override void Accept(INodeVisitor visitor)
             {
-                foreach (Statement statement in MainMethod)
+                foreach (IStatement statement in MainMethod)
                 {
                     statement.Accept(visitor);
                 }
@@ -179,14 +179,14 @@ namespace MiniJavaCompiler
                 get;
                 private set;
             }
-            public List<Statement> MethodBody
+            public List<IStatement> MethodBody
             {
                 get;
                 private set;
             }
 
             public MethodDeclaration(string name, string type, bool returnTypeIsArray,
-                List<VariableDeclaration> formals, List<Statement> methodBody,
+                List<VariableDeclaration> formals, List<IStatement> methodBody,
                 int row, int col)
                 : base(name, type, returnTypeIsArray, row, col)
             {
@@ -194,13 +194,13 @@ namespace MiniJavaCompiler
                 MethodBody = methodBody;
             }
 
-            public override void Accept(NodeVisitor visitor)
+            public override void Accept(INodeVisitor visitor)
             {
                 foreach (VariableDeclaration decl in Formals)
                 {
                     decl.Accept(visitor);
                 }
-                foreach (Statement statement in MethodBody)
+                foreach (IStatement statement in MethodBody)
                 {
                     statement.Accept(visitor);
                 }
@@ -208,76 +208,76 @@ namespace MiniJavaCompiler
             }
         }
 
-        public class VariableDeclaration : Declaration, Statement
+        public class VariableDeclaration : Declaration, IStatement
         {
             public VariableDeclaration(string name, string type, bool isArray, int row, int col)
                 : base(name, type, isArray, row, col) { }
 
-            public override void Accept(NodeVisitor visitor)
+            public override void Accept(INodeVisitor visitor)
             {
                 visitor.Visit(this);
             }
         }
 
-        public class PrintStatement : SyntaxElement, Statement
+        public class PrintStatement : SyntaxElement, IStatement
         {
-            public Expression Expression
+            public IExpression Expression
             {
                 get;
                 private set;
             }
 
-            public PrintStatement(Expression expression, int row, int col)
+            public PrintStatement(IExpression expression, int row, int col)
                 : base(row, col)
             {
                 Expression = expression;
             }
 
-            public override void Accept(NodeVisitor visitor)
+            public override void Accept(INodeVisitor visitor)
             {
                 Expression.Accept(visitor);
                 visitor.Visit(this);
             }
         }
 
-        public class ReturnStatement : SyntaxElement, Statement
+        public class ReturnStatement : SyntaxElement, IStatement
         {
-            public Expression Expression
+            public IExpression Expression
             {
                 get;
                 private set;
             }
 
-            public ReturnStatement(Expression expression, int row, int col)
+            public ReturnStatement(IExpression expression, int row, int col)
                 : base(row, col)
             {
                 Expression = expression;
             }
 
-            public override void Accept(NodeVisitor visitor)
+            public override void Accept(INodeVisitor visitor)
             {
                 Expression.Accept(visitor);
                 visitor.Visit(this);
             }
         }
 
-        public class BlockStatement : SyntaxElement, Statement
+        public class BlockStatement : SyntaxElement, IStatement
         {
-            public List<Statement> Statements
+            public List<IStatement> Statements
             {
                 get;
                 private set;
             }
 
-            public BlockStatement(List<Statement> statements, int row, int col)
+            public BlockStatement(List<IStatement> statements, int row, int col)
                 : base(row, col)
             {
                 Statements = statements;
             }
 
-            public override void Accept(NodeVisitor visitor)
+            public override void Accept(INodeVisitor visitor)
             {
-                foreach (Statement statement in Statements)
+                foreach (IStatement statement in Statements)
                 {
                     statement.Accept(visitor);
                 }
@@ -285,48 +285,48 @@ namespace MiniJavaCompiler
             }
         }
 
-        public class AssertStatement : SyntaxElement, Statement
+        public class AssertStatement : SyntaxElement, IStatement
         {
-            public Expression Expression
+            public IExpression Expression
             {
                 get;
                 private set;
             }
 
-            public AssertStatement(Expression expression, int row, int col)
+            public AssertStatement(IExpression expression, int row, int col)
                 : base(row, col)
             {
                 Expression = expression;
             }
 
-            public override void Accept(NodeVisitor visitor)
+            public override void Accept(INodeVisitor visitor)
             {
                 Expression.Accept(visitor);
                 visitor.Visit(this);
             }
         }
 
-        public class AssignmentStatement : SyntaxElement, Statement
+        public class AssignmentStatement : SyntaxElement, IStatement
         {
-            public Expression LHS
+            public IExpression LHS
             {
                 get;
                 private set;
             }
-            public Expression RHS
+            public IExpression RHS
             {
                 get;
                 private set;
             }
 
-            public AssignmentStatement(Expression lhs, Expression rhs, int row, int col)
+            public AssignmentStatement(IExpression lhs, IExpression rhs, int row, int col)
                 : base(row, col)
             {
                 LHS = lhs;
                 RHS = rhs;
             }
 
-            public override void Accept(NodeVisitor visitor)
+            public override void Accept(INodeVisitor visitor)
             {
                 RHS.Accept(visitor);
                 LHS.Accept(visitor);
@@ -334,26 +334,26 @@ namespace MiniJavaCompiler
             }
         }
 
-        public class IfStatement : SyntaxElement, Statement
+        public class IfStatement : SyntaxElement, IStatement
         {
-            public Expression BooleanExpression
+            public IExpression BooleanExpression
             {
                 get;
                 private set;
             }
-            public Statement Then
+            public IStatement Then
             {
                 get;
                 private set;
             }
-            public Statement Else
+            public IStatement Else
             {
                 get;
                 private set;
             }
 
-            public IfStatement(Expression booleanExp, Statement thenBranch,
-                Statement elseBranch, int row, int col)
+            public IfStatement(IExpression booleanExp, IStatement thenBranch,
+                IStatement elseBranch, int row, int col)
                 : base(row, col)
             {
                 BooleanExpression = booleanExp;
@@ -361,7 +361,7 @@ namespace MiniJavaCompiler
                 Else = elseBranch;
             }
 
-            public override void Accept(NodeVisitor visitor)
+            public override void Accept(INodeVisitor visitor)
             {
                 BooleanExpression.Accept(visitor);
                 Then.Accept(visitor);
@@ -370,20 +370,20 @@ namespace MiniJavaCompiler
             }
         }
 
-        public class WhileStatement : SyntaxElement, Statement
+        public class WhileStatement : SyntaxElement, IStatement
         {
-            public Expression BooleanExpression
+            public IExpression BooleanExpression
             {
                 get;
                 private set;
             }
-            public Statement LoopBody
+            public IStatement LoopBody
             {
                 get;
                 private set;
             }
 
-            public WhileStatement(Expression booleanExp, Statement loopBody,
+            public WhileStatement(IExpression booleanExp, IStatement loopBody,
                 int row, int col)
                 : base(row, col)
             {
@@ -391,7 +391,7 @@ namespace MiniJavaCompiler
                 LoopBody = loopBody;
             }
 
-            public override void Accept(NodeVisitor visitor)
+            public override void Accept(INodeVisitor visitor)
             {
                 BooleanExpression.Accept(visitor);
                 LoopBody.Accept(visitor);
@@ -399,9 +399,9 @@ namespace MiniJavaCompiler
             }
         }
 
-        public class MethodInvocation : SyntaxElement, Statement, Expression
+        public class MethodInvocation : SyntaxElement, IStatement, IExpression
         {
-            public Expression MethodOwner
+            public IExpression MethodOwner
             {
                 get;
                 private set;
@@ -411,14 +411,14 @@ namespace MiniJavaCompiler
                 get;
                 private set;
             }
-            public List<Expression> CallParameters
+            public List<IExpression> CallParameters
             {
                 get;
                 private set;
             }
 
-            public MethodInvocation(Expression methodOwner, string methodName,
-                List<Expression> callParameters, int row, int col)
+            public MethodInvocation(IExpression methodOwner, string methodName,
+                List<IExpression> callParameters, int row, int col)
                 : base(row, col)
             {
                 MethodOwner = methodOwner;
@@ -426,10 +426,10 @@ namespace MiniJavaCompiler
                 CallParameters = callParameters;
             }
 
-            public override void Accept(NodeVisitor visitor)
+            public override void Accept(INodeVisitor visitor)
             {
                 MethodOwner.Accept(visitor);
-                foreach (Expression expr in CallParameters)
+                foreach (IExpression expr in CallParameters)
                 {
                     expr.Accept(visitor);
                 }
@@ -437,73 +437,73 @@ namespace MiniJavaCompiler
             }
         }
 
-        public class InstanceCreationExpression : SyntaxElement, Expression
+        public class InstanceCreationExpression : SyntaxElement, IExpression
         {
             public string Type
             {
                 get;
                 private set;
             }
-            public Expression ArraySize
+            public IExpression ArraySize
             {
                 get;
                 private set;
             }
 
-            public InstanceCreationExpression(string type, int row, int col, Expression arraySize = null)
+            public InstanceCreationExpression(string type, int row, int col, IExpression arraySize = null)
                 : base(row, col)
             {
                 Type = type;
                 ArraySize = arraySize; 
             }
 
-            public override void Accept(NodeVisitor visitor)
+            public override void Accept(INodeVisitor visitor)
             {
                 ArraySize.Accept(visitor);
                 visitor.Visit(this);
             }
         }
 
-        public class UnaryNotExpression : SyntaxElement, Expression
+        public class UnaryNotExpression : SyntaxElement, IExpression
         {
-            public Expression BooleanExpression
+            public IExpression BooleanExpression
             {
                 get;
                 private set;
             }
 
-            public UnaryNotExpression(Expression booleanExp, int row, int col)
+            public UnaryNotExpression(IExpression booleanExp, int row, int col)
                 : base(row, col)
             {
                 BooleanExpression = booleanExp;
             }
 
-            public override void Accept(NodeVisitor visitor)
+            public override void Accept(INodeVisitor visitor)
             {
                 BooleanExpression.Accept(visitor);
                 visitor.Visit(this);
             }
         }
 
-        public abstract class BinaryOpExpression : SyntaxElement, Expression
+        public abstract class BinaryOpExpression : SyntaxElement, IExpression
         {
             public string Operator
             {
                 get;
                 private set;
             }
-            public Expression LeftOperand
+            public IExpression LeftOperand
             {
                 get;
                 private set;
             }
-            public Expression RightOperand
+            public IExpression RightOperand
             {
                 get;
                 private set;
             }
 
-            protected BinaryOpExpression(string opsymbol, Expression lhs, Expression rhs,
+            protected BinaryOpExpression(string opsymbol, IExpression lhs, IExpression rhs,
                 int row, int col) : base(row, col)
             {
                 Operator = opsymbol;
@@ -514,11 +514,11 @@ namespace MiniJavaCompiler
 
         public class ArithmeticOpExpression : BinaryOpExpression
         {
-            public ArithmeticOpExpression(string opsymbol, Expression lhs, Expression rhs,
+            public ArithmeticOpExpression(string opsymbol, IExpression lhs, IExpression rhs,
                 int row, int col)
                 : base(opsymbol, lhs, rhs, row, col) { }
 
-            public override void Accept(NodeVisitor visitor)
+            public override void Accept(INodeVisitor visitor)
             {
                 RightOperand.Accept(visitor);
                 LeftOperand.Accept(visitor);
@@ -528,11 +528,11 @@ namespace MiniJavaCompiler
 
         public class LogicalOpExpression : BinaryOpExpression
         {
-            public LogicalOpExpression(string opsymbol, Expression lhs, Expression rhs,
+            public LogicalOpExpression(string opsymbol, IExpression lhs, IExpression rhs,
                 int row, int col)
                 : base(opsymbol, lhs, rhs, row, col) { }
 
-            public override void Accept(NodeVisitor visitor)
+            public override void Accept(INodeVisitor visitor)
             {
                 RightOperand.Accept(visitor);
                 LeftOperand.Accept(visitor);
@@ -540,7 +540,7 @@ namespace MiniJavaCompiler
             }
         }
 
-        public class BooleanLiteralExpression : SyntaxElement, Expression
+        public class BooleanLiteralExpression : SyntaxElement, IExpression
         {
             public bool Value
             {
@@ -554,45 +554,45 @@ namespace MiniJavaCompiler
                 Value = value;
             }
 
-            public override void Accept(NodeVisitor visitor)
+            public override void Accept(INodeVisitor visitor)
             {
                 visitor.Visit(this);
             }
         }
 
-        public class ThisExpression : SyntaxElement, Expression
+        public class ThisExpression : SyntaxElement, IExpression
         {
             public ThisExpression(int row, int col)
                 : base(row, col) { }
 
-            public override void Accept(NodeVisitor visitor)
+            public override void Accept(INodeVisitor visitor)
             {
                 visitor.Visit(this);
             }
         }
 
-        public class ArrayIndexingExpression : SyntaxElement, Expression
+        public class ArrayIndexingExpression : SyntaxElement, IExpression
         {
-            public Expression Array
+            public IExpression Array
             {
                 get;
                 private set;
             }
-            public Expression Index
+            public IExpression Index
             {
                 get;
                 private set;
             }
 
-            public ArrayIndexingExpression(Expression arrayReference,
-                Expression arrayIndex, int row, int col)
+            public ArrayIndexingExpression(IExpression arrayReference,
+                IExpression arrayIndex, int row, int col)
                 : base(row, col)
             {
                 Array = arrayReference;
                 Index = arrayIndex;
             }
 
-            public override void Accept(NodeVisitor visitor)
+            public override void Accept(INodeVisitor visitor)
             {
                 Index.Accept(visitor);
                 Array.Accept(visitor);
@@ -600,7 +600,7 @@ namespace MiniJavaCompiler
             }
         }
 
-        public class VariableReferenceExpression : SyntaxElement, Expression
+        public class VariableReferenceExpression : SyntaxElement, IExpression
         {
             public string Name
             {
@@ -614,13 +614,13 @@ namespace MiniJavaCompiler
                 Name = name;
             }
 
-            public override void Accept(NodeVisitor visitor)
+            public override void Accept(INodeVisitor visitor)
             {
                 visitor.Visit(this);
             }
         }
 
-        public class IntegerLiteralExpression : SyntaxElement, Expression
+        public class IntegerLiteralExpression : SyntaxElement, IExpression
         {
             public string Value
             {
@@ -634,7 +634,7 @@ namespace MiniJavaCompiler
                 Value = value;
             }
 
-            public override void Accept(NodeVisitor visitor)
+            public override void Accept(INodeVisitor visitor)
             {
                 visitor.Visit(this);
             }

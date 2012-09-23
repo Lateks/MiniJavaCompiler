@@ -15,7 +15,7 @@ namespace MiniJavaCompilerTest
         [Test]
         public void ShouldConflictWithPredefinedTypesTest()
         {
-            var mainClass = new MainClassDeclaration("int", new List<Statement>(), 1, 0);
+            var mainClass = new MainClassDeclaration("int", new List<IStatement>(), 1, 0);
             var secondClass = new ClassDeclaration("boolean", null, new List<Declaration>(), 2, 0);
             var thirdClass = new ClassDeclaration("int", null, new List<Declaration>(), 3, 0);
             var program = new Program(mainClass, new List<ClassDeclaration> (
@@ -35,7 +35,7 @@ namespace MiniJavaCompilerTest
         [Test]
         public void ShouldConflictWithMainClassTest()
         {
-            var mainClass = new MainClassDeclaration("Foo", new List<Statement>(), 1, 0);
+            var mainClass = new MainClassDeclaration("Foo", new List<IStatement>(), 1, 0);
             var otherClass = new ClassDeclaration("Foo", null, new List<Declaration>(), 2, 0);
             var program = new Program(mainClass, new List<ClassDeclaration>(
                 new ClassDeclaration[] { otherClass }));
@@ -50,7 +50,7 @@ namespace MiniJavaCompilerTest
         [Test]
         public void ShouldConflictWithSelfDefinedTypesTest()
         {
-            var mainClass = new MainClassDeclaration("Foo", new List<Statement>(), 1, 0);
+            var mainClass = new MainClassDeclaration("Foo", new List<IStatement>(), 1, 0);
             var secondClass = new ClassDeclaration("Bar", null, new List<Declaration>(), 2, 0);
             var thirdClass = new ClassDeclaration("Bar", null, new List<Declaration>(), 3, 0);
             var program = new Program(mainClass, new List<ClassDeclaration>(
@@ -66,7 +66,7 @@ namespace MiniJavaCompilerTest
         [Test]
         public void ValidTypeDefinitionsTest()
         {
-            var mainClass = new MainClassDeclaration("Foo", new List<Statement>(), 1, 0);
+            var mainClass = new MainClassDeclaration("Foo", new List<IStatement>(), 1, 0);
             var secondClass = new ClassDeclaration("Bar", null, new List<Declaration>(), 2, 0);
             var thirdClass = new ClassDeclaration("Baz", null, new List<Declaration>(), 3, 0);
             var program = new Program(mainClass, new List<ClassDeclaration>(

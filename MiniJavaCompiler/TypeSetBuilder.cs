@@ -9,7 +9,7 @@ namespace MiniJavaCompiler
 {
     namespace SemanticAnalysis
     {
-        public class TypeSetBuilder : NodeVisitor
+        public class TypeSetBuilder : INodeVisitor
         {
             private Program syntaxTree;
             private HashSet<string> types;

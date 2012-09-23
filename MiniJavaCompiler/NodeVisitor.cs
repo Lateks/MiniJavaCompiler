@@ -8,7 +8,7 @@ namespace MiniJavaCompiler
 {
     namespace SemanticAnalysis
     {
-        public interface NodeVisitor
+        public interface INodeVisitor
         {
             void Visit(Program node);
             void Visit(ClassDeclaration node);

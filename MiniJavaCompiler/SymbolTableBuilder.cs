@@ -9,19 +9,19 @@ namespace MiniJavaCompiler
 {
     namespace SemanticAnalysis
     {
-        public class SymbolTableBuilder : NodeVisitor
+        public class SymbolTableBuilder : INodeVisitor
         {
             private Program syntaxTree;
             private GlobalScope symbolTable;
             private BaseScope currentScope;
-            private Dictionary<SyntaxTreeNode, Scope> scopes;
+            private Dictionary<ISyntaxTreeNode, IScope> scopes;
 
             public SymbolTableBuilder(Program node, List<string> types)
             {
                 syntaxTree = node;
                 symbolTable = new GlobalScope();
                 currentScope = symbolTable;
-                scopes = new Dictionary<SyntaxTreeNode, Scope>();
+                scopes = new Dictionary<ISyntaxTreeNode, IScope>();
             }
 
             public BaseScope BuildSymbolTable()
@@ -30,7 +30,7 @@ namespace MiniJavaCompiler
                 return symbolTable;
             }
 
-            public Dictionary<SyntaxTreeNode, Scope> GetScopeMapping()
+            public Dictionary<ISyntaxTreeNode, IScope> GetScopeMapping()
             {
                 return scopes;
             }
