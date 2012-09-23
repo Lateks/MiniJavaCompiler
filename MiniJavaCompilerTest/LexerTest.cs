@@ -1,9 +1,8 @@
-﻿using System;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using MiniJavaCompiler.LexicalAnalysis;
 using System.IO;
 
-namespace LexerTest
+namespace MiniJavaCompilerTest
 {
     [TestFixture]
     public class KeywordTest
@@ -18,7 +17,7 @@ namespace LexerTest
         public void Keywords(string keyword)
         {
             var lexer = new MiniJavaScanner(new StringReader(keyword));
-            Token next = lexer.NextToken();
+            IToken next = lexer.NextToken();
             Assert.That(next, Is.InstanceOf<KeywordToken>());
             Assert.That(((KeywordToken)next).Value, Is.EqualTo(keyword));
         }
@@ -34,7 +33,7 @@ namespace LexerTest
         public void ArithmeticOperators(string binop)
         {
             var lexer = new MiniJavaScanner(new StringReader(binop));
-            Token token = lexer.NextToken();
+            IToken token = lexer.NextToken();
             Assert.That(token, Is.InstanceOf<ArithmeticOperatorToken>());
             Assert.That(((ArithmeticOperatorToken)token).Value, Is.EqualTo(binop));
         }
@@ -50,7 +49,7 @@ namespace LexerTest
         public void LogicalOperators(string binop)
         {
             var lexer = new MiniJavaScanner(new StringReader(binop));
-            Token token = lexer.NextToken();
+            IToken token = lexer.NextToken();
             Assert.That(token, Is.InstanceOf<LogicalOperatorToken>());
             Assert.That(((LogicalOperatorToken)token).Value, Is.EqualTo(binop));
         }
@@ -113,7 +112,7 @@ namespace LexerTest
             Assert.That(lexer.NextToken(), Is.InstanceOf<Identifier>());
             Assert.That(lexer.NextToken(), Is.InstanceOf<LeftParenthesis>());
             Assert.That(lexer.NextToken(), Is.InstanceOf<RightParenthesis>());
-            Assert.That(lexer.NextToken(), Is.InstanceOf<EOF>());
+            Assert.That(lexer.NextToken(), Is.InstanceOf<EndOfFile>());
         }
 
         [Test]
@@ -133,10 +132,10 @@ namespace LexerTest
         public void TestEOF()
         {
             var lexer = new MiniJavaScanner(new StringReader(""));
-            Assert.That(lexer.NextToken(), Is.InstanceOf<EOF>());
+            Assert.That(lexer.NextToken(), Is.InstanceOf<EndOfFile>());
             lexer = new MiniJavaScanner(new StringReader("123"));
             lexer.NextToken();
-            Assert.That(lexer.NextToken(), Is.InstanceOf<EOF>());
+            Assert.That(lexer.NextToken(), Is.InstanceOf<EndOfFile>());
         }
 
         [Test]
@@ -144,7 +143,7 @@ namespace LexerTest
         {
             var lexer = new MiniJavaScanner(new StringReader("42foo"));
             Assert.That(((IntegerLiteralToken)lexer.NextToken()).Value, Is.EqualTo("42"));
-            Token next = lexer.NextToken();
+            IToken next = lexer.NextToken();
             Assert.That(next, Is.InstanceOf<Identifier>());
             Assert.That(((Identifier)next).Value, Is.EqualTo("foo"));
             lexer = new MiniJavaScanner(new StringReader("f_o12a"));
@@ -186,7 +185,7 @@ namespace LexerTest
         public void InputConsistingOfWhitespaceOnly()
         {
             var lexer = new MiniJavaScanner(new StringReader("\n   "));
-            Assert.That(lexer.NextToken(), Is.InstanceOf<EOF>());
+            Assert.That(lexer.NextToken(), Is.InstanceOf<EndOfFile>());
         }
 
         [Test]

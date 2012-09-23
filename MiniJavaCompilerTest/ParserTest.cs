@@ -10,33 +10,33 @@ using MiniJavaCompiler.Support;
 
 namespace MiniJavaCompilerTest
 {
-    public class StubScanner : Scanner
+    public class StubScanner : IScanner
     {
-        Queue<Token> tokens;
+        Queue<IToken> tokens;
 
-        public StubScanner(Queue<Token> tokens)
+        public StubScanner(Queue<IToken> tokens)
         {
             this.tokens = tokens;
         }
 
-        public Token NextToken()
+        public IToken NextToken()
         {
             if (tokens.Count > 0)
                 return tokens.Dequeue();
             else
-                return new EOF(0, 0);
+                return new EndOfFile(0, 0);
         }
     }
 
     [TestFixture]
     public class ParserTest
     {
-        Queue<Token> programTokens;
+        Queue<IToken> programTokens;
 
         [SetUp]
         public void SetUp()
         {
-            programTokens = new Queue<Token>();
+            programTokens = new Queue<IToken>();
         }
 
         private Program GetProgramTree()
@@ -350,7 +350,7 @@ namespace MiniJavaCompilerTest
         {   /* class ThisIsTheMainClass {
              *     public static void main() { }
              * }
-             * <EOF>
+             * <EndOfFile>
              */
             DeclareMainClassUntilMainMethod("ThisIsTheMainClass");
             ClosingCurlyBrace(); ClosingCurlyBrace();
@@ -372,7 +372,7 @@ namespace MiniJavaCompilerTest
              *         System.out.println(foo);
              *     }
              * }
-             * <EOF>
+             * <EndOfFile>
              */
             DeclareMainClassUntilMainMethod("ThisIsTheMainClass");
             DeclareBasicVariable("foo", "int");
@@ -413,7 +413,7 @@ namespace MiniJavaCompilerTest
              *         foo = new int[10];
              *     }
              * }
-             * <EOF>
+             * <EndOfFile>
              */
             DeclareMainClassUntilMainMethod("ThisIsTheMainClass");
             DeclareBasicArrayVariable("foo", "int");
@@ -450,7 +450,7 @@ namespace MiniJavaCompilerTest
         {   /* class MainClass {
              *     public static void main(int foo) { }
              * }
-             * <EOF>
+             * <EndOfFile>
              */
             programTokens.Enqueue(new KeywordToken("class", 0, 0));
             programTokens.Enqueue(new Identifier("MainClass", 0, 0));
@@ -477,7 +477,7 @@ namespace MiniJavaCompilerTest
              * class someClass {
              *     public int someMethod() { }
              * }
-             * <EOF>
+             * <EndOfFile>
              */
             DeclareMainClassUntilMainMethod("MainClass");
             ClosingCurlyBrace(); ClosingCurlyBrace();
@@ -506,7 +506,7 @@ namespace MiniJavaCompilerTest
              *         someClass.someMethod(42, parameterVariable);
              *     }
              * }
-             * <EOF>
+             * <EndOfFile>
              */
             DeclareMainClassUntilMainMethod("MainClass");
             MakeMethodInvocationWithoutParentheses("someClass", "someMethod");
@@ -538,7 +538,7 @@ namespace MiniJavaCompilerTest
              *         someClass.someMethod();
              *     }
              * }
-             * <EOF>
+             * <EndOfFile>
              */
             DeclareMainClassUntilMainMethod("MainClass");
             MakeMethodInvocationWithoutParentheses("someClass", "someMethod");
@@ -567,7 +567,7 @@ namespace MiniJavaCompilerTest
              * class anotherClass {
              *     public int someMethod(int foo, myOwnType bar) { }
              * }
-             * <EOF>
+             * <EndOfFile>
              */
             DeclareMainClassUntilMainMethod("MainClass");
             ClosingCurlyBrace(); ClosingCurlyBrace();
@@ -610,7 +610,7 @@ namespace MiniJavaCompilerTest
              *         someObject.someMethod().anotherMethod().length();
              *     }
              * }
-             * <EOF>
+             * <EndOfFile>
              */
             DeclareMainClassUntilMainMethod("MainClass");
             MakeMethodInvocationWithoutParentheses("someObject", "someMethod");
@@ -647,7 +647,7 @@ namespace MiniJavaCompilerTest
              *             foo = 42;
              *     }
              * }
-             * <EOF>
+             * <EndOfFile>
              */
             DeclareMainClassUntilMainMethod("MainClass");
             programTokens.Enqueue(new KeywordToken("if", 0, 0));
@@ -684,7 +684,7 @@ namespace MiniJavaCompilerTest
              *             foo = 42;
              *     }
              * }
-             * <EOF>
+             * <EndOfFile>
              */
             DeclareMainClassUntilMainMethod("MainClass");
             programTokens.Enqueue(new KeywordToken("if", 0, 0));
@@ -767,7 +767,7 @@ namespace MiniJavaCompilerTest
 
         private void EndFile()
         {
-            programTokens.Enqueue(new EOF(0, 0));
+            programTokens.Enqueue(new EndOfFile(0, 0));
         }
 
         private void PrintVariableValue(string variableName)
