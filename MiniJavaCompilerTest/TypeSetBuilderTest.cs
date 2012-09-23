@@ -10,7 +10,7 @@ using MiniJavaCompiler.SemanticAnalysis;
 namespace MiniJavaCompilerTest
 {
     [TestFixture]
-    public class TypeListBuilderTest
+    public class TypeSetBuilderTest
     {
         [Test]
         public void ShouldConflictWithPredefinedTypesTest()
@@ -19,7 +19,7 @@ namespace MiniJavaCompilerTest
             var secondClass = new ClassDeclaration("boolean", null, new List<Declaration>(), 2, 0);
             var thirdClass = new ClassDeclaration("int", null, new List<Declaration>(), 3, 0);
             var program = new Program(mainClass, new List<ClassDeclaration> (
-                new ClassDeclaration[] { secondClass, thirdClass }));
+                new [] { secondClass, thirdClass }));
 
             var builder = new TypeSetBuilder(program);
             var error = Assert.Catch<ErrorReport>(() => builder.BuildTypeSet());

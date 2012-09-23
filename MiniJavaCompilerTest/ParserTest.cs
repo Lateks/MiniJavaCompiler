@@ -266,7 +266,7 @@ namespace MiniJavaCompilerTest
 
             var parser = new Parser(new StubScanner(programTokens));
             Assert.Null(parser.Statement());
-            Assert.That(parser.errorMessages.Count, Is.GreaterThan(0));
+            Assert.That(parser.ErrorMessages.Count, Is.GreaterThan(0));
         }
 
         [Test]
@@ -277,7 +277,7 @@ namespace MiniJavaCompilerTest
 
             var parser = new Parser(new StubScanner(programTokens));
             Assert.Null(parser.Statement());
-            Assert.That(parser.errorMessages.Count, Is.GreaterThan(0));
+            Assert.That(parser.ErrorMessages.Count, Is.GreaterThan(0));
         }
 
         [Test]

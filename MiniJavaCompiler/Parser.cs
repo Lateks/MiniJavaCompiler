@@ -13,8 +13,8 @@ namespace MiniJavaCompiler
         public class Parser
         {
             private Scanner scanner;
-            private Stack<Token> inputBuffer;
-            public List<ErrorMessage> errorMessages
+            private Stack<Token> inputBuffer; // This stack is used for buffering when we need to peek forward.
+            public List<ErrorMessage> ErrorMessages
             {
                 get;
                 private set;
@@ -25,24 +25,25 @@ namespace MiniJavaCompiler
                 set;
             }
 
+            public Parser(Scanner scanner)
+            {
+                this.scanner = scanner;
+                this.inputBuffer = new Stack<Token>();
+                ErrorMessages = new List<ErrorMessage>();
+                InputToken = scanner.NextToken();
+            }
+
             // "Pushes" an already consumed token back into the input.
-            private void buffer(Token token)
+            private void Buffer(Token token)
             {
                 inputBuffer.Push(InputToken);
                 InputToken = token;
             }
 
-            private void reportError(string errorMsg, int row, int col)
+            // TODO: extract error reporting to an external, reusable class.
+            private void ReportError(string errorMsg, int row, int col)
             {
-                errorMessages.Add(new ErrorMessage(errorMsg, row, col));
-            }
-
-            public Parser(Scanner scanner)
-            {
-                this.scanner = scanner;
-                this.inputBuffer = new Stack<Token>();
-                errorMessages = new List<ErrorMessage>();
-                InputToken = scanner.NextToken();
+                ErrorMessages.Add(new ErrorMessage(errorMsg, row, col));
             }
 
             public Program Parse()
@@ -61,17 +62,16 @@ namespace MiniJavaCompiler
                     return new Program(main, declarations);
                 }
                 catch (SyntaxError e)
-                {
-                    reportError(e.Message, e.Row, e.Col);
-                    throw new ErrorReport(errorMessages);
+                { // Found something other than EOF.
+                    ReportError(e.Message, e.Row, e.Col);
+                    throw new ErrorReport(ErrorMessages);
                 }
             }
 
             private void ReportErrors()
             {
-                if (errorMessages.Count > 0)
-                    throw new ErrorReport(errorMessages);
-                return;
+                if (ErrorMessages.Count > 0)
+                    throw new ErrorReport(ErrorMessages);
             }
 
             public MainClassDeclaration MainClass()
@@ -79,7 +79,7 @@ namespace MiniJavaCompiler
                 try
                 {
                     Token startToken = Match<KeywordToken>("class");
-                    Identifier classIdent = Match<Identifier>();
+                    var classIdent = Match<Identifier>();
                     Match<LeftCurlyBrace>();
                     Match<KeywordToken>("public");
                     Match<KeywordToken>("static");
@@ -90,16 +90,16 @@ namespace MiniJavaCompiler
                     Match<RightParenthesis>();
 
                     Match<LeftCurlyBrace>();
-                    List<IStatement> main_statements = StatementList();
+                    var mainStatements = StatementList();
                     Match<RightCurlyBrace>();
 
                     Match<RightCurlyBrace>();
                     return new MainClassDeclaration(classIdent.Value,
-                        main_statements, startToken.Row, startToken.Col);
+                        mainStatements, startToken.Row, startToken.Col);
                 }
                 catch (SyntaxError e)
                 {
-                    reportError(e.Message, e.Row, e.Col);
+                    ReportError(e.Message, e.Row, e.Col);
                     RecoverFromClassMatching();
                     return null;
                 }
@@ -132,7 +132,7 @@ namespace MiniJavaCompiler
                 }
                 catch (SyntaxError e)
                 {
-                    reportError(e.Message, e.Col, e.Row);
+                    ReportError(e.Message, e.Col, e.Row);
                     return RecoverFromStatementMatching();
                 }
                 catch (LexicalErrorEncountered)
@@ -173,8 +173,8 @@ namespace MiniJavaCompiler
                         {   // Brackets are used to index into an array, beginning an expression.
                             // Buffer the tokens that were already consumed so the expression parser
                             // can match them again.
-                            buffer(lBracket);
-                            buffer(ident);
+                            Buffer(lBracket);
+                            Buffer(ident);
                             expression = Expression();
                         }
                     }
@@ -183,7 +183,7 @@ namespace MiniJavaCompiler
                     else
                     { // The consumed identifier token is a reference to a variable
                       // and begins an expression.
-                        buffer(ident);
+                        Buffer(ident);
                         expression = Expression();
                     }
                 }
@@ -233,7 +233,7 @@ namespace MiniJavaCompiler
 
             private IStatement MakeKeywordStatement()
             {
-                KeywordToken token = (KeywordToken)InputToken;
+                var token = (KeywordToken)InputToken;
                 switch (token.Value)
                 {
                     case "assert":
@@ -350,7 +350,7 @@ namespace MiniJavaCompiler
                 }
                 catch (SyntaxError e)
                 {
-                    reportError(e.Message, e.Row, e.Col);
+                    ReportError(e.Message, e.Row, e.Col);
                     RecoverFromClassMatching();
                     return null;
                 }
@@ -392,7 +392,7 @@ namespace MiniJavaCompiler
                 }
                 catch (SyntaxError e)
                 {
-                    reportError(e.Message, e.Row, e.Col);
+                    ReportError(e.Message, e.Row, e.Col);
                     return RecoverFromDeclarationMatching();
                 }
                 catch (LexicalErrorEncountered)
@@ -431,7 +431,7 @@ namespace MiniJavaCompiler
                 }
                 catch (SyntaxError e)
                 {
-                    reportError(e.Message, e.Row, e.Col);
+                    ReportError(e.Message, e.Row, e.Col);
                     return RecoverFromVariableDeclarationMatching();
                 }
                 catch (LexicalErrorEncountered)
@@ -504,7 +504,7 @@ namespace MiniJavaCompiler
                     }
                     catch (SyntaxError e)
                     {
-                        Parent.reportError(e.Message, e.Row, e.Col);
+                        Parent.ReportError(e.Message, e.Row, e.Col);
                         return RecoverFromExpressionParsing();
                     }
                     catch (LexicalErrorEncountered)
@@ -625,7 +625,7 @@ namespace MiniJavaCompiler
                     }
                     catch (SyntaxError e)
                     {
-                        Parent.reportError(e.Message, e.Row, e.Col);
+                        Parent.ReportError(e.Message, e.Row, e.Col);
                         return RecoverFromTermMatching();
                     }
                     catch (LexicalErrorEncountered)
@@ -778,23 +778,47 @@ namespace MiniJavaCompiler
             // Checks that the input token is of the expected type and matches the
             // expected value. If the input token matches, it is returned and
             // cast to the expected type. Otherwise an error is reported.
-            private ExpectedType Match<ExpectedType>(string expectedValue = null)
+            // The token is consumed even when it does not match expectations.
+            private ExpectedType Match<ExpectedType>(string expectedValue)
+                where ExpectedType : StringToken
+            {
+                if (InputToken is ExpectedType)
+                {
+                    if (((StringToken)InputToken).Value == expectedValue)
+                    {
+                        return Consume<ExpectedType>();
+                    }
+                    else
+                    {
+                        var token = Consume<StringToken>();
+                        throw new SyntaxError("Expected value \"" + expectedValue + "\" but got " +
+                            token.Value + ".", token.Row, token.Col);
+                    }
+                }
+                else
+                {
+                    throw ConstructMatchException<ExpectedType>(Consume<Token>());
+                }
+            }
+
+            private ExpectedType Match<ExpectedType>()
                 where ExpectedType : Token
             {
-                if (MatchWithoutConsuming<ExpectedType>(expectedValue))
+                if (MatchWithoutConsuming<ExpectedType>())
                     return Consume<ExpectedType>();
                 else
-                { // The token is consumed even when it does not match expectations.
-                    var token = Consume<Token>();
-                    if (token is ErrorToken)
-                        throw new LexicalErrorEncountered();
-                    else if (expectedValue == null)
-                        throw new SyntaxError("Expected type " + typeof(ExpectedType).Name +
-                            " but got " + token.GetType().Name + ".", token.Row, token.Col);
-                    else
-                        throw new SyntaxError("Expected value \"" + expectedValue + "\" but got " +
-                            ((StringToken)token).Value + ".", token.Row, token.Col);
+                {
+                    throw ConstructMatchException<ExpectedType>(Consume<Token>());
                 }
+            }
+
+            private Exception ConstructMatchException<ExpectedType>(Token token)
+            {
+                if (token is ErrorToken)
+                    return new LexicalErrorEncountered();
+                else
+                    return new SyntaxError("Expected type " + typeof(ExpectedType).Name +
+                        " but got " + token.GetType().Name + ".", token.Row, token.Col);
             }
 
             // Consumes a token from input and returns it after casting to the
@@ -805,7 +829,7 @@ namespace MiniJavaCompiler
             // for e.g. recovery purposes.)
             private TokenType Consume<TokenType>() where TokenType : Token
             {
-                dynamic temp = GetTokenOrReportError<TokenType>();
+                var temp = GetTokenOrReportError<TokenType>();
                 InputToken = inputBuffer.Count > 0 ? inputBuffer.Pop() : scanner.NextToken();
                 return temp;
             }
@@ -816,7 +840,7 @@ namespace MiniJavaCompiler
                 { // Lexical errors are reported here, so no errors are left unreported
                   // when consuming tokens because of recovery.
                     var temp = (ErrorToken)InputToken;
-                    reportError(temp.Message, temp.Row, temp.Col);
+                    ReportError(temp.Message, temp.Row, temp.Col);
                     return temp;
                 }
                 else
@@ -824,20 +848,16 @@ namespace MiniJavaCompiler
             }
 
             // Checks whether the input token matches the expected type and value or not.
-            // Either returns a boolean value or reports an error if input token is an
-            // error token.
-            private bool MatchWithoutConsuming<ExpectedType>(string expectedValue = null)
+            private bool MatchWithoutConsuming<ExpectedType>(string expectedValue)
+                where ExpectedType : StringToken
+            {
+                return MatchWithoutConsuming<ExpectedType>() && ((StringToken) InputToken).Value == expectedValue;
+            }
+
+            private bool MatchWithoutConsuming<ExpectedType>()
                 where ExpectedType : Token
             {
-                if (InputToken is ExpectedType)
-                {
-                    if (expectedValue == null || ((StringToken)InputToken).Value == expectedValue)
-                        return true;
-                    else
-                        return false;
-                }
-                else
-                    return false;
+                return InputToken is ExpectedType;
             }
 
             // List parsers.

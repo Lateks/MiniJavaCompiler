@@ -22,7 +22,7 @@ namespace MiniJavaCompiler
                 types = new HashSet<string>(new string[] {"int", "boolean"});
             }
 
-            public HashSet<string> BuildTypeSet()
+            public IEnumerable<string> BuildTypeSet()
             {
                 syntaxTree.Accept(this);
                 if (errorMessages.Count > 0)

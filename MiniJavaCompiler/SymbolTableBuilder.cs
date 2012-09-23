@@ -16,7 +16,7 @@ namespace MiniJavaCompiler
             private BaseScope currentScope;
             private Dictionary<ISyntaxTreeNode, IScope> scopes;
 
-            public SymbolTableBuilder(Program node, List<string> types)
+            public SymbolTableBuilder(Program node, IEnumerable<string> types)
             {
                 syntaxTree = node;
                 symbolTable = new GlobalScope();
