@@ -12,21 +12,55 @@ namespace MiniJavaCompiler.Support
         void Define(Symbol sym);
     }
 
-    public interface IType { }
+    public interface IType
+    {
+        string Name { get; }
+    }
+
+    public class BuiltinType : IType
+    {
+        private static BuiltinType classInstance = new BuiltinType();
+        public string Name { get; private set; }
+
+        private BuiltinType()
+        {
+            Name = "$builtin";
+        }
+
+        public static BuiltinType GetInstance()
+        {
+            return classInstance;
+        }
+    }
+
+    public class MiniJavaClass : IType
+    {
+        private static MiniJavaClass classInstance = new MiniJavaClass();
+        public string Name { get; private set; }
+
+        private MiniJavaClass()
+        {
+            Name = "class";
+        }
+
+        public static MiniJavaClass GetInstance()
+        {
+            return classInstance;
+        }
+    }
 
     public abstract class ScopeBase : IScope
     {
         private readonly Dictionary<string, Symbol> symbolTable;
-        public ScopeBase EnclosingScope
+        public IScope EnclosingScope
         {
             get;
             private set;
         }
 
-        // TODO: Replace null with a valid scope (constant?)
         protected ScopeBase() : this(null) { }
 
-        protected ScopeBase(ScopeBase enclosingScope)
+        protected ScopeBase(IScope enclosingScope)
         {
             symbolTable = new Dictionary<string, Symbol>();
             EnclosingScope = enclosingScope;
@@ -77,11 +111,6 @@ namespace MiniJavaCompiler.Support
             set;
         }
 
-        protected Symbol(string name, IScope enclosingScope)
-        {
-            Name = name;
-        }
-
         protected Symbol(string name, IType type, IScope enclosingScope)
         {
             Name = name;
@@ -99,15 +128,12 @@ namespace MiniJavaCompiler.Support
     public class BuiltinTypeSymbol : Symbol, IType
     {
         public BuiltinTypeSymbol(string name, IScope enclosingScope)
-            : base(name, enclosingScope) { }
+            : base(name, BuiltinType.GetInstance(), enclosingScope) { }
     }
 
     public abstract class ScopedSymbol : Symbol, IScope
     {
         protected Dictionary<string, Symbol> symbolTable;
-
-        protected ScopedSymbol(string name, IScope enclosingScope)
-            : base(name, enclosingScope) { }
 
         protected ScopedSymbol(string name, IType type, IScope enclosingScope)
             : base(name, type, enclosingScope) { }
@@ -146,7 +172,7 @@ namespace MiniJavaCompiler.Support
         private readonly ClassSymbol superClass;
 
         public ClassSymbol(string name, IScope enclosingScope, ClassSymbol superClass = null)
-            : base(name, enclosingScope)
+            : base(name, MiniJavaClass.GetInstance(), enclosingScope)
         {
             this.superClass = superClass;
         }
