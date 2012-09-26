@@ -16,6 +16,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         TTokenType Consume<TTokenType>() where TTokenType : IToken;
         bool NextTokenIs<TExpectedType>() where TExpectedType : IToken;
         bool NextTokenIs<TExpectedType>(string expectedValue) where TExpectedType : StringToken;
+        bool NextTokenOneOf<TExpectedType>(params string[] valueCollection) where TExpectedType : StringToken;
     }
 
     public class ParserInputReader : IParserInputReader
@@ -138,6 +139,15 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             where TExpectedType : IToken
         {
             return InputToken is TExpectedType;
+        }
+
+
+        public bool NextTokenOneOf<TExpectedType>(params string[] valueCollection) where TExpectedType : StringToken
+        {
+            if (!NextTokenIs<TExpectedType>())
+                return false;
+            else
+                return valueCollection.Contains(((StringToken) InputToken).Value);
         }
     }
 }

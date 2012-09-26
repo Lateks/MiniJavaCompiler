@@ -8,7 +8,10 @@ using MiniJavaCompiler.LexicalAnalysis;
 
 namespace MiniJavaCompiler.SyntaxAnalysis
 {
-    // A sub-parser that solves operator precedences in expressions.
+    // A sub-parser that parses expressions and solves operator precedences.
+    // Precedences are solved using an implementation of the Shunting Yard
+    // algorithm with the stack structure encoded into the recursive descent
+    // parser (no explicit stack).
     internal class ExpressionParser : ParserBase
     {
         public ExpressionParser(IParserInputReader input, IErrorReporter reporter)
@@ -32,7 +35,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             return null;
         }
 
-        private List<IExpression> ExpressionList(bool isListTail = false)
+        private List<IExpression> ExpressionList()
         {
             var parser = new CommaSeparatedListParser(Input, errorReporter);
             return parser.ParseList<IExpression, RightParenthesis>(Parse);
@@ -48,57 +51,35 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
         private IExpression ParseExpression()
         {
-            var firstOp = OrOperand();
-            Func<bool> orMatcher =
-                () => Input.NextTokenIs<BinaryOperatorToken>("||");
-            return BinaryOpTail<LogicalOpExpression>(firstOp, orMatcher, OrOperand);
+            return ParseBinaryOpExpression<LogicalOpExpression>(OrOperand, "||");
         }
 
         private IExpression OrOperand()
         {
-            var firstOp = AndOperand();
-            Func<bool> andMatcher =
-                () => Input.NextTokenIs<BinaryOperatorToken>("&&");
-            return BinaryOpTail<LogicalOpExpression>(firstOp, andMatcher, AndOperand);
+            return ParseBinaryOpExpression<LogicalOpExpression>(AndOperand, "&&");
         }
 
         private IExpression AndOperand()
         {
-            var firstOp = EqOperand();
-            Func<bool> eqMatcher =
-                () => Input.NextTokenIs<BinaryOperatorToken>("==");
-            return BinaryOpTail<LogicalOpExpression>(firstOp, eqMatcher, EqOperand);
+            return ParseBinaryOpExpression<LogicalOpExpression>(EqOperand, "==");
         }
 
         private IExpression EqOperand()
         {
-            var firstOp = NotEqOperand();
-            Func<bool> neqMatcher =
-                () => Input.NextTokenIs<BinaryOperatorToken>("<") ||
-                      Input.NextTokenIs<BinaryOperatorToken>(">");
-            return BinaryOpTail<LogicalOpExpression>(firstOp, neqMatcher, NotEqOperand);
+            return ParseBinaryOpExpression<LogicalOpExpression>(NotEqOperand, "<", ">");
         }
 
         private IExpression NotEqOperand()
         {
-            var firstOp = AddOperand();
-            Func<bool> addMatcher =
-                () => Input.NextTokenIs<BinaryOperatorToken>("+") ||
-                      Input.NextTokenIs<BinaryOperatorToken>("-");
-            return BinaryOpTail<ArithmeticOpExpression>(firstOp, addMatcher, AddOperand);
+            return ParseBinaryOpExpression<ArithmeticOpExpression>(AdditionOperand, "+", "-");
         }
 
-        private IExpression AddOperand()
+        private IExpression AdditionOperand()
         {
-            var firstOp = MultOperand();
-            Func<bool> multMatcher =
-                () => Input.NextTokenIs<BinaryOperatorToken>("*") ||
-                      Input.NextTokenIs<BinaryOperatorToken>("/") ||
-                      Input.NextTokenIs<BinaryOperatorToken>("%");
-            return BinaryOpTail<ArithmeticOpExpression>(firstOp, multMatcher, MultOperand);
+            return ParseBinaryOpExpression<ArithmeticOpExpression>(MultiplicationOperand, "*", "/", "%");
         }
 
-        private IExpression MultOperand()
+        private IExpression MultiplicationOperand()
         {
             if (Input.NextTokenIs<UnaryNotToken>())
             {
@@ -110,21 +91,35 @@ namespace MiniJavaCompiler.SyntaxAnalysis
                 return Term();
         }
 
-        private IExpression BinaryOpTail<OperatorType>(IExpression lhs,
-            Func<bool> matchOperator, Func<IExpression> operandParser)
-            where OperatorType : BinaryOpExpression
+        private IExpression ParseBinaryOpExpression<TExpressionType>(Func<IExpression> parseOperand,
+            params string[] operators)
+            where TExpressionType : BinaryOpExpression
         {
-            if (matchOperator())
+            return ParseBinaryOpTail<TExpressionType>(parseOperand(), parseOperand, operators);
+        }
+
+        // A general purpose helper function for parsing the tail of a
+        // binary operation (the operator and the right hand term).
+        // Continues parsing binary operations on the same precedence level
+        // recursively.
+        //
+        // Reflection is utilised to create the type of expression indicated
+        // by the type parameter.
+        private IExpression ParseBinaryOpTail<TExpressionType>(IExpression leftHandOperand,
+            Func<IExpression> parseRightHandSideOperand, params string[] operators)
+            where TExpressionType : BinaryOpExpression
+        {
+            if (Input.NextTokenOneOf<BinaryOperatorToken>(operators))
             {
                 var opToken = Input.Consume<BinaryOperatorToken>();
-                var rhs = operandParser();
+                var rhs = parseRightHandSideOperand();
                 var operatorExp = (IExpression)System.Activator.CreateInstance(
-                    typeof(OperatorType), new Object[] { opToken.Value, lhs, rhs, opToken.Row, opToken.Col });
-                return BinaryOpTail<OperatorType>(operatorExp, matchOperator,
-                    operandParser);
+                    typeof(TExpressionType), new Object[] { opToken.Value, leftHandOperand, rhs, opToken.Row, opToken.Col });
+                return ParseBinaryOpTail<TExpressionType>(operatorExp,
+                    parseRightHandSideOperand, operators);
             }
             else
-                return lhs;
+                return leftHandOperand;
         }
 
         public IExpression Term()
