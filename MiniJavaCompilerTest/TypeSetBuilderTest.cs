@@ -84,9 +84,9 @@ namespace MiniJavaCompilerTest
             Assert.Contains("Foo", types);
             Assert.Contains("Bar", types);
             Assert.Contains("Baz", types);
-            Assert.Contains("int", types);
-            Assert.Contains("boolean", types);
-            Assert.That(types.Count, Is.EqualTo(5));
+            Assert.That(types, Is.Not.Contains("int"));
+            Assert.That(types, Is.Not.Contains("boolean"));
+            Assert.That(types.Count, Is.EqualTo(3));
         }
     }
 }

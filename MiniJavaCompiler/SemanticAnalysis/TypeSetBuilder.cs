@@ -11,13 +11,14 @@ namespace MiniJavaCompiler.SemanticAnalysis
     {
         private Program syntaxTree;
         private HashSet<string> types;
+        private HashSet<string> builtIns = new HashSet<string>(new [] { "int", "boolean" });
         private IErrorReporter errorReporter;
 
         public TypeSetBuilder(Program node, IErrorReporter errorReporter)
         {
             syntaxTree = node;
             this.errorReporter = errorReporter;
-            types = new HashSet<string>(new string[] { "int", "boolean" });
+            types = new HashSet<string>();
         }
 
         public IEnumerable<string> BuildTypeSet()
@@ -32,11 +33,16 @@ namespace MiniJavaCompiler.SemanticAnalysis
                     typeName + ".", row, col);
         }
 
+        private bool NameAlreadyDefined(string name)
+        {
+            return types.Contains(name) || builtIns.Contains(name);
+        }
+
         public void Visit(Program node) { }
 
         public void Visit(ClassDeclaration node)
         {
-            if (types.Contains(node.Name))
+            if (NameAlreadyDefined(node.Name))
             {
                 ReportConflict(node.Name, node.Row, node.Col);
             }
@@ -48,7 +54,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
         public void Visit(MainClassDeclaration node)
         {
-            if (types.Contains(node.Name))
+            if (NameAlreadyDefined(node.Name))
             {
                 ReportConflict(node.Name, node.Row, node.Col);
             }
