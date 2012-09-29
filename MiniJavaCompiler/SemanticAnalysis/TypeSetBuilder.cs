@@ -11,27 +11,25 @@ namespace MiniJavaCompiler.SemanticAnalysis
     {
         private Program syntaxTree;
         private HashSet<string> types;
-        private List<ErrorMessage> errorMessages;
+        private IErrorReporter errorReporter;
 
-        public TypeSetBuilder(Program node)
+        public TypeSetBuilder(Program node, IErrorReporter errorReporter)
         {
             syntaxTree = node;
-            errorMessages = new List<ErrorMessage>();
+            this.errorReporter = errorReporter;
             types = new HashSet<string>(new string[] { "int", "boolean" });
         }
 
         public IEnumerable<string> BuildTypeSet()
         {
             syntaxTree.Accept(this);
-            if (errorMessages.Count > 0)
-                throw new ErrorReport(errorMessages);
             return types;
         }
 
         private void ReportConflict(string typeName, int row, int col)
         {
-            errorMessages.Add(new ErrorMessage("Conflicting definitions for " +
-                    typeName + ".", row, col));
+            errorReporter.ReportError("Conflicting definitions for " +
+                    typeName + ".", row, col);
         }
 
         public void Visit(Program node) { }

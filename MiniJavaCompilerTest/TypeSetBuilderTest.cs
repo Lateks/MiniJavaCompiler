@@ -21,15 +21,17 @@ namespace MiniJavaCompilerTest
             var program = new Program(mainClass, new List<ClassDeclaration> (
                 new [] { secondClass, thirdClass }));
 
-            var builder = new TypeSetBuilder(program);
-            var error = Assert.Catch<ErrorReport>(() => builder.BuildTypeSet());
-            Assert.AreEqual(error.ErrorMsgs.Count, 3);
-            Assert.AreEqual(error.ErrorMsgs[0].Content, "Conflicting definitions for int.");
-            Assert.AreEqual(error.ErrorMsgs[0].Row, 1);
-            Assert.AreEqual(error.ErrorMsgs[1].Content, "Conflicting definitions for boolean.");
-            Assert.AreEqual(error.ErrorMsgs[1].Row, 2);
-            Assert.AreEqual(error.ErrorMsgs[2].Content, "Conflicting definitions for int.");
-            Assert.AreEqual(error.ErrorMsgs[2].Row, 3);
+            var errorReporter = new ErrorLogger();
+            var builder = new TypeSetBuilder(program, errorReporter);
+            builder.BuildTypeSet();
+            var errors = errorReporter.Errors();
+            Assert.AreEqual(errors.Count, 3);
+            Assert.AreEqual(errors[0].Content, "Conflicting definitions for int.");
+            Assert.AreEqual(errors[0].Row, 1);
+            Assert.AreEqual(errors[1].Content, "Conflicting definitions for boolean.");
+            Assert.AreEqual(errors[1].Row, 2);
+            Assert.AreEqual(errors[2].Content, "Conflicting definitions for int.");
+            Assert.AreEqual(errors[2].Row, 3);
         }
 
         [Test]
@@ -40,11 +42,13 @@ namespace MiniJavaCompilerTest
             var program = new Program(mainClass, new List<ClassDeclaration>(
                 new ClassDeclaration[] { otherClass }));
 
-            var builder = new TypeSetBuilder(program);
-            var error = Assert.Catch<ErrorReport>(() => builder.BuildTypeSet());
-            Assert.AreEqual(error.ErrorMsgs.Count, 1);
-            Assert.AreEqual(error.ErrorMsgs[0].Content, "Conflicting definitions for Foo.");
-            Assert.AreEqual(error.ErrorMsgs[0].Row, 2);
+            var errorReporter = new ErrorLogger();
+            var builder = new TypeSetBuilder(program, errorReporter);
+            builder.BuildTypeSet();
+            var errors = errorReporter.Errors();
+            Assert.AreEqual(errors.Count, 1);
+            Assert.AreEqual(errors[0].Content, "Conflicting definitions for Foo.");
+            Assert.AreEqual(errors[0].Row, 2);
         }
 
         [Test]
@@ -56,11 +60,13 @@ namespace MiniJavaCompilerTest
             var program = new Program(mainClass, new List<ClassDeclaration>(
                 new ClassDeclaration[] { secondClass, thirdClass }));
 
-            var builder = new TypeSetBuilder(program);
-            var error = Assert.Catch<ErrorReport>(() => builder.BuildTypeSet());
-            Assert.AreEqual(error.ErrorMsgs.Count, 1);
-            Assert.AreEqual(error.ErrorMsgs[0].Content, "Conflicting definitions for Bar.");
-            Assert.AreEqual(error.ErrorMsgs[0].Row, 3);
+            var errorReporter = new ErrorLogger();
+            var builder = new TypeSetBuilder(program, errorReporter);
+            builder.BuildTypeSet();
+            var errors = errorReporter.Errors();
+            Assert.AreEqual(errors.Count, 1);
+            Assert.AreEqual(errors[0].Content, "Conflicting definitions for Bar.");
+            Assert.AreEqual(errors[0].Row, 3);
         }
 
         [Test]
@@ -70,9 +76,10 @@ namespace MiniJavaCompilerTest
             var secondClass = new ClassDeclaration("Bar", null, new List<Declaration>(), 2, 0);
             var thirdClass = new ClassDeclaration("Baz", null, new List<Declaration>(), 3, 0);
             var program = new Program(mainClass, new List<ClassDeclaration>(
-                new ClassDeclaration[] { secondClass, thirdClass }));
+                new [] { secondClass, thirdClass }));
 
-            var builder = new TypeSetBuilder(program);
+            var errorReporter = new ErrorLogger();
+            var builder = new TypeSetBuilder(program, errorReporter);
             var types = builder.BuildTypeSet().ToList();
             Assert.Contains("Foo", types);
             Assert.Contains("Bar", types);
