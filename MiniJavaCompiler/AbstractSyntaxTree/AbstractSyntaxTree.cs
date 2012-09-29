@@ -103,11 +103,12 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
 
         public override void Accept(INodeVisitor visitor)
         {
+            visitor.Visit(this);
             foreach (Declaration decl in Declarations)
             {
                 decl.Accept(visitor);
             }
-            visitor.Visit(this);
+            visitor.Exit(this);
         }
     }
 
@@ -134,11 +135,12 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
 
         public override void Accept(INodeVisitor visitor)
         {
+            visitor.Visit(this);
             foreach (IStatement statement in MainMethod)
             {
                 statement.Accept(visitor);
             }
-            visitor.Visit(this);
+            visitor.Exit(this);
         }
     }
 
@@ -194,6 +196,7 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
 
         public override void Accept(INodeVisitor visitor)
         {
+            visitor.Visit(this);
             foreach (VariableDeclaration decl in Formals)
             {
                 decl.Accept(visitor);
@@ -202,7 +205,7 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
             {
                 statement.Accept(visitor);
             }
-            visitor.Visit(this);
+            visitor.Exit(this);
         }
     }
 

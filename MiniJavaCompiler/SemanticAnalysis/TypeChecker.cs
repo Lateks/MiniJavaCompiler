@@ -112,5 +112,20 @@ namespace MiniJavaCompiler.SemanticAnalysis
         {
             throw new NotImplementedException();
         }
+
+        public void Exit(ClassDeclaration node)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Exit(MainClassDeclaration node)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Exit(MethodDeclaration node)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

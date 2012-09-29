@@ -29,5 +29,9 @@ namespace MiniJavaCompiler.SemanticAnalysis
         void Visit(ArrayIndexingExpression node);
         void Visit(VariableReferenceExpression node);
         void Visit(IntegerLiteralExpression node);
+
+        void Exit(ClassDeclaration node);
+        void Exit(MainClassDeclaration node);
+        void Exit(MethodDeclaration node);
     }
 }

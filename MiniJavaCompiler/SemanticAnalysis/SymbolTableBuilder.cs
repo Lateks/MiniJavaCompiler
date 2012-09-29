@@ -11,17 +11,32 @@ namespace MiniJavaCompiler.SemanticAnalysis
     {
         private Program syntaxTree;
         private GlobalScope symbolTable;
-        private IScope currentScope;
+        private Stack<IScope> scopeStack;
         private Dictionary<ISyntaxTreeNode, IScope> scopes;
         private string[] builtins = new [] { "int", "boolean" };
+        private IScope CurrentScope
+        {
+            get { return scopeStack.Peek(); }
+        }
 
         public SymbolTableBuilder(Program node, IEnumerable<string> types)
         {
             syntaxTree = node;
             symbolTable = new GlobalScope();
             SetupGlobalScope(types);
-            currentScope = symbolTable;
+            scopeStack = new Stack<IScope>();
+            scopeStack.Push(symbolTable);
             scopes = new Dictionary<ISyntaxTreeNode, IScope>();
+        }
+
+        private void EnterScope(IScope scope)
+        {
+            scopeStack.Push(scope);
+        }
+
+        private void ExitScope()
+        {
+            scopeStack.Pop();
         }
 
         private void SetupGlobalScope(IEnumerable<string> types)
@@ -36,10 +51,9 @@ namespace MiniJavaCompiler.SemanticAnalysis
             }
         }
 
-        public IScope BuildSymbolTable()
+        public void BuildSymbolTable()
         {
             syntaxTree.Accept(this);
-            return symbolTable;
         }
 
         public Dictionary<ISyntaxTreeNode, IScope> GetScopeMapping()
@@ -49,7 +63,23 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
         public void Visit(Program node) { }
 
-        public void Visit(ClassDeclaration node) { }
+        public void Visit(ClassDeclaration node)
+        {
+            var typeSymbol = (UserDefinedTypeSymbol)CurrentScope.Resolve(node.Name);
+            if (node.InheritedClass != null)
+            {
+                var inheritedType = (UserDefinedTypeSymbol)CurrentScope.Resolve(node.InheritedClass);
+                typeSymbol.SuperClass = inheritedType;
+            }
+            scopes[node] = typeSymbol;
+            node.Symbol = typeSymbol;
+            EnterScope(typeSymbol);
+        }
+
+        public void Exit(ClassDeclaration node)
+        {
+            ExitScope();
+        }
 
         public void Visit(MainClassDeclaration node)
         {
@@ -142,6 +172,16 @@ namespace MiniJavaCompiler.SemanticAnalysis
         }
 
         public void Visit(IntegerLiteralExpression node)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Exit(MainClassDeclaration node)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Exit(MethodDeclaration node)
         {
             throw new NotImplementedException();
         }

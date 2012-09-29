@@ -10,6 +10,7 @@ namespace MiniJavaCompiler.Support
     {
         Symbol Resolve(string name);
         void Define(Symbol sym);
+        IScope ParentScope { get; }
     }
 
     public interface IType
@@ -52,10 +53,14 @@ namespace MiniJavaCompiler.Support
     public abstract class ScopeBase : IScope
     {
         private readonly Dictionary<string, Symbol> symbolTable;
-        public IScope EnclosingScope
+        protected IScope EnclosingScope
         {
             get;
             private set;
+        }
+        public IScope ParentScope
+        {
+            get { return EnclosingScope; }
         }
 
         protected ScopeBase() : this(null) { }
@@ -158,6 +163,10 @@ namespace MiniJavaCompiler.Support
     public abstract class ScopedSymbol : Symbol, IScope
     {
         protected Dictionary<string, Symbol> symbolTable;
+        public IScope ParentScope
+        {
+            get { return EnclosingScope; }
+        }
 
         protected ScopedSymbol(string name, IType type, IScope enclosingScope)
             : base(name, type, enclosingScope) { }
@@ -174,11 +183,6 @@ namespace MiniJavaCompiler.Support
             }
         }
 
-        public virtual IScope GetParentScope()
-        {
-            return EnclosingScope;
-        }
-
         public void Define(Symbol sym)
         {
             symbolTable.Add(sym.Name, sym);
@@ -193,17 +197,16 @@ namespace MiniJavaCompiler.Support
 
     public class UserDefinedTypeSymbol : ScopedSymbol, IType
     {
-        protected UserDefinedTypeSymbol superClass;
+        internal UserDefinedTypeSymbol SuperClass { get; set; }
+        public new IScope ParentScope
+        {
+            get { return SuperClass ?? base.ParentScope; }
+        }
 
         public UserDefinedTypeSymbol(string name, IScope enclosingScope)
             : base(name, MiniJavaClass.GetInstance(), enclosingScope)
         {
-            this.superClass = superClass;
-        }
-
-        public override IScope GetParentScope()
-        {
-            return superClass ?? EnclosingScope;
+            this.SuperClass = SuperClass;
         }
 
         public override Symbol Resolve(string name)
@@ -214,7 +217,7 @@ namespace MiniJavaCompiler.Support
             }
             catch (KeyNotFoundException)
             {
-                return GetParentScope().Resolve(name);
+                return ParentScope.Resolve(name);
             }
         }
     }
