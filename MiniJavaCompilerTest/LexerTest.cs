@@ -34,8 +34,8 @@ namespace MiniJavaCompilerTest
         {
             var lexer = new MiniJavaScanner(new StringReader(binop));
             IToken token = lexer.NextToken();
-            Assert.That(token, Is.InstanceOf<ArithmeticOperatorToken>());
-            Assert.That(((ArithmeticOperatorToken)token).Value, Is.EqualTo(binop));
+            Assert.That(token, Is.InstanceOf<BinaryOperatorToken>());
+            Assert.That(((BinaryOperatorToken)token).Value, Is.EqualTo(binop));
         }
     }
 
@@ -50,8 +50,8 @@ namespace MiniJavaCompilerTest
         {
             var lexer = new MiniJavaScanner(new StringReader(binop));
             IToken token = lexer.NextToken();
-            Assert.That(token, Is.InstanceOf<LogicalOperatorToken>());
-            Assert.That(((LogicalOperatorToken)token).Value, Is.EqualTo(binop));
+            Assert.That(token, Is.InstanceOf<BinaryOperatorToken>());
+            Assert.That(((BinaryOperatorToken)token).Value, Is.EqualTo(binop));
         }
 
         [Test]

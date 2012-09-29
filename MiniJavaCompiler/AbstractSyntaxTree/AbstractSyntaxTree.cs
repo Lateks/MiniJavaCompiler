@@ -483,7 +483,7 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
         }
     }
 
-    public abstract class BinaryOpExpression : SyntaxElement, IExpression
+    public class BinaryOpExpression : SyntaxElement, IExpression
     {
         public string Operator
         {
@@ -501,7 +501,7 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
             private set;
         }
 
-        protected BinaryOpExpression(string opsymbol, IExpression lhs, IExpression rhs,
+        public BinaryOpExpression(string opsymbol, IExpression lhs, IExpression rhs,
             int row, int col)
             : base(row, col)
         {
@@ -509,27 +509,6 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
             LeftOperand = lhs;
             RightOperand = rhs;
         }
-    }
-
-    public class ArithmeticOpExpression : BinaryOpExpression
-    {
-        public ArithmeticOpExpression(string opsymbol, IExpression lhs, IExpression rhs,
-            int row, int col)
-            : base(opsymbol, lhs, rhs, row, col) { }
-
-        public override void Accept(INodeVisitor visitor)
-        {
-            RightOperand.Accept(visitor);
-            LeftOperand.Accept(visitor);
-            visitor.Visit(this);
-        }
-    }
-
-    public class LogicalOpExpression : BinaryOpExpression
-    {
-        public LogicalOpExpression(string opsymbol, IExpression lhs, IExpression rhs,
-            int row, int col)
-            : base(opsymbol, lhs, rhs, row, col) { }
 
         public override void Accept(INodeVisitor visitor)
         {

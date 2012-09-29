@@ -14,6 +14,16 @@ namespace MiniJavaCompiler.SyntaxAnalysis
     // parser (no explicit stack).
     internal class ExpressionParser : ParserBase
     {
+        private readonly string[][] operatorsByLevel = new []
+            {
+                new [] { "||" },                                           
+                new [] { "&&" },
+                new [] { "==" },
+                new [] { "<", ">" },
+                new [] { "+", "-" },
+                new [] { "*", "/", "%" }, 
+            };
+
         public ExpressionParser(IParserInputReader input, IErrorReporter reporter)
             : base(input, reporter) { }
 
@@ -51,32 +61,25 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
         private IExpression ParseExpression()
         {
-            return ParseBinaryOpExpression<LogicalOpExpression>(OrOperand, "||");
+            return ParseBinaryOpExpression(0);
         }
 
-        private IExpression OrOperand()
+        private IExpression ParseBinaryOpExpression(int precedenceLevel)
         {
-            return ParseBinaryOpExpression<LogicalOpExpression>(AndOperand, "&&");
+            var parseOperand = GetParserFunction(precedenceLevel);
+            return ParseBinaryOpTail(parseOperand(), parseOperand, operatorsByLevel[precedenceLevel]);
         }
 
-        private IExpression AndOperand()
+        private Func<IExpression> GetParserFunction(int precedenceLevel)
         {
-            return ParseBinaryOpExpression<LogicalOpExpression>(EqOperand, "==");
-        }
-
-        private IExpression EqOperand()
-        {
-            return ParseBinaryOpExpression<LogicalOpExpression>(NotEqOperand, "<", ">");
-        }
-
-        private IExpression NotEqOperand()
-        {
-            return ParseBinaryOpExpression<ArithmeticOpExpression>(AdditionOperand, "+", "-");
-        }
-
-        private IExpression AdditionOperand()
-        {
-            return ParseBinaryOpExpression<ArithmeticOpExpression>(MultiplicationOperand, "*", "/", "%");
+            if (precedenceLevel == operatorsByLevel.Count() - 1)
+            {
+                return MultiplicationOperand;
+            }
+            else
+            {
+                return () => ParseBinaryOpExpression(precedenceLevel + 1);
+            }
         }
 
         private IExpression MultiplicationOperand()
@@ -91,32 +94,19 @@ namespace MiniJavaCompiler.SyntaxAnalysis
                 return Term();
         }
 
-        private IExpression ParseBinaryOpExpression<TExpressionType>(Func<IExpression> parseOperand,
-            params string[] operators)
-            where TExpressionType : BinaryOpExpression
-        {
-            return ParseBinaryOpTail<TExpressionType>(parseOperand(), parseOperand, operators);
-        }
-
         // A general purpose helper function for parsing the tail of a
         // binary operation (the operator and the right hand term).
         // Continues parsing binary operations on the same precedence level
         // recursively.
-        //
-        // Reflection is utilised to create the type of expression indicated
-        // by the type parameter.
-        private IExpression ParseBinaryOpTail<TExpressionType>(IExpression leftHandOperand,
+        private IExpression ParseBinaryOpTail(IExpression leftHandOperand,
             Func<IExpression> parseRightHandSideOperand, params string[] operators)
-            where TExpressionType : BinaryOpExpression
         {
             if (Input.NextTokenOneOf<BinaryOperatorToken>(operators))
             {
                 var opToken = Input.Consume<BinaryOperatorToken>();
                 var rhs = parseRightHandSideOperand();
-                var operatorExp = (IExpression)System.Activator.CreateInstance(
-                    typeof(TExpressionType), new Object[] { opToken.Value, leftHandOperand, rhs, opToken.Row, opToken.Col });
-                return ParseBinaryOpTail<TExpressionType>(operatorExp,
-                    parseRightHandSideOperand, operators);
+                var operatorExp = new BinaryOpExpression(opToken.Value, leftHandOperand, rhs, opToken.Row, opToken.Col);
+                return ParseBinaryOpTail(operatorExp, parseRightHandSideOperand, operators);
             }
             else
                 return leftHandOperand;

@@ -300,20 +300,20 @@ namespace MiniJavaCompilerTest
         public void BinaryOperatorExpression()
         { // 7 % foo == 0
             programTokens.Enqueue(new IntegerLiteralToken("7", 0, 0));
-            programTokens.Enqueue(new ArithmeticOperatorToken("%", 0, 0));
+            programTokens.Enqueue(new BinaryOperatorToken("%", 0, 0));
             programTokens.Enqueue(new Identifier("foo", 0, 0));
-            programTokens.Enqueue(new LogicalOperatorToken("==", 0, 0));
+            programTokens.Enqueue(new BinaryOperatorToken("==", 0, 0));
             programTokens.Enqueue(new IntegerLiteralToken("0", 0, 0));
 
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
             var expression = parser.Expression();
-            Assert.That(expression, Is.InstanceOf<LogicalOpExpression>());
-            var logicalOp = (LogicalOpExpression)expression;
+            Assert.That(expression, Is.InstanceOf<BinaryOpExpression>());
+            var logicalOp = (BinaryOpExpression)expression;
             Assert.That(logicalOp.RightOperand, Is.InstanceOf<IntegerLiteralExpression>());
             Assert.That(((IntegerLiteralExpression)logicalOp.RightOperand).Value, Is.EqualTo("0"));
-            Assert.That(logicalOp.LeftOperand, Is.InstanceOf<ArithmeticOpExpression>());
-            var arithmetic = (ArithmeticOpExpression)logicalOp.LeftOperand;
+            Assert.That(logicalOp.LeftOperand, Is.InstanceOf<BinaryOpExpression>());
+            var arithmetic = (BinaryOpExpression)logicalOp.LeftOperand;
             Assert.That(arithmetic.LeftOperand, Is.InstanceOf<IntegerLiteralExpression>());
             Assert.That(((IntegerLiteralExpression)arithmetic.LeftOperand).Value, Is.EqualTo("7"));
             Assert.That(arithmetic.RightOperand, Is.InstanceOf<VariableReferenceExpression>());
@@ -324,40 +324,40 @@ namespace MiniJavaCompilerTest
         public void OperatorPrecedences()
         { // 4 + 9 * (7 - 2 % 3) - 2
             programTokens.Enqueue(new IntegerLiteralToken("4", 0, 0));
-            programTokens.Enqueue(new ArithmeticOperatorToken("+", 0, 0));
+            programTokens.Enqueue(new BinaryOperatorToken("+", 0, 0));
             programTokens.Enqueue(new IntegerLiteralToken("9", 0, 0));
-            programTokens.Enqueue(new ArithmeticOperatorToken("*", 0, 0));
+            programTokens.Enqueue(new BinaryOperatorToken("*", 0, 0));
             programTokens.Enqueue(new LeftParenthesis(0, 0));
             programTokens.Enqueue(new IntegerLiteralToken("7", 0, 0));
-            programTokens.Enqueue(new ArithmeticOperatorToken("-", 0, 0));
+            programTokens.Enqueue(new BinaryOperatorToken("-", 0, 0));
             programTokens.Enqueue(new IntegerLiteralToken("2", 0, 0));
-            programTokens.Enqueue(new ArithmeticOperatorToken("%", 0, 0));
+            programTokens.Enqueue(new BinaryOperatorToken("%", 0, 0));
             programTokens.Enqueue(new IntegerLiteralToken("3", 0, 0));
             programTokens.Enqueue(new RightParenthesis(0, 0));
-            programTokens.Enqueue(new ArithmeticOperatorToken("-", 0, 0));
+            programTokens.Enqueue(new BinaryOperatorToken("-", 0, 0));
             programTokens.Enqueue(new IntegerLiteralToken("2", 0, 0));
 
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
             var expression = parser.Expression();
-            Assert.That(expression, Is.InstanceOf<ArithmeticOpExpression>());
-            var minusOp = (ArithmeticOpExpression)expression;
+            Assert.That(expression, Is.InstanceOf<BinaryOpExpression>());
+            var minusOp = (BinaryOpExpression)expression;
             Assert.That(minusOp.Operator, Is.EqualTo("-"));
             Assert.That(minusOp.RightOperand, Is.InstanceOf<IntegerLiteralExpression>());
-            Assert.That(minusOp.LeftOperand, Is.InstanceOf<ArithmeticOpExpression>());
-            var plusOp = (ArithmeticOpExpression)minusOp.LeftOperand;
+            Assert.That(minusOp.LeftOperand, Is.InstanceOf<BinaryOpExpression>());
+            var plusOp = (BinaryOpExpression)minusOp.LeftOperand;
             Assert.That(plusOp.Operator, Is.EqualTo("+"));
             Assert.That(plusOp.LeftOperand, Is.InstanceOf<IntegerLiteralExpression>());
-            Assert.That(plusOp.RightOperand, Is.InstanceOf<ArithmeticOpExpression>());
-            var timesOp = (ArithmeticOpExpression)plusOp.RightOperand;
+            Assert.That(plusOp.RightOperand, Is.InstanceOf<BinaryOpExpression>());
+            var timesOp = (BinaryOpExpression)plusOp.RightOperand;
             Assert.That(timesOp.Operator, Is.EqualTo("*"));
             Assert.That(timesOp.LeftOperand, Is.InstanceOf<IntegerLiteralExpression>());
-            Assert.That(timesOp.RightOperand, Is.InstanceOf<ArithmeticOpExpression>());
-            var parenthesisedMinusOp = (ArithmeticOpExpression)timesOp.RightOperand;
+            Assert.That(timesOp.RightOperand, Is.InstanceOf<BinaryOpExpression>());
+            var parenthesisedMinusOp = (BinaryOpExpression)timesOp.RightOperand;
             Assert.That(parenthesisedMinusOp.Operator, Is.EqualTo("-"));
             Assert.That(parenthesisedMinusOp.LeftOperand, Is.InstanceOf<IntegerLiteralExpression>());
-            Assert.That(parenthesisedMinusOp.RightOperand, Is.InstanceOf<ArithmeticOpExpression>());
-            var moduloOp = (ArithmeticOpExpression)parenthesisedMinusOp.RightOperand;
+            Assert.That(parenthesisedMinusOp.RightOperand, Is.InstanceOf<BinaryOpExpression>());
+            var moduloOp = (BinaryOpExpression)parenthesisedMinusOp.RightOperand;
             Assert.That(moduloOp.Operator, Is.EqualTo("%"));
             Assert.That(moduloOp.LeftOperand, Is.InstanceOf<IntegerLiteralExpression>());
             Assert.That(moduloOp.RightOperand, Is.InstanceOf<IntegerLiteralExpression>());

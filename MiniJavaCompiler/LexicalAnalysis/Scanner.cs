@@ -98,9 +98,8 @@ namespace MiniJavaCompiler.LexicalAnalysis
                 input.Read();
                 return new UnaryNotToken(startRow, startCol);
             }
-            else if (input.Peek().Equals('<') || input.Peek().Equals('>'))
-                return new LogicalOperatorToken(input.Read(), startRow, startCol);
-            return new ArithmeticOperatorToken(input.Read(), startRow, startCol);
+            else
+                return new BinaryOperatorToken(input.Read(), startRow, startCol);
         }
 
         private IToken MakeAssignmentOrMultiCharOperatorToken()
@@ -109,7 +108,7 @@ namespace MiniJavaCompiler.LexicalAnalysis
             if (input.InputLeft() && input.Peek().ToString().Equals(symbol))
             {
                 symbol += input.Read();
-                return new LogicalOperatorToken(symbol, startRow, startCol);
+                return new BinaryOperatorToken(symbol, startRow, startCol);
             }
             else if (symbol.Equals("="))
                 return new AssignmentToken(startRow, startCol);

@@ -102,12 +102,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
             throw new NotImplementedException();
         }
 
-        public void Visit(ArithmeticOpExpression node)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Visit(LogicalOpExpression node)
+        public void Visit(BinaryOpExpression node)
         {
             throw new NotImplementedException();
         }

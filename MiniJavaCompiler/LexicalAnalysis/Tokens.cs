@@ -100,18 +100,6 @@ namespace MiniJavaCompiler.LexicalAnalysis
             : base(symbol, row, col) { }
     }
 
-    public class ArithmeticOperatorToken : BinaryOperatorToken
-    {
-        public ArithmeticOperatorToken(string symbol, int row, int col)
-            : base(symbol, row, col) { }
-    }
-
-    public class LogicalOperatorToken : BinaryOperatorToken
-    {
-        public LogicalOperatorToken(string symbol, int row, int col)
-            : base(symbol, row, col) { }
-    }
-
     public class UnaryNotToken : TokenElement
     {
         public UnaryNotToken(int row, int col)

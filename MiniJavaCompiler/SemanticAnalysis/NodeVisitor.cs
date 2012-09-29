@@ -23,8 +23,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
         void Visit(MethodInvocation node);
         void Visit(InstanceCreationExpression node);
         void Visit(UnaryNotExpression node);
-        void Visit(ArithmeticOpExpression node);
-        void Visit(LogicalOpExpression node);
+        void Visit(BinaryOpExpression node);
         void Visit(BooleanLiteralExpression node);
         void Visit(ThisExpression node);
         void Visit(ArrayIndexingExpression node);
