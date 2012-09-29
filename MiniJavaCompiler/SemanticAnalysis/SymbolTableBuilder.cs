@@ -10,7 +10,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
     public class SymbolTableBuilder : INodeVisitor
     {
         private Program syntaxTree;
-        private GlobalScope symbolTable;
+        private GlobalScope globalScope;
         private Stack<IScope> scopeStack;
         private Dictionary<ISyntaxTreeNode, IScope> scopes;
         private string[] builtins = new [] { "int", "boolean" };
@@ -22,10 +22,10 @@ namespace MiniJavaCompiler.SemanticAnalysis
         public SymbolTableBuilder(Program node, IEnumerable<string> types)
         {
             syntaxTree = node;
-            symbolTable = new GlobalScope();
+            globalScope = new GlobalScope();
             SetupGlobalScope(types);
             scopeStack = new Stack<IScope>();
-            scopeStack.Push(symbolTable);
+            scopeStack.Push(globalScope);
             scopes = new Dictionary<ISyntaxTreeNode, IScope>();
         }
 
@@ -43,11 +43,11 @@ namespace MiniJavaCompiler.SemanticAnalysis
         {
             foreach (string type in builtins)
             {
-                Symbol.CreateAndDefine<BuiltinTypeSymbol>(type, symbolTable);
+                Symbol.CreateAndDefine<BuiltinTypeSymbol>(type, globalScope);
             }
             foreach (string type in types)
             {
-                Symbol.CreateAndDefine<UserDefinedTypeSymbol>(type, symbolTable);
+                Symbol.CreateAndDefine<UserDefinedTypeSymbol>(type, globalScope);
             }
         }
 
@@ -83,7 +83,15 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
         public void Visit(MainClassDeclaration node)
         {
-            throw new NotImplementedException();
+            var typeSymbol = (UserDefinedTypeSymbol)CurrentScope.Resolve(node.Name);
+            scopes[node] = typeSymbol;
+            node.Symbol = typeSymbol;
+            EnterScope(typeSymbol);
+        }
+
+        public void Exit(MainClassDeclaration node)
+        {
+            ExitScope();
         }
 
         public void Visit(VariableDeclaration node)
@@ -172,11 +180,6 @@ namespace MiniJavaCompiler.SemanticAnalysis
         }
 
         public void Visit(IntegerLiteralExpression node)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Exit(MainClassDeclaration node)
         {
             throw new NotImplementedException();
         }
