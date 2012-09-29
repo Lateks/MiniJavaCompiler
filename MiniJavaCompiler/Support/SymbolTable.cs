@@ -111,6 +111,30 @@ namespace MiniJavaCompiler.Support
             set;
         }
 
+        public static Symbol CreateAndDefine<TSymbolType>(string name, IScope enclosingScope)
+            where TSymbolType : Symbol, IType
+        {
+            return CreateAndDefine<TSymbolType>(enclosingScope, name, enclosingScope);
+        }
+
+        public static Symbol CreateAndDefine<TSymbolType>(string name, IType type, IScope enclosingScope)
+            where TSymbolType : Symbol
+        {
+            if (typeof(TSymbolType) == typeof(UserDefinedTypeSymbol))
+            {
+                throw new NotSupportedException("This type of constructor not supported for the given type.");
+            }
+            return CreateAndDefine<TSymbolType>(enclosingScope, name, type, enclosingScope);
+        }
+
+        private static Symbol CreateAndDefine<TSymbolType>(IScope enclosingScope, params Object[] constructorParams)
+            where TSymbolType : Symbol
+        {
+            var sym = (Symbol)Activator.CreateInstance(typeof(TSymbolType), constructorParams);
+            enclosingScope.Define(sym);
+            return sym;
+        }
+
         protected Symbol(string name, IType type, IScope enclosingScope)
         {
             Name = name;
@@ -163,15 +187,15 @@ namespace MiniJavaCompiler.Support
 
     public class MethodSymbol : ScopedSymbol
     {
-        public MethodSymbol(string name, IType returnType, ClassSymbol enclosingScope)
+        public MethodSymbol(string name, IType returnType, UserDefinedTypeSymbol enclosingScope)
             : base(name, returnType, enclosingScope) { }
     }
 
-    public class ClassSymbol : ScopedSymbol, IType
+    public class UserDefinedTypeSymbol : ScopedSymbol, IType
     {
-        private readonly ClassSymbol superClass;
+        protected UserDefinedTypeSymbol superClass;
 
-        public ClassSymbol(string name, IScope enclosingScope, ClassSymbol superClass = null)
+        public UserDefinedTypeSymbol(string name, IScope enclosingScope)
             : base(name, MiniJavaClass.GetInstance(), enclosingScope)
         {
             this.superClass = superClass;

@@ -13,13 +13,27 @@ namespace MiniJavaCompiler.SemanticAnalysis
         private GlobalScope symbolTable;
         private IScope currentScope;
         private Dictionary<ISyntaxTreeNode, IScope> scopes;
+        private string[] builtins = new [] { "int", "boolean" };
 
         public SymbolTableBuilder(Program node, IEnumerable<string> types)
         {
             syntaxTree = node;
             symbolTable = new GlobalScope();
+            SetupGlobalScope(types);
             currentScope = symbolTable;
             scopes = new Dictionary<ISyntaxTreeNode, IScope>();
+        }
+
+        private void SetupGlobalScope(IEnumerable<string> types)
+        {
+            foreach (string type in builtins)
+            {
+                Symbol.CreateAndDefine<BuiltinTypeSymbol>(type, symbolTable);
+            }
+            foreach (string type in types)
+            {
+                Symbol.CreateAndDefine<UserDefinedTypeSymbol>(type, symbolTable);
+            }
         }
 
         public IScope BuildSymbolTable()
