@@ -17,6 +17,8 @@ namespace MiniJavaCompiler.Support
         string Name { get; }
     }
 
+    public interface ISimpleType : IType { }
+
     public class BuiltinType : IType
     {
         private static readonly BuiltinType ClassInstance = new BuiltinType();
@@ -30,6 +32,18 @@ namespace MiniJavaCompiler.Support
         public static BuiltinType GetInstance()
         {
             return ClassInstance;
+        }
+    }
+
+    public class MiniJavaArrayType : IType
+    {
+        public string Name { get; private set; }
+        public ISimpleType ElementType { get; private set; }
+
+        public MiniJavaArrayType(ISimpleType elementType)
+        {
+            Name = "$builtin_array_" + elementType.Name;
+            ElementType = elementType;
         }
     }
 
@@ -149,7 +163,7 @@ namespace MiniJavaCompiler.Support
             : base(name, type, enclosingScope) { }
     }
 
-    public class BuiltinTypeSymbol : Symbol, IType
+    public class BuiltinTypeSymbol : Symbol, ISimpleType
     {
         public BuiltinTypeSymbol(string name, IScope enclosingScope)
             : base(name, BuiltinType.GetInstance(), enclosingScope) { }
@@ -186,7 +200,7 @@ namespace MiniJavaCompiler.Support
             : base(name, returnType, enclosingScope) { }
     }
 
-    public class UserDefinedTypeSymbol : ScopedSymbol, IType
+    public class UserDefinedTypeSymbol : ScopedSymbol, ISimpleType
     {
         internal UserDefinedTypeSymbol SuperClass { get; set; }
 

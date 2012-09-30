@@ -14,13 +14,15 @@ namespace MiniJavaCompiler.SemanticAnalysis
         private Stack<IScope> scopeStack;
         private Dictionary<ISyntaxTreeNode, IScope> scopes;
         private string[] builtins = new [] { "int", "boolean" };
+        private IErrorReporter errorReporter;
         private IScope CurrentScope
         {
             get { return scopeStack.Peek(); }
         }
 
-        public SymbolTableBuilder(Program node, IEnumerable<string> types)
+        public SymbolTableBuilder(Program node, IEnumerable<string> types, IErrorReporter errorReporter)
         {
+            this.errorReporter = errorReporter;
             syntaxTree = node;
             globalScope = new GlobalScope();
             SetupGlobalScope(types);
@@ -96,97 +98,101 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
         public void Visit(VariableDeclaration node)
         {
-            throw new NotImplementedException();
+            // TODO: Refactor this check into a separate method.
+            if (CurrentScope.Resolve(node.Name) != null)
+            { // TODO: should this allow variables to share names with existing classes?
+                errorReporter.ReportError("Symbol '" + node.Name + "' is already defined.", node.Row, node.Col);
+                throw new Exception("placeholder"); // TODO: recover?
+            }
+
+            // TODO: Refactor this check into a separate method.
+            Symbol varType = globalScope.Resolve(node.Type);
+            if (varType == null)
+            {
+                errorReporter.ReportError("Unknown type '" + node.Type + "'.", node.Row, node.Col);
+                throw new Exception("placeholder"); // TODO: recover?
+            }
+
+            IType actualType = node.IsArray ?
+                new MiniJavaArrayType((ISimpleType)varType) :
+                (IType) varType;
+            var symbol = Symbol.CreateAndDefine<VariableSymbol>(node.Name, actualType, CurrentScope);
+            node.Symbol = symbol;
         }
 
         public void Visit(MethodDeclaration node)
         {
-            throw new NotImplementedException();
-        }
+            if (CurrentScope.Resolve(node.Name) != null)
+            { // TODO: should this allow methods to share names with existing classes?
+                errorReporter.ReportError("Symbol '" + node.Name + "' is already defined.", node.Row, node.Col);
+                throw new Exception("placeholder"); // TODO: recover?
+            }
+            if (!(CurrentScope is UserDefinedTypeSymbol))
+            {
+                errorReporter.ReportError("Method declarations are not allowed in this context.", node.Row, node.Col);
+                throw new Exception("placeholder"); // TODO: recover?
+            }
 
-        public void Visit(PrintStatement node)
-        {
-            throw new NotImplementedException();
-        }
+            Symbol mType = globalScope.Resolve(node.Type);
+            if (mType == null)
+            {
+                errorReporter.ReportError("Unknown type '" + node.Type + "'.", node.Row, node.Col);
+                throw new Exception("placeholder"); // TODO: recover?
+            }
 
-        public void Visit(ReturnStatement node)
-        {
-            throw new NotImplementedException();
-        }
+            IType actualType = node.IsArray ?
+                new MiniJavaArrayType((ISimpleType)mType) :
+                (IType)mType;
+            var methodSymbol = Symbol.CreateAndDefine<MethodSymbol>(
+                node.Name, actualType, CurrentScope);
+            node.Symbol = methodSymbol;
 
-        public void Visit(BlockStatement node)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Visit(AssertStatement node)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Visit(AssignmentStatement node)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Visit(IfStatement node)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Visit(WhileStatement node)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Visit(MethodInvocation node)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Visit(InstanceCreationExpression node)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Visit(UnaryNotExpression node)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Visit(BinaryOpExpression node)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Visit(BooleanLiteralExpression node)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Visit(ThisExpression node)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Visit(ArrayIndexingExpression node)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Visit(VariableReferenceExpression node)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Visit(IntegerLiteralExpression node)
-        {
-            throw new NotImplementedException();
+            EnterScope((IScope) methodSymbol);
         }
 
         public void Exit(MethodDeclaration node)
         {
-            throw new NotImplementedException();
+            ExitScope();
         }
+
+        public void Visit(VariableReferenceExpression node)
+        {
+            var resolvedVariable = CurrentScope.Resolve(node.Name);
+            if (resolvedVariable == null || !(resolvedVariable is VariableSymbol))
+            {
+                errorReporter.ReportError("Reference to unknown variable '" + node.Name + "'.", node.Row, node.Col);
+                throw new Exception("placeholder"); // TODO: recover?
+            }
+        }
+
+        public void Visit(PrintStatement node) { }
+
+        public void Visit(ReturnStatement node) { }
+
+        public void Visit(BlockStatement node) { }
+
+        public void Visit(AssertStatement node) { }
+
+        public void Visit(AssignmentStatement node) { }
+
+        public void Visit(IfStatement node) { }
+
+        public void Visit(WhileStatement node) { }
+
+        public void Visit(MethodInvocation node) { }
+
+        public void Visit(InstanceCreationExpression node) { }
+
+        public void Visit(UnaryNotExpression node) { }
+
+        public void Visit(BinaryOpExpression node) { }
+
+        public void Visit(BooleanLiteralExpression node) { }
+
+        public void Visit(ThisExpression node) { }
+
+        public void Visit(ArrayIndexingExpression node) { }
+
+        public void Visit(IntegerLiteralExpression node) { }
     }
 }
