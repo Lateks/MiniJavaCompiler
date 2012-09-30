@@ -10,7 +10,6 @@ namespace MiniJavaCompiler.Support
     {
         Symbol Resolve(string name);
         void Define(Symbol sym);
-        IScope ParentScope { get; }
     }
 
     public interface IType
@@ -20,7 +19,7 @@ namespace MiniJavaCompiler.Support
 
     public class BuiltinType : IType
     {
-        private static BuiltinType classInstance = new BuiltinType();
+        private static readonly BuiltinType ClassInstance = new BuiltinType();
         public string Name { get; private set; }
 
         private BuiltinType()
@@ -30,13 +29,13 @@ namespace MiniJavaCompiler.Support
 
         public static BuiltinType GetInstance()
         {
-            return classInstance;
+            return ClassInstance;
         }
     }
 
     public class MiniJavaClass : IType
     {
-        private static MiniJavaClass classInstance = new MiniJavaClass();
+        private static readonly MiniJavaClass ClassInstance = new MiniJavaClass();
         public string Name { get; private set; }
 
         private MiniJavaClass()
@@ -46,7 +45,7 @@ namespace MiniJavaCompiler.Support
 
         public static MiniJavaClass GetInstance()
         {
-            return classInstance;
+            return ClassInstance;
         }
     }
 
@@ -57,10 +56,6 @@ namespace MiniJavaCompiler.Support
         {
             get;
             private set;
-        }
-        public IScope ParentScope
-        {
-            get { return EnclosingScope; }
         }
 
         protected ScopeBase() : this(null) { }
@@ -163,10 +158,6 @@ namespace MiniJavaCompiler.Support
     public abstract class ScopedSymbol : Symbol, IScope
     {
         protected Dictionary<string, Symbol> symbolTable;
-        public IScope ParentScope
-        {
-            get { return EnclosingScope; }
-        }
 
         protected ScopedSymbol(string name, IType type, IScope enclosingScope)
             : base(name, type, enclosingScope) { }
@@ -198,10 +189,6 @@ namespace MiniJavaCompiler.Support
     public class UserDefinedTypeSymbol : ScopedSymbol, IType
     {
         internal UserDefinedTypeSymbol SuperClass { get; set; }
-        public new IScope ParentScope
-        {
-            get { return SuperClass ?? base.ParentScope; }
-        }
 
         public UserDefinedTypeSymbol(string name, IScope enclosingScope)
             : base(name, MiniJavaClass.GetInstance(), enclosingScope)
@@ -217,7 +204,24 @@ namespace MiniJavaCompiler.Support
             }
             catch (KeyNotFoundException)
             {
-                return ParentScope.Resolve(name);
+                Symbol resolvedSymbol = null;
+                if (SuperClass != null)
+                {
+                    resolvedSymbol = SuperClass.ResolveInSuperClasses(name);
+                }
+                return resolvedSymbol ?? EnclosingScope.Resolve(name);
+            }
+        }
+
+        private Symbol ResolveInSuperClasses(string name)
+        {
+            try
+            {
+                return symbolTable[name];
+            }
+            catch (KeyNotFoundException)
+            {
+                return SuperClass == null ? null : SuperClass.ResolveInSuperClasses(name);
             }
         }
     }
