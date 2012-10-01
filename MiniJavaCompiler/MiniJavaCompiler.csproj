@@ -52,6 +52,7 @@
     <Compile Include="SemanticAnalysis\NodeVisitor.cs" />
     <Compile Include="Support\SymbolTable\Scopes.cs" />
     <Compile Include="Support\SymbolTable\Symbols.cs" />
+    <Compile Include="Support\SymbolTable\SymbolTable.cs" />
     <Compile Include="Support\SymbolTable\Types.cs" />
     <Compile Include="SyntaxAnalysis\ListParsers.cs" />
     <Compile Include="SyntaxAnalysis\ExpressionParser.cs" />

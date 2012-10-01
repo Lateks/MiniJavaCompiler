@@ -8,32 +8,18 @@ using MiniJavaCompiler.Support;
 
 namespace MiniJavaCompiler.SemanticAnalysis
 {
+    // TODO: add all nodes as keys to the Scopes map
     public class SymbolTableBuilder : INodeVisitor
     {
+        private readonly SymbolTable symbolTable; 
         private readonly Program syntaxTree;
-        private readonly GlobalScope globalScope;
-        private readonly Stack<IScope> scopeStack;
-        private readonly Dictionary<ISyntaxTreeNode, IScope> scopes;
-        private readonly Dictionary<Symbol, ISyntaxTreeNode> definitions; 
         private readonly string[] builtins = new [] { "int", "boolean" }; // TODO: Refactor this into Support
         private readonly IErrorReporter errorReporter;
+
+        private readonly Stack<IScope> scopeStack;
         private IScope CurrentScope
         {
             get { return scopeStack.Peek(); }
-        }
-
-        public SymbolTableBuilder(Program node, IEnumerable<string> types, IErrorReporter errorReporter)
-        {
-            this.errorReporter = errorReporter;
-            syntaxTree = node;
-
-            globalScope = new GlobalScope();
-            SetupGlobalScope(types);
-            scopeStack = new Stack<IScope>();
-            EnterScope(globalScope);
-
-            scopes = new Dictionary<ISyntaxTreeNode, IScope> {{node, globalScope}};
-            definitions = new Dictionary<Symbol, ISyntaxTreeNode>();
         }
 
         private void EnterScope(IScope scope)
@@ -46,26 +32,39 @@ namespace MiniJavaCompiler.SemanticAnalysis
             scopeStack.Pop();
         }
 
+        public SymbolTableBuilder(Program node, IEnumerable<string> types, IErrorReporter errorReporter)
+        {
+            this.errorReporter = errorReporter;
+            syntaxTree = node;
+
+            symbolTable = new SymbolTable
+                              {
+                                  GlobalScope = new GlobalScope(),
+                                  Definitions = new Dictionary<Symbol, ISyntaxTreeNode>(),
+                                  Scopes = new Dictionary<ISyntaxTreeNode, IScope> {{node, symbolTable.GlobalScope}}
+                              };
+
+            SetupGlobalScope(types);
+            scopeStack = new Stack<IScope>();
+            EnterScope(symbolTable.GlobalScope);
+        }
+
         private void SetupGlobalScope(IEnumerable<string> types)
         {
             foreach (var type in builtins)
             {
-                Symbol.CreateAndDefine<BuiltinTypeSymbol>(type, globalScope);
+                Symbol.CreateAndDefine<BuiltinTypeSymbol>(type, symbolTable.GlobalScope);
             }
             foreach (var type in types)
             {
-                Symbol.CreateAndDefine<UserDefinedTypeSymbol>(type, globalScope);
+                Symbol.CreateAndDefine<UserDefinedTypeSymbol>(type, symbolTable.GlobalScope);
             }
         }
 
-        public void BuildSymbolTable()
+        public SymbolTable BuildSymbolTable()
         {
             syntaxTree.Accept(this);
-        }
-
-        public Dictionary<ISyntaxTreeNode, IScope> GetScopeMapping()
-        {
-            return scopes;
+            return symbolTable;
         }
 
         public void Visit(Program node) { }
@@ -78,8 +77,8 @@ namespace MiniJavaCompiler.SemanticAnalysis
                 var inheritedType = (UserDefinedTypeSymbol)CurrentScope.Resolve<TypeSymbol>(node.InheritedClass);
                 typeSymbol.SuperClass = inheritedType;
             }
-            scopes[node] = typeSymbol;
-            definitions[typeSymbol] = node;
+            symbolTable.Scopes[node] = typeSymbol;
+            symbolTable.Definitions[typeSymbol] = node;
             EnterScope(typeSymbol);
         }
 
@@ -91,8 +90,8 @@ namespace MiniJavaCompiler.SemanticAnalysis
         public void Visit(MainClassDeclaration node)
         {
             var typeSymbol = (UserDefinedTypeSymbol)CurrentScope.Resolve<TypeSymbol>(node.Name);
-            scopes.Add(node, typeSymbol);
-            definitions.Add(typeSymbol, node);
+            symbolTable.Scopes.Add(node, typeSymbol);
+            symbolTable.Definitions.Add(typeSymbol, node);
             EnterScope(typeSymbol);
         }
 
@@ -103,58 +102,48 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
         public void Visit(VariableDeclaration node)
         {
-            // TODO: Refactor this check into a separate method.
-            Symbol varType = globalScope.Resolve<TypeSymbol>(node.Type);
-            if (varType == null)
-            {
-                errorReporter.ReportError("Unknown type '" + node.Type + "'.", node.Row, node.Col);
-                throw new Exception("placeholder"); // TODO: recover?
-            }
-
-            IType actualType = node.IsArray ?
-                new MiniJavaArrayType((ISimpleType)varType) :
-                (IType) varType;
-            var symbol = Symbol.CreateAndDefine<VariableSymbol>(node.Name, actualType, CurrentScope);
-
-            // TODO: Refactor this check into a separate method.
-            if (symbol == null)
-            {
-                errorReporter.ReportError("Symbol '" + node.Name + "' is already defined in this scope.", node.Row, node.Col);
-                throw new Exception("placeholder"); // TODO: recover?
-            }
-            definitions.Add(symbol, node);
+            var variableType = CheckDeclaredType(node);
+            var symbol = DefineSymbolOrFail<VariableSymbol>(node, variableType);
+            symbolTable.Definitions.Add(symbol, node);
         }
 
         public void Visit(MethodDeclaration node)
         {
-            if (!(CurrentScope is UserDefinedTypeSymbol))
-            {
-                errorReporter.ReportError("Method declarations are not allowed in this context.", node.Row, node.Col);
-                throw new Exception("placeholder"); // TODO: recover?
-            }
+            var methodReturnType = CheckDeclaredType(node);
+            var methodSymbol = DefineSymbolOrFail<MethodSymbol>(node, methodReturnType);
+            symbolTable.Definitions.Add(methodSymbol, node);
 
-            Symbol mType = globalScope.Resolve<TypeSymbol>(node.Type);
-            if (mType == null)
+            EnterScope((IScope) methodSymbol);
+        }
+
+        private IType CheckDeclaredType(Declaration node)
+        {
+            Symbol nodeSimpleType = symbolTable.GlobalScope.Resolve<TypeSymbol>(node.Type);
+            if (nodeSimpleType == null)
             {
                 errorReporter.ReportError("Unknown type '" + node.Type + "'.", node.Row, node.Col);
                 throw new Exception("placeholder"); // TODO: recover?
             }
-
             IType actualType = node.IsArray ?
-                new MiniJavaArrayType((ISimpleType)mType) :
-                (IType)mType;
-            var methodSymbol = Symbol.CreateAndDefine<MethodSymbol>(
-                node.Name, actualType, CurrentScope);
+                new MiniJavaArrayType((ISimpleType)nodeSimpleType) :
+                (IType)nodeSimpleType;
 
-            // TODO: Refactor this check into a separate method.
-            if (methodSymbol == null)
+            return actualType;
+        }
+
+        private Symbol DefineSymbolOrFail<TSymbolType>(Declaration node, IType symbolType)
+            where TSymbolType : Symbol
+        {
+            var symbol = Symbol.CreateAndDefine<TSymbolType>(
+                node.Name, symbolType, CurrentScope);
+
+            if (symbol == null)
             {
                 errorReporter.ReportError("Symbol '" + node.Name + "' is already defined.", node.Row, node.Col);
                 throw new Exception("placeholder"); // TODO: recover?
             }
 
-            definitions.Add(methodSymbol, node);
-            EnterScope((IScope) methodSymbol);
+            return symbol;
         }
 
         public void Exit(MethodDeclaration node)
@@ -165,7 +154,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
         public void Visit(BlockStatement node)
         {
             var blockScope = new LocalScope(CurrentScope);
-            scopes.Add(node, blockScope);
+            symbolTable.Scopes.Add(node, blockScope);
             EnterScope(blockScope);
         }
 
