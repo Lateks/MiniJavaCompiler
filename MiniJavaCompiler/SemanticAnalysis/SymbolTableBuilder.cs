@@ -164,7 +164,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
         public void Visit(BlockStatement node)
         {
-            var blockScope = new LocalScope();
+            var blockScope = new LocalScope(CurrentScope);
             scopes.Add(node, blockScope);
             EnterScope(blockScope);
         }

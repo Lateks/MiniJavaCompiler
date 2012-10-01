@@ -92,6 +92,9 @@ namespace MiniJavaCompiler.Support.SymbolTable
 
     public class GlobalScope : ScopeBase { }
 
-    public class LocalScope : ScopeBase { }
+    public class LocalScope : ScopeBase
+    {
+        public LocalScope(IScope enclosingScope) : base(enclosingScope) { }
+    }
 
 }
