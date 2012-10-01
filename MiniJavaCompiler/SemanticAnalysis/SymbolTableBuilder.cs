@@ -14,6 +14,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
         private readonly GlobalScope globalScope;
         private readonly Stack<IScope> scopeStack;
         private readonly Dictionary<ISyntaxTreeNode, IScope> scopes;
+        private readonly Dictionary<Symbol, ISyntaxTreeNode> definitions; 
         private readonly string[] builtins = new [] { "int", "boolean" }; // TODO: Refactor this into Support
         private readonly IErrorReporter errorReporter;
         private IScope CurrentScope
@@ -25,11 +26,14 @@ namespace MiniJavaCompiler.SemanticAnalysis
         {
             this.errorReporter = errorReporter;
             syntaxTree = node;
+
             globalScope = new GlobalScope();
             SetupGlobalScope(types);
             scopeStack = new Stack<IScope>();
-            scopeStack.Push(globalScope);
-            scopes = new Dictionary<ISyntaxTreeNode, IScope>();
+            EnterScope(globalScope);
+
+            scopes = new Dictionary<ISyntaxTreeNode, IScope> {{node, globalScope}};
+            definitions = new Dictionary<Symbol, ISyntaxTreeNode>();
         }
 
         private void EnterScope(IScope scope)
@@ -75,7 +79,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
                 typeSymbol.SuperClass = inheritedType;
             }
             scopes[node] = typeSymbol;
-            node.Symbol = typeSymbol;
+            definitions[typeSymbol] = node;
             EnterScope(typeSymbol);
         }
 
@@ -87,8 +91,8 @@ namespace MiniJavaCompiler.SemanticAnalysis
         public void Visit(MainClassDeclaration node)
         {
             var typeSymbol = (UserDefinedTypeSymbol)CurrentScope.Resolve<TypeSymbol>(node.Name);
-            scopes[node] = typeSymbol;
-            node.Symbol = typeSymbol;
+            scopes.Add(node, typeSymbol);
+            definitions.Add(typeSymbol, node);
             EnterScope(typeSymbol);
         }
 
@@ -118,7 +122,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
                 errorReporter.ReportError("Symbol '" + node.Name + "' is already defined in this scope.", node.Row, node.Col);
                 throw new Exception("placeholder"); // TODO: recover?
             }
-            node.Symbol = symbol;
+            definitions.Add(symbol, node);
         }
 
         public void Visit(MethodDeclaration node)
@@ -149,7 +153,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
                 throw new Exception("placeholder"); // TODO: recover?
             }
 
-            node.Symbol = methodSymbol;
+            definitions.Add(methodSymbol, node);
             EnterScope((IScope) methodSymbol);
         }
 
@@ -158,20 +162,10 @@ namespace MiniJavaCompiler.SemanticAnalysis
             ExitScope();
         }
 
-        public void Visit(VariableReferenceExpression node)
-        {
-            var resolvedVariable = CurrentScope.Resolve<VariableSymbol>(node.Name);
-            if (resolvedVariable == null)
-            {
-                errorReporter.ReportError("Reference to unknown variable '" + node.Name + "'.", node.Row, node.Col);
-                throw new Exception("placeholder"); // TODO: recover?
-            }
-        }
-
         public void Visit(BlockStatement node)
         {
             var blockScope = new LocalScope();
-            scopes[node] = blockScope;
+            scopes.Add(node, blockScope);
             EnterScope(blockScope);
         }
 
@@ -179,6 +173,10 @@ namespace MiniJavaCompiler.SemanticAnalysis
         {
             ExitScope();
         }
+
+        public void Visit(VariableReferenceExpression node) { }
+
+        public void Visit(MethodInvocation node) { }
 
         public void Visit(PrintStatement node) { }
 
@@ -191,8 +189,6 @@ namespace MiniJavaCompiler.SemanticAnalysis
         public void Visit(IfStatement node) { }
 
         public void Visit(WhileStatement node) { }
-
-        public void Visit(MethodInvocation node) { }
 
         public void Visit(InstanceCreationExpression node) { }
 

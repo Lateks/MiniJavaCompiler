@@ -48,11 +48,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
             where TSymbolType : Symbol
         {
             var sym = (Symbol) Activator.CreateInstance(typeof (TSymbolType), constructorParams);
-            if (enclosingScope.Define(sym))
-            {
-                return sym;
-            }
-            return null;
+            return enclosingScope.Define(sym) ? sym : null;
         }
 
         protected Symbol(string name, IType type, IScope enclosingScope)
@@ -128,67 +124,44 @@ namespace MiniJavaCompiler.Support.SymbolTable
     public class UserDefinedTypeSymbol : TypeSymbol, IScope, ISimpleType
     {
         internal UserDefinedTypeSymbol SuperClass { get; set; }
-        private readonly Dictionary<string, Symbol> methodTable;
-        private readonly Dictionary<string, Symbol> variableTable;
+        private readonly Dictionary<string, Symbol> methods;
+        private readonly Dictionary<string, Symbol> fields;
 
         public UserDefinedTypeSymbol(string name, IScope enclosingScope)
             : base(name, MiniJavaClass.GetInstance(), enclosingScope)
         {
-            methodTable = new Dictionary<string, Symbol>();
-            variableTable = new Dictionary<string, Symbol>();
-            this.SuperClass = SuperClass;
-        }
-
-        private Dictionary<string, Symbol> LookupTableFor<TSymbolType>()
-            where TSymbolType : Symbol
-        {
-            if (typeof(TSymbolType) == typeof(MethodSymbol))
-            {
-                return methodTable;
-            }
-            else if (typeof(TSymbolType) == typeof(VariableSymbol))
-            {
-                return variableTable;
-            }
-            return null; // No other symbols in this scope.
+            methods = new Dictionary<string, Symbol>();
+            fields = new Dictionary<string, Symbol>();
+            SuperClass = null;
         }
 
         public Symbol Resolve<TSymbolType>(string name)
             where TSymbolType : Symbol
         {
-            var lookupTable = LookupTableFor<TSymbolType>();
-
-            Symbol resolvedSymbol = null;
-            if (lookupTable != null && lookupTable.TryGetValue(name, out resolvedSymbol))
-            {
-                return resolvedSymbol;
-            }
-            else
-            {
-                if (SuperClass != null)
-                {
-                    resolvedSymbol = SuperClass.ResolveInSuperClasses<TSymbolType>(name);
-                }
-                return resolvedSymbol ?? EnclosingScope.Resolve<TSymbolType>(name);
-            }
-        }
-
-        private Symbol ResolveInSuperClasses<TSymbolType>(string name)
-            where TSymbolType : Symbol
-        {
-            var lookupTable = LookupTableFor<TSymbolType>();
-            if (lookupTable == null)
-            {
-                return null;
-            }
+            if (typeof(TSymbolType) == typeof(MethodSymbol))
+                return ResolveMethodInSuperClasses(name);
+            if (typeof(TSymbolType) != typeof(VariableSymbol))
+                return EnclosingScope.Resolve<TSymbolType>(name);
 
             try
             {
-                return lookupTable[name];
+                return fields[name];
+            }
+            catch (KeyNotFoundException)
+            { // Because fields are private, they are not resolved from superclasses.
+                return EnclosingScope.Resolve<TSymbolType>(name);
+            }
+        }
+
+        private Symbol ResolveMethodInSuperClasses(string name)
+        {
+            try
+            {
+                return methods[name];
             }
             catch (KeyNotFoundException)
             {
-                return SuperClass == null ? null : SuperClass.ResolveInSuperClasses<TSymbolType>(name);
+                return SuperClass == null ? null : SuperClass.ResolveMethodInSuperClasses(name);
             }
         }
 
@@ -196,16 +169,16 @@ namespace MiniJavaCompiler.Support.SymbolTable
         {
             if (sym is MethodSymbol)
             {
-                return DefineSymbolIn(sym, methodTable);
+                return DefineSymbolIn(sym, methods);
             }
             else if (sym is VariableSymbol)
             {
-                return DefineSymbolIn(sym, methodTable);
+                return DefineSymbolIn(sym, fields);
             }
-            return false;
+            throw new NotSupportedException("Only variable and method symbols can be defined in this scope.");
         }
 
-        private bool DefineSymbolIn(Symbol sym, Dictionary<string, Symbol> lookupTable)
+        private bool DefineSymbolIn(Symbol sym, IDictionary<string, Symbol> lookupTable)
         {
             try
             {

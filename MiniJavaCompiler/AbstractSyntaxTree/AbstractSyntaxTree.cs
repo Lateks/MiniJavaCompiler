@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using MiniJavaCompiler.SemanticAnalysis;
-using MiniJavaCompiler.Support.SymbolTable;
 
 namespace MiniJavaCompiler.AbstractSyntaxTree
 {
@@ -27,11 +26,6 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
         {
             get;
             private set;
-        }
-        public Symbol Symbol
-        {
-            get;
-            set;
         }
 
         protected SyntaxElement(int row, int col)
@@ -441,22 +435,16 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
 
     public class InstanceCreationExpression : SyntaxElement, IExpression
     {
-        public string Type
-        {
-            get;
-            private set;
-        }
-        public IExpression ArraySize
-        {
-            get;
-            private set;
-        }
+        public string Type { get;  private set; }
+        public bool IsArrayCreation { get; private set; }
+        public IExpression ArraySize { get; private set; }
 
         public InstanceCreationExpression(string type, int row, int col, IExpression arraySize = null)
             : base(row, col)
         {
             Type = type;
             ArraySize = arraySize;
+            IsArrayCreation = arraySize != null;
         }
 
         public override void Accept(INodeVisitor visitor)
