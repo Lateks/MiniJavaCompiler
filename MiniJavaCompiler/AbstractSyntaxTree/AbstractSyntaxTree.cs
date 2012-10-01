@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using MiniJavaCompiler.SemanticAnalysis;
-using MiniJavaCompiler.Support;
+using MiniJavaCompiler.Support.SymbolTable;
 
 namespace MiniJavaCompiler.AbstractSyntaxTree
 {
@@ -278,11 +278,12 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
 
         public override void Accept(INodeVisitor visitor)
         {
+            visitor.Visit(this);
             foreach (IStatement statement in Statements)
             {
                 statement.Accept(visitor);
             }
-            visitor.Visit(this);
+            visitor.Exit(this);
         }
     }
 

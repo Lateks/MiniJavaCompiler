@@ -3,18 +3,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using MiniJavaCompiler.AbstractSyntaxTree;
+using MiniJavaCompiler.Support.SymbolTable;
 using MiniJavaCompiler.Support;
 
 namespace MiniJavaCompiler.SemanticAnalysis
 {
     public class SymbolTableBuilder : INodeVisitor
     {
-        private Program syntaxTree;
-        private GlobalScope globalScope;
-        private Stack<IScope> scopeStack;
-        private Dictionary<ISyntaxTreeNode, IScope> scopes;
-        private string[] builtins = new [] { "int", "boolean" };
-        private IErrorReporter errorReporter;
+        private readonly Program syntaxTree;
+        private readonly GlobalScope globalScope;
+        private readonly Stack<IScope> scopeStack;
+        private readonly Dictionary<ISyntaxTreeNode, IScope> scopes;
+        private readonly string[] builtins = new [] { "int", "boolean" }; // TODO: Refactor this into Support
+        private readonly IErrorReporter errorReporter;
         private IScope CurrentScope
         {
             get { return scopeStack.Peek(); }

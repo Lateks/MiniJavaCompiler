@@ -11,7 +11,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
     {
         private Program syntaxTree;
         private HashSet<string> types;
-        private HashSet<string> builtIns = new HashSet<string>(new [] { "int", "boolean" });
+        private HashSet<string> builtIns = new HashSet<string>(new [] { "int", "boolean" }); // TODO: refactor this into Support
         private IErrorReporter errorReporter;
 
         public TypeSetBuilder(Program node, IErrorReporter errorReporter)
