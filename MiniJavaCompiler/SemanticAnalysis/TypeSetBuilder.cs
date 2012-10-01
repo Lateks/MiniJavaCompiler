@@ -105,5 +105,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
         public void Exit(MainClassDeclaration node) { }
 
         public void Exit(MethodDeclaration node) { }
+
+        public void Exit(BlockStatement node) { }
     }
 }

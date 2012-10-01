@@ -8,8 +8,8 @@ namespace MiniJavaCompiler.Support
 {
     public interface IScope
     {
-        Symbol Resolve(string name);
-        void Define(Symbol sym);
+        Symbol Resolve<TSymbolType>(string name) where TSymbolType : Symbol;
+        bool Define(Symbol sym);
     }
 
     public interface IType
@@ -65,7 +65,9 @@ namespace MiniJavaCompiler.Support
 
     public abstract class ScopeBase : IScope
     {
-        private readonly Dictionary<string, Symbol> symbolTable;
+        private readonly Dictionary<string, Symbol> typeTable;
+        private readonly Dictionary<string, Symbol> methodTable;
+        private readonly Dictionary<string, Symbol> variableTable;
         protected IScope EnclosingScope
         {
             get;
@@ -76,24 +78,68 @@ namespace MiniJavaCompiler.Support
 
         protected ScopeBase(IScope enclosingScope)
         {
-            symbolTable = new Dictionary<string, Symbol>();
+            typeTable = new Dictionary<string, Symbol>();
+            methodTable = new Dictionary<string, Symbol>();
+            variableTable = new Dictionary<string, Symbol>();
             EnclosingScope = enclosingScope;
         }
 
-        public void Define(Symbol sym)
+        protected Dictionary<string, Symbol> LookupTableFor<TSymbolType>()
+            where TSymbolType : Symbol
         {
-            symbolTable.Add(sym.Name, sym);
+            if (typeof(TSymbolType) == typeof(MethodSymbol))
+            {
+                return methodTable;
+            }
+            else if (typeof(TSymbolType) == typeof(VariableSymbol))
+            {
+                return variableTable;
+            }
+            else
+            {
+                return typeTable;
+            }
         }
 
-        public Symbol Resolve(string name)
+        protected Dictionary<string, Symbol> LookupTableFor(Symbol sym)
+        {
+            if (sym is MethodSymbol)
+            {
+                return methodTable;
+            }
+            else if (sym is VariableSymbol)
+            {
+                return variableTable;
+            }
+            else
+            {
+                return typeTable;
+            }
+        }
+
+        public bool Define(Symbol sym)
         {
             try
             {
-                return symbolTable[name];
+                LookupTableFor(sym).Add(sym.Name, sym);
+                return true;
+            }
+            catch (ArgumentException)
+            {
+                return false;
+            }
+        }
+
+        public Symbol Resolve<TSymbolType>(string name)
+            where TSymbolType : Symbol
+        {
+            try
+            {
+                return LookupTableFor<TSymbolType>()[name];
             }
             catch (KeyNotFoundException)
             {
-                return EnclosingScope == null ? null : EnclosingScope.Resolve(name);
+                return EnclosingScope == null ? null : EnclosingScope.Resolve<TSymbolType>(name);
             }
         }
     }
@@ -125,6 +171,7 @@ namespace MiniJavaCompiler.Support
             set;
         }
 
+        // Returns the created symbol if defining succeeds. Otherwise returns null.
         public static Symbol CreateAndDefine<TSymbolType>(string name, IScope enclosingScope)
             where TSymbolType : Symbol, IType
         {
@@ -144,9 +191,12 @@ namespace MiniJavaCompiler.Support
         private static Symbol CreateAndDefine<TSymbolType>(IScope enclosingScope, params Object[] constructorParams)
             where TSymbolType : Symbol
         {
-            var sym = (Symbol)Activator.CreateInstance(typeof(TSymbolType), constructorParams);
-            enclosingScope.Define(sym);
-            return sym;
+            var sym = (Symbol) Activator.CreateInstance(typeof (TSymbolType), constructorParams);
+            if (enclosingScope.Define(sym))
+            {
+                return sym;
+            }
+            return null;
         }
 
         protected Symbol(string name, IType type, IScope enclosingScope)
@@ -163,79 +213,152 @@ namespace MiniJavaCompiler.Support
             : base(name, type, enclosingScope) { }
     }
 
-    public class BuiltinTypeSymbol : Symbol, ISimpleType
+    public abstract class TypeSymbol : Symbol
+    {
+        protected TypeSymbol(string name, IType type, IScope enclosingScope) : base(name, type, enclosingScope) { }
+    }
+
+    public class BuiltinTypeSymbol : TypeSymbol, ISimpleType
     {
         public BuiltinTypeSymbol(string name, IScope enclosingScope)
             : base(name, BuiltinType.GetInstance(), enclosingScope) { }
     }
 
-    public abstract class ScopedSymbol : Symbol, IScope
+    public class MethodSymbol : Symbol, IScope
     {
-        protected Dictionary<string, Symbol> symbolTable;
+        private Dictionary<string, Symbol> variableTable;
 
-        protected ScopedSymbol(string name, IType type, IScope enclosingScope)
-            : base(name, type, enclosingScope) { }
-
-        public virtual Symbol Resolve(string name)
+        public MethodSymbol(string name, IType returnType, UserDefinedTypeSymbol enclosingScope)
+            : base(name, returnType, enclosingScope)
         {
+            variableTable = new Dictionary<string, Symbol>();
+        }
+
+        public Symbol Resolve<TSymbolType>(string name)
+            where TSymbolType : Symbol
+        {
+            if (typeof(TSymbolType) != typeof(VariableSymbol))
+            {
+                return EnclosingScope.Resolve<TSymbolType>(name);
+            }
             try
             {
-                return symbolTable[name];
+                return variableTable[name];
             }
             catch (KeyNotFoundException)
             {
-                return EnclosingScope.Resolve(name);
+                return EnclosingScope.Resolve<TSymbolType>(name);
             }
         }
 
-        public void Define(Symbol sym)
+        public bool Define(Symbol sym)
         {
-            symbolTable.Add(sym.Name, sym);
+            if (!(sym is VariableSymbol))
+            {
+                throw new NotSupportedException("Only variable symbols can be defined in this scope.");
+            }
+            try
+            {
+                variableTable.Add(sym.Name, sym);
+                return true;
+            }
+            catch (ArgumentException)
+            {
+                return false;
+            }
         }
     }
 
-    public class MethodSymbol : ScopedSymbol
-    {
-        public MethodSymbol(string name, IType returnType, UserDefinedTypeSymbol enclosingScope)
-            : base(name, returnType, enclosingScope) { }
-    }
-
-    public class UserDefinedTypeSymbol : ScopedSymbol, ISimpleType
+    public class UserDefinedTypeSymbol : TypeSymbol, IScope, ISimpleType
     {
         internal UserDefinedTypeSymbol SuperClass { get; set; }
+        private readonly Dictionary<string, Symbol> methodTable;
+        private readonly Dictionary<string, Symbol> variableTable;
 
         public UserDefinedTypeSymbol(string name, IScope enclosingScope)
             : base(name, MiniJavaClass.GetInstance(), enclosingScope)
         {
+            methodTable = new Dictionary<string, Symbol>();
+            variableTable = new Dictionary<string, Symbol>();
             this.SuperClass = SuperClass;
         }
 
-        public override Symbol Resolve(string name)
+        private Dictionary<string, Symbol> LookupTableFor<TSymbolType>()
+            where TSymbolType : Symbol
         {
-            try
+            if (typeof(TSymbolType) == typeof(MethodSymbol))
             {
-                return symbolTable[name];
+                return methodTable;
             }
-            catch (KeyNotFoundException)
+            else if (typeof(TSymbolType) == typeof(VariableSymbol))
             {
-                Symbol resolvedSymbol = null;
+                return variableTable;
+            }
+            return null; // No other symbols in this scope.
+        }
+
+        public Symbol Resolve<TSymbolType>(string name)
+            where TSymbolType : Symbol
+        {
+            var lookupTable = LookupTableFor<TSymbolType>();
+
+            Symbol resolvedSymbol = null;
+            if (lookupTable != null && lookupTable.TryGetValue(name, out resolvedSymbol))
+            {
+                return resolvedSymbol;
+            }
+            else
+            {
                 if (SuperClass != null)
                 {
-                    resolvedSymbol = SuperClass.ResolveInSuperClasses(name);
+                    resolvedSymbol = SuperClass.ResolveInSuperClasses<TSymbolType>(name);
                 }
-                return resolvedSymbol ?? EnclosingScope.Resolve(name);
+                return resolvedSymbol ?? EnclosingScope.Resolve<TSymbolType>(name);
             }
         }
 
-        private Symbol ResolveInSuperClasses(string name)
+        private Symbol ResolveInSuperClasses<TSymbolType>(string name)
+            where TSymbolType : Symbol
         {
+            var lookupTable = LookupTableFor<TSymbolType>();
+            if (lookupTable == null)
+            {
+                return null;
+            }
+
             try
             {
-                return symbolTable[name];
+                return lookupTable[name];
             }
             catch (KeyNotFoundException)
             {
-                return SuperClass == null ? null : SuperClass.ResolveInSuperClasses(name);
+                return SuperClass == null ? null : SuperClass.ResolveInSuperClasses<TSymbolType>(name);
+            }
+        }
+
+        public bool Define(Symbol sym)
+        {
+            if (sym is MethodSymbol)
+            {
+                return DefineSymbolIn(sym, methodTable);
+            }
+            else if (sym is VariableSymbol)
+            {
+                return DefineSymbolIn(sym, methodTable);
+            }
+            return false;
+        }
+
+        private bool DefineSymbolIn(Symbol sym, Dictionary<string, Symbol> lookupTable)
+        {
+            try
+            {
+                lookupTable.Add(sym.Name, sym);
+                return true;
+            }
+            catch (ArgumentException)
+            {
+                return false;
             }
         }
     }

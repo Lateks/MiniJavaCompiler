@@ -33,5 +33,6 @@ namespace MiniJavaCompiler.SemanticAnalysis
         void Exit(ClassDeclaration node);
         void Exit(MainClassDeclaration node);
         void Exit(MethodDeclaration node);
+        void Exit(BlockStatement node);
     }
 }

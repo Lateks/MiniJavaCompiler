@@ -127,5 +127,10 @@ namespace MiniJavaCompiler.SemanticAnalysis
         {
             throw new NotImplementedException();
         }
+
+        public void Exit(BlockStatement node)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
