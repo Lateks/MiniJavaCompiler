@@ -8,7 +8,6 @@ using MiniJavaCompiler.Support;
 
 namespace MiniJavaCompiler.SemanticAnalysis
 {
-    // TODO: add all nodes as keys to the Scopes map
     public class SymbolTableBuilder : INodeVisitor
     {
         private readonly SymbolTable symbolTable; 
@@ -41,7 +40,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
                               {
                                   GlobalScope = new GlobalScope(),
                                   Definitions = new Dictionary<Symbol, ISyntaxTreeNode>(),
-                                  Scopes = new Dictionary<ISyntaxTreeNode, IScope> {{node, symbolTable.GlobalScope}}
+                                  Scopes = new Dictionary<ISyntaxTreeNode, IScope>()
                               };
 
             SetupGlobalScope(types);
@@ -67,7 +66,10 @@ namespace MiniJavaCompiler.SemanticAnalysis
             return symbolTable;
         }
 
-        public void Visit(Program node) { }
+        public void Visit(Program node)
+        {
+            symbolTable.Scopes.Add(node, symbolTable.GlobalScope);
+        }
 
         public void Visit(ClassDeclaration node)
         {
@@ -77,8 +79,8 @@ namespace MiniJavaCompiler.SemanticAnalysis
                 var inheritedType = (UserDefinedTypeSymbol)CurrentScope.Resolve<TypeSymbol>(node.InheritedClass);
                 typeSymbol.SuperClass = inheritedType;
             }
-            symbolTable.Scopes[node] = typeSymbol;
-            symbolTable.Definitions[typeSymbol] = node;
+            symbolTable.Scopes.Add(node, typeSymbol);
+            symbolTable.Definitions.Add(typeSymbol, node);
             EnterScope(typeSymbol);
         }
 
@@ -105,15 +107,17 @@ namespace MiniJavaCompiler.SemanticAnalysis
             var variableType = CheckDeclaredType(node);
             var symbol = DefineSymbolOrFail<VariableSymbol>(node, variableType);
             symbolTable.Definitions.Add(symbol, node);
+            symbolTable.Scopes.Add(node, CurrentScope);
         }
 
         public void Visit(MethodDeclaration node)
         {
             var methodReturnType = node.Type == "void" ? null : CheckDeclaredType(node);
-            var methodSymbol = DefineSymbolOrFail<MethodSymbol>(node, methodReturnType);
+            var methodSymbol = (MethodSymbol)DefineSymbolOrFail<MethodSymbol>(node, methodReturnType);
             symbolTable.Definitions.Add(methodSymbol, node);
+            symbolTable.Scopes.Add(node, methodSymbol);
 
-            EnterScope((IScope) methodSymbol);
+            EnterScope(methodSymbol);
         }
 
         private IType CheckDeclaredType(Declaration node)
@@ -163,34 +167,79 @@ namespace MiniJavaCompiler.SemanticAnalysis
             ExitScope();
         }
 
-        public void Visit(VariableReferenceExpression node) { }
+        public void Visit(VariableReferenceExpression node)
+        {
+            symbolTable.Scopes.Add(node, CurrentScope);
+        }
 
-        public void Visit(MethodInvocation node) { }
+        public void Visit(MethodInvocation node)
+        {
+            symbolTable.Scopes.Add(node, CurrentScope);
+        }
 
-        public void Visit(PrintStatement node) { }
+        public void Visit(PrintStatement node)
+        {
+            symbolTable.Scopes.Add(node, CurrentScope);
+        }
 
-        public void Visit(ReturnStatement node) { }
+        public void Visit(ReturnStatement node)
+        {
+            symbolTable.Scopes.Add(node, CurrentScope);
+        }
 
-        public void Visit(AssertStatement node) { }
+        public void Visit(AssertStatement node)
+        {
+            symbolTable.Scopes.Add(node, CurrentScope);
+        }
 
-        public void Visit(AssignmentStatement node) { }
+        public void Visit(AssignmentStatement node)
+        {
+            symbolTable.Scopes.Add(node, CurrentScope);
+        }
 
-        public void Visit(IfStatement node) { }
+        public void Visit(IfStatement node)
+        {
+            symbolTable.Scopes.Add(node, CurrentScope);
+        }
 
-        public void Visit(WhileStatement node) { }
+        public void Visit(WhileStatement node)
+        {
+            symbolTable.Scopes.Add(node, CurrentScope);
+        }
 
-        public void Visit(InstanceCreationExpression node) { }
+        public void Visit(InstanceCreationExpression node)
+        {
+            symbolTable.Scopes.Add(node, CurrentScope);
+        }
 
-        public void Visit(UnaryNotExpression node) { }
+        public void Visit(UnaryNotExpression node)
+        {
+            symbolTable.Scopes.Add(node, CurrentScope);
+        }
 
-        public void Visit(BinaryOpExpression node) { }
+        public void Visit(BinaryOpExpression node)
+        {
+            symbolTable.Scopes.Add(node, CurrentScope);
+        }
 
-        public void Visit(BooleanLiteralExpression node) { }
+        public void Visit(BooleanLiteralExpression node)
+        {
+            symbolTable.Scopes.Add(node, CurrentScope);
+        }
 
-        public void Visit(ThisExpression node) { }
+        public void Visit(ThisExpression node)
+        {
+            symbolTable.Scopes.Add(node, CurrentScope);
+        }
 
-        public void Visit(ArrayIndexingExpression node) { }
+        public void Visit(ArrayIndexingExpression node)
+        {
+            symbolTable.Scopes.Add(node, CurrentScope);
+        }
 
-        public void Visit(IntegerLiteralExpression node) { }
+        public void Visit(IntegerLiteralExpression node)
+        {
+            symbolTable.Scopes.Add(node, CurrentScope);
+        }
     }
 }
