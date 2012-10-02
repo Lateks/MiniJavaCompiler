@@ -126,7 +126,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
             if (nodeSimpleType == null)
             {
                 errorReporter.ReportError("Unknown type '" + node.Type + "'.", node.Row, node.Col);
-                throw new Exception("Failed to resolve type for declaration"); // TODO: recover?
+                return null;
             }
             IType actualType = node.IsArray ?
                 new MiniJavaArrayType((ISimpleType)nodeSimpleType) :
@@ -144,7 +144,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
             if (symbol == null)
             {
                 errorReporter.ReportError("Symbol '" + node.Name + "' is already defined.", node.Row, node.Col);
-                throw new Exception("Failed to define symbol"); // TODO: recover?
+                return null;
             }
 
             return symbol;

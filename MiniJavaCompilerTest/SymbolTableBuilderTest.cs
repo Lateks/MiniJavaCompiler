@@ -63,7 +63,8 @@ namespace MiniJavaCompilerTest
                              "class Foo {\n" +
                              "\t void foo; \n" +
                              "} \n\n";
-            Assert.Throws<Exception>(() => BuildSymbolTableFor(program));
+            BuildSymbolTableFor(program);
+            Assert.That(errors.Errors().First().Content, Is.StringContaining("Unknown type 'void'"));
         }
 
         [Test]
