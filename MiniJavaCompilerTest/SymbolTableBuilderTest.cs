@@ -92,6 +92,28 @@ namespace MiniJavaCompilerTest
         }
 
         [Test]
+        public void DefiningTheSameNameTwiceResultsInAnError()
+        {
+            string program = "class Factorial {\n" +
+                             "\t public static void main () {\n" +
+                             "\t\t System.out.println(42);\n" +
+                             "\t} \n" +
+                             "} \n\n" +
+                             "class Foo {\n" +
+                             "\t int foo; \n" +
+                             "\t int foo; \n" +
+                             "\t public int foo() { } \n" +
+                             "\t public int foo() { } \n" +
+                             "} \n\n";
+            BuildSymbolTableFor(program);
+            Assert.AreEqual(2, errors.Errors().Count);
+            foreach (var error in errors.Errors())
+            {
+                Assert.That(error.Content, Is.StringContaining("Symbol 'foo' is already defined"));
+            }
+        }
+
+        [Test]
         public void BuildsSymbolTableRightForSampleProgram()
         {
             // Note: The sample program from the site uses a unary minus that
