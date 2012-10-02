@@ -31,20 +31,36 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
         public Program Program()
         {
-            var main = MainClass();
-            var declarations = ClassDeclarationList();
+            MainClassDeclaration main;
+            List<ClassDeclaration> declarations;
+            try
+            {
+                main = MainClass();
+                declarations = ClassDeclarationList();
+            }
+            catch (OutOfInput e)
+            {
+                errorReporter.ReportError(e.Message, 0, 0);
+                throw new ErrorReport(errorReporter.Errors()); // TODO: Instead return an error token if any errors found.
+            }
+
             try
             {
                 Input.MatchAndConsume<EndOfFile>();
-                ReportErrors(); // TODO: Instead return an error token if any errors found.
-                return new Program(main, declarations);
             }
             catch (SyntaxError e)
             { // Found something other than end of file.
                 errorReporter.ReportError(e.Message, e.Row, e.Col);
-                // TODO: Instead return an error token if any errors found.
-                throw new ErrorReport(errorReporter.Errors());
+                throw new ErrorReport(errorReporter.Errors()); // TODO: Instead return an error token if any errors found.
             }
+            catch (OutOfInput e)
+            {
+                errorReporter.ReportError(e.Message, 0, 0);
+                throw new ErrorReport(errorReporter.Errors()); // TODO: Instead return an error token if any errors found.
+            }
+
+            ReportErrors(); // TODO: Instead return an error token if any errors found.
+            return new Program(main, declarations);
         }
 
         private void ReportErrors()
@@ -387,7 +403,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             while (!Input.NextTokenIs<EndOfFile>())
             {
                 var token = Input.Consume<IToken>();
-                if (token is LeftCurlyBrace)
+                if (token is RightCurlyBrace)
                     break;
             }
         }

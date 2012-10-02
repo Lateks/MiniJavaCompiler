@@ -106,18 +106,24 @@ namespace MiniJavaCompiler.SemanticAnalysis
         {
             var variableType = CheckDeclaredType(node);
             var symbol = DefineSymbolOrFail<VariableSymbol>(node, variableType);
-            symbolTable.Definitions.Add(symbol, node);
-            symbolTable.Scopes.Add(node, CurrentScope);
+            if (symbol != null)
+            {
+                symbolTable.Definitions.Add(symbol, node);
+                symbolTable.Scopes.Add(node, CurrentScope);
+            }
         }
 
         public void Visit(MethodDeclaration node)
         {
             var methodReturnType = node.Type == "void" ? null : CheckDeclaredType(node);
             var methodSymbol = (MethodSymbol)DefineSymbolOrFail<MethodSymbol>(node, methodReturnType);
-            symbolTable.Definitions.Add(methodSymbol, node);
-            symbolTable.Scopes.Add(node, methodSymbol);
+            if (methodSymbol != null)
+            {
+                symbolTable.Definitions.Add(methodSymbol, node);
+                symbolTable.Scopes.Add(node, methodSymbol);
 
-            EnterScope(methodSymbol);
+                EnterScope(methodSymbol);
+            }
         }
 
         private IType CheckDeclaredType(Declaration node)

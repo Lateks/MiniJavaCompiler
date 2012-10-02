@@ -7,6 +7,13 @@ using System.IO;
 
 namespace MiniJavaCompiler.LexicalAnalysis
 {
+    public class OutOfInput : Exception
+    {
+        public OutOfInput() { }
+
+        public OutOfInput(string message) : base(message) { }
+    }
+
     public interface IScanner
     {
         IToken NextToken();
@@ -29,19 +36,25 @@ namespace MiniJavaCompiler.LexicalAnalysis
         private Queue<IToken> tokens;
         private int startRow;
         private int startCol;
+        private bool EOFreached;
 
         public MiniJavaScanner(TextReader input)
         {
             this.input = new ScannerInputReader(input);
             tokens = new Queue<IToken>();
             BuildTokenList();
+            EOFreached = false;
         }
 
-        // If called after EndOfFile, will return null.
         public IToken NextToken()
         {
+            if (EOFreached)
+            {
+                throw new OutOfInput("Reached end of file while parsing.");
+            }
             if (tokens.Count > 0)
                 return tokens.Dequeue();
+            EOFreached = true;
             return new EndOfFile(input.Row, input.Col);
         }
 
