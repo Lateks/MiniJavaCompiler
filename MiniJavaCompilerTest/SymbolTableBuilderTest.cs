@@ -34,68 +34,60 @@ namespace MiniJavaCompilerTest
         }
 
         [Test]
-        [Ignore("TODO: complete test")]
-        public void TestMainClass()
+        public void HandlesVoidTypeRight()
         {
             string program = "class Factorial {\n" +
                              "\t public static void main () {\n" +
                              "\t\t System.out.println(42);\n" +
-                             "\t\t assert (10 > 5);" +
-                             "} \n\n";
-            var symbolTable = BuildSymbolTableFor(program);
-        }
-
-        [Test]
-        [Ignore("TODO: complete test")]
-        public void TestTwoClasses()
-        {
-            string program = "class Factorial {\n" +
-                             "\t public static void main () {\n" +
-                             "\t\t System.out.println(42);\n" +
+                             "\t} \n" +
                              "} \n\n" +
                              "class Foo {\n" +
-                             "}";
+                             "\t public void foo() {\n" +
+                             "\t\t System.out.println(42);\n" +
+                             "\t} \n" +
+                             "} \n\n";
             var symbolTable = BuildSymbolTableFor(program);
+            var fooClass = (UserDefinedTypeSymbol)symbolTable.GlobalScope.Resolve<TypeSymbol>("Foo");
+            var fooMethod = fooClass.Resolve<MethodSymbol>("foo");
+            Assert.That(fooMethod.Type, Is.InstanceOf<VoidType>());
         }
 
         [Test]
-        [Ignore("TODO: complete test")]
-        public void TestAssignment()
+        public void DoesNotAcceptVoidTypeForAVariable()
         {
             string program = "class Factorial {\n" +
                              "\t public static void main () {\n" +
-                             "\t\t int foo;\n" +
-                             "\t\t foo = 42;\n" +
-                             "\t\t System.out.println(foo);\n" +
+                             "\t\t System.out.println(42);\n" +
+                             "\t} \n" +
+                             "} \n\n" +
+                             "class Foo {\n" +
+                             "\t void foo; \n" +
                              "} \n\n";
-            var symbolTable = BuildSymbolTableFor(program);
+            Assert.Throws<Exception>(() => BuildSymbolTableFor(program));
         }
 
         [Test]
-        [Ignore("TODO: complete test")]
-        public void TestEquals()
+        public void BuildsSymbolTableRightWithInheritance()
         {
             string program = "class Factorial {\n" +
                              "\t public static void main () {\n" +
-                             "\t\t int foo;\n" +
-                             "\t\t foo = 42;\n" +
-                             "\t\t if (foo == 42)" +
-                             "\t\t System.out.println(foo);\n" +
-                             "} \n\n";
+                             "\t\t System.out.println(42);\n" +
+                             "\t} \n" +
+                             "} \n\n" +
+                             "class Foo {\n" +
+                             "\t public int foo() {\n" +
+                             "\t\t System.out.println(42); \n" +
+                             "\t\t return 42; \n" +
+                             "\t} \n" +
+                             "}\n" +
+                             "class Bar extends Foo {\n" +
+                             "\t int foo; \n" +
+                             "} \n";
             var symbolTable = BuildSymbolTableFor(program);
-        }
-
-        [Test]
-        [Ignore("TODO: complete test")]
-        public void TestAssignmentPrecedence()
-        {
-            string program = "class Factorial {\n" +
-                             "\t public static void main () {\n" +
-                             "\t\t int foo;\n" +
-                             "\t\t\t foo = bar * this.ComputeFac (num-1);\n" +
-                             "\t\t System.out.println(foo);\n" +
-                             "} \n\n";
-            var symbolTable = BuildSymbolTableFor(program);
+            var fooClass = (UserDefinedTypeSymbol)symbolTable.GlobalScope.Resolve<TypeSymbol>("Foo");
+            var barClass = (UserDefinedTypeSymbol)symbolTable.GlobalScope.Resolve<TypeSymbol>("Bar");
+            Assert.That(barClass.SuperClass, Is.EqualTo(fooClass));
+            Assert.That(barClass.Resolve<MethodSymbol>("foo"), Is.Not.Null);
         }
 
         [Test]
@@ -111,7 +103,7 @@ namespace MiniJavaCompilerTest
                              "} \n" +
                              "class Fac { \n" +
                              "\t public int ComputeFac (int num) {\n" +
-                             "\t\t assert (num > 1);\n" +
+                             "\t\t assert (num > 0 - 1);\n" +
                              "\t\t int num_aux;\n" +
                              "\t\t if (num == 0)\n" +
                              "\t\t\t num_aux = 1;\n" +
@@ -135,14 +127,18 @@ namespace MiniJavaCompilerTest
             var facMethod = (MethodSymbol)FacClassScope.Resolve<MethodSymbol>("ComputeFac");
             Assert.That(facMethod, Is.Not.Null);
             Assert.That(facMethod.Type, Is.InstanceOf<BuiltinTypeSymbol>());
+            Assert.That(facMethod.Type.Name, Is.EqualTo("int"));
 
             var numVariable = (VariableSymbol)facMethod.Resolve<VariableSymbol>("num");
             Assert.That(numVariable, Is.Not.Null);
             Assert.That(numVariable.Type, Is.InstanceOf<BuiltinTypeSymbol>());
+            Assert.That(numVariable.Type.Name, Is.EqualTo("int"));
+            Assert.AreEqual(numVariable.Type, facMethod.Type);
 
             var numAuxVariable = (VariableSymbol) facMethod.Resolve<VariableSymbol>("num_aux");
             Assert.That(numAuxVariable, Is.Not.Null);
             Assert.That(numAuxVariable.Type, Is.InstanceOf<BuiltinTypeSymbol>());
+            Assert.That(numVariable.Type.Name, Is.EqualTo("int"));
         }
     }
 }

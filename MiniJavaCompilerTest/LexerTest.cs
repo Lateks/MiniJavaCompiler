@@ -222,5 +222,25 @@ namespace MiniJavaCompilerTest
             scanner = new MiniJavaScanner(new StringReader("/* ... /"));
             Assert.That(scanner.NextToken(), Is.InstanceOf<ErrorToken>());
         }
+
+        [Test]
+        public void ReportsRowsAndColumnsRightForTokens()
+        {
+            string program = "class Factorial {\n" +
+                             "\t public static void main () {\n";
+            var scanner = new MiniJavaScanner(new StringReader(program));
+            var token = scanner.NextToken();
+            Assert.AreEqual(token.Row, 1);
+            Assert.AreEqual(token.Col, 1);
+            token = scanner.NextToken();
+            Assert.AreEqual(token.Row, 1);
+            Assert.AreEqual(token.Col, 7);
+            token = scanner.NextToken();
+            Assert.AreEqual(token.Row, 1);
+            Assert.AreEqual(token.Col, 17);
+            token = scanner.NextToken();
+            Assert.AreEqual(token.Row, 2);
+            Assert.AreEqual(token.Col, 3);
+        }
     }
 }

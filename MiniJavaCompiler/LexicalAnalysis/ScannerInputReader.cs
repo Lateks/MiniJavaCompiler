@@ -20,7 +20,11 @@ namespace MiniJavaCompiler.LexicalAnalysis
         }
 
         public EndlessCommentError(string message, int row, int col)
-            : base(message) { }
+            : base(message)
+        {
+            Row = row;
+            Col = col;
+        }
     }
 
     // Handles reading input from the given TextReader, skipping comments

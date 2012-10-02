@@ -55,4 +55,20 @@ namespace MiniJavaCompiler.Support.SymbolTable
             return ClassInstance;
         }
     }
+
+    public class VoidType : IType
+    {
+        private static readonly VoidType ClassInstance = new VoidType();
+        public string Name { get; private set; }
+
+        private VoidType()
+        {
+            Name = "void";
+        }
+
+        public static VoidType GetInstance()
+        {
+            return ClassInstance;
+        }
+    }
 }

@@ -109,7 +109,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
         public void Visit(MethodDeclaration node)
         {
-            var methodReturnType = CheckDeclaredType(node);
+            var methodReturnType = node.Type == "void" ? null : CheckDeclaredType(node);
             var methodSymbol = DefineSymbolOrFail<MethodSymbol>(node, methodReturnType);
             symbolTable.Definitions.Add(methodSymbol, node);
 
@@ -122,7 +122,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
             if (nodeSimpleType == null)
             {
                 errorReporter.ReportError("Unknown type '" + node.Type + "'.", node.Row, node.Col);
-                throw new Exception("placeholder"); // TODO: recover?
+                throw new Exception("Failed to resolve type for declaration"); // TODO: recover?
             }
             IType actualType = node.IsArray ?
                 new MiniJavaArrayType((ISimpleType)nodeSimpleType) :
@@ -140,7 +140,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
             if (symbol == null)
             {
                 errorReporter.ReportError("Symbol '" + node.Name + "' is already defined.", node.Row, node.Col);
-                throw new Exception("placeholder"); // TODO: recover?
+                throw new Exception("Failed to define symbol"); // TODO: recover?
             }
 
             return symbol;

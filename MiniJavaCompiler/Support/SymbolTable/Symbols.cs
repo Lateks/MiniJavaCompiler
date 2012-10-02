@@ -81,7 +81,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
         private Dictionary<string, Symbol> variableTable;
 
         public MethodSymbol(string name, IType returnType, UserDefinedTypeSymbol enclosingScope)
-            : base(name, returnType, enclosingScope)
+            : base(name, returnType ?? VoidType.GetInstance(), enclosingScope)
         {
             variableTable = new Dictionary<string, Symbol>();
         }
