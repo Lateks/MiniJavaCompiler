@@ -8,19 +8,24 @@ using MiniJavaCompiler.Support;
 
 namespace MiniJavaCompiler.SyntaxAnalysis
 {
+    public interface IParser
+    {
+        Program Parse();
+    }
+
     public abstract class ParserBase
     {
         protected IParserInputReader Input { get; set; }
-        protected readonly IErrorReporter errorReporter;
+        protected readonly IErrorReporter ErrorReporter;
 
         protected ParserBase(IParserInputReader input, IErrorReporter reporter)
         {
-            errorReporter = reporter;
+            ErrorReporter = reporter;
             Input = input;
         }
     }
 
-    public class Parser : ParserBase
+    public class Parser : ParserBase, IParser
     {
         public Parser(IParserInputReader input, IErrorReporter reporter) : base(input, reporter) { }
 
@@ -40,8 +45,8 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             }
             catch (OutOfInput e)
             {
-                errorReporter.ReportError(e.Message, 0, 0);
-                throw new ErrorReport(errorReporter.Errors()); // TODO: Instead return an error token if any errors found.
+                ErrorReporter.ReportError(e.Message, 0, 0);
+                throw new ErrorReport(ErrorReporter.Errors()); // TODO: Instead return an error token if any errors found.
             }
 
             try
@@ -50,13 +55,13 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             }
             catch (SyntaxError e)
             { // Found something other than end of file.
-                errorReporter.ReportError(e.Message, e.Row, e.Col);
-                throw new ErrorReport(errorReporter.Errors()); // TODO: Instead return an error token if any errors found.
+                ErrorReporter.ReportError(e.Message, e.Row, e.Col);
+                throw new ErrorReport(ErrorReporter.Errors()); // TODO: Instead return an error token if any errors found.
             }
             catch (OutOfInput e)
             {
-                errorReporter.ReportError(e.Message, 0, 0);
-                throw new ErrorReport(errorReporter.Errors()); // TODO: Instead return an error token if any errors found.
+                ErrorReporter.ReportError(e.Message, 0, 0);
+                throw new ErrorReport(ErrorReporter.Errors()); // TODO: Instead return an error token if any errors found.
             }
 
             ReportErrors(); // TODO: Instead return an error token if any errors found.
@@ -65,7 +70,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
         private void ReportErrors()
         { // TODO: Parser should not handle this. The caller should check the error log.
-            var errors = errorReporter.Errors();
+            var errors = ErrorReporter.Errors();
             if (errors.Any())
                 throw new ErrorReport(errors);
         }
@@ -95,7 +100,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             }
             catch (SyntaxError e)
             {
-                errorReporter.ReportError(e.Message, e.Row, e.Col);
+                ErrorReporter.ReportError(e.Message, e.Row, e.Col);
                 RecoverFromClassMatching();
                 return null;
             }
@@ -128,7 +133,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             }
             catch (SyntaxError e)
             {
-                errorReporter.ReportError(e.Message, e.Col, e.Row);
+                ErrorReporter.ReportError(e.Message, e.Col, e.Row);
                 RecoverFromStatementMatching();
             }
             catch (LexicalErrorEncountered)
@@ -302,7 +307,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             Input.MatchAndConsume<LeftParenthesis>();
             IExpression expr = Expression();
             Input.MatchAndConsume<RightParenthesis>();
-            Input.MatchAndConsume<EndLine>(); // not in the original CFG, probably a bug?
+            Input.MatchAndConsume<EndLine>(); // not in the original CFG, probably a mistake?
             return new AssertStatement(expr, assertToken.Row, assertToken.Col);
         }
 
@@ -327,7 +332,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
         public IExpression Expression()
         {
-            var expressionParser = new ExpressionParser(Input, errorReporter);
+            var expressionParser = new ExpressionParser(Input, ErrorReporter);
             return expressionParser.Parse();
         }
 
@@ -346,7 +351,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             }
             catch (SyntaxError e)
             {
-                errorReporter.ReportError(e.Message, e.Row, e.Col);
+                ErrorReporter.ReportError(e.Message, e.Row, e.Col);
                 RecoverFromClassMatching();
                 return null;
             }
@@ -388,7 +393,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             }
             catch (SyntaxError e)
             {
-                errorReporter.ReportError(e.Message, e.Row, e.Col);
+                ErrorReporter.ReportError(e.Message, e.Row, e.Col);
                 RecoverFromDeclarationMatching();
             }
             catch (LexicalErrorEncountered)
@@ -427,7 +432,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             }
             catch (SyntaxError e)
             {
-                errorReporter.ReportError(e.Message, e.Row, e.Col);
+                ErrorReporter.ReportError(e.Message, e.Row, e.Col);
                 RecoverFromVariableDeclarationMatching();
             }
             catch (LexicalErrorEncountered)
@@ -482,25 +487,25 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
         private List<ClassDeclaration> ClassDeclarationList()
         {
-            var parser = new ListParser(Input, errorReporter);
+            var parser = new ListParser(Input, ErrorReporter);
             return parser.ParseList<ClassDeclaration, EndOfFile>(ClassDeclaration);
         }
 
         private List<Declaration> DeclarationList()
         {
-            var parser = new ListParser(Input, errorReporter);
+            var parser = new ListParser(Input, ErrorReporter);
             return parser.ParseList<Declaration, RightCurlyBrace>(Declaration);
         }
 
         private List<IStatement> StatementList()
         {
-            var parser = new ListParser(Input, errorReporter);
+            var parser = new ListParser(Input, ErrorReporter);
             return parser.ParseList<IStatement, RightCurlyBrace>(Statement);
         }
 
         private List<VariableDeclaration> FormalParameters()
         {
-            var parser = new CommaSeparatedListParser(Input, errorReporter);
+            var parser = new CommaSeparatedListParser(Input, ErrorReporter);
             return parser.ParseList<VariableDeclaration, RightParenthesis>(
                 VariableOrFormalParameterDeclaration);
         }

@@ -17,16 +17,8 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
 
     public abstract class SyntaxElement : ISyntaxTreeNode
     {
-        public int Row
-        {
-            get;
-            private set;
-        }
-        public int Col
-        {
-            get;
-            private set;
-        }
+        public int Row { get; private set; }
+        public int Col { get; private set; }
 
         protected SyntaxElement(int row, int col)
         {
@@ -39,22 +31,14 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
 
     public class Program : ISyntaxTreeNode
     {
-        public MainClassDeclaration MainClass
-        {
-            get;
-            private set;
-        }
-        public List<ClassDeclaration> Classes
-        {
-            get;
-            private set;
-        }
+        public MainClassDeclaration MainClass { get; private set; }
+        public List<ClassDeclaration> Classes { get; private set; }
 
-        public Program(MainClassDeclaration main_class,
-                       List<ClassDeclaration> class_declarations)
+        public Program(MainClassDeclaration mainClass,
+                       List<ClassDeclaration> classDeclarations)
         {
-            MainClass = main_class;
-            Classes = class_declarations;
+            MainClass = mainClass;
+            Classes = classDeclarations;
         }
 
         public void Accept(INodeVisitor visitor)
@@ -70,21 +54,9 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
 
     public class ClassDeclaration : SyntaxElement
     {
-        public string Name
-        {
-            get;
-            private set;
-        }
-        public string InheritedClass
-        {
-            get;
-            private set;
-        }
-        public List<Declaration> Declarations
-        {
-            get;
-            private set;
-        }
+        public string Name { get; private set; }
+        public string InheritedClass { get; private set; }
+        public List<Declaration> Declarations { get; private set; }
 
         public ClassDeclaration(string name, string inherited,
             List<Declaration> declarations, int row, int col)
@@ -108,16 +80,8 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
 
     public class MainClassDeclaration : SyntaxElement
     {
-        public string Name
-        {
-            get;
-            private set;
-        }
-        public List<IStatement> MainMethod
-        {
-            get;
-            private set;
-        }
+        public string Name { get; private set; }
+        public List<IStatement> MainMethod { get; private set; }
 
         public MainClassDeclaration(string name, List<IStatement> mainMethod,
             int row, int col)
@@ -140,21 +104,9 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
 
     public abstract class Declaration : SyntaxElement
     {
-        public string Name
-        {
-            get;
-            private set;
-        }
-        public string Type
-        {
-            get;
-            private set;
-        }
-        public bool IsArray
-        {
-            get;
-            private set;
-        }
+        public string Name { get; private set; }
+        public string Type { get; private set; }
+        public bool IsArray { get; private set; }
 
         protected Declaration(string name, string type, bool isArray,
             int row, int col)
@@ -168,16 +120,8 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
 
     public class MethodDeclaration : Declaration
     {
-        public List<VariableDeclaration> Formals
-        {
-            get;
-            private set;
-        }
-        public List<IStatement> MethodBody
-        {
-            get;
-            private set;
-        }
+        public List<VariableDeclaration> Formals { get; private set; }
+        public List<IStatement> MethodBody { get; private set; }
 
         public MethodDeclaration(string name, string type, bool returnTypeIsArray,
             List<VariableDeclaration> formals, List<IStatement> methodBody,
@@ -191,11 +135,11 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
         public override void Accept(INodeVisitor visitor)
         {
             visitor.Visit(this);
-            foreach (VariableDeclaration decl in Formals)
+            foreach (var decl in Formals)
             {
                 decl.Accept(visitor);
             }
-            foreach (IStatement statement in MethodBody)
+            foreach (var statement in MethodBody)
             {
                 statement.Accept(visitor);
             }
@@ -216,11 +160,7 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
 
     public class PrintStatement : SyntaxElement, IStatement
     {
-        public IExpression Expression
-        {
-            get;
-            private set;
-        }
+        public IExpression Expression { get; private set; }
 
         public PrintStatement(IExpression expression, int row, int col)
             : base(row, col)
@@ -237,11 +177,7 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
 
     public class ReturnStatement : SyntaxElement, IStatement
     {
-        public IExpression Expression
-        {
-            get;
-            private set;
-        }
+        public IExpression Expression { get; private set; }
 
         public ReturnStatement(IExpression expression, int row, int col)
             : base(row, col)
@@ -258,11 +194,7 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
 
     public class BlockStatement : SyntaxElement, IStatement
     {
-        public List<IStatement> Statements
-        {
-            get;
-            private set;
-        }
+        public List<IStatement> Statements { get; private set; }
 
         public BlockStatement(List<IStatement> statements, int row, int col)
             : base(row, col)
@@ -273,7 +205,7 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
         public override void Accept(INodeVisitor visitor)
         {
             visitor.Visit(this);
-            foreach (IStatement statement in Statements)
+            foreach (var statement in Statements)
             {
                 statement.Accept(visitor);
             }
@@ -283,11 +215,7 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
 
     public class AssertStatement : SyntaxElement, IStatement
     {
-        public IExpression Expression
-        {
-            get;
-            private set;
-        }
+        public IExpression Expression { get; private set; }
 
         public AssertStatement(IExpression expression, int row, int col)
             : base(row, col)
@@ -304,49 +232,29 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
 
     public class AssignmentStatement : SyntaxElement, IStatement
     {
-        public IExpression LHS
-        {
-            get;
-            private set;
-        }
-        public IExpression RHS
-        {
-            get;
-            private set;
-        }
+        public IExpression LeftHandSide { get; private set; }
+        public IExpression RightHandSide { get; private set; }
 
         public AssignmentStatement(IExpression lhs, IExpression rhs, int row, int col)
             : base(row, col)
         {
-            LHS = lhs;
-            RHS = rhs;
+            LeftHandSide = lhs;
+            RightHandSide = rhs;
         }
 
         public override void Accept(INodeVisitor visitor)
         {
-            RHS.Accept(visitor);
-            LHS.Accept(visitor);
+            RightHandSide.Accept(visitor);
+            LeftHandSide.Accept(visitor);
             visitor.Visit(this);
         }
     }
 
     public class IfStatement : SyntaxElement, IStatement
     {
-        public IExpression BooleanExpression
-        {
-            get;
-            private set;
-        }
-        public IStatement Then
-        {
-            get;
-            private set;
-        }
-        public IStatement Else
-        {
-            get;
-            private set;
-        }
+        public IExpression BooleanExpression { get; private set; }
+        public IStatement Then { get; private set; }
+        public IStatement Else { get; private set; }
 
         public IfStatement(IExpression booleanExp, IStatement thenBranch,
             IStatement elseBranch, int row, int col)
@@ -368,16 +276,8 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
 
     public class WhileStatement : SyntaxElement, IStatement
     {
-        public IExpression BooleanExpression
-        {
-            get;
-            private set;
-        }
-        public IStatement LoopBody
-        {
-            get;
-            private set;
-        }
+        public IExpression BooleanExpression { get; private set; }
+        public IStatement LoopBody { get; private set; }
 
         public WhileStatement(IExpression booleanExp, IStatement loopBody,
             int row, int col)
@@ -397,21 +297,9 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
 
     public class MethodInvocation : SyntaxElement, IStatement, IExpression
     {
-        public IExpression MethodOwner
-        {
-            get;
-            private set;
-        }
-        public string MethodName
-        {
-            get;
-            private set;
-        }
-        public List<IExpression> CallParameters
-        {
-            get;
-            private set;
-        }
+        public IExpression MethodOwner { get; private set; }
+        public string MethodName { get; private set; }
+        public List<IExpression> CallParameters { get; private set; }
 
         public MethodInvocation(IExpression methodOwner, string methodName,
             List<IExpression> callParameters, int row, int col)
@@ -425,7 +313,7 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
         public override void Accept(INodeVisitor visitor)
         {
             MethodOwner.Accept(visitor);
-            foreach (IExpression expr in CallParameters)
+            foreach (var expr in CallParameters)
             {
                 expr.Accept(visitor);
             }
@@ -456,11 +344,7 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
 
     public class UnaryNotExpression : SyntaxElement, IExpression
     {
-        public IExpression BooleanExpression
-        {
-            get;
-            private set;
-        }
+        public IExpression BooleanExpression { get; private set; }
 
         public UnaryNotExpression(IExpression booleanExp, int row, int col)
             : base(row, col)
@@ -477,21 +361,9 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
 
     public class BinaryOpExpression : SyntaxElement, IExpression
     {
-        public string Operator
-        {
-            get;
-            private set;
-        }
-        public IExpression LeftOperand
-        {
-            get;
-            private set;
-        }
-        public IExpression RightOperand
-        {
-            get;
-            private set;
-        }
+        public string Operator { get; private set; }
+        public IExpression LeftOperand { get; private set; }
+        public IExpression RightOperand { get; private set; }
 
         public BinaryOpExpression(string opsymbol, IExpression lhs, IExpression rhs,
             int row, int col)
@@ -512,11 +384,7 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
 
     public class BooleanLiteralExpression : SyntaxElement, IExpression
     {
-        public bool Value
-        {
-            get;
-            private set;
-        }
+        public bool Value { get; private set; }
 
         public BooleanLiteralExpression(bool value, int row, int col)
             : base(row, col)
@@ -543,16 +411,8 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
 
     public class ArrayIndexingExpression : SyntaxElement, IExpression
     {
-        public IExpression Array
-        {
-            get;
-            private set;
-        }
-        public IExpression Index
-        {
-            get;
-            private set;
-        }
+        public IExpression Array { get; private set; }
+        public IExpression Index { get; private set; }
 
         public ArrayIndexingExpression(IExpression arrayReference,
             IExpression arrayIndex, int row, int col)
@@ -572,11 +432,7 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
 
     public class VariableReferenceExpression : SyntaxElement, IExpression
     {
-        public string Name
-        {
-            get;
-            private set;
-        }
+        public string Name { get; private set; }
 
         public VariableReferenceExpression(string name, int row, int col)
             : base(row, col)
@@ -592,11 +448,7 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
 
     public class IntegerLiteralExpression : SyntaxElement, IExpression
     {
-        public string Value
-        {
-            get;
-            private set;
-        }
+        public string Value { get; private set; }
 
         public IntegerLiteralExpression(string value, int row, int col)
             : base(row, col)

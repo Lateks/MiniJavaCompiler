@@ -13,32 +13,32 @@ namespace MiniJavaCompiler.SemanticAnalysis
         private class DefinitionException : Exception { }
 
         private readonly SymbolTable _symbolTable;
-        private readonly Program syntaxTree;
-        private readonly string[] builtins = new [] { "int", "boolean" }; // TODO: Refactor this into Support
-        private readonly IErrorReporter errorReporter;
-        private int errors;
+        private readonly Program _syntaxTree;
+        private readonly string[] _builtins = new [] { "int", "boolean" }; // TODO: Refactor this into Support
+        private readonly IErrorReporter _errorReporter;
+        private int _errors;
 
-        private readonly Stack<IScope> scopeStack;
+        private readonly Stack<IScope> _scopeStack;
         private IScope CurrentScope
         {
-            get { return scopeStack.Peek(); }
+            get { return _scopeStack.Peek(); }
         }
 
         private void EnterScope(IScope scope)
         {
-            scopeStack.Push(scope);
+            _scopeStack.Push(scope);
         }
 
         private void ExitScope()
         {
-            scopeStack.Pop();
+            _scopeStack.Pop();
         }
 
         public SymbolTableBuilder(Program node, IEnumerable<string> types, IErrorReporter errorReporter)
         {
-            this.errorReporter = errorReporter;
-            errors = 0;
-            syntaxTree = node;
+            _errorReporter = errorReporter;
+            _errors = 0;
+            _syntaxTree = node;
 
             _symbolTable = new SymbolTable
                               {
@@ -48,13 +48,13 @@ namespace MiniJavaCompiler.SemanticAnalysis
                               };
 
             SetupGlobalScope(types);
-            scopeStack = new Stack<IScope>();
+            _scopeStack = new Stack<IScope>();
             EnterScope(_symbolTable.GlobalScope);
         }
 
         private void SetupGlobalScope(IEnumerable<string> types)
         {
-            foreach (var type in builtins)
+            foreach (var type in _builtins)
             {
                 Symbol.CreateAndDefine<BuiltinTypeSymbol>(type, _symbolTable.GlobalScope);
             }
@@ -68,8 +68,8 @@ namespace MiniJavaCompiler.SemanticAnalysis
         {
             try
             {
-                syntaxTree.Accept(this);
-                return errors == 0;
+                _syntaxTree.Accept(this);
+                return _errors == 0;
             }
             catch (DefinitionException)
             {
@@ -148,8 +148,8 @@ namespace MiniJavaCompiler.SemanticAnalysis
             Symbol nodeSimpleType = _symbolTable.GlobalScope.Resolve<TypeSymbol>(node.Type);
             if (nodeSimpleType == null)
             {
-                errorReporter.ReportError("Unknown type '" + node.Type + "'.", node.Row, node.Col);
-                errors++;
+                _errorReporter.ReportError("Unknown type '" + node.Type + "'.", node.Row, node.Col);
+                _errors++;
                 return null;
             }
             IType actualType = node.IsArray ?
@@ -167,8 +167,8 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
             if (symbol == null)
             {
-                errorReporter.ReportError("Symbol '" + node.Name + "' is already defined.", node.Row, node.Col);
-                errors++;
+                _errorReporter.ReportError("Symbol '" + node.Name + "' is already defined.", node.Row, node.Col);
+                _errors++;
                 return null;
             }
 

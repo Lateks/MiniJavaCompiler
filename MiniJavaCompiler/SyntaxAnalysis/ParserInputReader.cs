@@ -19,11 +19,26 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         bool NextTokenOneOf<TExpectedType>(params string[] valueCollection) where TExpectedType : StringToken;
     }
 
-    public class ParserInputReader : IParserInputReader
+    internal class LexicalErrorEncountered : Exception { }
+
+    internal class SyntaxError : Exception
     {
-        private readonly IScanner scanner;
-        private readonly Stack<IToken> inputBuffer; // This stack is used for buffering when we need to peek forward.
-        private readonly IErrorReporter errorReporter;
+        public int Row { get; private set; }
+        public int Col { get; private set; }
+
+        public SyntaxError(string message, int row, int col)
+            : base(message)
+        {
+            Row = row;
+            Col = col;
+        }
+    }
+
+    internal class ParserInputReader : IParserInputReader
+    {
+        private readonly IScanner _scanner;
+        private readonly Stack<IToken> _inputBuffer; // This stack is used for buffering when we need to peek forward.
+        private readonly IErrorReporter _errorReporter;
 
         private IToken InputToken
         {
@@ -33,9 +48,9 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
         public ParserInputReader(IScanner scanner, IErrorReporter errorReporter)
         {
-            this.scanner = scanner;
-            this.errorReporter = errorReporter;
-            this.inputBuffer = new Stack<IToken>();
+            this._scanner = scanner;
+            this._errorReporter = errorReporter;
+            this._inputBuffer = new Stack<IToken>();
             InputToken = scanner.NextToken();
         }
 
@@ -47,7 +62,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         // Pushes an already consumed token back into the input.
         public void PushBack(IToken token)
         {
-            inputBuffer.Push(InputToken);
+            _inputBuffer.Push(InputToken);
             InputToken = token;
         }
 
@@ -111,7 +126,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         public TTokenType Consume<TTokenType>() where TTokenType : IToken
         {
             var temp = GetTokenOrReportError<TTokenType>();
-            InputToken = inputBuffer.Count > 0 ? inputBuffer.Pop() : scanner.NextToken();
+            InputToken = _inputBuffer.Count > 0 ? _inputBuffer.Pop() : _scanner.NextToken();
             return temp;
         }
 
@@ -121,7 +136,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             {   // Lexical errors are reported here, so no errors are left unreported
                 // when consuming tokens because of recovery.
                 var temp = (ErrorToken)InputToken;
-                errorReporter.ReportError(temp.Message, temp.Row, temp.Col);
+                _errorReporter.ReportError(temp.Message, temp.Row, temp.Col);
                 return temp;
             }
             else

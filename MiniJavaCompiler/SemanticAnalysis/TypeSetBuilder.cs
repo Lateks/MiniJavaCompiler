@@ -9,33 +9,33 @@ namespace MiniJavaCompiler.SemanticAnalysis
 {
     public class TypeSetBuilder : INodeVisitor
     {
-        private Program syntaxTree;
-        private HashSet<string> types;
-        private HashSet<string> builtIns = new HashSet<string>(new [] { "int", "boolean" }); // TODO: refactor this into Support
-        private IErrorReporter errorReporter;
+        private readonly Program _syntaxTree;
+        private readonly HashSet<string> _types;
+        private readonly HashSet<string> _builtIns = new HashSet<string>(new [] { "int", "boolean" }); // TODO: refactor this into Support
+        private readonly IErrorReporter _errorReporter;
 
         public TypeSetBuilder(Program node, IErrorReporter errorReporter)
         {
-            syntaxTree = node;
-            this.errorReporter = errorReporter;
-            types = new HashSet<string>();
+            _syntaxTree = node;
+            _errorReporter = errorReporter;
+            _types = new HashSet<string>();
         }
 
         public IEnumerable<string> BuildTypeSet()
         {
-            syntaxTree.Accept(this);
-            return types;
+            _syntaxTree.Accept(this);
+            return _types;
         }
 
         private void ReportConflict(string typeName, int row, int col)
         {
-            errorReporter.ReportError("Conflicting definitions for " +
+            _errorReporter.ReportError("Conflicting definitions for " +
                     typeName + ".", row, col);
         }
 
         private bool NameAlreadyDefined(string name)
         {
-            return types.Contains(name) || builtIns.Contains(name);
+            return _types.Contains(name) || _builtIns.Contains(name);
         }
 
         public void Visit(Program node) { }
@@ -48,7 +48,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
             }
             else
             {
-                types.Add(node.Name);
+                _types.Add(node.Name);
             }
         }
 
@@ -60,7 +60,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
             }
             else
             {
-                types.Add(node.Name);
+                _types.Add(node.Name);
             }
         }
 

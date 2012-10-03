@@ -6,26 +6,10 @@ namespace MiniJavaCompiler.Support.SymbolTable
 {
     public abstract class Symbol
     {
-        public string Name
-        {
-            get;
-            private set;
-        }
-        public IType Type
-        {
-            get;
-            private set;
-        }
-        public IScope EnclosingScope
-        {
-            get;
-            private set;
-        }
-        public SyntaxElement Definition
-        {
-            get;
-            set;
-        }
+        public string Name { get; private set; }
+        public IType Type { get; private set; }
+        public IScope EnclosingScope { get; private set; }
+        public SyntaxElement Definition { get; set; }
 
         // Returns the created symbol if defining succeeds. Otherwise returns null.
         public static Symbol CreateAndDefine<TSymbolType>(string name, IScope enclosingScope)
@@ -78,12 +62,12 @@ namespace MiniJavaCompiler.Support.SymbolTable
 
     public class MethodSymbol : Symbol, IScope
     {
-        private Dictionary<string, Symbol> variableTable;
+        private readonly Dictionary<string, Symbol> _variableTable;
 
         public MethodSymbol(string name, IType returnType, UserDefinedTypeSymbol enclosingScope)
             : base(name, returnType ?? VoidType.GetInstance(), enclosingScope)
         {
-            variableTable = new Dictionary<string, Symbol>();
+            _variableTable = new Dictionary<string, Symbol>();
         }
 
         public Symbol Resolve<TSymbolType>(string name)
@@ -95,7 +79,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
             }
             try
             {
-                return variableTable[name];
+                return _variableTable[name];
             }
             catch (KeyNotFoundException)
             {
@@ -111,7 +95,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
             }
             try
             {
-                variableTable.Add(sym.Name, sym);
+                _variableTable.Add(sym.Name, sym);
                 return true;
             }
             catch (ArgumentException)
@@ -124,14 +108,14 @@ namespace MiniJavaCompiler.Support.SymbolTable
     public class UserDefinedTypeSymbol : TypeSymbol, IScope, ISimpleType
     {
         internal UserDefinedTypeSymbol SuperClass { get; set; }
-        private readonly Dictionary<string, Symbol> methods;
-        private readonly Dictionary<string, Symbol> fields;
+        private readonly Dictionary<string, Symbol> _methods;
+        private readonly Dictionary<string, Symbol> _fields;
 
         public UserDefinedTypeSymbol(string name, IScope enclosingScope)
             : base(name, MiniJavaClass.GetInstance(), enclosingScope)
         {
-            methods = new Dictionary<string, Symbol>();
-            fields = new Dictionary<string, Symbol>();
+            _methods = new Dictionary<string, Symbol>();
+            _fields = new Dictionary<string, Symbol>();
             SuperClass = null;
         }
 
@@ -145,7 +129,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
 
             try
             {
-                return fields[name];
+                return _fields[name];
             }
             catch (KeyNotFoundException)
             { // Because fields are private, they are not resolved from superclasses.
@@ -157,7 +141,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
         {
             try
             {
-                return methods[name];
+                return _methods[name];
             }
             catch (KeyNotFoundException)
             {
@@ -169,11 +153,11 @@ namespace MiniJavaCompiler.Support.SymbolTable
         {
             if (sym is MethodSymbol)
             {
-                return DefineSymbolIn(sym, methods);
+                return DefineSymbolIn(sym, _methods);
             }
             else if (sym is VariableSymbol)
             {
-                return DefineSymbolIn(sym, fields);
+                return DefineSymbolIn(sym, _fields);
             }
             throw new NotSupportedException("Only variable and method symbols can be defined in this scope.");
         }

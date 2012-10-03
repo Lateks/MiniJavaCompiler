@@ -11,9 +11,9 @@ namespace MiniJavaCompiler.Support.SymbolTable
 
     public abstract class ScopeBase : IScope
     {
-        private readonly Dictionary<string, Symbol> typeTable;
-        private readonly Dictionary<string, Symbol> methodTable;
-        private readonly Dictionary<string, Symbol> variableTable;
+        private readonly Dictionary<string, Symbol> _typeTable;
+        private readonly Dictionary<string, Symbol> _methodTable;
+        private readonly Dictionary<string, Symbol> _variableTable;
         protected IScope EnclosingScope
         {
             get;
@@ -24,9 +24,9 @@ namespace MiniJavaCompiler.Support.SymbolTable
 
         protected ScopeBase(IScope enclosingScope)
         {
-            typeTable = new Dictionary<string, Symbol>();
-            methodTable = new Dictionary<string, Symbol>();
-            variableTable = new Dictionary<string, Symbol>();
+            _typeTable = new Dictionary<string, Symbol>();
+            _methodTable = new Dictionary<string, Symbol>();
+            _variableTable = new Dictionary<string, Symbol>();
             EnclosingScope = enclosingScope;
         }
 
@@ -35,15 +35,15 @@ namespace MiniJavaCompiler.Support.SymbolTable
         {
             if (typeof(TSymbolType) == typeof(MethodSymbol))
             {
-                return methodTable;
+                return _methodTable;
             }
             else if (typeof(TSymbolType) == typeof(VariableSymbol))
             {
-                return variableTable;
+                return _variableTable;
             }
             else
             {
-                return typeTable;
+                return _typeTable;
             }
         }
 
@@ -51,15 +51,15 @@ namespace MiniJavaCompiler.Support.SymbolTable
         {
             if (sym is MethodSymbol)
             {
-                return methodTable;
+                return _methodTable;
             }
             else if (sym is VariableSymbol)
             {
-                return variableTable;
+                return _variableTable;
             }
             else
             {
-                return typeTable;
+                return _typeTable;
             }
         }
 

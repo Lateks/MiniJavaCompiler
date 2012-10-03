@@ -13,21 +13,21 @@ namespace MiniJavaCompiler.Support
 
     public class ErrorLogger : IErrorReporter
     {
-        private readonly List<ErrorMessage> errorMessages;
+        private readonly List<ErrorMessage> _errorMessages;
 
         public ErrorLogger()
         {
-            errorMessages = new List<ErrorMessage>();
+            _errorMessages = new List<ErrorMessage>();
         }
 
         public void ReportError(string message, int row, int col)
         {
-            errorMessages.Add(new ErrorMessage(message, row, col));
+            _errorMessages.Add(new ErrorMessage(message, row, col));
         }
 
         public List<ErrorMessage> Errors()
         {
-            return errorMessages;
+            return _errorMessages;
         }
     }
 
@@ -61,6 +61,10 @@ namespace MiniJavaCompiler.Support
         {
             get;
             private set;
+        }
+        public string Message
+        {
+            get { return String.Format("{0} (near row {1}, column {2})", Content, Row, Col); }
         }
 
         public ErrorMessage(string message, int row, int col)

@@ -264,8 +264,8 @@ namespace MiniJavaCompilerTest
             var statement = parser.Statement();
             Assert.That(statement, Is.InstanceOf<AssignmentStatement>());
             var assignment = (AssignmentStatement)statement;
-            Assert.That(assignment.RHS, Is.InstanceOf<BooleanLiteralExpression>());
-            Assert.That(assignment.LHS, Is.InstanceOf<ArrayIndexingExpression>());
+            Assert.That(assignment.RightHandSide, Is.InstanceOf<BooleanLiteralExpression>());
+            Assert.That(assignment.LeftHandSide, Is.InstanceOf<ArrayIndexingExpression>());
         }
 
         [Test]
@@ -285,7 +285,7 @@ namespace MiniJavaCompilerTest
         }
 
         [Test]
-        public void AnyExpressionDoesNotQualifyAsAStatement()
+        public void AllExpressionsDoNotQualifyAsAStatements()
         { // 42;
             programTokens.Enqueue(new IntegerLiteralToken("42", 0, 0));
             programTokens.Enqueue(new EndLine(0, 0));
@@ -415,10 +415,10 @@ namespace MiniJavaCompilerTest
             Assert.That(mainMethod[1], Is.InstanceOf<AssignmentStatement>());
 
             var assignment = (AssignmentStatement)mainMethod[1];
-            Assert.That(assignment.LHS, Is.InstanceOf<VariableReferenceExpression>());
-            Assert.That(((VariableReferenceExpression)assignment.LHS).Name, Is.EqualTo("foo"));
-            Assert.That(assignment.RHS, Is.InstanceOf<IntegerLiteralExpression>());
-            Assert.That(((IntegerLiteralExpression)assignment.RHS).Value, Is.EqualTo("42"));
+            Assert.That(assignment.LeftHandSide, Is.InstanceOf<VariableReferenceExpression>());
+            Assert.That(((VariableReferenceExpression)assignment.LeftHandSide).Name, Is.EqualTo("foo"));
+            Assert.That(assignment.RightHandSide, Is.InstanceOf<IntegerLiteralExpression>());
+            Assert.That(((IntegerLiteralExpression)assignment.RightHandSide).Value, Is.EqualTo("42"));
             Assert.That(mainMethod[2], Is.InstanceOf<PrintStatement>());
             Assert.That(((PrintStatement)mainMethod[2]).Expression, Is.InstanceOf<VariableReferenceExpression>());
         }
@@ -454,10 +454,10 @@ namespace MiniJavaCompilerTest
             Assert.That(mainMethod[1], Is.InstanceOf<AssignmentStatement>());
 
             var assignment = (AssignmentStatement)mainMethod[1];
-            Assert.That(assignment.LHS, Is.InstanceOf<VariableReferenceExpression>());
-            Assert.That(assignment.RHS, Is.InstanceOf<InstanceCreationExpression>());
+            Assert.That(assignment.LeftHandSide, Is.InstanceOf<VariableReferenceExpression>());
+            Assert.That(assignment.RightHandSide, Is.InstanceOf<InstanceCreationExpression>());
 
-            var newinstance = (InstanceCreationExpression)assignment.RHS;
+            var newinstance = (InstanceCreationExpression)assignment.RightHandSide;
             Assert.That(newinstance.Type, Is.EqualTo("int"));
             Assert.That(newinstance.ArraySize, Is.InstanceOf<IntegerLiteralExpression>());
             Assert.That(((IntegerLiteralExpression)newinstance.ArraySize).Value, Is.EqualTo("10"));

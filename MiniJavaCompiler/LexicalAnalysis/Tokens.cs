@@ -11,20 +11,14 @@ namespace MiniJavaCompiler.LexicalAnalysis
         int Col { get; }
     }
 
+    // ITypeToken is a token that can appear representing a type
+    // by itself.
     public interface ITypeToken : IToken { }
 
     public abstract class TokenElement : IToken
     {
-        public int Row
-        {
-            get;
-            private set;
-        }
-        public int Col
-        {
-            get;
-            private set;
-        }
+        public int Row { get; private set; }
+        public int Col { get; private set; }
 
         protected TokenElement(int row, int col)
         {
@@ -35,17 +29,9 @@ namespace MiniJavaCompiler.LexicalAnalysis
 
     public class ErrorToken : TokenElement
     {
-        public string Message
-        {
-            get;
-            private set;
-        }
+        public string Message { get; private set; }
 
-        public string Lexeme
-        {
-            get;
-            private set;
-        }
+        public string Lexeme { get; private set; }
 
         public ErrorToken(string lexeme, string message, int row, int col)
             : base(row, col)
@@ -57,11 +43,7 @@ namespace MiniJavaCompiler.LexicalAnalysis
 
     public class StringToken : TokenElement
     {
-        public string Value
-        {
-            get;
-            private set;
-        }
+        public string Value { get; private set; }
 
         public StringToken(string name, int row, int col)
             : base(row, col)

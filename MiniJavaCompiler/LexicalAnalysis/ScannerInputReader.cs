@@ -8,16 +8,8 @@ namespace MiniJavaCompiler.LexicalAnalysis
 {
     public class EndlessCommentError : Exception
     {
-        public int Row
-        {
-            get;
-            private set;
-        }
-        public int Col
-        {
-            get;
-            private set;
-        }
+        public int Row { get; private set; }
+        public int Col { get; private set; }
 
         public EndlessCommentError(string message, int row, int col)
             : base(message)
@@ -34,54 +26,46 @@ namespace MiniJavaCompiler.LexicalAnalysis
     // symbols from comment starter symbols).
     internal class ScannerInputReader
     {
-        private TextReader input;
-        private char? buffer;
-        private int commentStartRow;
-        private int commentStartCol;
-        internal int Row
-        {
-            get;
-            private set;
-        }
-        internal int Col
-        {
-            get;
-            private set;
-        }
+        private readonly TextReader _input;
+        private char? _buffer;
+        private int _commentStartRow;
+        private int _commentStartCol;
+        internal int Row { get; private set; }
+        internal int Col { get; private set; }
 
         internal ScannerInputReader(TextReader input)
         {
-            this.input = input;
-            buffer = null;
+            this._input = input;
+            _buffer = null;
             Row = 1; Col = 0;
         }
 
         internal char Peek()
         {
-            if (buffer != null)
+            if (_buffer != null)
             {
-                char temp = (char)buffer;
+                char temp = (char)_buffer;
                 return temp;
             }
             else
-                return (char)input.Peek();
+                return (char)_input.Peek();
         }
 
         internal bool InputLeft()
         {
-            return !(input.Peek() < 0 && buffer == null);
+            return !(_input.Peek() < 0 && _buffer == null);
         }
 
         internal string Read()
         {
             char symbol;
-            if (buffer != null)
+            if (_buffer != null)
             {
-                symbol = (char)buffer;
-                buffer = null;
+                symbol = (char)_buffer;
+                _buffer = null;
             }
             else
-                symbol = (char)input.Read();
+                symbol = (char)_input.Read();
 
             AdvanceScannerPosition(symbol);
 
@@ -127,12 +111,12 @@ namespace MiniJavaCompiler.LexicalAnalysis
             if (!InputLeft() || !Peek().Equals('/'))
                 return false;
 
-            commentStartRow = Row;
-            commentStartCol = Col + 1;
-            buffer = (char)input.Read(); // may be a division symbol, not a comment starter
-            if (input.Peek().Equals('/'))
+            _commentStartRow = Row;
+            _commentStartCol = Col + 1;
+            _buffer = (char)_input.Read(); // may be a division symbol, not a comment starter
+            if (_input.Peek().Equals('/'))
                 SkipOneLineComment();
-            else if (input.Peek().Equals('*'))
+            else if (_input.Peek().Equals('*'))
                 SkipMultilineComment();
             else
                 return false;
@@ -151,7 +135,7 @@ namespace MiniJavaCompiler.LexicalAnalysis
             {
                 if (!ReadUntil('*'))
                     throw new EndlessCommentError("Reached end of input while scanning for a comment.",
-                    commentStartRow, commentStartCol);
+                    _commentStartRow, _commentStartCol);
                 if (Peek().Equals('/'))
                 {
                     Read();

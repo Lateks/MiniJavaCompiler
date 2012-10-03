@@ -14,7 +14,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
     // parser (no explicit stack).
     internal class ExpressionParser : ParserBase
     {
-        private readonly string[][] operatorsByLevel = new []
+        private readonly string[][] _operatorsByLevel = new []
             {
                 new [] { "||" },                                           
                 new [] { "&&" },
@@ -27,7 +27,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         public ExpressionParser(IParserInputReader input, IErrorReporter reporter)
             : base(input, reporter) { }
 
-        public new IExpression Parse()
+        public IExpression Parse()
         {
             try
             {
@@ -35,7 +35,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             }
             catch (SyntaxError e)
             {
-                errorReporter.ReportError(e.Message, e.Row, e.Col);
+                ErrorReporter.ReportError(e.Message, e.Row, e.Col);
                 RecoverFromExpressionParsing();
             }
             catch (LexicalErrorEncountered)
@@ -47,7 +47,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
         private List<IExpression> ExpressionList()
         {
-            var parser = new CommaSeparatedListParser(Input, errorReporter);
+            var parser = new CommaSeparatedListParser(Input, ErrorReporter);
             return parser.ParseList<IExpression, RightParenthesis>(Parse);
         }
 
@@ -67,12 +67,12 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         private IExpression ParseBinaryOpExpression(int precedenceLevel)
         {
             var parseOperand = GetParserFunction(precedenceLevel);
-            return ParseBinaryOpTail(parseOperand(), parseOperand, operatorsByLevel[precedenceLevel]);
+            return ParseBinaryOpTail(parseOperand(), parseOperand, _operatorsByLevel[precedenceLevel]);
         }
 
         private Func<IExpression> GetParserFunction(int precedenceLevel)
         {
-            if (precedenceLevel == operatorsByLevel.Count() - 1)
+            if (precedenceLevel == _operatorsByLevel.Count() - 1)
             {
                 return MultiplicationOperand;
             }
@@ -134,7 +134,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             }
             catch (SyntaxError e)
             {
-                errorReporter.ReportError(e.Message, e.Row, e.Col);
+                ErrorReporter.ReportError(e.Message, e.Row, e.Col);
                 return RecoverFromTermMatching();
             }
             catch (LexicalErrorEncountered)

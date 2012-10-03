@@ -21,40 +21,41 @@ namespace MiniJavaCompiler.LexicalAnalysis
 
     public class MiniJavaScanner : IScanner
     {
-        public static HashSet<char>
-            symbols = new HashSet<char>(new char[] { ';', '(', ')', '[', ']', '.', '{', '}', ',' }),
-            singleCharOperators = new HashSet<char>(new char[] { '/', '+', '-', '*', '<', '>', '!', '%' }),
-            multiCharOperatorSymbols = new HashSet<char>(new char[] { '&', '=', '|' });
-        public static HashSet<string>
-            keywords = new HashSet<string>(new string[] { "this", "true", "false", "new",
+        private static readonly HashSet<char>
+            Symbols = new HashSet<char>(new char[] { ';', '(', ')', '[', ']', '.', '{', '}', ',' }),
+            SingleCharOperators = new HashSet<char>(new char[] { '/', '+', '-', '*', '<', '>', '!', '%' }),
+            MultiCharOperatorSymbols = new HashSet<char>(new char[] { '&', '=', '|' });
+
+        private static readonly HashSet<string>
+            Keywords = new HashSet<string>(new string[] { "this", "true", "false", "new",
                                                         "length", "System", "out", "println",
                                                         "if", "else", "while", "return", "assert",
                                                         "public", "static", "main", "class", "extends" }),
-            types = new HashSet<string>(new string[] { "int", "boolean", "void" });
+            Types = new HashSet<string>(new string[] { "int", "boolean", "void" });
 
-        private ScannerInputReader input;
-        private Queue<IToken> tokens;
-        private int startRow;
-        private int startCol;
-        private bool EOFreached;
+        private readonly ScannerInputReader input;
+        private readonly Queue<IToken> tokens;
+        private int _startRow;
+        private int _startCol;
+        private bool _endOfFileReached;
 
         public MiniJavaScanner(TextReader input)
         {
             this.input = new ScannerInputReader(input);
             tokens = new Queue<IToken>();
             BuildTokenList();
-            EOFreached = false;
+            _endOfFileReached = false;
         }
 
         public IToken NextToken()
         {
-            if (EOFreached)
+            if (_endOfFileReached)
             {
                 throw new OutOfInput("Reached end of file while parsing.");
             }
             if (tokens.Count > 0)
                 return tokens.Dequeue();
-            EOFreached = true;
+            _endOfFileReached = true;
             return new EndOfFile(input.Row, input.Col);
         }
 
@@ -82,15 +83,15 @@ namespace MiniJavaCompiler.LexicalAnalysis
             if (!input.InputLeft())
                 return new EndOfFile(input.Row, input.Col);
 
-            startRow = input.Row;     // store starting row and column for the token object 
-            startCol = input.Col + 1;
+            _startRow = input.Row;     // store starting row and column for the token object 
+            _startCol = input.Col + 1;
 
             char inputChar = input.Peek();
-            if (singleCharOperators.Contains(inputChar))
+            if (SingleCharOperators.Contains(inputChar))
                 return MakeSingleCharOperatorToken();
-            else if (multiCharOperatorSymbols.Contains(inputChar))
+            else if (MultiCharOperatorSymbols.Contains(inputChar))
                 return MakeAssignmentOrMultiCharOperatorToken();
-            else if (symbols.Contains(inputChar))
+            else if (Symbols.Contains(inputChar))
                 return MakeSymbolToken();
             else if (Char.IsDigit(inputChar))
                 return MakeIntegerLiteralToken();
@@ -100,7 +101,7 @@ namespace MiniJavaCompiler.LexicalAnalysis
             {
                 string token = input.Read();
                 return new ErrorToken(token, "Invalid token \"" + token + ".",
-                    startRow, startCol);
+                    _startRow, _startCol);
             }
         }
 
@@ -109,10 +110,10 @@ namespace MiniJavaCompiler.LexicalAnalysis
             if (input.Peek().Equals('!'))
             {
                 input.Read();
-                return new UnaryNotToken(startRow, startCol);
+                return new UnaryNotToken(_startRow, _startCol);
             }
             else
-                return new BinaryOperatorToken(input.Read(), startRow, startCol);
+                return new BinaryOperatorToken(input.Read(), _startRow, _startCol);
         }
 
         private IToken MakeAssignmentOrMultiCharOperatorToken()
@@ -121,13 +122,13 @@ namespace MiniJavaCompiler.LexicalAnalysis
             if (input.InputLeft() && input.Peek().ToString().Equals(symbol))
             {
                 symbol += input.Read();
-                return new BinaryOperatorToken(symbol, startRow, startCol);
+                return new BinaryOperatorToken(symbol, _startRow, _startCol);
             }
             else if (symbol.Equals("="))
-                return new AssignmentToken(startRow, startCol);
+                return new AssignmentToken(_startRow, _startCol);
             else
                 return new ErrorToken(symbol, "Unexpected token " + symbol + ".",
-                    startRow, startCol);
+                    _startRow, _startCol);
         }
 
         private IToken MakeSymbolToken()
@@ -136,23 +137,23 @@ namespace MiniJavaCompiler.LexicalAnalysis
             switch (token)
             {
                 case "(":
-                    return new LeftParenthesis(startRow, startCol);
+                    return new LeftParenthesis(_startRow, _startCol);
                 case ")":
-                    return new RightParenthesis(startRow, startCol);
+                    return new RightParenthesis(_startRow, _startCol);
                 case "[":
-                    return new LeftBracket(startRow, startCol);
+                    return new LeftBracket(_startRow, _startCol);
                 case "]":
-                    return new RightBracket(startRow, startCol);
+                    return new RightBracket(_startRow, _startCol);
                 case "{":
-                    return new LeftCurlyBrace(startRow, startCol);
+                    return new LeftCurlyBrace(_startRow, _startCol);
                 case "}":
-                    return new RightCurlyBrace(startRow, startCol);
+                    return new RightCurlyBrace(_startRow, _startCol);
                 case ".":
-                    return new MethodInvocationToken(startRow, startCol);
+                    return new MethodInvocationToken(_startRow, _startCol);
                 case ",":
-                    return new ParameterSeparator(startRow, startCol);
+                    return new ParameterSeparator(_startRow, _startCol);
                 default:
-                    return new EndLine(startRow, startCol);
+                    return new EndLine(_startRow, _startCol);
             }
         }
 
@@ -161,7 +162,7 @@ namespace MiniJavaCompiler.LexicalAnalysis
             string token = "";
             while (input.InputLeft() && Char.IsDigit(input.Peek()))
                 token += input.Read();
-            return new IntegerLiteralToken(token, startRow, startCol);
+            return new IntegerLiteralToken(token, _startRow, _startCol);
         }
 
         private IToken MakeIdentifierOrKeywordToken()
@@ -170,11 +171,11 @@ namespace MiniJavaCompiler.LexicalAnalysis
             while (input.InputLeft() && (Char.IsLetterOrDigit(input.Peek()) ||
                                          input.Peek().Equals('_')))
                 token += input.Read();
-            if (types.Contains(token))
-                return new MiniJavaType(token, startRow, startCol);
-            if (keywords.Contains(token))
-                return new KeywordToken(token, startRow, startCol);
-            return new Identifier(token, startRow, startCol);
+            if (Types.Contains(token))
+                return new MiniJavaType(token, _startRow, _startCol);
+            if (Keywords.Contains(token))
+                return new KeywordToken(token, _startRow, _startCol);
+            return new Identifier(token, _startRow, _startCol);
         }
     }
 }
