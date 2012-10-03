@@ -80,20 +80,20 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             {
                 IToken startToken = Input.MatchAndConsume<KeywordToken>("class");
                 var classIdent = Input.MatchAndConsume<Identifier>();
-                Input.MatchAndConsume<LeftCurlyBrace>();
+                Input.MatchAndConsume<PunctuationToken>("{");
                 Input.MatchAndConsume<KeywordToken>("public");
                 Input.MatchAndConsume<KeywordToken>("static");
                 Input.MatchAndConsume<MiniJavaType>("void");
                 Input.MatchAndConsume<KeywordToken>("main");
 
-                Input.MatchAndConsume<LeftParenthesis>();
-                Input.MatchAndConsume<RightParenthesis>();
+                Input.MatchAndConsume<PunctuationToken>("(");
+                Input.MatchAndConsume<PunctuationToken>(")");
 
-                Input.MatchAndConsume<LeftCurlyBrace>();
+                Input.MatchAndConsume<PunctuationToken>("{");
                 var mainStatements = StatementList();
-                Input.MatchAndConsume<RightCurlyBrace>();
+                Input.MatchAndConsume<PunctuationToken>("}");
 
-                Input.MatchAndConsume<RightCurlyBrace>();
+                Input.MatchAndConsume<PunctuationToken>("}");
                 return new MainClassDeclaration(classIdent.Value,
                     mainStatements, startToken.Row, startToken.Col);
             }
@@ -126,7 +126,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
                     return VariableDeclaration();
                 else if (Input.NextTokenIs<KeywordToken>())
                     return MakeKeywordStatement();
-                else if (Input.NextTokenIs<LeftCurlyBrace>())
+                else if (Input.NextTokenIs<PunctuationToken>("{"))
                     return MakeBlockStatement();
                 else // Can be an assignment, a method invocation or a variable
                     // declaration for a user defined type.
@@ -151,7 +151,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             while (!Input.NextTokenIs<EndOfFile>())
             {
                 var token = Input.Consume<IToken>();
-                if (token is EndLine)
+                if (token is PunctuationToken && ((PunctuationToken)token).Value == ";")
                     break;
             }
         }
@@ -165,12 +165,12 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             if (Input.NextTokenIs<Identifier>())
             {
                 var ident = Input.Consume<Identifier>();
-                if (Input.NextTokenIs<LeftBracket>())
+                if (Input.NextTokenIs<PunctuationToken>("["))
                 {
-                    var leftBracket = Input.Consume<LeftBracket>();
-                    if (Input.NextTokenIs<RightBracket>())
+                    var leftBracket = Input.Consume<PunctuationToken>();
+                    if (Input.NextTokenIs<PunctuationToken>("]"))
                     { // The statement is a local array variable declaration.
-                        Input.Consume<RightBracket>();
+                        Input.Consume<PunctuationToken>();
                         return FinishParsingLocalVariableDeclaration(ident, true);
                     }
                     else
@@ -207,7 +207,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
         private IStatement MakeMethodInvocationStatement(IExpression expression)
         {
-            Input.MatchAndConsume<EndLine>();
+            Input.MatchAndConsume<PunctuationToken>(";");
             if (expression is MethodInvocation)
                 return (MethodInvocation)expression;
             else
@@ -222,16 +222,16 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         {
             var assignment = Input.MatchAndConsume<OperatorToken>("=");
             IExpression rhs = Expression();
-            Input.MatchAndConsume<EndLine>();
+            Input.MatchAndConsume<PunctuationToken>(";");
             return new AssignmentStatement(lhs, rhs,
                 assignment.Row, assignment.Col);
         }
 
         private IStatement MakeBlockStatement()
         {
-            IToken blockStart = Input.MatchAndConsume<LeftCurlyBrace>();
+            IToken blockStart = Input.MatchAndConsume<PunctuationToken>("{");
             var statements = StatementList();
-            Input.MatchAndConsume<RightCurlyBrace>();
+            Input.MatchAndConsume<PunctuationToken>("}");
             return new BlockStatement(statements, blockStart.Row, blockStart.Col);
         }
 
@@ -261,7 +261,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         {
             var returnToken = Input.Consume<KeywordToken>();
             var expression = Expression();
-            Input.MatchAndConsume<EndLine>();
+            Input.MatchAndConsume<PunctuationToken>(";");
             return new ReturnStatement(expression,
                 returnToken.Row, returnToken.Col);
         }
@@ -269,14 +269,14 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         private IStatement MakePrintStatement()
         {
             var systemToken = Input.Consume<KeywordToken>();
-            Input.MatchAndConsume<MethodInvocationToken>();
+            Input.MatchAndConsume<PunctuationToken>(".");
             Input.MatchAndConsume<KeywordToken>("out");
-            Input.MatchAndConsume<MethodInvocationToken>();
+            Input.MatchAndConsume<PunctuationToken>(".");
             Input.MatchAndConsume<KeywordToken>("println");
-            Input.MatchAndConsume<LeftParenthesis>();
+            Input.MatchAndConsume<PunctuationToken>("(");
             var integerExpression = Expression();
-            Input.MatchAndConsume<RightParenthesis>();
-            Input.MatchAndConsume<EndLine>();
+            Input.MatchAndConsume<PunctuationToken>(")");
+            Input.MatchAndConsume<PunctuationToken>(";");
             return new PrintStatement(integerExpression,
                 systemToken.Row, systemToken.Col);
         }
@@ -284,9 +284,9 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         private IStatement MakeWhileStatement()
         {
             var whileToken = Input.Consume<KeywordToken>();
-            Input.MatchAndConsume<LeftParenthesis>();
+            Input.MatchAndConsume<PunctuationToken>("(");
             var booleanExpr = Expression();
-            Input.MatchAndConsume<RightParenthesis>();
+            Input.MatchAndConsume<PunctuationToken>(")");
             var whileBody = Statement();
             return new WhileStatement(booleanExpr, whileBody,
                 whileToken.Row, whileToken.Col);
@@ -295,9 +295,9 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         private IStatement MakeIfStatement()
         {
             var ifToken = Input.Consume<KeywordToken>();
-            Input.MatchAndConsume<LeftParenthesis>();
+            Input.MatchAndConsume<PunctuationToken>("(");
             IExpression booleanExpr = Expression();
-            Input.MatchAndConsume<RightParenthesis>();
+            Input.MatchAndConsume<PunctuationToken>(")");
             var thenBranch = Statement();
             var elseBranch = OptionalElseBranch();
             return new IfStatement(booleanExpr, thenBranch, elseBranch,
@@ -307,17 +307,17 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         private IStatement MakeAssertStatement()
         {
             var assertToken = Input.Consume<KeywordToken>();
-            Input.MatchAndConsume<LeftParenthesis>();
+            Input.MatchAndConsume<PunctuationToken>("(");
             IExpression expr = Expression();
-            Input.MatchAndConsume<RightParenthesis>();
-            Input.MatchAndConsume<EndLine>(); // not in the original CFG, probably a mistake?
+            Input.MatchAndConsume<PunctuationToken>(")");
+            Input.MatchAndConsume<PunctuationToken>(";"); // not in the original CFG, probably a mistake?
             return new AssertStatement(expr, assertToken.Row, assertToken.Col);
         }
 
         private IStatement FinishParsingLocalVariableDeclaration(Identifier variableTypeName, bool isArray)
         {
             var variableName = Input.MatchAndConsume<Identifier>();
-            Input.MatchAndConsume<EndLine>();
+            Input.MatchAndConsume<PunctuationToken>(";");
             return new VariableDeclaration(variableName.Value, variableTypeName.Value, isArray,
                 variableTypeName.Row, variableTypeName.Col);
         }
@@ -348,9 +348,9 @@ namespace MiniJavaCompiler.SyntaxAnalysis
                 IToken startToken = Input.MatchAndConsume<KeywordToken>("class");
                 var classIdent = Input.MatchAndConsume<Identifier>();
                 var inheritedClass = OptionalInheritance();
-                Input.MatchAndConsume<LeftCurlyBrace>();
+                Input.MatchAndConsume<PunctuationToken>("{");
                 var declarations = DeclarationList();
-                Input.MatchAndConsume<RightCurlyBrace>();
+                Input.MatchAndConsume<PunctuationToken>("}");
                 return new ClassDeclaration(classIdent.Value, inheritedClass,
                     declarations, startToken.Row, startToken.Col);
             }
@@ -371,7 +371,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
         public string OptionalInheritance()
         {
-            if (!(Input.NextTokenIs<LeftCurlyBrace>()))
+            if (!(Input.NextTokenIs<PunctuationToken>("{")))
             {
                 Input.MatchAndConsume<KeywordToken>("extends");
                 return Input.MatchAndConsume<Identifier>().Value;
@@ -417,7 +417,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             while (!Input.NextTokenIs<EndOfFile>())
             {
                 var token = Input.Consume<IToken>();
-                if (token is RightCurlyBrace)
+                if (token is PunctuationToken && ((PunctuationToken)token).Value == "}")
                     break;
             }
         }
@@ -425,7 +425,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         public VariableDeclaration VariableDeclaration()
         {
             var variableDecl = VariableOrFormalParameterDeclaration();
-            Input.MatchAndConsume<EndLine>();
+            Input.MatchAndConsume<PunctuationToken>(";");
             return variableDecl;
         }
 
@@ -454,11 +454,11 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         }
 
         private void RecoverFromVariableDeclarationMatching()
-        { // This could be parameterised on follow set.
+        { // TODO: This could be parameterised on follow set.
             while (!(Input.NextTokenIs<EndOfFile>()
-                || Input.NextTokenIs<EndLine>()
-                || Input.NextTokenIs<ParameterSeparator>()
-                || Input.NextTokenIs<RightParenthesis>()))
+                || Input.NextTokenIs<PunctuationToken>(";")
+                || Input.NextTokenIs<PunctuationToken>(",")
+                || Input.NextTokenIs<PunctuationToken>(")")))
                 Input.Consume<IToken>();
         }
 
@@ -467,13 +467,13 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             IToken startToken = Input.MatchAndConsume<KeywordToken>("public");
             var typeInfo = Type();
             var type = (StringToken)typeInfo.Item1;
-            Identifier methodName = Input.MatchAndConsume<Identifier>();
-            Input.MatchAndConsume<LeftParenthesis>();
+            var methodName = Input.MatchAndConsume<Identifier>();
+            Input.MatchAndConsume<PunctuationToken>("(");
             List<VariableDeclaration> parameters = FormalParameters();
-            Input.MatchAndConsume<RightParenthesis>();
-            Input.MatchAndConsume<LeftCurlyBrace>();
+            Input.MatchAndConsume<PunctuationToken>(")");
+            Input.MatchAndConsume<PunctuationToken>("{");
             List<IStatement> methodBody = StatementList();
-            Input.MatchAndConsume<RightCurlyBrace>();
+            Input.MatchAndConsume<PunctuationToken>("}");
             return new MethodDeclaration(methodName.Value, type.Value,
                 typeInfo.Item2, parameters, methodBody, startToken.Row,
                 startToken.Col);
@@ -485,10 +485,10 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         public Tuple<ITypeToken, bool> Type()
         {
             var type = Input.MatchAndConsume<ITypeToken>();
-            if (Input.NextTokenIs<LeftBracket>())
+            if (Input.NextTokenIs<PunctuationToken>("["))
             {
-                Input.MatchAndConsume<LeftBracket>();
-                Input.MatchAndConsume<RightBracket>();
+                Input.MatchAndConsume<PunctuationToken>();
+                Input.MatchAndConsume<PunctuationToken>("]");
                 return new Tuple<ITypeToken, bool>(type, true);
             }
             return new Tuple<ITypeToken, bool>(type, false);
@@ -499,26 +499,26 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         private List<ClassDeclaration> ClassDeclarationList()
         {
             var parser = new ListParser(Input, ErrorReporter);
-            return parser.ParseList<ClassDeclaration, EndOfFile>(ClassDeclaration);
+            return parser.ParseList(ClassDeclaration);
         }
 
         private List<Declaration> DeclarationList()
         {
             var parser = new ListParser(Input, ErrorReporter);
-            return parser.ParseList<Declaration, RightCurlyBrace>(Declaration);
+            return parser.ParseList<Declaration, PunctuationToken>(Declaration, "}");
         }
 
         private List<IStatement> StatementList()
         {
             var parser = new ListParser(Input, ErrorReporter);
-            return parser.ParseList<IStatement, RightCurlyBrace>(Statement);
+            return parser.ParseList<IStatement, PunctuationToken>(Statement, "}");
         }
 
         private List<VariableDeclaration> FormalParameters()
         {
             var parser = new CommaSeparatedListParser(Input, ErrorReporter);
-            return parser.ParseList<VariableDeclaration, RightParenthesis>(
-                VariableOrFormalParameterDeclaration);
+            return parser.ParseList<VariableDeclaration, PunctuationToken>(
+                VariableOrFormalParameterDeclaration, ")");
         }
     }
 }

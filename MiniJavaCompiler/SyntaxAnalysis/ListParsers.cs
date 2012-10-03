@@ -8,56 +8,75 @@ using MiniJavaCompiler.Support;
 
 namespace MiniJavaCompiler.SyntaxAnalysis
 {
-    public interface IListParser
+    public interface IListEndingInStringTokenParser
     {
-        List<TNodeType> ParseList<TNodeType, TFollowToken>(Func<TNodeType> parseNode)
+        List<TNodeType> ParseList<TNodeType, TFollowToken>(Func<TNodeType> parseNode, string followTokenValue)
             where TNodeType : ISyntaxTreeNode
-            where TFollowToken : IToken;
+            where TFollowToken : StringToken;
     }
 
-    internal class ListParser : ParserBase, IListParser
+    public interface IListEndingInEndOfFileParser
+    {
+        List<TNodeType> ParseList<TNodeType>(Func<TNodeType> parseNode)
+            where TNodeType : ISyntaxTreeNode;
+    }
+
+    internal class ListParser : ParserBase, IListEndingInEndOfFileParser, IListEndingInStringTokenParser
     {
         public ListParser(IParserInputReader input, IErrorReporter errorReporter)
             : base(input, errorReporter) { }
 
-        public List<TNodeType> ParseList<TNodeType, TFollowToken>(Func<TNodeType> parseNode)
+        public List<TNodeType> ParseList<TNodeType>(Func<TNodeType> parseNode)
             where TNodeType : ISyntaxTreeNode
-            where TFollowToken : IToken
+        {
+            return Parse(parseNode, Input.NextTokenIs<EndOfFile>);
+
+        }
+
+        public List<TNodeType> ParseList<TNodeType, TFollowToken>(Func<TNodeType> parseNode, string followTokenValue)
+            where TNodeType : ISyntaxTreeNode
+            where TFollowToken : StringToken
+        {
+            return Parse(parseNode, () => Input.NextTokenIs<TFollowToken>(followTokenValue));
+        }
+
+        private static List<TNodeType> Parse<TNodeType>(Func<TNodeType> parseNode, Func<bool> nextTokenIsFollowToken)
+            where TNodeType : ISyntaxTreeNode
         {
             var nodeList = new List<TNodeType>();
-            if (!(Input.NextTokenIs<TFollowToken>()))
+            if (!nextTokenIsFollowToken())
             {
                 nodeList.Add(parseNode());
-                nodeList.AddRange(ParseList<TNodeType, TFollowToken>(parseNode));
+                nodeList.AddRange(Parse(parseNode, nextTokenIsFollowToken));
             }
             return nodeList;
         }
     }
 
-    internal class CommaSeparatedListParser : ParserBase, IListParser
+    internal class CommaSeparatedListParser : ParserBase, IListEndingInStringTokenParser
     {
         public CommaSeparatedListParser(IParserInputReader input, IErrorReporter errorReporter)
             : base(input, errorReporter) { }
 
-        public List<TNodeType> ParseList<TNodeType, TFollowToken>(Func<TNodeType> parseNode)
+        public List<TNodeType> ParseList<TNodeType, TFollowToken>(Func<TNodeType> parseNode, string followTokenValue)
             where TNodeType : ISyntaxTreeNode
-            where TFollowToken : IToken
+            where TFollowToken : StringToken
         {
-            return ParseList<TNodeType, TFollowToken>(parseNode, false);
+            return ParseList<TNodeType, TFollowToken>(parseNode, followTokenValue, false);
         }
 
         private List<TNodeType> ParseList<TNodeType, TFollowToken>
-            (Func<TNodeType> parseNode, bool isListTail)
+            (Func<TNodeType> parseNode, string followTokenValue, bool isListTail)
             where TNodeType : ISyntaxTreeNode
-            where TFollowToken : IToken
+            where TFollowToken : StringToken
         {
             var list = new List<TNodeType>();
-            if (!(Input.NextTokenIs<TFollowToken>()))
+            if (!(Input.NextTokenIs<TFollowToken>(followTokenValue)))
             {
-                if (isListTail) Input.MatchAndConsume<ParameterSeparator>();
+                if (isListTail) Input.MatchAndConsume<PunctuationToken>(",");
                 list.Add(parseNode());
                 list.AddRange(ParseList<TNodeType, TFollowToken>(
-                    parseNode, true));
+                    parseNode, followTokenValue, true));
             }
             return list;
         }

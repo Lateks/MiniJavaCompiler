@@ -22,15 +22,15 @@ namespace MiniJavaCompiler.LexicalAnalysis
     public class MiniJavaScanner : IScanner
     {
         private static readonly char[]
-            Symbols = new [] { ';', '(', ')', '[', ']', '.', '{', '}', ',' },
+            Punctuation = new [] { ';', '(', ')', '[', ']', '.', '{', '}', ',' },
             SingleCharOperatorSymbols = new [] { '/', '+', '-', '*', '<', '>', '%', '!' },
             MultiCharOperatorSymbols = new [] { '&', '=', '|' };
 
         private static readonly string[]
             Keywords = new [] { "this", "true", "false", "new",
-                                                        "length", "System", "out", "println",
-                                                        "if", "else", "while", "return", "assert",
-                                                        "public", "static", "main", "class", "extends" },
+                                "length", "System", "out", "println",
+                                "if", "else", "while", "return", "assert",
+                                "public", "static", "main", "class", "extends" },
             Types = new [] { "int", "boolean", "void" };
 
         private readonly ScannerInputReader _input;
@@ -91,8 +91,8 @@ namespace MiniJavaCompiler.LexicalAnalysis
                 return MakeSingleCharBinaryOperatorToken();
             else if (MultiCharOperatorSymbols.Contains(inputSymbol))
                 return MakeAssignmentOrMultiCharOperatorToken();
-            else if (Symbols.Contains(inputSymbol))
-                return MakeSymbolToken();
+            else if (Punctuation.Contains(inputSymbol))
+                return MakePunctuationToken();
             else if (Char.IsDigit(inputSymbol))
                 return MakeIntegerLiteralToken();
             else if (Char.IsLetter(inputSymbol))
@@ -125,30 +125,10 @@ namespace MiniJavaCompiler.LexicalAnalysis
                     _startRow, _startCol);
         }
 
-        private IToken MakeSymbolToken()
+        private IToken MakePunctuationToken()
         {
             string token = _input.Read();
-            switch (token)
-            {
-                case "(":
-                    return new LeftParenthesis(_startRow, _startCol);
-                case ")":
-                    return new RightParenthesis(_startRow, _startCol);
-                case "[":
-                    return new LeftBracket(_startRow, _startCol);
-                case "]":
-                    return new RightBracket(_startRow, _startCol);
-                case "{":
-                    return new LeftCurlyBrace(_startRow, _startCol);
-                case "}":
-                    return new RightCurlyBrace(_startRow, _startCol);
-                case ".":
-                    return new MethodInvocationToken(_startRow, _startCol);
-                case ",":
-                    return new ParameterSeparator(_startRow, _startCol);
-                default:
-                    return new EndLine(_startRow, _startCol);
-            }
+            return new PunctuationToken(token, _startRow, _startCol);
         }
 
         private IntegerLiteralToken MakeIntegerLiteralToken()

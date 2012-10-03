@@ -50,14 +50,14 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         private List<IExpression> ExpressionList()
         {
             var parser = new CommaSeparatedListParser(Input, ErrorReporter);
-            return parser.ParseList<IExpression, RightParenthesis>(Parse);
+            return parser.ParseList<IExpression, PunctuationToken>(Parse, ")");
         }
 
         private void RecoverFromExpressionParsing()
         {
             while (!(Input.NextTokenIs<EndOfFile>()
-                || Input.NextTokenIs<RightParenthesis>()
-                || Input.NextTokenIs<EndLine>()))
+                || Input.NextTokenIs<PunctuationToken>(")")
+                || Input.NextTokenIs<PunctuationToken>(";")))
                 Input.Consume<IToken>();
         }
 
@@ -124,7 +124,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
                     return MakeVariableReferenceExpression();
                 else if (Input.NextTokenIs<IntegerLiteralToken>())
                     return MakeIntegerLiteralExpression();
-                else if (Input.NextTokenIs<LeftParenthesis>())
+                else if (Input.NextTokenIs<PunctuationToken>("("))
                     return MakeParenthesisedExpression();
                 else
                 {
@@ -148,10 +148,10 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         }
 
         private IExpression RecoverFromTermMatching()
-        { // could be parameterised on follow set
+        { // TODO: could be parameterised on follow set
             while (!(Input.NextTokenIs<EndOfFile>()
-                || Input.NextTokenIs<RightParenthesis>()
-                || Input.NextTokenIs<EndLine>()
+                || Input.NextTokenIs<PunctuationToken>(")")
+                || Input.NextTokenIs<PunctuationToken>(";")
                 || Input.NextTokenIs<OperatorToken>()))
                 Input.Consume<IToken>();
             return null;
@@ -159,9 +159,9 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
         private IExpression MakeParenthesisedExpression()
         {
-            Input.Consume<LeftParenthesis>();
+            Input.MatchAndConsume<PunctuationToken>("(");
             IExpression parenthesisedExpression = Parse();
-            Input.MatchAndConsume<RightParenthesis>();
+            Input.MatchAndConsume<PunctuationToken>(")");
             return OptionalTermTail(parenthesisedExpression);
         }
 
@@ -225,9 +225,9 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
         public IExpression OptionalTermTail(IExpression lhs)
         {
-            if (Input.NextTokenIs<LeftBracket>())
+            if (Input.NextTokenIs<PunctuationToken>("["))
                 return MakeArrayIndexingExpression(lhs);
-            else if (Input.NextTokenIs<MethodInvocationToken>())
+            else if (Input.NextTokenIs<PunctuationToken>("."))
                 return MakeMethodInvocationExpression(lhs);
             else
                 return lhs;
@@ -235,7 +235,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
         private IExpression MakeMethodInvocationExpression(IExpression methodOwner)
         {
-            Input.Consume<MethodInvocationToken>();
+            Input.MatchAndConsume<PunctuationToken>(".");
             if (Input.NextTokenIs<KeywordToken>())
                 return MakeLengthMethodInvocation(methodOwner);
             else
@@ -245,9 +245,9 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         private IExpression MakeUserDefinedMethodInvocation(IExpression methodOwner)
         {
             var methodName = Input.MatchAndConsume<Identifier>();
-            Input.MatchAndConsume<LeftParenthesis>();
+            Input.MatchAndConsume<PunctuationToken>("(");
             var parameters = ExpressionList();
-            Input.MatchAndConsume<RightParenthesis>();
+            Input.MatchAndConsume<PunctuationToken>(")");
             return OptionalTermTail(new MethodInvocation(methodOwner,
                 methodName.Value, parameters, methodName.Row, methodName.Col));
         }
@@ -262,9 +262,9 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
         private IExpression MakeArrayIndexingExpression(IExpression lhs)
         {
-            var startToken = Input.MatchAndConsume<LeftBracket>();
+            var startToken = Input.MatchAndConsume<PunctuationToken>("[");
             var indexExpression = Parse();
-            Input.MatchAndConsume<RightBracket>();
+            Input.MatchAndConsume<PunctuationToken>("]");
             return OptionalTermTail(new ArrayIndexingExpression(lhs, indexExpression,
                 startToken.Row, startToken.Col));
         }
@@ -272,17 +272,17 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         public Tuple<ITypeToken, IExpression> NewType()
         {
             var type = Input.MatchAndConsume<ITypeToken>();
-            if (type is MiniJavaType || !(Input.NextTokenIs<LeftParenthesis>()))
+            if (type is MiniJavaType || !(Input.NextTokenIs<PunctuationToken>("(")))
             { // must be an array
-                Input.MatchAndConsume<LeftBracket>();
+                Input.MatchAndConsume<PunctuationToken>("[");
                 var arraySize = Parse();
-                Input.MatchAndConsume<RightBracket>();
+                Input.MatchAndConsume<PunctuationToken>("]");
                 return new Tuple<ITypeToken, IExpression>(type, arraySize);
             }
             else
             {
-                Input.MatchAndConsume<LeftParenthesis>();
-                Input.MatchAndConsume<RightParenthesis>();
+                Input.MatchAndConsume<PunctuationToken>("(");
+                Input.MatchAndConsume<PunctuationToken>(")");
                 return new Tuple<ITypeToken, IExpression>(type, null);
             }
         }

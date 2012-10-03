@@ -73,8 +73,8 @@ namespace MiniJavaCompilerTest
         {
             var lexer = new MiniJavaScanner(new StringReader(type + "[]"));
             Assert.That(lexer.NextToken(), Is.InstanceOf<MiniJavaType>());
-            Assert.That(lexer.NextToken(), Is.InstanceOf<LeftBracket>());
-            Assert.That(lexer.NextToken(), Is.InstanceOf<RightBracket>());
+            Assert.That(lexer.NextToken(), Is.InstanceOf<PunctuationToken>());
+            Assert.That(lexer.NextToken(), Is.InstanceOf<PunctuationToken>());
         }
     }
 
@@ -85,15 +85,15 @@ namespace MiniJavaCompilerTest
         public void ParameterSeparator()
         {
             var lexer = new MiniJavaScanner(new StringReader(","));
-            Assert.That(lexer.NextToken(), Is.InstanceOf<ParameterSeparator>());
+            Assert.That(lexer.NextToken(), Is.InstanceOf<PunctuationToken>());
         }
 
         [Test]
         public void CurlyBraces()
         {
             var lexer = new MiniJavaScanner(new StringReader("{}"));
-            Assert.That(lexer.NextToken(), Is.InstanceOf<LeftCurlyBrace>());
-            Assert.That(lexer.NextToken(), Is.InstanceOf<RightCurlyBrace>());
+            Assert.That(lexer.NextToken(), Is.InstanceOf<PunctuationToken>());
+            Assert.That(lexer.NextToken(), Is.InstanceOf<PunctuationToken>());
         }
 
         [Test]
@@ -101,10 +101,10 @@ namespace MiniJavaCompilerTest
         {
             var lexer = new MiniJavaScanner(new StringReader("foo.bar()"));
             Assert.That(lexer.NextToken(), Is.InstanceOf<Identifier>());
-            Assert.That(lexer.NextToken(), Is.InstanceOf<MethodInvocationToken>());
+            Assert.That(lexer.NextToken(), Is.InstanceOf<PunctuationToken>());
             Assert.That(lexer.NextToken(), Is.InstanceOf<Identifier>());
-            Assert.That(lexer.NextToken(), Is.InstanceOf<LeftParenthesis>());
-            Assert.That(lexer.NextToken(), Is.InstanceOf<RightParenthesis>());
+            Assert.That(lexer.NextToken(), Is.InstanceOf<PunctuationToken>());
+            Assert.That(lexer.NextToken(), Is.InstanceOf<PunctuationToken>());
             Assert.That(lexer.NextToken(), Is.InstanceOf<EndOfFile>());
         }
 

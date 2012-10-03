@@ -53,8 +53,8 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new Identifier("ClassName", 0, 0));
             programTokens.Enqueue(new KeywordToken("extends", 0, 0));
             programTokens.Enqueue(new Identifier("OtherClass", 0, 0));
-            programTokens.Enqueue(new LeftCurlyBrace(0, 0));
-            programTokens.Enqueue(new RightCurlyBrace(0, 0));
+            programTokens.Enqueue(new PunctuationToken("{", 0, 0));
+            programTokens.Enqueue(new PunctuationToken("}", 0, 0));
 
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
@@ -70,18 +70,18 @@ namespace MiniJavaCompilerTest
         { // class ClassName { int foo; public void bar() { } }
             programTokens.Enqueue(new KeywordToken("class", 0, 0));
             programTokens.Enqueue(new Identifier("ClassName", 0, 0));
-            programTokens.Enqueue(new LeftCurlyBrace(0, 0));
+            programTokens.Enqueue(new PunctuationToken("{", 0, 0));
             programTokens.Enqueue(new MiniJavaType("int", 0, 0));
             programTokens.Enqueue(new Identifier("foo", 0, 0));
-            programTokens.Enqueue(new EndLine(0, 0));
+            programTokens.Enqueue(new PunctuationToken(";", 0, 0));
             programTokens.Enqueue(new KeywordToken("public", 0, 0));
             programTokens.Enqueue(new MiniJavaType("void", 0, 0));
             programTokens.Enqueue(new Identifier("bar", 0, 0));
-            programTokens.Enqueue(new LeftParenthesis(0, 0));
-            programTokens.Enqueue(new RightParenthesis(0, 0));
-            programTokens.Enqueue(new LeftCurlyBrace(0, 0));
-            programTokens.Enqueue(new RightCurlyBrace(0, 0));
-            programTokens.Enqueue(new RightCurlyBrace(0, 0));
+            programTokens.Enqueue(new PunctuationToken("(", 0, 0));
+            programTokens.Enqueue(new PunctuationToken(")", 0, 0));
+            programTokens.Enqueue(new PunctuationToken("{", 0, 0));
+            programTokens.Enqueue(new PunctuationToken("}", 0, 0));
+            programTokens.Enqueue(new PunctuationToken("}", 0, 0));
 
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
@@ -125,8 +125,8 @@ namespace MiniJavaCompilerTest
         public void ArrayVariableDeclaration()
         { // int[] foo;
             programTokens.Enqueue(new MiniJavaType("int", 0, 0));
-            programTokens.Enqueue(new LeftBracket(0, 0));
-            programTokens.Enqueue(new RightBracket(0, 0));
+            programTokens.Enqueue(new PunctuationToken("[", 0, 0));
+            programTokens.Enqueue(new PunctuationToken("]", 0, 0));
             programTokens.Enqueue(new Identifier("foo", 0, 0));
             EndLine();
 
@@ -142,9 +142,9 @@ namespace MiniJavaCompilerTest
         public void AssertStatement()
         { // assert(true);
             programTokens.Enqueue(new KeywordToken("assert", 0, 0));
-            programTokens.Enqueue(new LeftParenthesis(0, 0));
+            programTokens.Enqueue(new PunctuationToken("(", 0, 0));
             programTokens.Enqueue(new KeywordToken("true", 0, 0));
-            programTokens.Enqueue(new RightParenthesis(0, 0));
+            programTokens.Enqueue(new PunctuationToken(")", 0, 0));
             EndLine();
 
             var errorReporter = new ErrorLogger();
@@ -158,14 +158,14 @@ namespace MiniJavaCompilerTest
         public void PrintStatement()
         { // System.out.println(5);
             programTokens.Enqueue(new KeywordToken("System", 0, 0));
-            programTokens.Enqueue(new MethodInvocationToken(0, 0));
+            programTokens.Enqueue(new PunctuationToken(".", 0, 0));
             programTokens.Enqueue(new KeywordToken("out", 0, 0));
-            programTokens.Enqueue(new MethodInvocationToken(0, 0));
+            programTokens.Enqueue(new PunctuationToken(".", 0, 0));
             programTokens.Enqueue(new KeywordToken("println", 0, 0));
-            programTokens.Enqueue(new LeftParenthesis(0, 0));
+            programTokens.Enqueue(new PunctuationToken("(", 0, 0));
             programTokens.Enqueue(new IntegerLiteralToken("5", 0, 0));
-            programTokens.Enqueue(new RightParenthesis(0, 0));
-            programTokens.Enqueue(new EndLine(0, 0));
+            programTokens.Enqueue(new PunctuationToken(")", 0, 0));
+            programTokens.Enqueue(new PunctuationToken(";", 0, 0));
 
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
@@ -178,14 +178,14 @@ namespace MiniJavaCompilerTest
         public void WhileStatement()
         { // while (true) assert(false);
             programTokens.Enqueue(new KeywordToken("while", 0, 0));
-            programTokens.Enqueue(new LeftParenthesis(0, 0));
+            programTokens.Enqueue(new PunctuationToken("(", 0, 0));
             programTokens.Enqueue(new KeywordToken("true", 0, 0));
-            programTokens.Enqueue(new RightParenthesis(0, 0));
+            programTokens.Enqueue(new PunctuationToken(")", 0, 0));
             programTokens.Enqueue(new KeywordToken("assert", 0, 0));
-            programTokens.Enqueue(new LeftParenthesis(0, 0));
+            programTokens.Enqueue(new PunctuationToken("(", 0, 0));
             programTokens.Enqueue(new KeywordToken("false", 0, 0));
-            programTokens.Enqueue(new RightParenthesis(0, 0));
-            programTokens.Enqueue(new EndLine(0, 0));
+            programTokens.Enqueue(new PunctuationToken(")", 0, 0));
+            programTokens.Enqueue(new PunctuationToken(";", 0, 0));
 
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
@@ -201,7 +201,7 @@ namespace MiniJavaCompilerTest
         { // return foo;
             programTokens.Enqueue(new KeywordToken("return", 0, 0));
             programTokens.Enqueue(new Identifier("foo", 0, 0));
-            programTokens.Enqueue(new EndLine(0, 0));
+            programTokens.Enqueue(new PunctuationToken(";", 0, 0));
 
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
@@ -214,11 +214,11 @@ namespace MiniJavaCompilerTest
         public void MethodInvocationStatement()
         { // foo.bar();
             programTokens.Enqueue(new Identifier("foo", 0, 0));
-            programTokens.Enqueue(new MethodInvocationToken(0, 0));
+            programTokens.Enqueue(new PunctuationToken(".", 0, 0));
             programTokens.Enqueue(new Identifier("bar", 0, 0));
-            programTokens.Enqueue(new LeftParenthesis(0, 0));
-            programTokens.Enqueue(new RightParenthesis(0, 0));
-            programTokens.Enqueue(new EndLine(0, 0));
+            programTokens.Enqueue(new PunctuationToken("(", 0, 0));
+            programTokens.Enqueue(new PunctuationToken(")", 0, 0));
+            programTokens.Enqueue(new PunctuationToken(";", 0, 0));
 
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
@@ -236,10 +236,10 @@ namespace MiniJavaCompilerTest
         public void VariableDeclarationStatement()
         { // foo[] bar;
             programTokens.Enqueue(new Identifier("foo", 0, 0));
-            programTokens.Enqueue(new LeftBracket(0, 0));
-            programTokens.Enqueue(new RightBracket(0, 0));
+            programTokens.Enqueue(new PunctuationToken("[", 0, 0));
+            programTokens.Enqueue(new PunctuationToken("]", 0, 0));
             programTokens.Enqueue(new Identifier("bar", 0, 0));
-            programTokens.Enqueue(new EndLine(0, 0));
+            programTokens.Enqueue(new PunctuationToken(";", 0, 0));
 
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
@@ -252,12 +252,12 @@ namespace MiniJavaCompilerTest
         public void AssignmentToArrayStatement()
         { // foo[5] = true;
             programTokens.Enqueue(new Identifier("foo", 0, 0));
-            programTokens.Enqueue(new LeftBracket(0, 0));
+            programTokens.Enqueue(new PunctuationToken("[", 0, 0));
             programTokens.Enqueue(new IntegerLiteralToken("5", 0, 0));
-            programTokens.Enqueue(new RightBracket(0, 0));
+            programTokens.Enqueue(new PunctuationToken("]", 0, 0));
             programTokens.Enqueue(new OperatorToken("=", 0, 0));
             programTokens.Enqueue(new KeywordToken("true", 0, 0));
-            programTokens.Enqueue(new EndLine(0, 0));
+            programTokens.Enqueue(new PunctuationToken(";", 0, 0));
 
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
@@ -272,11 +272,11 @@ namespace MiniJavaCompilerTest
         public void TryingToAssignToArrayWithoutAnIndexExpression()
         { // foo[] = 42;
             programTokens.Enqueue(new Identifier("foo", 0, 0));
-            programTokens.Enqueue(new LeftBracket(0, 0));
-            programTokens.Enqueue(new RightBracket(0, 0));
+            programTokens.Enqueue(new PunctuationToken("[", 0, 0));
+            programTokens.Enqueue(new PunctuationToken("]", 0, 0));
             programTokens.Enqueue(new OperatorToken("=", 0, 0));
             programTokens.Enqueue(new IntegerLiteralToken("42", 0, 0));
-            programTokens.Enqueue(new EndLine(0, 0));
+            programTokens.Enqueue(new PunctuationToken(";", 0, 0));
 
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
@@ -288,7 +288,7 @@ namespace MiniJavaCompilerTest
         public void AllExpressionsDoNotQualifyAsAStatements()
         { // 42;
             programTokens.Enqueue(new IntegerLiteralToken("42", 0, 0));
-            programTokens.Enqueue(new EndLine(0, 0));
+            programTokens.Enqueue(new PunctuationToken(";", 0, 0));
 
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
@@ -327,13 +327,13 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new OperatorToken("+", 0, 0));
             programTokens.Enqueue(new IntegerLiteralToken("9", 0, 0));
             programTokens.Enqueue(new OperatorToken("*", 0, 0));
-            programTokens.Enqueue(new LeftParenthesis(0, 0));
+            programTokens.Enqueue(new PunctuationToken("(", 0, 0));
             programTokens.Enqueue(new IntegerLiteralToken("7", 0, 0));
             programTokens.Enqueue(new OperatorToken("-", 0, 0));
             programTokens.Enqueue(new IntegerLiteralToken("2", 0, 0));
             programTokens.Enqueue(new OperatorToken("%", 0, 0));
             programTokens.Enqueue(new IntegerLiteralToken("3", 0, 0));
-            programTokens.Enqueue(new RightParenthesis(0, 0));
+            programTokens.Enqueue(new PunctuationToken(")", 0, 0));
             programTokens.Enqueue(new OperatorToken("-", 0, 0));
             programTokens.Enqueue(new IntegerLiteralToken("2", 0, 0));
 
@@ -472,16 +472,16 @@ namespace MiniJavaCompilerTest
              */
             programTokens.Enqueue(new KeywordToken("class", 0, 0));
             programTokens.Enqueue(new Identifier("MainClass", 0, 0));
-            programTokens.Enqueue(new LeftCurlyBrace(0, 0));
+            programTokens.Enqueue(new PunctuationToken("{", 0, 0));
             programTokens.Enqueue(new KeywordToken("public", 0, 0));
             programTokens.Enqueue(new KeywordToken("static", 0, 0));
             programTokens.Enqueue(new MiniJavaType("void", 0, 0));
             programTokens.Enqueue(new KeywordToken("main", 0, 0));
-            programTokens.Enqueue(new LeftParenthesis(0, 0));
+            programTokens.Enqueue(new PunctuationToken("(", 0, 0));
             programTokens.Enqueue(new MiniJavaType("int", 0, 0));
             programTokens.Enqueue(new Identifier("foo", 0, 0));
-            programTokens.Enqueue(new RightParenthesis(0, 0));
-            programTokens.Enqueue(new LeftCurlyBrace(0, 0));
+            programTokens.Enqueue(new PunctuationToken(")", 0, 0));
+            programTokens.Enqueue(new PunctuationToken("{", 0, 0));
             EndFile();
 
             Assert.Throws<SyntaxAnalysisFailed>(() => GetProgramTree());
@@ -502,8 +502,8 @@ namespace MiniJavaCompilerTest
 
             BeginClassDeclaration("someClass");
             BeginMethodDeclaration("someMethod", "int");
-            programTokens.Enqueue(new RightParenthesis(0, 0));
-            programTokens.Enqueue(new LeftCurlyBrace(0, 0));
+            programTokens.Enqueue(new PunctuationToken(")", 0, 0));
+            programTokens.Enqueue(new PunctuationToken("{", 0, 0));
             ClosingCurlyBrace(); ClosingCurlyBrace();
             EndFile();
 
@@ -528,11 +528,11 @@ namespace MiniJavaCompilerTest
              */
             DeclareMainClassUntilMainMethod("MainClass");
             MakeMethodInvocationWithoutParentheses("someClass", "someMethod");
-            programTokens.Enqueue(new LeftParenthesis(0, 0));
+            programTokens.Enqueue(new PunctuationToken("(", 0, 0));
             programTokens.Enqueue(new IntegerLiteralToken("42", 0, 0));
-            programTokens.Enqueue(new ParameterSeparator(0, 0));
+            programTokens.Enqueue(new PunctuationToken(",", 0, 0));
             programTokens.Enqueue(new Identifier("parameterVariable", 0, 0));
-            programTokens.Enqueue(new RightParenthesis(0, 0));
+            programTokens.Enqueue(new PunctuationToken(")", 0, 0));
             EndLine();
             ClosingCurlyBrace(); ClosingCurlyBrace();
             EndFile();
@@ -593,10 +593,10 @@ namespace MiniJavaCompilerTest
             BeginClassDeclaration("anotherClass");
             BeginMethodDeclaration("someMethod", "int");
             DefineBasicParameter("foo", "int");
-            programTokens.Enqueue(new ParameterSeparator(0, 0));
+            programTokens.Enqueue(new PunctuationToken(",", 0, 0));
             DefineOwnTypeParameter("bar", "myOwnType");
-            programTokens.Enqueue(new RightParenthesis(0, 0));
-            programTokens.Enqueue(new LeftCurlyBrace(0, 0));
+            programTokens.Enqueue(new PunctuationToken(")", 0, 0));
+            programTokens.Enqueue(new PunctuationToken("{", 0, 0));
             ClosingCurlyBrace(); ClosingCurlyBrace();
             EndFile();
 
@@ -669,11 +669,11 @@ namespace MiniJavaCompilerTest
              */
             DeclareMainClassUntilMainMethod("MainClass");
             programTokens.Enqueue(new KeywordToken("if", 0, 0));
-            programTokens.Enqueue(new LeftParenthesis(0, 0));
+            programTokens.Enqueue(new PunctuationToken("(", 0, 0));
             programTokens.Enqueue(new KeywordToken("true", 0, 0));
             programTokens.Enqueue(new OperatorToken("&&", 0, 0));
             programTokens.Enqueue(new KeywordToken("false", 0, 0));
-            programTokens.Enqueue(new RightParenthesis(0, 0));
+            programTokens.Enqueue(new PunctuationToken(")", 0, 0));
             AssignIntegerToVariable("foo", "42");
             ClosingCurlyBrace(); ClosingCurlyBrace();
             EndFile();
@@ -706,11 +706,11 @@ namespace MiniJavaCompilerTest
              */
             DeclareMainClassUntilMainMethod("MainClass");
             programTokens.Enqueue(new KeywordToken("if", 0, 0));
-            programTokens.Enqueue(new LeftParenthesis(0, 0));
+            programTokens.Enqueue(new PunctuationToken("(", 0, 0));
             programTokens.Enqueue(new KeywordToken("true", 0, 0));
-            programTokens.Enqueue(new RightParenthesis(0, 0));
+            programTokens.Enqueue(new PunctuationToken(")", 0, 0));
             programTokens.Enqueue(new Identifier("foo", 0, 0));
-            programTokens.Enqueue(new MethodInvocationToken(0, 0));
+            programTokens.Enqueue(new PunctuationToken(".", 0, 0));
             programTokens.Enqueue(new Identifier("bar", 0, 0));
             EmptyMethodInvocationParentheses();
             EndLine();
@@ -729,25 +729,25 @@ namespace MiniJavaCompilerTest
 
         private void EndLine()
         {
-            programTokens.Enqueue(new EndLine(0, 0));
+            programTokens.Enqueue(new PunctuationToken(";", 0, 0));
         }
 
         private void InvokeMethod(string methodName)
         {
-            programTokens.Enqueue(new MethodInvocationToken(0, 0));
+            programTokens.Enqueue(new PunctuationToken(".", 0, 0));
             programTokens.Enqueue(new Identifier(methodName, 0, 0));
         }
 
         private void EmptyMethodInvocationParentheses()
         {
-            programTokens.Enqueue(new LeftParenthesis(0, 0));
-            programTokens.Enqueue(new RightParenthesis(0, 0));
+            programTokens.Enqueue(new PunctuationToken("(", 0, 0));
+            programTokens.Enqueue(new PunctuationToken(")", 0, 0));
         }
 
         private void MakeMethodInvocationWithoutParentheses(string className, string methodName)
         {
             programTokens.Enqueue(new Identifier(className, 0, 0));
-            programTokens.Enqueue(new MethodInvocationToken(0, 0));
+            programTokens.Enqueue(new PunctuationToken(".", 0, 0));
             programTokens.Enqueue(new Identifier(methodName, 0, 0));
         }
 
@@ -768,19 +768,19 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new KeywordToken("public", 0, 0));
             programTokens.Enqueue(new MiniJavaType(type, 0, 0));
             programTokens.Enqueue(new Identifier(methodName, 0, 0));
-            programTokens.Enqueue(new LeftParenthesis(0, 0));
+            programTokens.Enqueue(new PunctuationToken("(", 0, 0));
         }
 
         private void BeginClassDeclaration(string className)
         {
             programTokens.Enqueue(new KeywordToken("class", 0, 0));
             programTokens.Enqueue(new Identifier(className, 0, 0));
-            programTokens.Enqueue(new LeftCurlyBrace(0, 0));
+            programTokens.Enqueue(new PunctuationToken("{", 0, 0));
         }
 
         private void ClosingCurlyBrace()
         {
-            programTokens.Enqueue(new RightCurlyBrace(0, 0));
+            programTokens.Enqueue(new PunctuationToken("}", 0, 0));
         }
 
         private void EndFile()
@@ -791,13 +791,13 @@ namespace MiniJavaCompilerTest
         private void PrintVariableValue(string variableName)
         {
             programTokens.Enqueue(new KeywordToken("System", 0, 0));
-            programTokens.Enqueue(new MethodInvocationToken(0, 0));
+            programTokens.Enqueue(new PunctuationToken(".", 0, 0));
             programTokens.Enqueue(new KeywordToken("out", 0, 0));
-            programTokens.Enqueue(new MethodInvocationToken(0, 0));
+            programTokens.Enqueue(new PunctuationToken(".", 0, 0));
             programTokens.Enqueue(new KeywordToken("println", 0, 0));
-            programTokens.Enqueue(new LeftParenthesis(0, 0));
+            programTokens.Enqueue(new PunctuationToken("(", 0, 0));
             programTokens.Enqueue(new Identifier(variableName, 0, 0));
-            programTokens.Enqueue(new RightParenthesis(0, 0));
+            programTokens.Enqueue(new PunctuationToken(")", 0, 0));
             EndLine();
         }
 
@@ -813,13 +813,13 @@ namespace MiniJavaCompilerTest
         {
             programTokens.Enqueue(new KeywordToken("class", 0, 0));
             programTokens.Enqueue(new Identifier(className, 0, 0));
-            programTokens.Enqueue(new LeftCurlyBrace(0, 0));
+            programTokens.Enqueue(new PunctuationToken("{", 0, 0));
             programTokens.Enqueue(new KeywordToken("public", 0, 0));
             programTokens.Enqueue(new KeywordToken("static", 0, 0));
             programTokens.Enqueue(new MiniJavaType("void", 0, 0));
             programTokens.Enqueue(new KeywordToken("main", 0, 0));
             EmptyMethodInvocationParentheses();
-            programTokens.Enqueue(new LeftCurlyBrace(0, 0));
+            programTokens.Enqueue(new PunctuationToken("{", 0, 0));
         }
 
         private void DeclareBasicVariable(string name, string type)
@@ -835,17 +835,17 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new OperatorToken("=", 0, 0));
             programTokens.Enqueue(new KeywordToken("new", 0, 0));
             programTokens.Enqueue(new MiniJavaType(arrayType, 0, 0));
-            programTokens.Enqueue(new LeftBracket(0, 0));
+            programTokens.Enqueue(new PunctuationToken("[", 0, 0));
             programTokens.Enqueue(new IntegerLiteralToken(arraySize, 0, 0));
-            programTokens.Enqueue(new RightBracket(0, 0));
+            programTokens.Enqueue(new PunctuationToken("]", 0, 0));
             EndLine();
         }
 
         private void DeclareBasicArrayVariable(string name, string type)
         {
             programTokens.Enqueue(new MiniJavaType(type, 0, 0));
-            programTokens.Enqueue(new LeftBracket(0, 0));
-            programTokens.Enqueue(new RightBracket(0, 0));
+            programTokens.Enqueue(new PunctuationToken("[", 0, 0));
+            programTokens.Enqueue(new PunctuationToken("]", 0, 0));
             programTokens.Enqueue(new Identifier(name, 0, 0));
             EndLine();
         }

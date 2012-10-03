@@ -82,58 +82,10 @@ namespace MiniJavaCompiler.LexicalAnalysis
             : base(symbol, row, col) { }
     }
 
-    public class LeftParenthesis : TokenElement
+    public class PunctuationToken : StringToken
     {
-        public LeftParenthesis(int row, int col)
-            : base(row, col) { }
-    }
-
-    public class RightParenthesis : TokenElement
-    {
-        public RightParenthesis(int row, int col)
-            : base(row, col) { }
-    }
-
-    public class EndLine : TokenElement
-    {
-        public EndLine(int row, int col)
-            : base(row, col) { }
-    }
-
-    public class LeftBracket : TokenElement
-    {
-        public LeftBracket(int row, int col)
-            : base(row, col) { }
-    }
-
-    public class RightBracket : TokenElement
-    {
-        public RightBracket(int row, int col)
-            : base(row, col) { }
-    }
-
-    public class LeftCurlyBrace : TokenElement
-    {
-        public LeftCurlyBrace(int row, int col)
-            : base(row, col) { }
-    }
-
-    public class RightCurlyBrace : TokenElement
-    {
-        public RightCurlyBrace(int row, int col)
-            : base(row, col) { }
-    }
-
-    public class MethodInvocationToken : TokenElement
-    {
-        public MethodInvocationToken(int row, int col)
-            : base(row, col) { }
-    }
-
-    public class ParameterSeparator : TokenElement
-    {
-        public ParameterSeparator(int row, int col)
-            : base(row, col) { }
+        public PunctuationToken(string symbol, int row, int col)
+            : base(symbol, row, col) { }
     }
 
     public class EndOfFile : TokenElement
