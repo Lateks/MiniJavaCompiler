@@ -50,6 +50,7 @@
     <Compile Include="Compiler.cs" />
     <Compile Include="Support\Errors.cs" />
     <Compile Include="SemanticAnalysis\NodeVisitor.cs" />
+    <Compile Include="Support\MiniJavaInfo.cs" />
     <Compile Include="Support\SymbolTable\Scopes.cs" />
     <Compile Include="Support\SymbolTable\Symbols.cs" />
     <Compile Include="Support\SymbolTable\SymbolTable.cs" />

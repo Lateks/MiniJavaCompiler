@@ -11,7 +11,6 @@ namespace MiniJavaCompiler.SemanticAnalysis
     {
         private readonly Program _syntaxTree;
         private readonly HashSet<string> _types;
-        private readonly HashSet<string> _builtIns = new HashSet<string>(new [] { "int", "boolean" }); // TODO: refactor this into Support
         private readonly IErrorReporter _errorReporter;
 
         public TypeSetBuilder(Program node, IErrorReporter errorReporter)
@@ -35,7 +34,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
         private bool NameAlreadyDefined(string name)
         {
-            return _types.Contains(name) || _builtIns.Contains(name);
+            return _types.Contains(name) || MiniJavaInfo.IsBuiltinType(name);
         }
 
         public void Visit(Program node) { }

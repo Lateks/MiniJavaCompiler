@@ -14,7 +14,6 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
         private readonly SymbolTable _symbolTable;
         private readonly Program _syntaxTree;
-        private readonly string[] _builtins = new [] { "int", "boolean" }; // TODO: Refactor this into Support
         private readonly IErrorReporter _errorReporter;
         private int _errors;
 
@@ -54,7 +53,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
         private void SetupGlobalScope(IEnumerable<string> types)
         {
-            foreach (var type in _builtins)
+            foreach (var type in MiniJavaInfo.BuiltIns)
             {
                 Symbol.CreateAndDefine<BuiltinTypeSymbol>(type, _symbolTable.GlobalScope);
             }
