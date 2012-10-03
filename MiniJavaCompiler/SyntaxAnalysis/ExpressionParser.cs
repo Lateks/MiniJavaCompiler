@@ -36,10 +36,12 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             catch (SyntaxError e)
             {
                 ErrorReporter.ReportError(e.Message, e.Row, e.Col);
+                ParsingFailed = true;
                 RecoverFromExpressionParsing();
             }
             catch (LexicalErrorEncountered)
             {
+                ParsingFailed = true;
                 RecoverFromExpressionParsing();
             }
             return null;
@@ -135,10 +137,12 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             catch (SyntaxError e)
             {
                 ErrorReporter.ReportError(e.Message, e.Row, e.Col);
+                ParsingFailed = true;
                 return RecoverFromTermMatching();
             }
             catch (LexicalErrorEncountered)
             {
+                ParsingFailed = true;
                 return RecoverFromTermMatching();
             }
         }

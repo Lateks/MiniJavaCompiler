@@ -484,7 +484,7 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new LeftCurlyBrace(0, 0));
             EndFile();
 
-            Assert.Throws<ErrorReport>(() => GetProgramTree());
+            Assert.Throws<SyntaxAnalysisFailed>(() => GetProgramTree());
         }
 
         [Test]
