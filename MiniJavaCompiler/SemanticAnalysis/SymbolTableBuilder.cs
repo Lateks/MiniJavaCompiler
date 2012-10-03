@@ -10,10 +10,13 @@ namespace MiniJavaCompiler.SemanticAnalysis
 {
     public class SymbolTableBuilder : INodeVisitor
     {
-        private readonly SymbolTable symbolTable; 
+        private class DefinitionException : Exception { }
+
+        private readonly SymbolTable _symbolTable;
         private readonly Program syntaxTree;
         private readonly string[] builtins = new [] { "int", "boolean" }; // TODO: Refactor this into Support
         private readonly IErrorReporter errorReporter;
+        private int errors;
 
         private readonly Stack<IScope> scopeStack;
         private IScope CurrentScope
@@ -34,9 +37,10 @@ namespace MiniJavaCompiler.SemanticAnalysis
         public SymbolTableBuilder(Program node, IEnumerable<string> types, IErrorReporter errorReporter)
         {
             this.errorReporter = errorReporter;
+            errors = 0;
             syntaxTree = node;
 
-            symbolTable = new SymbolTable
+            _symbolTable = new SymbolTable
                               {
                                   GlobalScope = new GlobalScope(),
                                   Definitions = new Dictionary<Symbol, ISyntaxTreeNode>(),
@@ -45,30 +49,41 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
             SetupGlobalScope(types);
             scopeStack = new Stack<IScope>();
-            EnterScope(symbolTable.GlobalScope);
+            EnterScope(_symbolTable.GlobalScope);
         }
 
         private void SetupGlobalScope(IEnumerable<string> types)
         {
             foreach (var type in builtins)
             {
-                Symbol.CreateAndDefine<BuiltinTypeSymbol>(type, symbolTable.GlobalScope);
+                Symbol.CreateAndDefine<BuiltinTypeSymbol>(type, _symbolTable.GlobalScope);
             }
             foreach (var type in types)
             {
-                Symbol.CreateAndDefine<UserDefinedTypeSymbol>(type, symbolTable.GlobalScope);
+                Symbol.CreateAndDefine<UserDefinedTypeSymbol>(type, _symbolTable.GlobalScope);
             }
         }
 
-        public SymbolTable BuildSymbolTable()
+        public bool BuildSymbolTable(out SymbolTable symbolTable)
         {
-            syntaxTree.Accept(this);
-            return symbolTable;
+            try
+            {
+                syntaxTree.Accept(this);
+                return errors == 0;
+            }
+            catch (DefinitionException)
+            {
+                return false;
+            }
+            finally
+            {
+                symbolTable = _symbolTable;
+            }
         }
 
         public void Visit(Program node)
         {
-            symbolTable.Scopes.Add(node, symbolTable.GlobalScope);
+            _symbolTable.Scopes.Add(node, _symbolTable.GlobalScope);
         }
 
         public void Visit(ClassDeclaration node)
@@ -79,8 +94,8 @@ namespace MiniJavaCompiler.SemanticAnalysis
                 var inheritedType = (UserDefinedTypeSymbol)CurrentScope.Resolve<TypeSymbol>(node.InheritedClass);
                 typeSymbol.SuperClass = inheritedType;
             }
-            symbolTable.Scopes.Add(node, typeSymbol);
-            symbolTable.Definitions.Add(typeSymbol, node);
+            _symbolTable.Scopes.Add(node, typeSymbol);
+            _symbolTable.Definitions.Add(typeSymbol, node);
             EnterScope(typeSymbol);
         }
 
@@ -92,8 +107,8 @@ namespace MiniJavaCompiler.SemanticAnalysis
         public void Visit(MainClassDeclaration node)
         {
             var typeSymbol = (UserDefinedTypeSymbol)CurrentScope.Resolve<TypeSymbol>(node.Name);
-            symbolTable.Scopes.Add(node, typeSymbol);
-            symbolTable.Definitions.Add(typeSymbol, node);
+            _symbolTable.Scopes.Add(node, typeSymbol);
+            _symbolTable.Definitions.Add(typeSymbol, node);
             EnterScope(typeSymbol);
         }
 
@@ -108,8 +123,8 @@ namespace MiniJavaCompiler.SemanticAnalysis
             var symbol = DefineSymbolOrFail<VariableSymbol>(node, variableType);
             if (symbol != null)
             {
-                symbolTable.Definitions.Add(symbol, node);
-                symbolTable.Scopes.Add(node, CurrentScope);
+                _symbolTable.Definitions.Add(symbol, node);
+                _symbolTable.Scopes.Add(node, CurrentScope);
             }
         }
 
@@ -117,21 +132,24 @@ namespace MiniJavaCompiler.SemanticAnalysis
         {
             var methodReturnType = node.Type == "void" ? null : CheckDeclaredType(node);
             var methodSymbol = (MethodSymbol)DefineSymbolOrFail<MethodSymbol>(node, methodReturnType);
-            if (methodSymbol != null)
+            if (methodSymbol == null)
             {
-                symbolTable.Definitions.Add(methodSymbol, node);
-                symbolTable.Scopes.Add(node, methodSymbol);
-
-                EnterScope(methodSymbol);
+                throw new DefinitionException();
             }
+
+            _symbolTable.Definitions.Add(methodSymbol, node);
+            _symbolTable.Scopes.Add(node, methodSymbol);
+
+            EnterScope(methodSymbol);
         }
 
         private IType CheckDeclaredType(Declaration node)
         {
-            Symbol nodeSimpleType = symbolTable.GlobalScope.Resolve<TypeSymbol>(node.Type);
+            Symbol nodeSimpleType = _symbolTable.GlobalScope.Resolve<TypeSymbol>(node.Type);
             if (nodeSimpleType == null)
             {
                 errorReporter.ReportError("Unknown type '" + node.Type + "'.", node.Row, node.Col);
+                errors++;
                 return null;
             }
             IType actualType = node.IsArray ?
@@ -150,6 +168,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
             if (symbol == null)
             {
                 errorReporter.ReportError("Symbol '" + node.Name + "' is already defined.", node.Row, node.Col);
+                errors++;
                 return null;
             }
 
@@ -164,7 +183,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
         public void Visit(BlockStatement node)
         {
             var blockScope = new LocalScope(CurrentScope);
-            symbolTable.Scopes.Add(node, blockScope);
+            _symbolTable.Scopes.Add(node, blockScope);
             EnterScope(blockScope);
         }
 
@@ -175,77 +194,77 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
         public void Visit(VariableReferenceExpression node)
         {
-            symbolTable.Scopes.Add(node, CurrentScope);
+            _symbolTable.Scopes.Add(node, CurrentScope);
         }
 
         public void Visit(MethodInvocation node)
         {
-            symbolTable.Scopes.Add(node, CurrentScope);
+            _symbolTable.Scopes.Add(node, CurrentScope);
         }
 
         public void Visit(PrintStatement node)
         {
-            symbolTable.Scopes.Add(node, CurrentScope);
+            _symbolTable.Scopes.Add(node, CurrentScope);
         }
 
         public void Visit(ReturnStatement node)
         {
-            symbolTable.Scopes.Add(node, CurrentScope);
+            _symbolTable.Scopes.Add(node, CurrentScope);
         }
 
         public void Visit(AssertStatement node)
         {
-            symbolTable.Scopes.Add(node, CurrentScope);
+            _symbolTable.Scopes.Add(node, CurrentScope);
         }
 
         public void Visit(AssignmentStatement node)
         {
-            symbolTable.Scopes.Add(node, CurrentScope);
+            _symbolTable.Scopes.Add(node, CurrentScope);
         }
 
         public void Visit(IfStatement node)
         {
-            symbolTable.Scopes.Add(node, CurrentScope);
+            _symbolTable.Scopes.Add(node, CurrentScope);
         }
 
         public void Visit(WhileStatement node)
         {
-            symbolTable.Scopes.Add(node, CurrentScope);
+            _symbolTable.Scopes.Add(node, CurrentScope);
         }
 
         public void Visit(InstanceCreationExpression node)
         {
-            symbolTable.Scopes.Add(node, CurrentScope);
+            _symbolTable.Scopes.Add(node, CurrentScope);
         }
 
         public void Visit(UnaryNotExpression node)
         {
-            symbolTable.Scopes.Add(node, CurrentScope);
+            _symbolTable.Scopes.Add(node, CurrentScope);
         }
 
         public void Visit(BinaryOpExpression node)
         {
-            symbolTable.Scopes.Add(node, CurrentScope);
+            _symbolTable.Scopes.Add(node, CurrentScope);
         }
 
         public void Visit(BooleanLiteralExpression node)
         {
-            symbolTable.Scopes.Add(node, CurrentScope);
+            _symbolTable.Scopes.Add(node, CurrentScope);
         }
 
         public void Visit(ThisExpression node)
         {
-            symbolTable.Scopes.Add(node, CurrentScope);
+            _symbolTable.Scopes.Add(node, CurrentScope);
         }
 
         public void Visit(ArrayIndexingExpression node)
         {
-            symbolTable.Scopes.Add(node, CurrentScope);
+            _symbolTable.Scopes.Add(node, CurrentScope);
         }
 
         public void Visit(IntegerLiteralExpression node)
         {
-            symbolTable.Scopes.Add(node, CurrentScope);
+            _symbolTable.Scopes.Add(node, CurrentScope);
         }
     }
 }

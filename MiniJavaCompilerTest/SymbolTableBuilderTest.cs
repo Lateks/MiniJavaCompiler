@@ -17,20 +17,22 @@ namespace MiniJavaCompilerTest
     class SymbolTableBuilderTest
     {
         private IErrorReporter errors;
-        private Program syntaxTree;
+        private SymbolTable symbolTable;
 
-        private SymbolTable BuildSymbolTableFor(string program)
+        private bool BuildSymbolTableFor(string program)
         {
             var scanner = new MiniJavaScanner(new StringReader(program));
             errors = new ErrorLogger();
             var parserInputReader = new ParserInputReader(scanner, errors);
             var parser = new Parser(parserInputReader, errors);
-            syntaxTree = parser.Parse();
+            Program syntaxTree = parser.Parse();
+            Assert.That(errors.Errors(), Is.Empty);
 
             var types = new TypeSetBuilder(syntaxTree, errors).BuildTypeSet();
             var symbolTableBuilder = new SymbolTableBuilder(syntaxTree, types, errors);
             Assert.That(errors.Errors(), Is.Empty);
-            return symbolTableBuilder.BuildSymbolTable();
+
+            return symbolTableBuilder.BuildSymbolTable(out symbolTable);
         }
 
         [Test]
@@ -46,7 +48,7 @@ namespace MiniJavaCompilerTest
                              "\t\t System.out.println(42);\n" +
                              "\t} \n" +
                              "} \n\n";
-            var symbolTable = BuildSymbolTableFor(program);
+            Assert.True(BuildSymbolTableFor(program));
             var fooClass = (UserDefinedTypeSymbol)symbolTable.GlobalScope.Resolve<TypeSymbol>("Foo");
             var fooMethod = fooClass.Resolve<MethodSymbol>("foo");
             Assert.That(fooMethod.Type, Is.InstanceOf<VoidType>());
@@ -63,7 +65,7 @@ namespace MiniJavaCompilerTest
                              "class Foo {\n" +
                              "\t void foo; \n" +
                              "} \n\n";
-            BuildSymbolTableFor(program);
+            Assert.False(BuildSymbolTableFor(program));
             Assert.That(errors.Errors().First().Content, Is.StringContaining("Unknown type 'void'"));
         }
 
@@ -84,7 +86,7 @@ namespace MiniJavaCompilerTest
                              "class Bar extends Foo {\n" +
                              "\t int foo; \n" +
                              "} \n";
-            var symbolTable = BuildSymbolTableFor(program);
+            Assert.True(BuildSymbolTableFor(program));
             var fooClass = (UserDefinedTypeSymbol)symbolTable.GlobalScope.Resolve<TypeSymbol>("Foo");
             var barClass = (UserDefinedTypeSymbol)symbolTable.GlobalScope.Resolve<TypeSymbol>("Bar");
             Assert.That(barClass.SuperClass, Is.EqualTo(fooClass));
@@ -105,7 +107,7 @@ namespace MiniJavaCompilerTest
                              "\t public int foo() { } \n" +
                              "\t public int foo() { } \n" +
                              "} \n\n";
-            BuildSymbolTableFor(program);
+            Assert.False(BuildSymbolTableFor(program));
             Assert.AreEqual(2, errors.Errors().Count);
             foreach (var error in errors.Errors())
             {
@@ -135,7 +137,7 @@ namespace MiniJavaCompilerTest
                              "\t\t return num_aux;\n" +
                              "\t }\n" +
                              "}\n";
-            var symbolTable = BuildSymbolTableFor(program);
+            Assert.True(BuildSymbolTableFor(program));
 
             var firstClass = symbolTable.GlobalScope.Resolve<TypeSymbol>("Factorial");
             Assert.That(firstClass, Is.InstanceOf<UserDefinedTypeSymbol>());
