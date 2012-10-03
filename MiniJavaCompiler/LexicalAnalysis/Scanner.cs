@@ -21,28 +21,28 @@ namespace MiniJavaCompiler.LexicalAnalysis
 
     public class MiniJavaScanner : IScanner
     {
-        private static readonly HashSet<char>
-            Symbols = new HashSet<char>(new char[] { ';', '(', ')', '[', ']', '.', '{', '}', ',' }),
-            SingleCharOperators = new HashSet<char>(new char[] { '/', '+', '-', '*', '<', '>', '!', '%' }),
-            MultiCharOperatorSymbols = new HashSet<char>(new char[] { '&', '=', '|' });
+        private static readonly char[]
+            Symbols = new [] { ';', '(', ')', '[', ']', '.', '{', '}', ',' },
+            SingleCharOperatorSymbols = new [] { '/', '+', '-', '*', '<', '>', '%', '!' },
+            MultiCharOperatorSymbols = new [] { '&', '=', '|' };
 
-        private static readonly HashSet<string>
-            Keywords = new HashSet<string>(new string[] { "this", "true", "false", "new",
+        private static readonly string[]
+            Keywords = new [] { "this", "true", "false", "new",
                                                         "length", "System", "out", "println",
                                                         "if", "else", "while", "return", "assert",
-                                                        "public", "static", "main", "class", "extends" }),
-            Types = new HashSet<string>(new string[] { "int", "boolean", "void" });
+                                                        "public", "static", "main", "class", "extends" },
+            Types = new [] { "int", "boolean", "void" };
 
-        private readonly ScannerInputReader input;
-        private readonly Queue<IToken> tokens;
+        private readonly ScannerInputReader _input;
+        private readonly Queue<IToken> _tokens;
         private int _startRow;
         private int _startCol;
         private bool _endOfFileReached;
 
         public MiniJavaScanner(TextReader input)
         {
-            this.input = new ScannerInputReader(input);
-            tokens = new Queue<IToken>();
+            _input = new ScannerInputReader(input);
+            _tokens = new Queue<IToken>();
             BuildTokenList();
             _endOfFileReached = false;
         }
@@ -53,10 +53,10 @@ namespace MiniJavaCompiler.LexicalAnalysis
             {
                 throw new OutOfInput("Reached end of file while parsing.");
             }
-            if (tokens.Count > 0)
-                return tokens.Dequeue();
+            if (_tokens.Count > 0)
+                return _tokens.Dequeue();
             _endOfFileReached = true;
-            return new EndOfFile(input.Row, input.Col);
+            return new EndOfFile(_input.Row, _input.Col);
         }
 
         // Passes through the code once and builds a queue of tokens.
@@ -66,7 +66,7 @@ namespace MiniJavaCompiler.LexicalAnalysis
             do
             {
                 token = MatchNextToken();
-                tokens.Enqueue(token);
+                _tokens.Enqueue(token);
             } while (!(token is EndOfFile));
         }
 
@@ -74,58 +74,52 @@ namespace MiniJavaCompiler.LexicalAnalysis
         {
             try
             {
-                input.SkipWhiteSpaceAndComments();
+                _input.SkipWhiteSpaceAndComments();
             }
             catch (EndlessCommentError e)
             {
                 return new ErrorToken("", e.Message, e.Row, e.Col);
             }
-            if (!input.InputLeft())
-                return new EndOfFile(input.Row, input.Col);
+            if (!_input.InputLeft())
+                return new EndOfFile(_input.Row, _input.Col);
 
-            _startRow = input.Row;     // store starting row and column for the token object 
-            _startCol = input.Col + 1;
+            _startRow = _input.Row;     // store starting row and column for the token object 
+            _startCol = _input.Col + 1;
 
-            char inputChar = input.Peek();
-            if (SingleCharOperators.Contains(inputChar))
-                return MakeSingleCharOperatorToken();
-            else if (MultiCharOperatorSymbols.Contains(inputChar))
+            char inputSymbol = _input.Peek();
+            if (SingleCharOperatorSymbols.Contains(inputSymbol))
+                return MakeSingleCharBinaryOperatorToken();
+            else if (MultiCharOperatorSymbols.Contains(inputSymbol))
                 return MakeAssignmentOrMultiCharOperatorToken();
-            else if (Symbols.Contains(inputChar))
+            else if (Symbols.Contains(inputSymbol))
                 return MakeSymbolToken();
-            else if (Char.IsDigit(inputChar))
+            else if (Char.IsDigit(inputSymbol))
                 return MakeIntegerLiteralToken();
-            else if (Char.IsLetter(inputChar))
+            else if (Char.IsLetter(inputSymbol))
                 return MakeIdentifierOrKeywordToken();
             else
             {
-                string token = input.Read();
+                string token = _input.Read();
                 return new ErrorToken(token, "Invalid token \"" + token + ".",
                     _startRow, _startCol);
             }
         }
 
-        private IToken MakeSingleCharOperatorToken()
+        private IToken MakeSingleCharBinaryOperatorToken()
         {
-            if (input.Peek().Equals('!'))
-            {
-                input.Read();
-                return new UnaryNotToken(_startRow, _startCol);
-            }
-            else
-                return new BinaryOperatorToken(input.Read(), _startRow, _startCol);
+            return new OperatorToken(_input.Read(), _startRow, _startCol);
         }
 
         private IToken MakeAssignmentOrMultiCharOperatorToken()
         {
-            string symbol = input.Read();
-            if (input.InputLeft() && input.Peek().ToString().Equals(symbol))
+            string symbol = _input.Read();
+            if (_input.InputLeft() && _input.Peek().ToString().Equals(symbol))
             {
-                symbol += input.Read();
-                return new BinaryOperatorToken(symbol, _startRow, _startCol);
+                symbol += _input.Read();
+                return new OperatorToken(symbol, _startRow, _startCol);
             }
             else if (symbol.Equals("="))
-                return new AssignmentToken(_startRow, _startCol);
+                return new OperatorToken(symbol, _startRow, _startCol);
             else
                 return new ErrorToken(symbol, "Unexpected token " + symbol + ".",
                     _startRow, _startCol);
@@ -133,7 +127,7 @@ namespace MiniJavaCompiler.LexicalAnalysis
 
         private IToken MakeSymbolToken()
         {
-            string token = input.Read();
+            string token = _input.Read();
             switch (token)
             {
                 case "(":
@@ -160,17 +154,17 @@ namespace MiniJavaCompiler.LexicalAnalysis
         private IntegerLiteralToken MakeIntegerLiteralToken()
         {
             string token = "";
-            while (input.InputLeft() && Char.IsDigit(input.Peek()))
-                token += input.Read();
+            while (_input.InputLeft() && Char.IsDigit(_input.Peek()))
+                token += _input.Read();
             return new IntegerLiteralToken(token, _startRow, _startCol);
         }
 
         private IToken MakeIdentifierOrKeywordToken()
         {
             string token = "";
-            while (input.InputLeft() && (Char.IsLetterOrDigit(input.Peek()) ||
-                                         input.Peek().Equals('_')))
-                token += input.Read();
+            while (_input.InputLeft() && (Char.IsLetterOrDigit(_input.Peek()) ||
+                                         _input.Peek().Equals('_')))
+                token += _input.Read();
             if (Types.Contains(token))
                 return new MiniJavaType(token, _startRow, _startCol);
             if (Keywords.Contains(token))

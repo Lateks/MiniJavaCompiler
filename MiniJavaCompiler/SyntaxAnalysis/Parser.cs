@@ -199,7 +199,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
         private IStatement CompleteStatement(IExpression expression)
         {
-            if (Input.NextTokenIs<AssignmentToken>())
+            if (Input.NextTokenIs<OperatorToken>("="))
                 return MakeAssignmentStatement(expression);
             else
                 return MakeMethodInvocationStatement(expression);
@@ -220,7 +220,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
         private IStatement MakeAssignmentStatement(IExpression lhs)
         {
-            var assignment = Input.MatchAndConsume<AssignmentToken>();
+            var assignment = Input.MatchAndConsume<OperatorToken>("=");
             IExpression rhs = Expression();
             Input.MatchAndConsume<EndLine>();
             return new AssignmentStatement(lhs, rhs,

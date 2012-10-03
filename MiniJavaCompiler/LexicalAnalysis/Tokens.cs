@@ -76,16 +76,10 @@ namespace MiniJavaCompiler.LexicalAnalysis
             : base(name, row, col) { }
     }
 
-    public class BinaryOperatorToken : StringToken
+    public class OperatorToken : StringToken
     {
-        public BinaryOperatorToken(string symbol, int row, int col)
+        public OperatorToken(string symbol, int row, int col)
             : base(symbol, row, col) { }
-    }
-
-    public class UnaryNotToken : TokenElement
-    {
-        public UnaryNotToken(int row, int col)
-            : base(row, col) { }
     }
 
     public class LeftParenthesis : TokenElement
@@ -103,18 +97,6 @@ namespace MiniJavaCompiler.LexicalAnalysis
     public class EndLine : TokenElement
     {
         public EndLine(int row, int col)
-            : base(row, col) { }
-    }
-
-    public class AssignmentToken : TokenElement
-    {
-        public AssignmentToken(int row, int col)
-            : base(row, col) { }
-    }
-
-    public class TypeDeclaration : TokenElement
-    {
-        public TypeDeclaration(int row, int col)
             : base(row, col) { }
     }
 

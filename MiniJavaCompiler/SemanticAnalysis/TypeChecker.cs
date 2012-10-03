@@ -78,7 +78,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
             throw new NotImplementedException();
         }
 
-        public void Visit(UnaryNotExpression node)
+        public void Visit(UnaryOperatorExpression node)
         {
             throw new NotImplementedException();
         }

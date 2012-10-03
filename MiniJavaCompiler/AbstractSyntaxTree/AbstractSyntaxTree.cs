@@ -342,13 +342,15 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
         }
     }
 
-    public class UnaryNotExpression : SyntaxElement, IExpression
+    public class UnaryOperatorExpression : SyntaxElement, IExpression
     {
         public IExpression BooleanExpression { get; private set; }
+        public string Operator { get; private set; }
 
-        public UnaryNotExpression(IExpression booleanExp, int row, int col)
+        public UnaryOperatorExpression(string opSymbol, IExpression booleanExp, int row, int col)
             : base(row, col)
         {
+            Operator = opSymbol;
             BooleanExpression = booleanExp;
         }
 

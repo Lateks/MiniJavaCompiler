@@ -86,11 +86,11 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
         private IExpression MultiplicationOperand()
         {
-            if (Input.NextTokenIs<UnaryNotToken>())
+            if (Input.NextTokenOneOf<OperatorToken>(MiniJavaInfo.UnaryOperators))
             {
-                var token = Input.Consume<UnaryNotToken>();
+                var token = Input.Consume<OperatorToken>();
                 var term = Term();
-                return new UnaryNotExpression(term, token.Row, token.Col);
+                return new UnaryOperatorExpression(token.Value, term, token.Row, token.Col);
             }
             else
                 return Term();
@@ -103,9 +103,9 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         private IExpression ParseBinaryOpTail(IExpression leftHandOperand,
             Func<IExpression> parseRightHandSideOperand, params string[] operators)
         {
-            if (Input.NextTokenOneOf<BinaryOperatorToken>(operators))
+            if (Input.NextTokenOneOf<OperatorToken>(operators))
             {
-                var opToken = Input.Consume<BinaryOperatorToken>();
+                var opToken = Input.Consume<OperatorToken>();
                 var rhs = parseRightHandSideOperand();
                 var operatorExp = new BinaryOpExpression(opToken.Value, leftHandOperand, rhs, opToken.Row, opToken.Col);
                 return ParseBinaryOpTail(operatorExp, parseRightHandSideOperand, operators);
@@ -152,7 +152,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             while (!(Input.NextTokenIs<EndOfFile>()
                 || Input.NextTokenIs<RightParenthesis>()
                 || Input.NextTokenIs<EndLine>()
-                || Input.NextTokenIs<BinaryOperatorToken>()))
+                || Input.NextTokenIs<OperatorToken>()))
                 Input.Consume<IToken>();
             return null;
         }

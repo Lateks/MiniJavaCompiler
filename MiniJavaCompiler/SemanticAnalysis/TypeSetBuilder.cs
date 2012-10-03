@@ -85,7 +85,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
         public void Visit(InstanceCreationExpression node) { }
 
-        public void Visit(UnaryNotExpression node) { }
+        public void Visit(UnaryOperatorExpression node) { }
 
         public void Visit(BinaryOpExpression node) { }
 

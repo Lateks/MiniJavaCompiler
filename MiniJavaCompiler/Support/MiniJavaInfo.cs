@@ -7,7 +7,10 @@ namespace MiniJavaCompiler.Support
 {
     internal static class MiniJavaInfo
     {
-        internal static readonly HashSet<string> BuiltIns = new HashSet<string>(new[] { "int", "boolean" });
+        // TODO: define semantics of operators here?
+
+        internal static readonly string[] BuiltIns = new [] { "int", "boolean" };
+        internal static readonly string[] UnaryOperators = new [] { "!" };
 
         internal static bool IsBuiltinType(string typeName)
         {

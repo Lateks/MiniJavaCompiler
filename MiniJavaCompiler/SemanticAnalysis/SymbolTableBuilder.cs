@@ -236,7 +236,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
             _symbolTable.Scopes.Add(node, CurrentScope);
         }
 
-        public void Visit(UnaryNotExpression node)
+        public void Visit(UnaryOperatorExpression node)
         {
             _symbolTable.Scopes.Add(node, CurrentScope);
         }

@@ -255,7 +255,7 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new LeftBracket(0, 0));
             programTokens.Enqueue(new IntegerLiteralToken("5", 0, 0));
             programTokens.Enqueue(new RightBracket(0, 0));
-            programTokens.Enqueue(new AssignmentToken(0, 0));
+            programTokens.Enqueue(new OperatorToken("=", 0, 0));
             programTokens.Enqueue(new KeywordToken("true", 0, 0));
             programTokens.Enqueue(new EndLine(0, 0));
 
@@ -274,7 +274,7 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new Identifier("foo", 0, 0));
             programTokens.Enqueue(new LeftBracket(0, 0));
             programTokens.Enqueue(new RightBracket(0, 0));
-            programTokens.Enqueue(new AssignmentToken(0, 0));
+            programTokens.Enqueue(new OperatorToken("=", 0, 0));
             programTokens.Enqueue(new IntegerLiteralToken("42", 0, 0));
             programTokens.Enqueue(new EndLine(0, 0));
 
@@ -300,9 +300,9 @@ namespace MiniJavaCompilerTest
         public void BinaryOperatorExpression()
         { // 7 % foo == 0
             programTokens.Enqueue(new IntegerLiteralToken("7", 0, 0));
-            programTokens.Enqueue(new BinaryOperatorToken("%", 0, 0));
+            programTokens.Enqueue(new OperatorToken("%", 0, 0));
             programTokens.Enqueue(new Identifier("foo", 0, 0));
-            programTokens.Enqueue(new BinaryOperatorToken("==", 0, 0));
+            programTokens.Enqueue(new OperatorToken("==", 0, 0));
             programTokens.Enqueue(new IntegerLiteralToken("0", 0, 0));
 
             var errorReporter = new ErrorLogger();
@@ -324,17 +324,17 @@ namespace MiniJavaCompilerTest
         public void OperatorPrecedences()
         { // 4 + 9 * (7 - 2 % 3) - 2
             programTokens.Enqueue(new IntegerLiteralToken("4", 0, 0));
-            programTokens.Enqueue(new BinaryOperatorToken("+", 0, 0));
+            programTokens.Enqueue(new OperatorToken("+", 0, 0));
             programTokens.Enqueue(new IntegerLiteralToken("9", 0, 0));
-            programTokens.Enqueue(new BinaryOperatorToken("*", 0, 0));
+            programTokens.Enqueue(new OperatorToken("*", 0, 0));
             programTokens.Enqueue(new LeftParenthesis(0, 0));
             programTokens.Enqueue(new IntegerLiteralToken("7", 0, 0));
-            programTokens.Enqueue(new BinaryOperatorToken("-", 0, 0));
+            programTokens.Enqueue(new OperatorToken("-", 0, 0));
             programTokens.Enqueue(new IntegerLiteralToken("2", 0, 0));
-            programTokens.Enqueue(new BinaryOperatorToken("%", 0, 0));
+            programTokens.Enqueue(new OperatorToken("%", 0, 0));
             programTokens.Enqueue(new IntegerLiteralToken("3", 0, 0));
             programTokens.Enqueue(new RightParenthesis(0, 0));
-            programTokens.Enqueue(new BinaryOperatorToken("-", 0, 0));
+            programTokens.Enqueue(new OperatorToken("-", 0, 0));
             programTokens.Enqueue(new IntegerLiteralToken("2", 0, 0));
 
             var errorReporter = new ErrorLogger();
@@ -671,7 +671,7 @@ namespace MiniJavaCompilerTest
             programTokens.Enqueue(new KeywordToken("if", 0, 0));
             programTokens.Enqueue(new LeftParenthesis(0, 0));
             programTokens.Enqueue(new KeywordToken("true", 0, 0));
-            programTokens.Enqueue(new BinaryOperatorToken("&&", 0, 0));
+            programTokens.Enqueue(new OperatorToken("&&", 0, 0));
             programTokens.Enqueue(new KeywordToken("false", 0, 0));
             programTokens.Enqueue(new RightParenthesis(0, 0));
             AssignIntegerToVariable("foo", "42");
@@ -804,7 +804,7 @@ namespace MiniJavaCompilerTest
         private void AssignIntegerToVariable(string variableName, string integerValue)
         {
             programTokens.Enqueue(new Identifier(variableName, 0, 0));
-            programTokens.Enqueue(new AssignmentToken(0, 0));
+            programTokens.Enqueue(new OperatorToken("=", 0, 0));
             programTokens.Enqueue(new IntegerLiteralToken(integerValue, 0, 0));
             EndLine();
         }
@@ -832,7 +832,7 @@ namespace MiniJavaCompilerTest
         private void AssignNewArrayToVariable(string variableName, string arrayType, string arraySize)
         {
             programTokens.Enqueue(new Identifier(variableName, 0, 0));
-            programTokens.Enqueue(new AssignmentToken(0, 0));
+            programTokens.Enqueue(new OperatorToken("=", 0, 0));
             programTokens.Enqueue(new KeywordToken("new", 0, 0));
             programTokens.Enqueue(new MiniJavaType(arrayType, 0, 0));
             programTokens.Enqueue(new LeftBracket(0, 0));

@@ -30,12 +30,12 @@ namespace MiniJavaCompilerTest
         public string[] arithmeticOperators = { "+", "-", "*", "/", "%" };
 
         [Theory]
-        public void ArithmeticOperators(string binop)
+        public void ArithmeticOperators(string @operator)
         {
-            var lexer = new MiniJavaScanner(new StringReader(binop));
+            var lexer = new MiniJavaScanner(new StringReader(@operator));
             IToken token = lexer.NextToken();
-            Assert.That(token, Is.InstanceOf<BinaryOperatorToken>());
-            Assert.That(((BinaryOperatorToken)token).Value, Is.EqualTo(binop));
+            Assert.That(token, Is.InstanceOf<OperatorToken>());
+            Assert.That(((OperatorToken)token).Value, Is.EqualTo(@operator));
         }
     }
 
@@ -43,22 +43,15 @@ namespace MiniJavaCompilerTest
     public class LogicalOperatorTest
     {
         [Datapoints]
-        public string[] logicalOperators = { "<", ">", "&&", "==", "||" };
+        public string[] logicalOperators = { "<", ">", "&&", "==", "||", "!" };
 
         [Theory]
-        public void LogicalOperators(string binop)
+        public void LogicalOperators(string @operator)
         {
-            var lexer = new MiniJavaScanner(new StringReader(binop));
+            var lexer = new MiniJavaScanner(new StringReader(@operator));
             IToken token = lexer.NextToken();
-            Assert.That(token, Is.InstanceOf<BinaryOperatorToken>());
-            Assert.That(((BinaryOperatorToken)token).Value, Is.EqualTo(binop));
-        }
-
-        [Test]
-        public void UnaryNot()
-        {
-            var lexer = new MiniJavaScanner(new StringReader("!"));
-            Assert.That(lexer.NextToken(), Is.InstanceOf<UnaryNotToken>());
+            Assert.That(token, Is.InstanceOf<OperatorToken>());
+            Assert.That(((OperatorToken)token).Value, Is.EqualTo(@operator));
         }
     }
 
@@ -129,7 +122,7 @@ namespace MiniJavaCompilerTest
         }
 
         [Test]
-        public void TestEOF()
+        public void TestEndOfFile()
         {
             var lexer = new MiniJavaScanner(new StringReader(""));
             Assert.That(lexer.NextToken(), Is.InstanceOf<EndOfFile>());
@@ -192,16 +185,16 @@ namespace MiniJavaCompilerTest
         public void DivisionSymbolIsNotConfusedWithAComment()
         {
             var lexer = new MiniJavaScanner(new StringReader("/"));
-            Assert.That(lexer.NextToken(), Is.InstanceOf<BinaryOperatorToken>());
+            Assert.That(lexer.NextToken(), Is.InstanceOf<OperatorToken>());
             lexer = new MiniJavaScanner(new StringReader("// .. / ..\n /"));
-            Assert.That(((BinaryOperatorToken)lexer.NextToken()).Value, Is.EqualTo("/"));
+            Assert.That(((OperatorToken)lexer.NextToken()).Value, Is.EqualTo("/"));
         }
 
         [Test]
         public void AssignmentToken()
         {
             var lexer = new MiniJavaScanner(new StringReader("="));
-            Assert.That(lexer.NextToken(), Is.InstanceOf<AssignmentToken>());
+            Assert.That(lexer.NextToken(), Is.InstanceOf<OperatorToken>());
         }
 
         [Test]
