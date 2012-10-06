@@ -133,7 +133,9 @@ namespace MiniJavaCompiler.Support.SymbolTable
             }
             catch (KeyNotFoundException)
             { // Because fields are private, they are not resolved from superclasses.
-                return EnclosingScope.Resolve<TSymbolType>(name);
+              // In Mini-Java the enclosing scope of a class is the global scope which
+              // cannot contain variable declarations, so resolving stops here.
+                return null;
             }
         }
 

@@ -81,10 +81,10 @@ namespace MiniJavaCompilerTest
         }
 
         [Test]
-        public void VariablesCanBeResolvedInEnclosingScopes()
+        public void VariablesCanOnlyBeResolvedInsideDefiningClass()
         {
             globalScope.Define(new VariableSymbol("bar", someType, superClass));
-            Assert.That(testClass.Resolve<VariableSymbol>("bar"), Is.InstanceOf<VariableSymbol>());
+            Assert.That(testClass.Resolve<VariableSymbol>("bar"), Is.Null);
         }
 
         [Test]

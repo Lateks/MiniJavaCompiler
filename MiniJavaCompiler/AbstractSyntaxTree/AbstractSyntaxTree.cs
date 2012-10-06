@@ -44,7 +44,7 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
         public void Accept(INodeVisitor visitor)
         {
             visitor.Visit(MainClass);
-            foreach (ClassDeclaration aClass in Classes)
+            foreach (var aClass in Classes)
             {
                 aClass.Accept(visitor);
             }

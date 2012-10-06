@@ -7,10 +7,14 @@ namespace MiniJavaCompiler.Support.SymbolTable
 
     public interface ISimpleType : IType { }
 
-    public class BuiltinType : IType
+    public class Type : IType
+    {
+        public string Name { get; protected set; }
+    }
+
+    public class BuiltinType : Type
     {
         private static readonly BuiltinType ClassInstance = new BuiltinType();
-        public string Name { get; private set; }
 
         private BuiltinType()
         {
@@ -23,9 +27,8 @@ namespace MiniJavaCompiler.Support.SymbolTable
         }
     }
 
-    public class MiniJavaArrayType : IType
+    public class MiniJavaArrayType : Type
     {
-        public string Name { get; private set; }
         public ISimpleType ElementType { get; private set; }
 
         public MiniJavaArrayType(ISimpleType elementType)
@@ -37,6 +40,20 @@ namespace MiniJavaCompiler.Support.SymbolTable
         public static bool IsPredefinedArrayAction(string name)
         {
             return name == "length";
+        }
+
+        public bool Equals(IType other)
+        {
+            if (other == null)
+            {
+                return false;
+            }
+            return other is MiniJavaArrayType && Equals(other as MiniJavaArrayType);
+        }
+
+        public bool Equals(MiniJavaArrayType other)
+        {
+            return ElementType == other.ElementType;
         }
     }
 

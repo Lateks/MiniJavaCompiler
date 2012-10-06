@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using MiniJavaCompiler.AbstractSyntaxTree;
 using MiniJavaCompiler.Support.SymbolTable;
 using MiniJavaCompiler.Support;
@@ -119,7 +117,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
         public void Visit(VariableDeclaration node)
         {
             var variableType = CheckDeclaredType(node);
-            var symbol = DefineSymbolOrFail<VariableSymbol>(node, variableType);
+            var symbol = TryDefineSymbol<VariableSymbol>(node, variableType);
             if (symbol != null)
             {
                 _symbolTable.Definitions.Add(symbol, node);
@@ -130,7 +128,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
         public void Visit(MethodDeclaration node)
         {
             var methodReturnType = node.Type == "void" ? null : CheckDeclaredType(node);
-            var methodSymbol = (MethodSymbol)DefineSymbolOrFail<MethodSymbol>(node, methodReturnType);
+            var methodSymbol = (MethodSymbol)TryDefineSymbol<MethodSymbol>(node, methodReturnType);
             if (methodSymbol == null)
             {
                 throw new DefinitionException();
@@ -158,7 +156,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
             return actualType;
         }
 
-        private Symbol DefineSymbolOrFail<TSymbolType>(Declaration node, IType symbolType)
+        private Symbol TryDefineSymbol<TSymbolType>(Declaration node, IType symbolType)
             where TSymbolType : Symbol
         {
             var symbol = Symbol.CreateAndDefine<TSymbolType>(

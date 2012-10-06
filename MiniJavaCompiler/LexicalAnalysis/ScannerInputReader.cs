@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.IO;
 
 namespace MiniJavaCompiler.LexicalAnalysis
@@ -35,7 +32,7 @@ namespace MiniJavaCompiler.LexicalAnalysis
 
         internal ScannerInputReader(TextReader input)
         {
-            this._input = input;
+            _input = input;
             _buffer = null;
             Row = 1; Col = 0;
         }
@@ -44,7 +41,7 @@ namespace MiniJavaCompiler.LexicalAnalysis
         {
             if (_buffer != null)
             {
-                char temp = (char)_buffer;
+                var temp = (char)_buffer;
                 return temp;
             }
             else
@@ -88,8 +85,8 @@ namespace MiniJavaCompiler.LexicalAnalysis
             while (InputLeft())
             {
                 SkipWhiteSpace();
-                bool no_comments_found = !SkipComments();
-                if ((no_comments_found && !NextCharIsWhiteSpace()))
+                bool noCommentsFound = !SkipComments();
+                if ((noCommentsFound && !NextCharIsWhiteSpace()))
                     return;
             }
         }
