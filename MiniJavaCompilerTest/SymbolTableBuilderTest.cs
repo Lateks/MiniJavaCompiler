@@ -156,6 +156,8 @@ namespace MiniJavaCompilerTest
 
             var numVariable = (VariableSymbol)facMethod.Resolve<VariableSymbol>("num");
             Assert.That(numVariable, Is.Not.Null);
+            var numVariableNode = symbolTable.Definitions[numVariable];
+            Assert.That(symbolTable.Scopes[numVariableNode], Is.EqualTo(facMethod));
             Assert.That(numVariable.Type, Is.InstanceOf<BuiltinTypeSymbol>());
             Assert.That(numVariable.Type.Name, Is.EqualTo("int"));
             Assert.AreEqual(numVariable.Type, facMethod.Type);

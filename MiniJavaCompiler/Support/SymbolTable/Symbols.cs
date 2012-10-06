@@ -9,7 +9,6 @@ namespace MiniJavaCompiler.Support.SymbolTable
         public string Name { get; private set; }
         public IType Type { get; private set; }
         public IScope EnclosingScope { get; private set; }
-        public SyntaxElement Definition { get; set; }
 
         // Returns the created symbol if defining succeeds. Otherwise returns null.
         public static Symbol CreateAndDefine<TSymbolType>(string name, IScope enclosingScope)

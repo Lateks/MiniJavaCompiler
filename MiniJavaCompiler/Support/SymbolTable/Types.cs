@@ -33,7 +33,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
 
         public MiniJavaArrayType(ISimpleType elementType)
         {
-            Name = "$builtin_array_" + elementType.Name;
+            Name = "array[" + elementType.Name + "]";
             ElementType = elementType;
         }
 

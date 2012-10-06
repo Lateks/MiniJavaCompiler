@@ -312,11 +312,11 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
 
         public override void Accept(INodeVisitor visitor)
         {
-            MethodOwner.Accept(visitor);
             foreach (var expr in CallParameters)
             {
                 expr.Accept(visitor);
             }
+            MethodOwner.Accept(visitor);
             visitor.Visit(this);
         }
     }
@@ -337,26 +337,29 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
 
         public override void Accept(INodeVisitor visitor)
         {
-            ArraySize.Accept(visitor);
+            if (ArraySize != null)
+            {
+                ArraySize.Accept(visitor);
+            }
             visitor.Visit(this);
         }
     }
 
     public class UnaryOperatorExpression : SyntaxElement, IExpression
     {
-        public IExpression BooleanExpression { get; private set; }
+        public IExpression ArgumentExpression { get; private set; }
         public string Operator { get; private set; }
 
-        public UnaryOperatorExpression(string opSymbol, IExpression booleanExp, int row, int col)
+        public UnaryOperatorExpression(string opSymbol, IExpression argExpression, int row, int col)
             : base(row, col)
         {
             Operator = opSymbol;
-            BooleanExpression = booleanExp;
+            ArgumentExpression = argExpression;
         }
 
         public override void Accept(INodeVisitor visitor)
         {
-            BooleanExpression.Accept(visitor);
+            ArgumentExpression.Accept(visitor);
             visitor.Visit(this);
         }
     }

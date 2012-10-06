@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Collections;
 using System.IO;
+using MiniJavaCompiler.Support;
 
 namespace MiniJavaCompiler.LexicalAnalysis
 {
@@ -21,18 +22,6 @@ namespace MiniJavaCompiler.LexicalAnalysis
 
     public class MiniJavaScanner : IScanner
     {
-        private static readonly char[]
-            Punctuation = new [] { ';', '(', ')', '[', ']', '.', '{', '}', ',' },
-            SingleCharOperatorSymbols = new [] { '/', '+', '-', '*', '<', '>', '%', '!' },
-            MultiCharOperatorSymbols = new [] { '&', '=', '|' };
-
-        private static readonly string[]
-            Keywords = new [] { "this", "true", "false", "new",
-                                "length", "System", "out", "println",
-                                "if", "else", "while", "return", "assert",
-                                "public", "static", "main", "class", "extends" },
-            Types = new [] { "int", "boolean", "void" };
-
         private readonly ScannerInputReader _input;
         private readonly Queue<IToken> _tokens;
         private int _startRow;
@@ -87,11 +76,11 @@ namespace MiniJavaCompiler.LexicalAnalysis
             _startCol = _input.Col + 1;
 
             char inputSymbol = _input.Peek();
-            if (SingleCharOperatorSymbols.Contains(inputSymbol))
+            if (MiniJavaInfo.SingleCharOperatorSymbols.Contains(inputSymbol))
                 return MakeSingleCharBinaryOperatorToken();
-            else if (MultiCharOperatorSymbols.Contains(inputSymbol))
+            else if (MiniJavaInfo.MultiCharOperatorSymbols.Contains(inputSymbol))
                 return MakeAssignmentOrMultiCharOperatorToken();
-            else if (Punctuation.Contains(inputSymbol))
+            else if (MiniJavaInfo.Punctuation.Contains(inputSymbol))
                 return MakePunctuationToken();
             else if (Char.IsDigit(inputSymbol))
                 return MakeIntegerLiteralToken();
@@ -145,9 +134,9 @@ namespace MiniJavaCompiler.LexicalAnalysis
             while (_input.InputLeft() && (Char.IsLetterOrDigit(_input.Peek()) ||
                                          _input.Peek().Equals('_')))
                 token += _input.Read();
-            if (Types.Contains(token))
+            if (MiniJavaInfo.Types.Contains(token))
                 return new MiniJavaType(token, _startRow, _startCol);
-            if (Keywords.Contains(token))
+            if (MiniJavaInfo.Keywords.Contains(token))
                 return new KeywordToken(token, _startRow, _startCol);
             return new Identifier(token, _startRow, _startCol);
         }

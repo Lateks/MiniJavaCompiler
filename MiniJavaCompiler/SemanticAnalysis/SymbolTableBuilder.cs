@@ -37,12 +37,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
             _errors = 0;
             _syntaxTree = node;
 
-            _symbolTable = new SymbolTable
-                              {
-                                  GlobalScope = new GlobalScope(),
-                                  Definitions = new Dictionary<Symbol, ISyntaxTreeNode>(),
-                                  Scopes = new Dictionary<ISyntaxTreeNode, IScope>()
-                              };
+            _symbolTable = new SymbolTable();
 
             SetupGlobalScope(types);
             _scopeStack = new Stack<IScope>();
