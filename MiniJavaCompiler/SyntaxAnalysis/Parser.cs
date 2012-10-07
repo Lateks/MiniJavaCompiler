@@ -86,7 +86,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
                 IToken startToken = Input.MatchAndConsume<KeywordToken>("class");
                 var classIdent = Input.MatchAndConsume<Identifier>();
                 Input.MatchAndConsume<PunctuationToken>("{");
-                Input.MatchAndConsume<KeywordToken>("public");
+                IToken methodStartToken = Input.MatchAndConsume<KeywordToken>("public");
                 Input.MatchAndConsume<KeywordToken>("static");
                 Input.MatchAndConsume<MiniJavaType>("void");
                 Input.MatchAndConsume<KeywordToken>("main");
@@ -100,7 +100,8 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
                 Input.MatchAndConsume<PunctuationToken>("}");
                 return new MainClassDeclaration(classIdent.Value,
-                    mainStatements, startToken.Row, startToken.Col);
+                    mainStatements, startToken.Row, startToken.Col,
+                    methodStartToken.Row, methodStartToken.Col);
             }
             catch (SyntaxError e)
             {

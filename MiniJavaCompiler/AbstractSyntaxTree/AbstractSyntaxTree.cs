@@ -81,23 +81,21 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
     public class MainClassDeclaration : SyntaxElement
     {
         public string Name { get; private set; }
-        public List<IStatement> MainMethod { get; private set; }
+        public MethodDeclaration MainMethod { get; private set; }
 
         public MainClassDeclaration(string name, List<IStatement> mainMethod,
-            int row, int col)
+            int row, int col, int mainMethodRow, int mainMethodCol)
             : base(row, col)
         {
             Name = name;
-            MainMethod = mainMethod;
+            MainMethod = new MethodDeclaration("main", "void", false,
+                new List<VariableDeclaration>(), mainMethod, mainMethodRow, mainMethodCol, true);
         }
 
         public override void Accept(INodeVisitor visitor)
         {
             visitor.Visit(this);
-            foreach (IStatement statement in MainMethod)
-            {
-                statement.Accept(visitor);
-            }
+            MainMethod.Accept(visitor);
             visitor.Exit(this);
         }
     }
@@ -122,14 +120,16 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
     {
         public List<VariableDeclaration> Formals { get; private set; }
         public List<IStatement> MethodBody { get; private set; }
+        public bool IsStatic { get; private set; }
 
         public MethodDeclaration(string name, string type, bool returnTypeIsArray,
             List<VariableDeclaration> formals, List<IStatement> methodBody,
-            int row, int col)
+            int row, int col, bool isStatic = false)
             : base(name, type, returnTypeIsArray, row, col)
         {
             Formals = formals;
             MethodBody = methodBody;
+            IsStatic = isStatic;
         }
 
         public override void Accept(INodeVisitor visitor)
@@ -253,23 +253,37 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
     public class IfStatement : SyntaxElement, IStatement
     {
         public IExpression BooleanExpression { get; private set; }
-        public IStatement Then { get; private set; }
-        public IStatement Else { get; private set; }
+        public IStatement ThenBranch { get; private set; }
+        public IStatement ElseBranch { get; private set; }
 
         public IfStatement(IExpression booleanExp, IStatement thenBranch,
             IStatement elseBranch, int row, int col)
             : base(row, col)
         {
             BooleanExpression = booleanExp;
-            Then = thenBranch;
-            Else = elseBranch;
+            ThenBranch = WrapInBlock(thenBranch);
+            ElseBranch =  elseBranch == null ? null : WrapInBlock(elseBranch);
+        }
+
+        private BlockStatement WrapInBlock(IStatement statement)
+        {
+            if (statement is BlockStatement)
+            {
+                return statement as BlockStatement;
+            }
+            var statementNode = (SyntaxElement) statement;
+            return new BlockStatement(new List<IStatement>() { statement },
+                statementNode.Row, statementNode.Col);
         }
 
         public override void Accept(INodeVisitor visitor)
         {
             BooleanExpression.Accept(visitor);
-            Then.Accept(visitor);
-            Else.Accept(visitor);
+            ThenBranch.Accept(visitor);
+            if (ElseBranch != null)
+            {
+                ElseBranch.Accept(visitor);
+            }
             visitor.Visit(this);
         }
     }

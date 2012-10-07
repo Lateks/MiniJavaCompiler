@@ -51,7 +51,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
             var type = _operandTypes.Pop();
             if (!(type is BuiltinTypeSymbol))
             {
-                throw new TypeError(String.Format("Cannot convert type '{0}' to string near row {1}, col {2}.",
+                throw new TypeError(String.Format("Cannot convert type {0} to string near row {1}, col {2}.",
                     type.Name, node.Row, node.Col));
             }
         }
@@ -72,9 +72,9 @@ namespace MiniJavaCompiler.SemanticAnalysis
         private void RequireSingleBooleanArgument(SyntaxElement node)
         {
             var argType = _operandTypes.Pop();
-            if (!(argType is BuiltinTypeSymbol && argType.Name == MiniJavaInfo.IntType))
+            if (!(argType is BuiltinTypeSymbol && argType.Name == MiniJavaInfo.BoolType))
             {
-                throw new TypeError(String.Format("Cannot convert expression of type '{0}' to boolean near row {1}, col {2}.",
+                throw new TypeError(String.Format("Cannot convert expression of type {0} to boolean near row {1}, col {2}.",
                                                   argType.Name, node.Row, node.Col));
             }
         }
@@ -112,7 +112,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
         }
 
         public void Visit(MethodInvocation node)
-        {
+        { // TODO: take static method(s) into account
             var expressionType = _operandTypes.Pop();
             MethodSymbol method;
             if (node.MethodOwner is ThisExpression) // method called is defined by the enclosing class or its superclasses
@@ -131,12 +131,12 @@ namespace MiniJavaCompiler.SemanticAnalysis
                         _operandTypes.Push(_symbolTable.ResolveType(MiniJavaInfo.IntType));
                         return;
                     }
-                    throw new ReferenceError(String.Format("Cannot call method '{0}' for an array near row {1}, col {2}.",
+                    throw new ReferenceError(String.Format("Cannot call method {0} for an array near row {1}, col {2}.",
                         node.MethodName, node.Row, node.Col));
                 }
                 else if (expressionType is BuiltinTypeSymbol) // no methods are defined for builtin simple types
                 {
-                    throw new ReferenceError(String.Format("Cannot call method '{0}' on builtin type {1} near row {2}, col {3}.",
+                    throw new ReferenceError(String.Format("Cannot call method {0} on builtin type {1} near row {2}, col {3}.",
                         node.MethodName, expressionType.Name, node.Row, node.Col));
                 }
                 else // expression evaluates to an object of a user defined type and method must be resolved in the defining class
@@ -158,13 +158,13 @@ namespace MiniJavaCompiler.SemanticAnalysis
         {
             if (method == null) // method does not exist
             {
-                throw new ReferenceError(String.Format("Cannot resolve symbol '{0}' near row {1}, col {2}.",
+                throw new ReferenceError(String.Format("Cannot resolve symbol {0} near row {1}, col {2}.",
                     node.MethodName, node.Row, node.Col));
             }
             var methodDecl = (MethodDeclaration)_symbolTable.Definitions[method];
             if (node.CallParameters.Count != methodDecl.Formals.Count)
             {
-                throw new ReferenceError(String.Format("Wrong number of arguments to method '{0}' near row {1}, col {2}.",
+                throw new TypeError(String.Format("Wrong number of arguments to method {0} near row {1}, col {2}.",
                     node.MethodName, node.Row, node.Col));
             }
 
@@ -185,7 +185,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
                 if (!formalParamType.Equals(callParamType))
                 {
                     throw new TypeError(String.Format(
-                        "Wrong type of argument to method '{0}' near row {1}, col {2}. Expected {3} but got {4}.",
+                        "Wrong type of argument to method {0} near row {1}, col {2}. Expected {3} but got {4}.",
                         node.MethodName, node.Row, node.Col, formalParamType.Name, callParamType.Name));
                 }
             }

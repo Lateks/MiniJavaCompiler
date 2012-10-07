@@ -121,7 +121,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
         }
 
         public void Visit(MethodDeclaration node)
-        {
+        { // TODO: handle static method(s)
             var methodReturnType = node.Type == "void" ? null : CheckDeclaredType(node);
             var methodSymbol = (MethodSymbol)TryDefineSymbol<MethodSymbol>(node, methodReturnType);
             if (methodSymbol == null)
@@ -184,6 +184,11 @@ namespace MiniJavaCompiler.SemanticAnalysis
             ExitScope();
         }
 
+        public void Visit(IfStatement node)
+        {
+            _symbolTable.Scopes.Add(node, CurrentScope);
+        }
+
         public void Visit(VariableReferenceExpression node)
         {
             _symbolTable.Scopes.Add(node, CurrentScope);
@@ -210,11 +215,6 @@ namespace MiniJavaCompiler.SemanticAnalysis
         }
 
         public void Visit(AssignmentStatement node)
-        {
-            _symbolTable.Scopes.Add(node, CurrentScope);
-        }
-
-        public void Visit(IfStatement node)
         {
             _symbolTable.Scopes.Add(node, CurrentScope);
         }

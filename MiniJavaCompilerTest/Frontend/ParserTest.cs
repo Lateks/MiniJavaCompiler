@@ -375,7 +375,7 @@ namespace MiniJavaCompilerTest.Frontend
 
             Assert.That(programTree.Classes.Count, Is.EqualTo(0));
             Assert.That(programTree.MainClass.Name, Is.EqualTo("ThisIsTheMainClass"));
-            Assert.That(programTree.MainClass.MainMethod.Count, Is.EqualTo(0));
+            Assert.That(programTree.MainClass.MainMethod.MethodBody.Count, Is.EqualTo(0));
         }
 
         [Test]
@@ -400,24 +400,24 @@ namespace MiniJavaCompilerTest.Frontend
 
             Assert.That(programTree.Classes.Count, Is.EqualTo(0));
             Assert.That(programTree.MainClass.Name, Is.EqualTo("ThisIsTheMainClass"));
-            Assert.That(programTree.MainClass.MainMethod.Count, Is.EqualTo(3));
+            Assert.That(programTree.MainClass.MainMethod.MethodBody.Count, Is.EqualTo(3));
 
             var mainMethod = programTree.MainClass.MainMethod;
-            Assert.That(mainMethod[0], Is.InstanceOf<VariableDeclaration>());
+            Assert.That(mainMethod.MethodBody[0], Is.InstanceOf<VariableDeclaration>());
 
-            var fooDecl = (VariableDeclaration)mainMethod[0];
+            var fooDecl = (VariableDeclaration)mainMethod.MethodBody[0];
             Assert.That(fooDecl.Name, Is.EqualTo("foo"));
             Assert.That(fooDecl.IsArray, Is.EqualTo(false));
 
-            Assert.That(mainMethod[1], Is.InstanceOf<AssignmentStatement>());
+            Assert.That(mainMethod.MethodBody[1], Is.InstanceOf<AssignmentStatement>());
 
-            var assignment = (AssignmentStatement)mainMethod[1];
+            var assignment = (AssignmentStatement)mainMethod.MethodBody[1];
             Assert.That(assignment.LeftHandSide, Is.InstanceOf<VariableReferenceExpression>());
             Assert.That(((VariableReferenceExpression)assignment.LeftHandSide).Name, Is.EqualTo("foo"));
             Assert.That(assignment.RightHandSide, Is.InstanceOf<IntegerLiteralExpression>());
             Assert.That(((IntegerLiteralExpression)assignment.RightHandSide).Value, Is.EqualTo("42"));
-            Assert.That(mainMethod[2], Is.InstanceOf<PrintStatement>());
-            Assert.That(((PrintStatement)mainMethod[2]).Expression, Is.InstanceOf<VariableReferenceExpression>());
+            Assert.That(mainMethod.MethodBody[2], Is.InstanceOf<PrintStatement>());
+            Assert.That(((PrintStatement)mainMethod.MethodBody[2]).Expression, Is.InstanceOf<VariableReferenceExpression>());
         }
 
         [Test]
@@ -441,16 +441,16 @@ namespace MiniJavaCompilerTest.Frontend
             Assert.That(programTree.Classes.Count, Is.EqualTo(0));
 
             var mainMethod = programTree.MainClass.MainMethod;
-            Assert.That(mainMethod.Count, Is.EqualTo(2));
-            Assert.That(mainMethod[0], Is.InstanceOf<VariableDeclaration>());
+            Assert.That(mainMethod.MethodBody.Count, Is.EqualTo(2));
+            Assert.That(mainMethod.MethodBody[0], Is.InstanceOf<VariableDeclaration>());
 
-            var decl = (VariableDeclaration)mainMethod[0];
+            var decl = (VariableDeclaration)mainMethod.MethodBody[0];
             Assert.That(decl.Name, Is.EqualTo("foo"));
             Assert.That(decl.Type, Is.EqualTo("int"));
             Assert.True(decl.IsArray);
-            Assert.That(mainMethod[1], Is.InstanceOf<AssignmentStatement>());
+            Assert.That(mainMethod.MethodBody[1], Is.InstanceOf<AssignmentStatement>());
 
-            var assignment = (AssignmentStatement)mainMethod[1];
+            var assignment = (AssignmentStatement)mainMethod.MethodBody[1];
             Assert.That(assignment.LeftHandSide, Is.InstanceOf<VariableReferenceExpression>());
             Assert.That(assignment.RightHandSide, Is.InstanceOf<InstanceCreationExpression>());
 
@@ -537,9 +537,9 @@ namespace MiniJavaCompilerTest.Frontend
             var programTree = GetProgramTree();
 
             var mainMethod = programTree.MainClass.MainMethod;
-            Assert.That(mainMethod.Count, Is.EqualTo(1));
-            Assert.That(mainMethod[0], Is.InstanceOf<MethodInvocation>());
-            var methodInvocation = (MethodInvocation)mainMethod[0];
+            Assert.That(mainMethod.MethodBody.Count, Is.EqualTo(1));
+            Assert.That(mainMethod.MethodBody[0], Is.InstanceOf<MethodInvocation>());
+            var methodInvocation = (MethodInvocation)mainMethod.MethodBody[0];
             Assert.That(methodInvocation.MethodOwner, Is.InstanceOf<VariableReferenceExpression>());
             Assert.That(((VariableReferenceExpression)methodInvocation.MethodOwner).Name, Is.EqualTo("someClass"));
             Assert.That(methodInvocation.MethodName, Is.EqualTo("someMethod"));
@@ -565,9 +565,9 @@ namespace MiniJavaCompilerTest.Frontend
             var programTree = GetProgramTree();
 
             var mainMethod = programTree.MainClass.MainMethod;
-            Assert.That(mainMethod.Count, Is.EqualTo(1));
-            Assert.That(mainMethod[0], Is.InstanceOf<MethodInvocation>());
-            var methodInvocation = (MethodInvocation)mainMethod[0];
+            Assert.That(mainMethod.MethodBody.Count, Is.EqualTo(1));
+            Assert.That(mainMethod.MethodBody[0], Is.InstanceOf<MethodInvocation>());
+            var methodInvocation = (MethodInvocation)mainMethod.MethodBody[0];
             Assert.That(methodInvocation.MethodOwner, Is.InstanceOf<VariableReferenceExpression>());
             Assert.That(((VariableReferenceExpression)methodInvocation.MethodOwner).Name, Is.EqualTo("someClass"));
             Assert.That(methodInvocation.MethodName, Is.EqualTo("someMethod"));
@@ -641,9 +641,9 @@ namespace MiniJavaCompilerTest.Frontend
             var programTree = GetProgramTree();
 
             var mainMethod = programTree.MainClass.MainMethod;
-            Assert.That(mainMethod.Count, Is.EqualTo(1));
-            Assert.That(mainMethod[0], Is.InstanceOf<MethodInvocation>());
-            var lengthMethodInvocation = (MethodInvocation)mainMethod[0];
+            Assert.That(mainMethod.MethodBody.Count, Is.EqualTo(1));
+            Assert.That(mainMethod.MethodBody[0], Is.InstanceOf<MethodInvocation>());
+            var lengthMethodInvocation = (MethodInvocation)mainMethod.MethodBody[0];
             Assert.That(lengthMethodInvocation.MethodName, Is.EqualTo("length"));
             Assert.That(lengthMethodInvocation.MethodOwner, Is.InstanceOf<MethodInvocation>());
             var anotherMethodInvocation = (MethodInvocation)lengthMethodInvocation.MethodOwner;
@@ -675,12 +675,12 @@ namespace MiniJavaCompilerTest.Frontend
             ClosingCurlyBrace(); ClosingCurlyBrace();
             EndFile();
 
-            var mainMethod = GetProgramTree().MainClass.MainMethod;
+            var mainMethod = GetProgramTree().MainClass.MainMethod.MethodBody;
             Assert.That(mainMethod.Count, Is.EqualTo(1));
             Assert.That(mainMethod[0], Is.InstanceOf<IfStatement>());
             var ifStatement = (IfStatement)mainMethod[0];
-            Assert.That(ifStatement.Then, Is.InstanceOf<AssignmentStatement>());
-            Assert.IsNull(ifStatement.Else);
+            Assert.That(ifStatement.ThenBranch, Is.InstanceOf<BlockStatement>());
+            Assert.IsNull(ifStatement.ElseBranch);
             Assert.That(ifStatement.BooleanExpression, Is.InstanceOf<BinaryOpExpression>());
             var boolExpression = (BinaryOpExpression)ifStatement.BooleanExpression;
             Assert.That(boolExpression.LeftOperand, Is.InstanceOf<BooleanLiteralExpression>());
@@ -716,12 +716,15 @@ namespace MiniJavaCompilerTest.Frontend
             ClosingCurlyBrace(); ClosingCurlyBrace();
             EndFile();
 
-            var mainMethod = GetProgramTree().MainClass.MainMethod;
+            var mainMethod = GetProgramTree().MainClass.MainMethod.MethodBody;
             Assert.That(mainMethod.Count, Is.EqualTo(1));
             Assert.That(mainMethod[0], Is.InstanceOf<IfStatement>());
             var ifStatement = (IfStatement)mainMethod[0];
-            Assert.That(ifStatement.Then, Is.InstanceOf<MethodInvocation>());
-            Assert.That(ifStatement.Else, Is.InstanceOf<AssignmentStatement>());
+            Assert.That(ifStatement.ThenBranch, Is.InstanceOf<BlockStatement>());
+            Assert.That(((BlockStatement) ifStatement.ThenBranch).Statements[0], Is.InstanceOf<MethodInvocation>());
+            Assert.That(ifStatement.ElseBranch, Is.InstanceOf<BlockStatement>());
+            Assert.That(((BlockStatement)ifStatement.ElseBranch).Statements[0], Is.InstanceOf<AssignmentStatement>());
+
         }
 
         private void EndLine()

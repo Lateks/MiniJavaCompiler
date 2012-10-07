@@ -169,7 +169,51 @@ namespace MiniJavaCompilerTest.Frontend
                              "\t}\n" +
                              "}\n";
             var checker = SetUpReferenceChecker(program);
-            Assert.Throws<ReferenceError>(checker.CheckTypesAndReferences);
+            var exception = Assert.Throws<ReferenceError>(checker.CheckTypesAndReferences);
+            Assert.That(exception.Message, Is.StringContaining("foo"));
+        }
+
+        [Test]
+        public void IfBlockHasItsOwnScope()
+        {
+            string program = "class Factorial {\n" +
+                 "\t public static void main () {\n" +
+                 "\t\t if (true)\n" +
+                 "\t\t\t int foo;" +
+                 "\t\t foo = 42;\n" +
+                 "\t} \n" +
+                 "} \n\n";
+            var checker = SetUpReferenceChecker(program);
+            var exception = Assert.Throws<ReferenceError>(checker.CheckTypesAndReferences);
+            Assert.That(exception.Message, Is.StringContaining("Could not resolve symbol foo"));
+        }
+
+        [Test]
+        public void IfAndElseBlocksAreInSeparateScopes()
+        {
+            string program = "class Factorial {\n" +
+                 "\t public static void main () {\n" +
+                 "\t\t if (true)\n" +
+                 "\t\t\t int foo;" +
+                 "\t\t else \n" +
+                 "\t\t\t foo = 42;\n" +
+                 "\t} \n" +
+                 "} \n\n";
+            var checker = SetUpReferenceChecker(program);
+            var exception = Assert.Throws<ReferenceError>(checker.CheckTypesAndReferences);
+            Assert.That(exception.Message, Is.StringContaining("Could not resolve symbol foo"));
+        }
+
+        [Test]
+        [Ignore("TODO")]
+        public void CannotCallAStaticMethodForAnInstance()
+        {
+        }
+
+        [Test]
+        [Ignore("TODO")]
+        public void CanCallMainMethodFromInsideProgram() // makes no sense but should still be possible
+        {
         }
     }
 

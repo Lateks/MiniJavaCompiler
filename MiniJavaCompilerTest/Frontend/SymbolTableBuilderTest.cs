@@ -139,8 +139,7 @@ namespace MiniJavaCompilerTest.Frontend
             var firstClass = symbolTable.GlobalScope.Resolve<TypeSymbol>("Factorial");
             Assert.That(firstClass, Is.InstanceOf<UserDefinedTypeSymbol>());
 
-            // Main method is not in the symbol table.
-            Assert.That(((UserDefinedTypeSymbol)firstClass).Resolve<MethodSymbol>("main"), Is.Null);
+            Assert.That(((UserDefinedTypeSymbol)firstClass).Resolve<MethodSymbol>("main"), Is.Not.Null);
 
             var secondClass = symbolTable.GlobalScope.Resolve<TypeSymbol>("Fac");
             Assert.That(secondClass, Is.Not.Null);
