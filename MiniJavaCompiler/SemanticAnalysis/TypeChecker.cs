@@ -112,7 +112,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
         }
 
         public void Visit(MethodInvocation node)
-        { // TODO: take static method(s) into account
+        {
             var expressionType = _operandTypes.Pop();
             MethodSymbol method;
             if (node.MethodOwner is ThisExpression) // method called is defined by the enclosing class or its superclasses
@@ -159,6 +159,11 @@ namespace MiniJavaCompiler.SemanticAnalysis
             if (method == null) // method does not exist
             {
                 throw new ReferenceError(String.Format("Cannot resolve symbol {0} near row {1}, col {2}.",
+                    node.MethodName, node.Row, node.Col));
+            }
+            if (method.IsStatic)
+            {
+                throw new ReferenceError(String.Format("Cannot call static method {0} on an instance near row {1}, col {2}.",
                     node.MethodName, node.Row, node.Col));
             }
             var methodDecl = (MethodDeclaration)_symbolTable.Definitions[method];

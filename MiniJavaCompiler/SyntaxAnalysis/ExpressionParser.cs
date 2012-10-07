@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using MiniJavaCompiler.AbstractSyntaxTree;
 using MiniJavaCompiler.Support;
 using MiniJavaCompiler.LexicalAnalysis;
@@ -240,7 +239,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         private IExpression MakeMethodInvocationExpression(IExpression methodOwner)
         {
             Input.MatchAndConsume<PunctuationToken>(".");
-            if (Input.NextTokenIs<KeywordToken>())
+            if (Input.NextTokenIs<KeywordToken>("length"))
                 return MakeLengthMethodInvocation(methodOwner);
             else
                 return MakeUserDefinedMethodInvocation(methodOwner);
@@ -248,7 +247,15 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
         private IExpression MakeUserDefinedMethodInvocation(IExpression methodOwner)
         {
-            var methodName = Input.MatchAndConsume<Identifier>();
+            StringToken methodName;
+            if (Input.NextTokenIs<KeywordToken>("main"))
+            {
+                methodName = Input.MatchAndConsume<KeywordToken>();
+            }
+            else
+            {
+                methodName = Input.MatchAndConsume<Identifier>();
+            }
             Input.MatchAndConsume<PunctuationToken>("(");
             var parameters = ExpressionList();
             Input.MatchAndConsume<PunctuationToken>(")");

@@ -251,7 +251,6 @@ namespace MiniJavaCompilerTest.Frontend
         }
 
         [Test]
-        [Ignore("TODO")]
         public void CannotCallAStaticMethodForAnInstance()
         {
             string program = "class Foo {\n" +
@@ -269,26 +268,6 @@ namespace MiniJavaCompilerTest.Frontend
             var checker = SetUpReferenceChecker(program);
             var exception = Assert.Throws<ReferenceError>(checker.CheckTypesAndReferences);
             Assert.That(exception.Message, Is.StringContaining("main").And.StringContaining("static"));
-        }
-
-        [Test]
-        [Ignore("TODO")]
-        public void CanCallMainMethodFromInsideProgram() // makes no sense but should still be possible
-        {
-            string program = "class Foo {\n" +
-                 "\tpublic static void main() {\n" +
-                 "\t}\n" +
-                 "}\n\n" +
-                 "class A {\n" +
-                 "\tint foo;" +
-                 "\tpublic int foo()" +
-                 "\t{\n" +
-                 "\t\tnew Foo.main();" +
-                 "\t\treturn 1;" +
-                 "\t}\n" +
-                 "}\n";
-            var checker = SetUpReferenceChecker(program);
-            Assert.DoesNotThrow(checker.CheckTypesAndReferences);
         }
     }
 

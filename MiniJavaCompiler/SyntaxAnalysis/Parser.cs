@@ -132,7 +132,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             {
                 if (Input.NextTokenIs<MiniJavaType>())
                     return VariableDeclaration();
-                else if (Input.NextTokenIs<KeywordToken>())
+                else if (Input.NextTokenOneOf<KeywordToken>("assert", "if", "while", "System", "return"))
                     return MakeKeywordStatement();
                 else if (Input.NextTokenIs<PunctuationToken>("{"))
                     return MakeBlockStatement();
@@ -246,6 +246,8 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         }
 
         // Keyword statements are statements starting with a keyword.
+        // (Other than new or this which start an expression that can
+        // also begin a statement.)
         private IStatement MakeKeywordStatement()
         {
             var token = (KeywordToken) Input.Peek();

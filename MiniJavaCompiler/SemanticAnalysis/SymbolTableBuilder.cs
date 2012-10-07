@@ -121,13 +121,14 @@ namespace MiniJavaCompiler.SemanticAnalysis
         }
 
         public void Visit(MethodDeclaration node)
-        { // TODO: handle static method(s)
+        {
             var methodReturnType = node.Type == "void" ? null : CheckDeclaredType(node);
             var methodSymbol = (MethodSymbol)TryDefineSymbol<MethodSymbol>(node, methodReturnType);
             if (methodSymbol == null)
             {
                 throw new DefinitionException();
             }
+            methodSymbol.IsStatic = node.IsStatic;
 
             _symbolTable.Definitions.Add(methodSymbol, node);
             _symbolTable.Scopes.Add(node, methodSymbol);
