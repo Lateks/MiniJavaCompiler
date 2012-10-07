@@ -80,7 +80,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
 
         private VoidType()
         {
-            Name = "void";
+            Name = MiniJavaInfo.VoidType;
         }
 
         public static VoidType GetInstance()
