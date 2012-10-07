@@ -17,12 +17,14 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
     public abstract class ParserBase
     {
+        internal bool DebugMode;
         internal bool ParsingFailed;
         protected IParserInputReader Input { get; set; }
         protected readonly IErrorReporter ErrorReporter;
 
-        protected ParserBase(IParserInputReader input, IErrorReporter reporter)
+        protected ParserBase(IParserInputReader input, IErrorReporter reporter, bool debugMode = false)
         {
+            DebugMode = debugMode;
             ErrorReporter = reporter;
             Input = input;
         }
@@ -30,7 +32,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
     public class Parser : ParserBase, IParser
     {
-        public Parser(IParserInputReader input, IErrorReporter reporter) : base(input, reporter) { }
+        public Parser(IParserInputReader input, IErrorReporter reporter, bool debugMode = false) : base(input, reporter, debugMode) { }
 
         public Program Parse()
         {
@@ -48,6 +50,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             }
             catch (OutOfInput e)
             {
+                if (DebugMode) throw;
                 ErrorReporter.ReportError(e.Message, 0, 0);
                 throw new SyntaxAnalysisFailed();
             }
@@ -58,11 +61,13 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             }
             catch (SyntaxError e)
             { // Found something other than end of file.
+                if (DebugMode) throw;
                 ErrorReporter.ReportError(e.Message, e.Row, e.Col);
                 throw new SyntaxAnalysisFailed();
             }
             catch (OutOfInput e)
             {
+                if (DebugMode) throw;
                 ErrorReporter.ReportError(e.Message, 0, 0);
                 throw new SyntaxAnalysisFailed();
             }
@@ -99,6 +104,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             }
             catch (SyntaxError e)
             {
+                if (DebugMode) throw;
                 ErrorReporter.ReportError(e.Message, e.Row, e.Col);
                 ParsingFailed = true;
                 RecoverFromClassMatching();
@@ -106,6 +112,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             }
             catch (LexicalErrorEncountered)
             {
+                if (DebugMode) throw;
                 RecoverFromClassMatching();
                 ParsingFailed = true;
                 return null;
@@ -134,12 +141,14 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             }
             catch (SyntaxError e)
             {
+                if (DebugMode) throw;
                 ErrorReporter.ReportError(e.Message, e.Col, e.Row);
                 ParsingFailed = true;
                 RecoverFromStatementMatching();
             }
             catch (LexicalErrorEncountered)
             {
+                if (DebugMode) throw;
                 ParsingFailed = true;
                 RecoverFromStatementMatching();
             }
@@ -335,7 +344,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
         public IExpression Expression()
         {
-            var expressionParser = new ExpressionParser(Input, ErrorReporter);
+            var expressionParser = new ExpressionParser(Input, ErrorReporter, DebugMode);
             var expr = expressionParser.Parse();
             ParsingFailed = ParsingFailed && expressionParser.ParsingFailed;
             return expr;
@@ -356,6 +365,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             }
             catch (SyntaxError e)
             {
+                if (DebugMode) throw;
                 ErrorReporter.ReportError(e.Message, e.Row, e.Col);
                 ParsingFailed = true;
                 RecoverFromClassMatching();
@@ -363,6 +373,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             }
             catch (LexicalErrorEncountered)
             {
+                if (DebugMode) throw;
                 ParsingFailed = true;
                 RecoverFromClassMatching();
                 return null;
@@ -400,12 +411,14 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             }
             catch (SyntaxError e)
             {
+                if (DebugMode) throw;
                 ErrorReporter.ReportError(e.Message, e.Row, e.Col);
                 ParsingFailed = true;
                 RecoverFromDeclarationMatching();
             }
             catch (LexicalErrorEncountered)
             {
+                if (DebugMode) throw;
                 ParsingFailed = true;
                 RecoverFromDeclarationMatching();
             }
@@ -441,12 +454,14 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             }
             catch (SyntaxError e)
             {
+                if (DebugMode) throw;
                 ErrorReporter.ReportError(e.Message, e.Row, e.Col);
                 ParsingFailed = true;
                 RecoverFromVariableDeclarationMatching();
             }
             catch (LexicalErrorEncountered)
             {
+                if (DebugMode) throw;
                 ParsingFailed = true;
                 RecoverFromVariableDeclarationMatching();
             }

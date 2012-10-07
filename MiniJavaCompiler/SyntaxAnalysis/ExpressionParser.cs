@@ -24,8 +24,8 @@ namespace MiniJavaCompiler.SyntaxAnalysis
                 new [] { "*", "/", "%" }, 
             };
 
-        public ExpressionParser(IParserInputReader input, IErrorReporter reporter)
-            : base(input, reporter) { }
+        public ExpressionParser(IParserInputReader input, IErrorReporter reporter, bool debugMode = false)
+            : base(input, reporter, debugMode) { }
 
         public IExpression Parse()
         {
@@ -35,12 +35,14 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             }
             catch (SyntaxError e)
             {
+                if (DebugMode) throw;
                 ErrorReporter.ReportError(e.Message, e.Row, e.Col);
                 ParsingFailed = true;
                 RecoverFromExpressionParsing();
             }
             catch (LexicalErrorEncountered)
             {
+                if (DebugMode) throw;
                 ParsingFailed = true;
                 RecoverFromExpressionParsing();
             }
@@ -136,12 +138,14 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             }
             catch (SyntaxError e)
             {
+                if (DebugMode) throw;
                 ErrorReporter.ReportError(e.Message, e.Row, e.Col);
                 ParsingFailed = true;
                 return RecoverFromTermMatching();
             }
             catch (LexicalErrorEncountered)
             {
+                if (DebugMode) throw;
                 ParsingFailed = true;
                 return RecoverFromTermMatching();
             }
