@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 using NUnit.Framework;
 using MiniJavaCompiler.SyntaxAnalysis;
 using MiniJavaCompiler.AbstractSyntaxTree;
 using MiniJavaCompiler.LexicalAnalysis;
 using MiniJavaCompiler.Support;
 
-namespace MiniJavaCompilerTest
+namespace MiniJavaCompilerTest.Frontend
 {
     public class StubScanner : IScanner
     {

@@ -49,12 +49,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="LexerTest.cs" />
-    <Compile Include="ParserTest.cs" />
+    <Compile Include="Frontend\LexerTest.cs" />
+    <Compile Include="Frontend\ParserTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SymbolTableBuilderTest.cs" />
-    <Compile Include="SymbolTableTest.cs" />
-    <Compile Include="TypeSetBuilderTest.cs" />
+    <Compile Include="Frontend\SymbolTableBuilderTest.cs" />
+    <Compile Include="Frontend\SymbolTableTest.cs" />
+    <Compile Include="Frontend\TypeSetBuilderTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MiniJavaCompiler\MiniJavaCompiler.csproj">

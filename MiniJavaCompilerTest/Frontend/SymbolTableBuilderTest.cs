@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Linq;
 using System.IO;
 using NUnit.Framework;
 using MiniJavaCompiler.LexicalAnalysis;
@@ -11,7 +8,7 @@ using MiniJavaCompiler.Support.SymbolTable;
 using MiniJavaCompiler.Support;
 using MiniJavaCompiler.SemanticAnalysis;
 
-namespace MiniJavaCompilerTest
+namespace MiniJavaCompilerTest.Frontend
 {
     [TestFixture]
     class SymbolTableBuilderTest

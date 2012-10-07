@@ -2,7 +2,7 @@
 using MiniJavaCompiler.LexicalAnalysis;
 using System.IO;
 
-namespace MiniJavaCompilerTest
+namespace MiniJavaCompilerTest.Frontend
 {
     [TestFixture]
     public class KeywordTest
