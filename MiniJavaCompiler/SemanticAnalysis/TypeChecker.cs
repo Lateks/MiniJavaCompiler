@@ -311,8 +311,9 @@ namespace MiniJavaCompiler.SemanticAnalysis
         public void Exit(MainClassDeclaration node) { }
 
         public void Exit(MethodDeclaration node)
-        { // check return statements
-          // Note: the main method cannot be called from inside the program because there would be no sensible use for this.
+        { // Note: in this implementation the main method cannot be called from inside the program
+          // because there would be no sensible use for such a method call - and there are no other
+          // static methods - so implementing it would have been pointless.
             var method = (MethodSymbol)_symbolTable.Scopes[node].Resolve<MethodSymbol>(node.Name);
             int numReturnStatements = _returnTypes.Count;
             if (method.Type == VoidType.GetInstance())
