@@ -37,7 +37,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
             ElementType = elementType;
         }
 
-        public static bool IsPredefinedArrayAction(string name)
+        public static bool IsPredefinedArrayMethod(string name)
         {
             return name == "length";
         }

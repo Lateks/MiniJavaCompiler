@@ -17,7 +17,6 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
     public class TypeChecker : INodeVisitor
     {
-        // TODO: must check that referred variables have been defined before the reference point
         private readonly SymbolTable _symbolTable;
         private readonly Stack<IType> _operandTypes;
         private readonly Stack<IType> _returnTypes;
@@ -127,8 +126,8 @@ namespace MiniJavaCompiler.SemanticAnalysis
             {
                 if (expressionType is MiniJavaArrayType) // method is called on an array (can only be a built in array method)
                 {
-                    if (MiniJavaArrayType.IsPredefinedArrayAction(node.MethodName))
-                    { // TODO: ask type from array
+                    if (MiniJavaArrayType.IsPredefinedArrayMethod(node.MethodName))
+                    {
                         _operandTypes.Push(_symbolTable.ResolveType(MiniJavaInfo.IntType));
                         return;
                     }
@@ -273,13 +272,23 @@ namespace MiniJavaCompiler.SemanticAnalysis
         public void Visit(VariableReferenceExpression node)
         { // check that the reference is valid and take note of the type
             var scope = _symbolTable.Scopes[node];
-            var symbol = scope.Resolve<VariableSymbol>(node.Name);
-            if (symbol == null)
+            var symbol = (VariableSymbol) scope.Resolve<VariableSymbol>(node.Name);
+            if (symbol == null || !VariableDeclaredBeforeReference(symbol, node))
             {
                 throw new ReferenceError(String.Format("Could not resolve symbol {0} near row {1}, col {2}.",
                     node.Name, node.Row, node.Col));
             }
             _operandTypes.Push(symbol.Type);
+        }
+
+        private bool VariableDeclaredBeforeReference(VariableSymbol varSymbol, VariableReferenceExpression reference)
+        {
+            if (varSymbol.EnclosingScope is UserDefinedTypeSymbol)
+            { // Variables defined on the class level are visible in all internal scopes.
+                return true;
+            }
+            var declaration = (VariableDeclaration) _symbolTable.Definitions[varSymbol];
+            return declaration.Row < reference.Row || (declaration.Row == reference.Row && declaration.Col < reference.Col);
         }
 
         public void Visit(IntegerLiteralExpression node)
