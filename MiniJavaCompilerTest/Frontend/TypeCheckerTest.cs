@@ -93,7 +93,7 @@ namespace MiniJavaCompilerTest.Frontend
         }
 
         [Test]
-        public void CanCallResolvableMethod()
+        public void CanCallResolvableMethodInSameClass()
         {
             string program = "class Foo {\n" +
                              "\tpublic static void main() {\n" +
@@ -108,6 +108,52 @@ namespace MiniJavaCompilerTest.Frontend
                              "class B extends A {\n" +
                              "\tpublic boolean bar() {\n" +
                              "\t\treturn this.foo();\n" +
+                             "\t}\n" +
+                             "}\n";
+            var checker = SetUpReferenceChecker(program);
+            Assert.DoesNotThrow(checker.CheckTypesAndReferences);
+        }
+
+        [Test]
+        public void CanCallMethodForAnInstance()
+        {
+            string program = "class Foo {\n" +
+                             "\tpublic static void main() {\n" +
+                             "\t}\n" +
+                             "}\n\n" +
+                             "class A {\n" +
+                             "\tpublic boolean foo()" +
+                             "\t{\n" +
+                             "\t\treturn true;" +
+                             "\t}\n" +
+                             "}\n" +
+                             "class B {\n" +
+                             "\tA bar;\n" +
+                             "\tpublic boolean bar() {\n" +
+                             "\t\tbar = new A();\n" +
+                             "\t\treturn bar.foo();\n" +
+                             "\t}\n" +
+                             "}\n";
+            var checker = SetUpReferenceChecker(program);
+            Assert.DoesNotThrow(checker.CheckTypesAndReferences);
+        }
+
+        [Test]
+        public void CanCallMethodForAJustCreatedInstance()
+        {
+            string program = "class Foo {\n" +
+                             "\tpublic static void main() {\n" +
+                             "\t}\n" +
+                             "}\n\n" +
+                             "class A {\n" +
+                             "\tpublic boolean foo()" +
+                             "\t{\n" +
+                             "\t\treturn true;" +
+                             "\t}\n" +
+                             "}\n" +
+                             "class B {\n" +
+                             "\tpublic boolean bar() {\n" +
+                             "\t\treturn new A().foo();\n" +
                              "\t}\n" +
                              "}\n";
             var checker = SetUpReferenceChecker(program);
@@ -208,12 +254,41 @@ namespace MiniJavaCompilerTest.Frontend
         [Ignore("TODO")]
         public void CannotCallAStaticMethodForAnInstance()
         {
+            string program = "class Foo {\n" +
+                 "\tpublic static void main() {\n" +
+                 "\t}\n" +
+                 "}\n\n" +
+                 "class A {\n" +
+                 "\tint foo;" +
+                 "\tpublic int foo()" +
+                 "\t{\n" +
+                 "\t\tnew Foo().main();" +
+                 "\t\treturn 1;" +
+                 "\t}\n" +
+                 "}\n";
+            var checker = SetUpReferenceChecker(program);
+            var exception = Assert.Throws<ReferenceError>(checker.CheckTypesAndReferences);
+            Assert.That(exception.Message, Is.StringContaining("main").And.StringContaining("static"));
         }
 
         [Test]
         [Ignore("TODO")]
         public void CanCallMainMethodFromInsideProgram() // makes no sense but should still be possible
         {
+            string program = "class Foo {\n" +
+                 "\tpublic static void main() {\n" +
+                 "\t}\n" +
+                 "}\n\n" +
+                 "class A {\n" +
+                 "\tint foo;" +
+                 "\tpublic int foo()" +
+                 "\t{\n" +
+                 "\t\tnew Foo.main();" +
+                 "\t\treturn 1;" +
+                 "\t}\n" +
+                 "}\n";
+            var checker = SetUpReferenceChecker(program);
+            Assert.DoesNotThrow(checker.CheckTypesAndReferences);
         }
     }
 

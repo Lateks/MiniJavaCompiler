@@ -199,9 +199,9 @@ namespace MiniJavaCompiler.SemanticAnalysis
                 throw new ReferenceError(String.Format("Cannot resolve symbol {0} near row {1}, col {2}.",
                     node.Type, node.Row, node.Col));
             }
-            var arraySizeType = _operandTypes.Pop();
             if (node.IsArrayCreation)
             {
+                var arraySizeType = _operandTypes.Pop();
                 if (!arraySizeType.Equals(_symbolTable.ResolveType(MiniJavaInfo.IntType)))
                 {
                     throw new ReferenceError(String.Format("Array size must be numeric near row {0}, col {1}.",
