@@ -42,7 +42,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
             return name == "length";
         }
 
-        public bool Equals(IType other)
+        public override bool Equals(object other)
         {
             if (other == null)
             {
@@ -53,7 +53,12 @@ namespace MiniJavaCompiler.Support.SymbolTable
 
         public bool Equals(MiniJavaArrayType other)
         {
-            return ElementType == other.ElementType;
+            return ElementType.Equals(other.ElementType);
+        }
+
+        public override int GetHashCode()
+        {
+            return (ElementType != null ? ElementType.GetHashCode() : 0);
         }
     }
 
