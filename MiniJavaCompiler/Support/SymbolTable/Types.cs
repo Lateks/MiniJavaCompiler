@@ -5,16 +5,17 @@ namespace MiniJavaCompiler.Support.SymbolTable
         string Name { get; }
     }
 
-    public interface ISimpleType : IType { }
-
-    public class Type : IType
+    public interface IProgrammableType : IType
     {
-        public string Name { get; protected set; }
+        bool IsAssignableTo(IType other);
     }
 
-    public class BuiltinType : Type
+    public interface ISimpleType : IProgrammableType { }
+
+    public class BuiltinType : IType
     {
         private static readonly BuiltinType ClassInstance = new BuiltinType();
+        public string Name { get; protected set; }
 
         private BuiltinType()
         {
@@ -27,14 +28,24 @@ namespace MiniJavaCompiler.Support.SymbolTable
         }
     }
 
-    public class MiniJavaArrayType : Type
+    public class MiniJavaArrayType : IProgrammableType
     {
         public ISimpleType ElementType { get; private set; }
+        public string Name { get; protected set; }
 
         public MiniJavaArrayType(ISimpleType elementType)
         {
             Name = "array[" + elementType.Name + "]";
             ElementType = elementType;
+        }
+
+        public bool IsAssignableTo(IType other)
+        {
+            if (!(other is MiniJavaArrayType))
+            {
+                return false;
+            }
+            return ElementType.IsAssignableTo((other as MiniJavaArrayType).ElementType);
         }
 
         public static bool IsPredefinedArrayMethod(string name)
@@ -78,7 +89,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
         }
     }
 
-    public class VoidType : IType
+    public class VoidType : IProgrammableType
     {
         private static readonly VoidType ClassInstance = new VoidType();
         public string Name { get; private set; }
@@ -86,6 +97,11 @@ namespace MiniJavaCompiler.Support.SymbolTable
         private VoidType()
         {
             Name = MiniJavaInfo.VoidType;
+        }
+
+        public bool IsAssignableTo(IType other)
+        {
+            return false;
         }
 
         public static VoidType GetInstance()

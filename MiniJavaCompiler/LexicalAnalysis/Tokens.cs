@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace MiniJavaCompiler.LexicalAnalysis
+﻿namespace MiniJavaCompiler.LexicalAnalysis
 {
     public interface IToken
     {
@@ -70,9 +65,9 @@ namespace MiniJavaCompiler.LexicalAnalysis
             : base(name, row, col) { }
     }
 
-    public class MiniJavaType : KeywordToken, ITypeToken
+    public class MiniJavaTypeToken : KeywordToken, ITypeToken
     {
-        public MiniJavaType(string name, int row, int col)
+        public MiniJavaTypeToken(string name, int row, int col)
             : base(name, row, col) { }
     }
 

@@ -65,14 +65,14 @@ namespace MiniJavaCompilerTest.Frontend
         public void SimpleTypes(string type)
         {
             var lexer = new MiniJavaScanner(new StringReader(type));
-            Assert.That(lexer.NextToken(), Is.InstanceOf<MiniJavaType>());
+            Assert.That(lexer.NextToken(), Is.InstanceOf<MiniJavaTypeToken>());
         }
 
         [Theory]
         public void ArrayType(string type)
         {
             var lexer = new MiniJavaScanner(new StringReader(type + "[]"));
-            Assert.That(lexer.NextToken(), Is.InstanceOf<MiniJavaType>());
+            Assert.That(lexer.NextToken(), Is.InstanceOf<MiniJavaTypeToken>());
             Assert.That(lexer.NextToken(), Is.InstanceOf<PunctuationToken>());
             Assert.That(lexer.NextToken(), Is.InstanceOf<PunctuationToken>());
         }

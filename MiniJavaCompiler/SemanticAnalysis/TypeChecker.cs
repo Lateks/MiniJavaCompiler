@@ -89,7 +89,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
             var rhsType = _operandTypes.Pop();
             if (node.LeftHandSide is VariableReferenceExpression)
             {
-                if (!lhsType.Equals(rhsType))
+                if (!(lhsType.Equals(rhsType)))
                 {
                     throw new TypeError(String.Format("Cannot assign expression of type {0} to variable of type {1} " +
                         "near row {2}, col {3}.", rhsType.Name, lhsType.Name, node.Row, node.Col));

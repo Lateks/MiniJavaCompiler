@@ -653,6 +653,12 @@ namespace MiniJavaCompilerTest.Frontend
             // TODO: tests and implementation
         }
 
+        [TestFixture]
+        public class TestReturnStatementChecks
+        {
+            // TODO
+        }
+
         // TODO: test other type checks
     }
 }

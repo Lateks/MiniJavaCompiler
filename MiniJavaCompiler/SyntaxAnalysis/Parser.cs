@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using MiniJavaCompiler.LexicalAnalysis;
 using MiniJavaCompiler.AbstractSyntaxTree;
 using MiniJavaCompiler.Support;
@@ -88,7 +86,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
                 Input.MatchAndConsume<PunctuationToken>("{");
                 IToken methodStartToken = Input.MatchAndConsume<KeywordToken>("public");
                 Input.MatchAndConsume<KeywordToken>("static");
-                Input.MatchAndConsume<MiniJavaType>("void");
+                Input.MatchAndConsume<MiniJavaTypeToken>("void");
                 Input.MatchAndConsume<KeywordToken>("main");
 
                 Input.MatchAndConsume<PunctuationToken>("(");
@@ -130,7 +128,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         {
             try
             {
-                if (Input.NextTokenIs<MiniJavaType>())
+                if (Input.NextTokenIs<MiniJavaTypeToken>())
                     return VariableDeclaration();
                 else if (Input.NextTokenOneOf<KeywordToken>("assert", "if", "while", "System", "return"))
                     return MakeKeywordStatement();
@@ -397,7 +395,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         {
             try
             {
-                if (Input.NextTokenIs<MiniJavaType>() || Input.NextTokenIs<Identifier>())
+                if (Input.NextTokenIs<MiniJavaTypeToken>() || Input.NextTokenIs<Identifier>())
                 {
                     return VariableDeclaration();
                 }

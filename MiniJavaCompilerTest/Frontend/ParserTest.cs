@@ -68,11 +68,11 @@ namespace MiniJavaCompilerTest.Frontend
             programTokens.Enqueue(new KeywordToken("class", 0, 0));
             programTokens.Enqueue(new Identifier("ClassName", 0, 0));
             programTokens.Enqueue(new PunctuationToken("{", 0, 0));
-            programTokens.Enqueue(new MiniJavaType("int", 0, 0));
+            programTokens.Enqueue(new MiniJavaTypeToken("int", 0, 0));
             programTokens.Enqueue(new Identifier("foo", 0, 0));
             programTokens.Enqueue(new PunctuationToken(";", 0, 0));
             programTokens.Enqueue(new KeywordToken("public", 0, 0));
-            programTokens.Enqueue(new MiniJavaType("void", 0, 0));
+            programTokens.Enqueue(new MiniJavaTypeToken("void", 0, 0));
             programTokens.Enqueue(new Identifier("bar", 0, 0));
             programTokens.Enqueue(new PunctuationToken("(", 0, 0));
             programTokens.Enqueue(new PunctuationToken(")", 0, 0));
@@ -91,7 +91,7 @@ namespace MiniJavaCompilerTest.Frontend
         [Test]
         public void BasicTypeVariableDeclaration()
         { // int foo;
-            programTokens.Enqueue(new MiniJavaType("int", 0, 0));
+            programTokens.Enqueue(new MiniJavaTypeToken("int", 0, 0));
             programTokens.Enqueue(new Identifier("foo", 0, 0));
             EndLine();
 
@@ -121,7 +121,7 @@ namespace MiniJavaCompilerTest.Frontend
         [Test]
         public void ArrayVariableDeclaration()
         { // int[] foo;
-            programTokens.Enqueue(new MiniJavaType("int", 0, 0));
+            programTokens.Enqueue(new MiniJavaTypeToken("int", 0, 0));
             programTokens.Enqueue(new PunctuationToken("[", 0, 0));
             programTokens.Enqueue(new PunctuationToken("]", 0, 0));
             programTokens.Enqueue(new Identifier("foo", 0, 0));
@@ -472,10 +472,10 @@ namespace MiniJavaCompilerTest.Frontend
             programTokens.Enqueue(new PunctuationToken("{", 0, 0));
             programTokens.Enqueue(new KeywordToken("public", 0, 0));
             programTokens.Enqueue(new KeywordToken("static", 0, 0));
-            programTokens.Enqueue(new MiniJavaType("void", 0, 0));
+            programTokens.Enqueue(new MiniJavaTypeToken("void", 0, 0));
             programTokens.Enqueue(new KeywordToken("main", 0, 0));
             programTokens.Enqueue(new PunctuationToken("(", 0, 0));
-            programTokens.Enqueue(new MiniJavaType("int", 0, 0));
+            programTokens.Enqueue(new MiniJavaTypeToken("int", 0, 0));
             programTokens.Enqueue(new Identifier("foo", 0, 0));
             programTokens.Enqueue(new PunctuationToken(")", 0, 0));
             programTokens.Enqueue(new PunctuationToken("{", 0, 0));
@@ -759,14 +759,14 @@ namespace MiniJavaCompilerTest.Frontend
 
         private void DefineBasicParameter(string name, string type)
         {
-            programTokens.Enqueue(new MiniJavaType(type, 0, 0));
+            programTokens.Enqueue(new MiniJavaTypeToken(type, 0, 0));
             programTokens.Enqueue(new Identifier(name, 0, 0));
         }
 
         private void BeginMethodDeclaration(string methodName, string type)
         {
             programTokens.Enqueue(new KeywordToken("public", 0, 0));
-            programTokens.Enqueue(new MiniJavaType(type, 0, 0));
+            programTokens.Enqueue(new MiniJavaTypeToken(type, 0, 0));
             programTokens.Enqueue(new Identifier(methodName, 0, 0));
             programTokens.Enqueue(new PunctuationToken("(", 0, 0));
         }
@@ -816,7 +816,7 @@ namespace MiniJavaCompilerTest.Frontend
             programTokens.Enqueue(new PunctuationToken("{", 0, 0));
             programTokens.Enqueue(new KeywordToken("public", 0, 0));
             programTokens.Enqueue(new KeywordToken("static", 0, 0));
-            programTokens.Enqueue(new MiniJavaType("void", 0, 0));
+            programTokens.Enqueue(new MiniJavaTypeToken("void", 0, 0));
             programTokens.Enqueue(new KeywordToken("main", 0, 0));
             EmptyMethodInvocationParentheses();
             programTokens.Enqueue(new PunctuationToken("{", 0, 0));
@@ -824,7 +824,7 @@ namespace MiniJavaCompilerTest.Frontend
 
         private void DeclareBasicVariable(string name, string type)
         {
-            programTokens.Enqueue(new MiniJavaType(type, 0, 0));
+            programTokens.Enqueue(new MiniJavaTypeToken(type, 0, 0));
             programTokens.Enqueue(new Identifier(name, 0, 0));
             EndLine();
         }
@@ -834,7 +834,7 @@ namespace MiniJavaCompilerTest.Frontend
             programTokens.Enqueue(new Identifier(variableName, 0, 0));
             programTokens.Enqueue(new OperatorToken("=", 0, 0));
             programTokens.Enqueue(new KeywordToken("new", 0, 0));
-            programTokens.Enqueue(new MiniJavaType(arrayType, 0, 0));
+            programTokens.Enqueue(new MiniJavaTypeToken(arrayType, 0, 0));
             programTokens.Enqueue(new PunctuationToken("[", 0, 0));
             programTokens.Enqueue(new IntegerLiteralToken(arraySize, 0, 0));
             programTokens.Enqueue(new PunctuationToken("]", 0, 0));
@@ -843,7 +843,7 @@ namespace MiniJavaCompilerTest.Frontend
 
         private void DeclareBasicArrayVariable(string name, string type)
         {
-            programTokens.Enqueue(new MiniJavaType(type, 0, 0));
+            programTokens.Enqueue(new MiniJavaTypeToken(type, 0, 0));
             programTokens.Enqueue(new PunctuationToken("[", 0, 0));
             programTokens.Enqueue(new PunctuationToken("]", 0, 0));
             programTokens.Enqueue(new Identifier(name, 0, 0));

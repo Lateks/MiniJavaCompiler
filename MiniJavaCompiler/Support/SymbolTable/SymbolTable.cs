@@ -19,9 +19,9 @@ namespace MiniJavaCompiler.Support.SymbolTable
             Definitions = new Dictionary<Symbol, ISyntaxTreeNode>();
         }
 
-        public IType ResolveType(string typeName)
+        public IProgrammableType ResolveType(string typeName)
         {
-            return (IType) GlobalScope.Resolve<TypeSymbol>(typeName);
+            return (IProgrammableType) GlobalScope.Resolve<TypeSymbol>(typeName);
         }
     }
 }

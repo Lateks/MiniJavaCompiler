@@ -283,7 +283,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         public Tuple<ITypeToken, IExpression> NewType()
         {
             var type = Input.MatchAndConsume<ITypeToken>();
-            if (type is MiniJavaType || !(Input.NextTokenIs<PunctuationToken>("(")))
+            if (type is MiniJavaTypeToken || !(Input.NextTokenIs<PunctuationToken>("(")))
             { // must be an array
                 Input.MatchAndConsume<PunctuationToken>("[");
                 var arraySize = Parse();
