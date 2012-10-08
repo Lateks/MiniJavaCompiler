@@ -25,6 +25,10 @@ namespace MiniJavaCompiler.SyntaxAnalysis
     {
         public int Row { get; private set; }
         public int Col { get; private set; }
+        public new string Message
+        {
+            get { return String.Format("{0} (On row {1}, col {2}.)", base.Message, Row, Col); }
+        }
 
         public SyntaxError(string message, int row, int col)
             : base(message)

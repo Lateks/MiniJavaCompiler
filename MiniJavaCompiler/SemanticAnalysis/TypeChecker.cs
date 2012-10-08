@@ -15,6 +15,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
         public ReferenceError(string message) : base(message) { }
     }
 
+    // TODO: implement polymorphism
     public class TypeChecker : INodeVisitor
     {
         private readonly SymbolTable _symbolTable;
@@ -96,7 +97,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
             }
             else
             {
-                throw new TypeError(String.Format("Expression is not assignable near row {0}, col {1}.",
+                throw new TypeError(String.Format("Assignment receiver expression is not assignable (requires an lvalue) near row {0}, col {1}.",
                     node.Row, node.Col));
             }
         }

@@ -31,7 +31,7 @@ namespace MiniJavaCompilerTest.Frontend
         }
 
         [TestFixture]
-        private class ReferenceCheckTest
+        public class ReferenceCheckTest
         {
             [Test]
             public void UndefinedVariableReferenceCausesReferenceError()
@@ -284,7 +284,7 @@ namespace MiniJavaCompilerTest.Frontend
         }
 
         [TestFixture]
-        private class UnaryOperatorTypeCheckTest
+        public class UnaryOperatorTypeCheckTest
         {
             [Test]
             public void InvalidOperandTypeForAUnaryOperatorCausesError()
@@ -317,10 +317,10 @@ namespace MiniJavaCompilerTest.Frontend
         }
 
         [TestFixture]
-        private class OperandsForAnArithmeticBinaryOperatorTest
+        public class OperandsForAnArithmeticBinaryOperatorTest
         {
             [Datapoints]
-            public string[] arithmeticOperators = new [] { "+", "-", "/", "*", "%" };
+            public string[] ArithmeticOperators = new [] { "+", "-", "/", "*", "%" };
 
             [Theory]
             public void InvalidLeftOperandForAnArithmeticBinaryOperatorCausesError(string op)
@@ -387,7 +387,7 @@ namespace MiniJavaCompilerTest.Frontend
         public class OperandsForALogicalBinaryOperatorTest
         {
             [Datapoints]
-            public string[] logicalOperators = new [] { "&&", "||" };
+            public string[] LogicalOperators = new [] { "&&", "||" };
 
             [Theory]
             public void InvalidLeftOperandForALogicalOperatorTest(string op)
@@ -452,7 +452,7 @@ namespace MiniJavaCompilerTest.Frontend
         public class OperandsForComparisonOperatorsTest
         {
             [Datapoints]
-            public string[] comparisonOperators = new [] { "<", ">" };
+            public string[] ComparisonOperators = new [] { "<", ">" };
 
             [Theory]
             public void InvalidLeftOperandForAComparisonOperatorTest(string op)
@@ -511,6 +511,146 @@ namespace MiniJavaCompilerTest.Frontend
                 var checker = SetUpTypeAndReferenceChecker(program);
                 Assert.DoesNotThrow(checker.CheckTypesAndReferences);
             }
+        }
+
+        [TestFixture]
+        public class AssignmentTypeCheckTest
+        {
+            [Test]
+            public void ValidAssignmentsTest()
+            {
+                string program = "class Foo {\n" +
+                                 "\tpublic static void main() {\n" +
+                                 "\t\tint foo;\n" +
+                                 "\t\tfoo = 10;\n" +
+                                 "\t\tint bar;\n" +
+                                 "\t\tbar = foo;\n" +
+                                 "\t\tboolean baz; baz = new A().alwaysTrue();\n" +
+                                 "\t\tboolean baz_copy;\n" +
+                                 "\t\tbaz_copy = true\n;" +
+                                 "\t}\n" +
+                                 "}\n" +
+                                 "class A {\n" +
+                                 "\tA foo;\n" +
+                                 "\tpublic boolean alwaysTrue() {\n" +
+                                 "\t\tfoo = new A(); // pointless side effect\n" +
+                                 "\t\treturn true;\n\n" +
+                                 "\t}\n" +
+                                 "}\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                Assert.DoesNotThrow(checker.CheckTypesAndReferences);
+            }
+
+            [Test]
+            public void InvalidAssignmentToBuiltinFromMethod()
+            {
+                string program = "class Foo {\n" +
+                                 "\tpublic static void main() {\n" +
+                                 "\t\tboolean foo;\n" +
+                                 "\t\tfoo = new A().foo();\n" +
+                                 "\t}\n" +
+                                 "}\n" +
+                                 "class A {\n" +
+                                 "\tpublic int foo() {" +
+                                 "\t\treturn 42;\n" +
+                                 "\t}\n" +
+                                 "}\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Cannot assign").And.
+                    StringContaining("int").And.StringContaining("boolean"));
+            }
+
+            [Test]
+            public void InvalidAssignmentToBuiltin()
+            {
+                string program = "class Foo {\n" +
+                                 "\tpublic static void main() {\n" +
+                                 "\t\tboolean foo;\n" +
+                                 "\t\tfoo = new A();\n" +
+                                 "\t}\n" +
+                                 "}\n" +
+                                 "class A { }\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Cannot assign").And.
+                    StringContaining("A").And.StringContaining("boolean"));
+            }
+
+            [Test]
+            public void InvalidAssignmentToArrayVariable()
+            {
+                string program = "class Foo {\n" +
+                                 "\tpublic static void main() {\n" +
+                                 "\t\tA[] foo;\n" +
+                                 "\t\tfoo = new A();\n" +
+                                 "\t}\n" +
+                                 "}\n" +
+                                 "class A { }\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Cannot assign").And.
+                    StringContaining("A").And.StringContaining("array[A]"));
+            }
+
+            [Test]
+            public void InvalidArrayAssignment()
+            {
+                string program = "class Foo {\n" +
+                                 "\tpublic static void main() {\n" +
+                                 "\t\tA foo;\n" +
+                                 "\t\tfoo = new A[10];\n" +
+                                 "\t}\n" +
+                                 "}\n" +
+                                 "class A { }\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Cannot assign").And.
+                    StringContaining("A").And.StringContaining("array[A]"));
+            }
+
+            [Test]
+            public void InvalidAssignmentToUserDefinedTypeVariable()
+            {
+                string program = "class Foo {\n" +
+                                 "\tpublic static void main() {\n" +
+                                 "\t\tA foo;\n" +
+                                 "\t\tfoo = new B();\n" +
+                                 "\t}\n" +
+                                 "}\n" +
+                                 "class A { }\n" +
+                                 "class B { }\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Cannot assign").And.
+                    StringContaining("A").And.StringContaining("B"));
+            }
+
+            [Test]
+            public void UnassignableLeftHandSideInAssignment()
+            {
+                string program = "class Foo {\n" +
+                                 "\tpublic static void main() {\n" +
+                                 "\t new A() = new A();\n" +
+                                 "\t}\n" +
+                                 "}\n" +
+                                 "class A { }\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("is not assignable"));
+            }
+        }
+
+        [TestFixture]
+        public class EqualsOperatorTypeCheckTest
+        {
+            // TODO
+        }
+
+        [TestFixture]
+        public class PolymorphismTest
+        {
+            // TODO: tests and implementation
         }
 
         // TODO: test other type checks
