@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
+﻿using System.IO;
 using MiniJavaCompiler.AbstractSyntaxTree;
 using MiniJavaCompiler.LexicalAnalysis;
 using MiniJavaCompiler.Support;
@@ -222,6 +218,20 @@ namespace MiniJavaCompilerTest.Frontend
             }
 
             [Test]
+            public void VariableMustBeDeclaredBeforeReferenceEvenIfOnTheSamePhysicalRow()
+            {
+                string program = "class Foo {\n" +
+                                 "\tpublic static void main() {\n" +
+                                 "\tSystem.out.println(foo); int foo; foo = 4;" +
+                                 "\t}\n" +
+                                 "}\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<ReferenceError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Could not resolve").And.StringContaining("foo"));
+
+            }
+
+            [Test]
             public void IfBlockHasItsOwnScope()
             {
                 string program = "class Factorial {\n" +
@@ -307,7 +317,7 @@ namespace MiniJavaCompilerTest.Frontend
         }
 
         [TestFixture]
-        private class InvalidOperandsForAnArithmeticBinaryOperatorTest
+        private class OperandsForAnArithmeticBinaryOperatorTest
         {
             [Datapoints]
             public string[] arithmeticOperators = new [] { "+", "-", "/", "*", "%" };
@@ -373,7 +383,136 @@ namespace MiniJavaCompilerTest.Frontend
             }
         }
 
-        // TODO: test other operator types
+        [TestFixture]
+        public class OperandsForALogicalBinaryOperatorTest
+        {
+            [Datapoints]
+            public string[] logicalOperators = new [] { "&&", "||" };
+
+            [Theory]
+            public void InvalidLeftOperandForALogicalOperatorTest(string op)
+            {
+                string program = "class Foo {\n" +
+                                 "\tpublic static void main() {\n" +
+                                 "\t\tboolean foo;\n" +
+                                 "\t\tfoo = new A() " + op + " false;\n" +
+                                 "\t}\n" +
+                                 "}\n" +
+                                 "class A { }";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Cannot apply operator").And.StringContaining("A"));
+            }
+
+            [Theory]
+            public void InvalidRightOperandForALogicalOperatorTest(string op)
+            {
+                string program = "class Foo {\n" +
+                                 "\tpublic static void main() {\n" +
+                                 "\t\tboolean foo;\n" +
+                                 "\t\tfoo = true " + op + " 1;\n" +
+                                 "\t}\n" +
+                                 "}\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Cannot apply operator").And.StringContaining("int"));
+            }
+
+            [Theory]
+            public void InvalidBothOperandsForALogicalOperatorTest(string op)
+            {
+                string program = "class Foo {\n" +
+                                 "\tpublic static void main() {\n" +
+                                 "\t\tboolean foo;\n" +
+                                 "\t\tfoo = new A() " + op + " 1;\n" +
+                                 "\t}\n" +
+                                 "}\n" +
+                                 "class A { }\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Cannot apply operator").And.StringContaining("int").And.StringContaining("A"));
+            }
+
+            [Theory]
+            public void ValidOperandsForALogicalOperatorTest(string op)
+            {
+                string program = "class Foo {\n" +
+                                 "\tpublic static void main() {\n" +
+                                 "\t\tboolean foo;\n" +
+                                 "\t\tfoo = true " + op + " foo;\n" +
+                                 "\t}\n" +
+                                 "}\n" +
+                                 "class A { }\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                Assert.DoesNotThrow(checker.CheckTypesAndReferences);
+            }
+        }
+
+        [TestFixture]
+        public class OperandsForComparisonOperatorsTest
+        {
+            [Datapoints]
+            public string[] comparisonOperators = new [] { "<", ">" };
+
+            [Theory]
+            public void InvalidLeftOperandForAComparisonOperatorTest(string op)
+            {
+                string program = "class Foo {\n" +
+                                 "\tpublic static void main() {\n" +
+                                 "\t\tboolean foo;\n" +
+                                 "\t\tfoo = new A() " + op + " 100;\n" +
+                                 "\t}\n" +
+                                 "}\n" +
+                                 "class A { }";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Cannot apply operator").And.StringContaining("A"));
+            }
+
+            [Theory]
+            public void InvalidRightOperandForAComparisonOperatorTest(string op)
+            {
+                string program = "class Foo {\n" +
+                                 "\tpublic static void main() {\n" +
+                                 "\t\tboolean foo;\n" +
+                                 "\t\tfoo = 99 " + op + " false;\n" +
+                                 "\t}\n" +
+                                 "}\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Cannot apply operator").And.StringContaining("boolean"));
+            }
+
+            [Theory]
+            public void InvalidBothOperandsForAComparisonOperatorTest(string op)
+            {
+                string program = "class Foo {\n" +
+                                 "\tpublic static void main() {\n" +
+                                 "\t\tboolean foo;\n" +
+                                 "\t\tfoo = new A() " + op + " false;\n" +
+                                 "\t}\n" +
+                                 "}\n" +
+                                 "class A { }\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Cannot apply operator").And.StringContaining("boolean").And.StringContaining("A"));
+            }
+
+            [Theory]
+            public void ValidOperandsForAComparisonOperatorTest(string op)
+            {
+                string program = "class Foo {\n" +
+                                 "\tpublic static void main() {\n" +
+                                 "\t\tboolean foo;\n" +
+                                 "\t\tfoo = 4 " + op + " 5;\n" +
+                                 "\t}\n" +
+                                 "}\n" +
+                                 "class A { }\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                Assert.DoesNotThrow(checker.CheckTypesAndReferences);
+            }
+        }
+
         // TODO: test other type checks
     }
 }
