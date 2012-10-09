@@ -23,5 +23,15 @@ namespace MiniJavaCompiler.Support.SymbolTable
         {
             return (IType) GlobalScope.Resolve<TypeSymbol>(typeName);
         }
+
+        public UserDefinedTypeSymbol ResolveSurroundingClass(ISyntaxTreeNode node)
+        {
+            var scope = Scopes[node];
+            while (!(scope is UserDefinedTypeSymbol) && scope != null)
+            {
+                scope = scope.EnclosingScope;
+            }
+            return (UserDefinedTypeSymbol) scope;
+        }
     }
 }

@@ -831,6 +831,8 @@ namespace MiniJavaCompilerTest.Frontend
                 Assert.That(exception.Message, Is.StringContaining("Cannot convert").
                     And.StringContaining("type A to B"));
             }
+
+            // TODO: arrays are non-polymorphic
         }
 
         // TODO: test other type checks

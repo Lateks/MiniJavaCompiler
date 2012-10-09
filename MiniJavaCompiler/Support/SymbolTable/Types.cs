@@ -25,7 +25,8 @@ namespace MiniJavaCompiler.Support.SymbolTable
             {
                 return false;
             }
-            return ElementType.IsAssignableTo((other as MiniJavaArrayType).ElementType);
+            // Element types must be the same (not just derived from the same base).
+            return ElementType.Equals((other as MiniJavaArrayType).ElementType);
         }
 
         public static bool IsPredefinedArrayMethod(string name)

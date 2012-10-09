@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using MiniJavaCompiler.AbstractSyntaxTree;
 using MiniJavaCompiler.Support;
 using MiniJavaCompiler.Support.SymbolTable;
@@ -15,6 +16,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
         public ReferenceError(string message) : base(message) { }
     }
 
+    // TODO: Test checking parameter types when overriding methods in superclasses
     public class TypeChecker : INodeVisitor
     {
         private readonly SymbolTable _symbolTable;
@@ -44,7 +46,37 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
         public void Visit(VariableDeclaration node) { }
 
-        public void Visit(MethodDeclaration node) { }
+        public void Visit(MethodDeclaration node)
+        { // Check that the method does not overload a method in a superclass.
+          // Only overriding is allowed.
+            var classScope = _symbolTable.ResolveSurroundingClass(node);
+            if (classScope.SuperClass == null)
+            {
+                return;
+            }
+            var superClassMethod = classScope.SuperClass.Resolve<MethodSymbol>(node.Name);
+            if (superClassMethod == null)
+            {
+                return;
+            }
+            if (OverloadsSuperClassMethod(node, (MethodDeclaration) _symbolTable.Definitions[superClassMethod]))
+            {
+                throw new TypeError(String.Format(
+                    "Method {0} in class {1} on row {2}, col {3} overloads method {4} in class {5}.",
+                    node.Name, classScope.Name, node.Row, node.Col, superClassMethod.Name, classScope.SuperClass.Name));
+            }
+        }
+
+        public bool OverloadsSuperClassMethod(MethodDeclaration method, MethodDeclaration superClassMethod)
+        {
+            if (method.Formals.Count != superClassMethod.Formals.Count)
+            {
+                return true;
+            }
+            var paramsEqual = method.Formals.Zip(superClassMethod.Formals,
+                (a, b) => _symbolTable.ResolveType(a.Type) == _symbolTable.ResolveType(b.Type));
+            return paramsEqual.Contains(false);
+        }
 
         public void Visit(PrintStatement node)
         { // argument must be a basic type (int or boolean)
@@ -257,13 +289,8 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
         public void Visit(ThisExpression node)
         {
-            var thisScope = _symbolTable.Scopes[node];
-            while (!(thisScope is UserDefinedTypeSymbol))
-            {
-                thisScope = thisScope.EnclosingScope;
-            }
-            var typeSymbol = (IType) thisScope;
-            _operandTypes.Push(typeSymbol);
+            var thisType = _symbolTable.ResolveSurroundingClass(node);
+            _operandTypes.Push(thisType);
         }
 
         public void Visit(ArrayIndexingExpression node)

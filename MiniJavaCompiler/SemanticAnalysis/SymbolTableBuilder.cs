@@ -122,7 +122,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
         public void Visit(MethodDeclaration node)
         {
-            var methodReturnType = node.Type == "void" ? null : CheckDeclaredType(node);
+            var methodReturnType = node.Type == "void" ? VoidType.GetInstance() : CheckDeclaredType(node);
             var methodSymbol = (MethodSymbol)TryDefineSymbol<MethodSymbol>(node, methodReturnType);
             if (methodSymbol == null)
             {
