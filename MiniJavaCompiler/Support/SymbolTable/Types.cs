@@ -3,32 +3,12 @@ namespace MiniJavaCompiler.Support.SymbolTable
     public interface IType
     {
         string Name { get; }
-    }
-
-    public interface IProgrammableType : IType
-    {
         bool IsAssignableTo(IType other);
     }
 
-    public interface ISimpleType : IProgrammableType { }
+    public interface ISimpleType : IType { }
 
-    public class BuiltinType : IType
-    {
-        private static readonly BuiltinType ClassInstance = new BuiltinType();
-        public string Name { get; protected set; }
-
-        private BuiltinType()
-        {
-            Name = "$builtin";
-        }
-
-        public static BuiltinType GetInstance()
-        {
-            return ClassInstance;
-        }
-    }
-
-    public class MiniJavaArrayType : IProgrammableType
+    public class MiniJavaArrayType : IType
     {
         public ISimpleType ElementType { get; private set; }
         public string Name { get; protected set; }
@@ -73,23 +53,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
         }
     }
 
-    public class MiniJavaClass : IType
-    {
-        private static readonly MiniJavaClass ClassInstance = new MiniJavaClass();
-        public string Name { get; private set; }
-
-        private MiniJavaClass()
-        {
-            Name = "class";
-        }
-
-        public static MiniJavaClass GetInstance()
-        {
-            return ClassInstance;
-        }
-    }
-
-    public class VoidType : IProgrammableType
+    public class VoidType : IType
     {
         private static readonly VoidType ClassInstance = new VoidType();
         public string Name { get; private set; }

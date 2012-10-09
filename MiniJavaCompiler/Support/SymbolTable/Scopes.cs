@@ -7,6 +7,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
     {
         Symbol Resolve<TSymbolType>(string name) where TSymbolType : Symbol;
         bool Define(Symbol sym);
+        IScope EnclosingScope { get; }
     }
 
     public abstract class ScopeBase : IScope
@@ -14,7 +15,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
         private readonly Dictionary<string, Symbol> _typeTable;
         private readonly Dictionary<string, Symbol> _methodTable;
         private readonly Dictionary<string, Symbol> _variableTable;
-        protected IScope EnclosingScope
+        public IScope EnclosingScope
         {
             get;
             private set;

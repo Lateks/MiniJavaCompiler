@@ -55,7 +55,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
     public class BuiltinTypeSymbol : TypeSymbol, ISimpleType
     {
         public BuiltinTypeSymbol(string name, IScope enclosingScope)
-            : base(name, BuiltinType.GetInstance(), enclosingScope) { }
+            : base(name, null, enclosingScope) { }
 
         public bool IsAssignableTo(IType other)
         {
@@ -117,14 +117,13 @@ namespace MiniJavaCompiler.Support.SymbolTable
         private readonly Dictionary<string, Symbol> _fields;
 
         public UserDefinedTypeSymbol(string name, IScope enclosingScope)
-            : base(name, MiniJavaClass.GetInstance(), enclosingScope)
+            : base(name, null, enclosingScope)
         {
             _methods = new Dictionary<string, Symbol>();
             _fields = new Dictionary<string, Symbol>();
             SuperClass = null;
         }
 
-        // TODO: test this
         public bool IsAssignableTo(IType other)
         {
             return IsDerivedFrom(other as UserDefinedTypeSymbol);

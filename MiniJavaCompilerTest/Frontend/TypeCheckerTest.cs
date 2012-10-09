@@ -281,6 +281,26 @@ namespace MiniJavaCompilerTest.Frontend
                 var exception = Assert.Throws<ReferenceError>(checker.CheckTypesAndReferences);
                 Assert.That(exception.Message, Is.StringContaining("main").And.StringContaining("static"));
             }
+
+            [Test]
+            public void CanDoRecursion()
+            {
+                string program = "class Foo {\n" +
+                                 "\tpublic static void main() {\n" +
+                                 "\t}\n" +
+                                 "}\n\n" +
+                                 "class A {\n" +
+                                 "\tpublic int fib(int n)" +
+                                 "\t{\n" +
+                                 "\t\tif (n == 0 || n == 1)\n" +
+                                 "\t\t\t return 1;\n" +
+                                 "\t\telse\n" +
+                                 "\t\t\t return this.fib(n-1) + this.fib(n-2);\n" +
+                                 "\t}\n" +
+                                 "}\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                Assert.DoesNotThrow(checker.CheckTypesAndReferences);
+            }
         }
 
         [TestFixture]
@@ -517,7 +537,7 @@ namespace MiniJavaCompilerTest.Frontend
         public class AssignmentTypeCheckTest
         {
             [Test]
-            public void ValidAssignmentsTest()
+            public void BasicValidAssignmentsTest()
             {
                 string program = "class Foo {\n" +
                                  "\tpublic static void main() {\n" +
@@ -644,19 +664,173 @@ namespace MiniJavaCompilerTest.Frontend
         [TestFixture]
         public class EqualsOperatorTypeCheckTest
         {
-            // TODO
+            [Test]
+            public void AcceptsAnyOperands()
+            {
+                string program = "class Foo {\n" +
+                                 "\tpublic static void main() {\n" +
+                                 "\t boolean a;\n" +
+                                 "\t a = new A() == 42;\n" +
+                                 "\t a = false == true;\n" +
+                                 "\t}\n" +
+                                 "}\n" +
+                                 "class A { }\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                Assert.DoesNotThrow(checker.CheckTypesAndReferences);
+            }
         }
 
         [TestFixture]
         public class PolymorphismTest
         {
-            // TODO: tests and implementation
+            [Test]
+            public void ValidPolymorphicAssignmentTest()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() {\n" +
+                                 "\t\t A foo;\n" +
+                                 "\t\t foo = new B();\n" +
+                                 "\t}\n" +
+                                 "}\n" +
+                                 "class A { }\n" +
+                                 "class B extends A { }\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                Assert.DoesNotThrow(checker.CheckTypesAndReferences);
+            }
+
+            [Test]
+            public void InvalidPolymorphicAssignmentTest()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() {\n" +
+                                 "\t\t B foo;\n" +
+                                 "\t\t foo = new A();\n" +
+                                 "\t}\n" +
+                                 "}\n" +
+                                 "class A { }\n" +
+                                 "class B extends A { }\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Cannot assign").
+                    And.StringContaining("type A").And.StringContaining("type B"));
+            }
+
+            [Test]
+            public void ValidPolymorphicMethodCallTest()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() {\n" +
+                                 "\t\t A foo;\n" +
+                                 "\t\t foo = new B();\n" +
+                                 "\t\t int bar;\n" +
+                                 "\t\t bar = foo.foo();\n" +
+                                 "\t}\n" +
+                                 "}\n" +
+                                 "class A {\n" +
+                                 "\t public int foo() { return 42; }\n" +
+                                 "}\n" +
+                                 "class B extends A { }\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                Assert.DoesNotThrow(checker.CheckTypesAndReferences);
+            }
+
+            [Test]
+            public void InvalidPolymorphicMethodCallTest()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() {\n" +
+                                 "\t\t A foo;\n" +
+                                 "\t\t foo = new B();\n" +
+                                 "\t\t int bar;\n" +
+                                 "\t\t bar = foo.foo();\n" +
+                                 "\t}\n" +
+                                 "}\n" +
+                                 "class A { }\n" +
+                                 "class B extends A {\n" +
+                                 "\t public int foo() { return 42; }\n" +
+                                 "}\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<ReferenceError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Cannot resolve").And.StringContaining("foo"));
+            }
         }
 
         [TestFixture]
         public class TestReturnStatementChecks
         {
-            // TODO
+            [Test]
+            public void VoidMethodCannotHaveAReturnStatement()
+            {
+                string program = "class Foo{\n" +
+                 "\t public static void main() { return 42; }\n" +
+                 "}\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Method of type void cannot have return statements"));
+            }
+
+            [Test]
+            public void BasicValidReturnStatements()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() { }\n" +
+                                 "}\n" +
+                                 "class A {\n" +
+                                 "\t public int foo() { return 42; }\n" +
+                                 "\t public boolean bar() { return true; }\n" +
+                                 "}\n" +
+                                 "class B {\n" +
+                                 "\t public A foo() { return new A(); }\n" +
+                                 "}\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                Assert.DoesNotThrow(checker.CheckTypesAndReferences);
+            }
+
+            [Test]
+            public void InvalidReturnStatement()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() { }\n" +
+                                 "}\n" +
+                                 "class A {\n" +
+                                 "\t public int foo() { return false; }\n" +
+                                 "}\n" +
+                                 "class B { }\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Cannot convert").
+                    And.StringContaining("type boolean to int"));
+            }
+
+            [Test]
+            public void ValidPolymorphicReturnStatement()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() { }\n" +
+                                 "}\n" +
+                                 "class A {\n" +
+                                 "\t public A foo() { return new B(); }\n" +
+                                 "}\n" +
+                                 "class B extends A { }\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                Assert.DoesNotThrow(checker.CheckTypesAndReferences);
+            }
+
+            [Test]
+            public void InvalidPolymorphicReturnStatement()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() { }\n" +
+                                 "}\n" +
+                                 "class A {\n" +
+                                 "\t public B foo() { return new A(); }\n" +
+                                 "}\n" +
+                                 "class B extends A { }\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Cannot convert").
+                    And.StringContaining("type A to B"));
+            }
         }
 
         // TODO: test other type checks
