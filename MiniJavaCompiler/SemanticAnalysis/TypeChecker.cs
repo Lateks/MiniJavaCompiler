@@ -323,13 +323,13 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
         private bool BlockAlwaysReturnsAValue(List<IStatement> statementsInBlock)
         {
-            // TODO: take statements inside blocks (unconditional) into account here (make a flattened copy of the method body)
-            var returnIdx = statementsInBlock.FindIndex((statement) => statement is ReturnStatement); // TODO: if this is not the last index in the block, there is unreachable code which should cause an error
+            var flattenedStatementsInBlock = FlattenStatementList(statementsInBlock);
+            var returnIdx = flattenedStatementsInBlock.FindIndex((statement) => statement is ReturnStatement); // TODO: if this is not the last index in the block, there is unreachable code which should cause an error
             if (returnIdx >= 0)
             {
                 return true;
             }
-            var conditionalStatements = new List<IfStatement>(statementsInBlock.OfType<IfStatement>());
+            var conditionalStatements = new List<IfStatement>(flattenedStatementsInBlock.OfType<IfStatement>());
             if (!conditionalStatements.Any())
             {
                 return false;
@@ -348,6 +348,18 @@ namespace MiniJavaCompiler.SemanticAnalysis
                 }
             }
             return allConditionalsReturnAValue;
+        }
+
+        private List<IStatement> FlattenStatementList(List<IStatement> statementList)
+        {
+            if (!statementList.Any(elem => elem is BlockStatement))
+            {
+                return statementList;
+            }
+            var wrappedStatements = statementList.Select(elem => elem is BlockStatement ?
+                new List<IStatement>(FlattenStatementList((elem as BlockStatement).Statements)) :
+                new List<IStatement>() {elem});
+            return wrappedStatements.SelectMany(elem => elem).ToList();
         }
 
         private void RequireSingleBooleanArgument(SyntaxElement node)

@@ -904,6 +904,25 @@ namespace MiniJavaCompilerTest.Frontend
             }
 
             [Test]
+            public void ReturnStatementChecksTakeNakedBlocksIntoAccount()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() { }\n" +
+                                 "}\n" +
+                                 "class A {\n" +
+                                 "\t public int foo() {\n" +
+                                 "\t\t {\n" +
+                                 "\t\t\t {\n" +
+                                 "\t\t\t\t return 0;\n" +
+                                 "\t\t\t }\n" +
+                                 "\t\t }\n" +
+                                 "}\n" +
+                                 "}\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                Assert.DoesNotThrow(checker.CheckTypesAndReferences);
+            }
+
+            [Test]
             public void BasicValidReturnStatements()
             {
                 string program = "class Foo{\n" +
@@ -984,5 +1003,6 @@ namespace MiniJavaCompilerTest.Frontend
         }
 
         // TODO: test other type checks
+        // TODO: test assignment to array index
     }
 }
