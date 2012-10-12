@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using MiniJavaCompiler.AbstractSyntaxTree;
 using MiniJavaCompiler.Support;
@@ -291,11 +292,16 @@ namespace MiniJavaCompiler.SemanticAnalysis
             }
             else if (numReturnStatements == 0)
             {
-                throw new TypeError(String.Format("Method declared as returning {0} does not return a value near row {1}, col {2}.",
-                    method.Type.Name, node.Row, node.Col));
+                throw new TypeError(String.Format("Missing return statement in method {0} near row {1}, col {2}.",
+                    method.Name, node.Row, node.Col));
             }
             else
             {
+                if (!AllBranchesReturnAValue(node))
+                {
+                    throw new TypeError(String.Format("Missing return statement in method {0} near row {1}, col {2}.",
+                        method.Name, node.Row, node.Col));
+                }
                 for (int i = 0; i < numReturnStatements; i++)
                 {
                     var returnType = _returnTypes.Pop();
@@ -309,6 +315,40 @@ namespace MiniJavaCompiler.SemanticAnalysis
         }
 
         public void Exit(BlockStatement node) { }
+
+        private bool AllBranchesReturnAValue(MethodDeclaration node)
+        {
+            return BlockAlwaysReturnsAValue(node.MethodBody);
+        }
+
+        private bool BlockAlwaysReturnsAValue(List<IStatement> statementsInBlock)
+        {
+            // TODO: take statements inside blocks (unconditional) into account here (make a flattened copy of the method body)
+            var returnIdx = statementsInBlock.FindIndex((statement) => statement is ReturnStatement); // TODO: if this is not the last index in the block, there is unreachable code which should cause an error
+            if (returnIdx >= 0)
+            {
+                return true;
+            }
+            var conditionalStatements = new List<IfStatement>(statementsInBlock.OfType<IfStatement>());
+            if (!conditionalStatements.Any())
+            {
+                return false;
+            }
+            bool allConditionalsReturnAValue = true;
+            foreach (var conditional in conditionalStatements)
+            {
+                allConditionalsReturnAValue &= BlockAlwaysReturnsAValue(conditional.ThenBranch.Statements);
+                if (conditional.ElseBranch == null)
+                {
+                    allConditionalsReturnAValue = false;
+                }
+                else
+                {
+                    allConditionalsReturnAValue &= BlockAlwaysReturnsAValue(conditional.ElseBranch.Statements);
+                }
+            }
+            return allConditionalsReturnAValue;
+        }
 
         private void RequireSingleBooleanArgument(SyntaxElement node)
         {

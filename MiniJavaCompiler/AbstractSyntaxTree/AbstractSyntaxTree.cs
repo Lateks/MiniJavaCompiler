@@ -250,8 +250,8 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
     public class IfStatement : SyntaxElement, IStatement
     {
         public IExpression BooleanExpression { get; private set; }
-        public IStatement ThenBranch { get; private set; }
-        public IStatement ElseBranch { get; private set; }
+        public BlockStatement ThenBranch { get; private set; }
+        public BlockStatement ElseBranch { get; private set; }
 
         public IfStatement(IExpression booleanExp, IStatement thenBranch,
             IStatement elseBranch, int row, int col)

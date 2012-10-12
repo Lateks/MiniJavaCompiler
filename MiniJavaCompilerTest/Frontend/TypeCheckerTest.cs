@@ -810,7 +810,97 @@ namespace MiniJavaCompilerTest.Frontend
                                  "}\n";
                 var checker = SetUpTypeAndReferenceChecker(program);
                 var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
-                Assert.That(exception.Message, Is.StringContaining("Method declared as returning int does not return a value"));
+                Assert.That(exception.Message, Is.StringContaining("Missing return statement"));
+            }
+
+            [Test]
+            public void OkReturnStatements()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() { }\n" +
+                                 "}\n" +
+                                 "class A {\n" +
+                                 "\t public int foo(boolean bar) {\n" +
+                                 "\t\t int foo;\n" +
+                                 "\t\t foo = 10;\n" +
+                                 "\t\t if (bar) \n" +
+                                 "\t\t\t foo = foo + 1;\n" +
+                                 "\t\t else \n" +
+                                 "\t\t\t foo = foo - 1;\n" +
+                                 "\t\t return foo;\n" +
+                                 "\t }\n" +
+                                 "\t public int bar(boolean foo) {\n" +
+                                 "\t\t int baz;\n" +
+                                 "\t\t baz = 0;\n" +
+                                 "\t\t if (foo)\n" +
+                                 "\t\t\t return baz;\n" +
+                                 "\t\t else \n" +
+                                 "\t\t\t return 0;\n" +
+                                 "}\n" +
+                                 "}\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                Assert.DoesNotThrow(checker.CheckTypesAndReferences);
+            }
+
+            [Test]
+            public void AllPathsInANonVoidMethodRequireReturnStatements_FaultyIfBranch()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() { }\n" +
+                                 "}\n" +
+                                 "class A {\n" +
+                                 "\t public int foo(boolean bar) {\n" +
+                                 "\t\t int foo;\n" +
+                                 "\t\t foo = 10;\n" +
+                                 "\t\t if (bar) \n" +
+                                 "\t\t\t foo = foo + 1;\n" +
+                                 "\t\t else\n" +
+                                 "\t\t\t return foo;" +
+                                 "}\n" +
+                                 "}\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Missing return statement"));
+            }
+
+            [Test]
+            public void AllPathsInANonVoidMethodRequireReturnStatements_FaultyElseBranch()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() { }\n" +
+                                 "}\n" +
+                                 "class A {\n" +
+                                 "\t public int foo(boolean bar) {\n" +
+                                 "\t\t int foo;\n" +
+                                 "\t\t foo = 10;\n" +
+                                 "\t\t if (bar) \n" +
+                                 "\t\t\t return foo;\n" +
+                                 "\t\t else\n" +
+                                 "\t\t\t foo = foo + 1;\n" +
+                                 "}\n" +
+                                 "}\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Missing return statement"));
+            }
+
+            [Test]
+            public void AllPathsInANonVoidMethodRequireReturnStatements_IfWithoutAnElseBranch()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() { }\n" +
+                                 "}\n" +
+                                 "class A {\n" +
+                                 "\t public int foo(boolean bar) {\n" +
+                                 "\t\t int foo;\n" +
+                                 "\t\t foo = 10;\n" +
+                                 "\t\t if (bar) \n" +
+                                 "\t\t\t return foo;\n" +
+                                 "}\n" +
+                                 "}\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Missing return statement"));
             }
 
             [Test]
