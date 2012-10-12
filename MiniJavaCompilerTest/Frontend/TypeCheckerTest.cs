@@ -753,6 +753,36 @@ namespace MiniJavaCompilerTest.Frontend
                 var exception = Assert.Throws<ReferenceError>(checker.CheckTypesAndReferences);
                 Assert.That(exception.Message, Is.StringContaining("Cannot resolve").And.StringContaining("foo"));
             }
+
+            [Test]
+            public void ArraysAreNonPolymorphicInAssignments()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() { A[] foo; foo = new B[10]; }\n" +
+                                 "}\n" +
+                                 "class A { }\n" +
+                                 "class B extends A { }\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Cannot assign").
+                    And.StringContaining("array[B]").And.StringContaining("array[A]"));
+            }
+
+            [Test]
+            public void ArraysAreNonPolymorphicInMethodCalls()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() { int foo; foo = new A().arrayLen(new B[10]); }\n" +
+                                 "}\n" +
+                                 "class A {\n" +
+                                 "\t public int arrayLen(A[] array) { return array.length; }\n" +
+                                 " }\n" +
+                                 "class B extends A { }\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Wrong type of argument").
+                    And.StringContaining("array[B]").And.StringContaining("array[A]"));
+            }
         }
 
         [TestFixture]
@@ -767,6 +797,20 @@ namespace MiniJavaCompilerTest.Frontend
                 var checker = SetUpTypeAndReferenceChecker(program);
                 var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
                 Assert.That(exception.Message, Is.StringContaining("Method of type void cannot have return statements"));
+            }
+
+            [Test]
+            public void NonVoidMethodRequiresAReturnStatement()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() { }\n" +
+                                 "}\n" +
+                                 "class A {\n" +
+                                 "\t public int foo() { }\n" +
+                                 "}\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Method declared as returning int does not return a value"));
             }
 
             [Test]
@@ -832,7 +876,21 @@ namespace MiniJavaCompilerTest.Frontend
                     And.StringContaining("type A to B"));
             }
 
-            // TODO: arrays are non-polymorphic
+            [Test]
+            public void ArraysAreNonPolymorphicInReturnStatements()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() { }\n" +
+                                 "}\n" +
+                                 "class A {\n" +
+                                 "\t public A[] foo() { return new B[10]; }\n" +
+                                 "}\n" +
+                                 "class B extends A { }\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Cannot convert").
+                    And.StringContaining("type array[B] to array[A]"));
+            }
         }
 
         // TODO: test other type checks

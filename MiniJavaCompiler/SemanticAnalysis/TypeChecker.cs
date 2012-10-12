@@ -50,11 +50,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
         { // Check that the method does not overload a method in a superclass.
           // Only overriding is allowed.
             var classScope = _symbolTable.ResolveSurroundingClass(node);
-            if (classScope.SuperClass == null)
-            {
-                return;
-            }
-            var superClassMethod = classScope.SuperClass.Resolve<MethodSymbol>(node.Name);
+            var superClassMethod = classScope.SuperClass == null ? null : classScope.SuperClass.Resolve<MethodSymbol>(node.Name);
             if (superClassMethod == null)
             {
                 return;
@@ -74,7 +70,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
                 return true;
             }
             var paramsEqual = method.Formals.Zip(superClassMethod.Formals,
-                (a, b) => _symbolTable.ResolveType(a.Type) == _symbolTable.ResolveType(b.Type));
+                (a, b) => _symbolTable.ResolveType(a.Type).Equals(_symbolTable.ResolveType(b.Type)));
             return paramsEqual.Contains(false);
         }
 
@@ -99,16 +95,6 @@ namespace MiniJavaCompiler.SemanticAnalysis
         public void Visit(AssertStatement node)
         {
             RequireSingleBooleanArgument(node);
-        }
-
-        private void RequireSingleBooleanArgument(SyntaxElement node)
-        {
-            var argType = _operandTypes.Pop();
-            if (!(argType is BuiltinTypeSymbol && argType.Name == MiniJavaInfo.BoolType))
-            {
-                throw new TypeError(String.Format("Cannot convert expression of type {0} to boolean near row {1}, col {2}.",
-                                                  argType.Name, node.Row, node.Col));
-            }
         }
 
         public void Visit(AssignmentStatement node)
@@ -186,48 +172,6 @@ namespace MiniJavaCompiler.SemanticAnalysis
             _operandTypes.Push(method.Type); // return type, can be void
         }
 
-        private void ValidateMethodCall(MethodSymbol method, MethodInvocation node)
-        {
-            if (method == null) // method does not exist
-            {
-                throw new ReferenceError(String.Format("Cannot resolve symbol {0} near row {1}, col {2}.",
-                    node.MethodName, node.Row, node.Col));
-            }
-            if (method.IsStatic)
-            {
-                throw new ReferenceError(String.Format("Cannot call static method {0} on an instance near row {1}, col {2}.",
-                    node.MethodName, node.Row, node.Col));
-            }
-            var methodDecl = (MethodDeclaration)_symbolTable.Definitions[method];
-            if (node.CallParameters.Count != methodDecl.Formals.Count)
-            {
-                throw new TypeError(String.Format("Wrong number of arguments to method {0} near row {1}, col {2}.",
-                    node.MethodName, node.Row, node.Col));
-            }
-
-            ValidateCallParameterTypes(node, methodDecl);
-        }
-
-        private void ValidateCallParameterTypes(MethodInvocation node, MethodDeclaration methodDecl)
-        {
-            var callParams = new Stack<IType>();
-            foreach (var arg in node.CallParameters)
-            {
-                callParams.Push(_operandTypes.Pop());
-            }
-            foreach (var formalParameter in methodDecl.Formals)
-            {
-                var callParamType = callParams.Pop();
-                var formalParamType = _symbolTable.ResolveType(formalParameter.Type);
-                if (!callParamType.IsAssignableTo(formalParamType))
-                {
-                    throw new TypeError(String.Format(
-                        "Wrong type of argument to method {0} near row {1}, col {2}. Expected {3} but got {4}.",
-                        node.MethodName, node.Row, node.Col, formalParamType.Name, callParamType.Name));
-                }
-            }
-        }
-
         public void Visit(InstanceCreationExpression node)
         {
             var createdType = (ISimpleType) _symbolTable.ResolveType(node.Type);
@@ -270,8 +214,8 @@ namespace MiniJavaCompiler.SemanticAnalysis
             var leftOperandType = _operandTypes.Pop();
             var rightOperandType = _operandTypes.Pop();
             var op = MiniJavaInfo.Operators[node.Operator];
-            if (op.OperandType != MiniJavaInfo.AnyType) // types are not checked if operator can be applied to any type of object (like ==)
-            {
+            if (op.OperandType != MiniJavaInfo.AnyType)
+            { // types are not checked if operator can be applied to any type of object (like ==)
                 var expectedOpType = _symbolTable.ResolveType(op.OperandType);
                 if (!leftOperandType.IsAssignableTo(expectedOpType) || !rightOperandType.IsAssignableTo(expectedOpType))
                 { // both arguments (lhs and rhs) must match operator's expected operand type
@@ -302,8 +246,8 @@ namespace MiniJavaCompiler.SemanticAnalysis
                     arrayType.Name, node.Row, node.Col));
             }
             var indexType = _operandTypes.Pop();
-            if (!indexType.IsAssignableTo(_symbolTable.ResolveType(MiniJavaInfo.IntType))) // array must be indexed with an expression that evaluates to an int value
-            {
+            if (!indexType.IsAssignableTo(_symbolTable.ResolveType(MiniJavaInfo.IntType)))
+            { // array must be indexed with an expression that evaluates to an int value
                 throw new TypeError(String.Format("Invalid array index near row {0}, col {1}.",
                     node.Row, node.Col));
             }
@@ -322,18 +266,8 @@ namespace MiniJavaCompiler.SemanticAnalysis
             _operandTypes.Push(symbol.Type);
         }
 
-        private bool VariableDeclaredBeforeReference(VariableSymbol varSymbol, VariableReferenceExpression reference)
-        {
-            if (varSymbol.EnclosingScope is UserDefinedTypeSymbol)
-            { // Variables defined on the class level are visible in all internal scopes.
-                return true;
-            }
-            var declaration = (VariableDeclaration) _symbolTable.Definitions[varSymbol];
-            return declaration.Row < reference.Row || (declaration.Row == reference.Row && declaration.Col < reference.Col);
-        }
-
         public void Visit(IntegerLiteralExpression node)
-        { // take note of the type
+        { // TODO: check that integer literals fit into a 32-bit integer (the only numeric type in Mini-Java)
             _operandTypes.Push(_symbolTable.ResolveType(MiniJavaInfo.IntType));
         }
 
@@ -347,7 +281,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
           // static methods - so implementing it would have been pointless.
             var method = (MethodSymbol)_symbolTable.Scopes[node].Resolve<MethodSymbol>(node.Name);
             int numReturnStatements = _returnTypes.Count;
-            if (method.Type == VoidType.GetInstance())
+            if (method.Type.Equals(VoidType.GetInstance()))
             { // void methods cannot have return statements (because Mini-Java does not define an empty return statement)
                 if (numReturnStatements > 0)
                 {
@@ -355,13 +289,18 @@ namespace MiniJavaCompiler.SemanticAnalysis
                         method.Type.Name, node.Row, node.Col));
                 }
             }
+            else if (numReturnStatements == 0)
+            {
+                throw new TypeError(String.Format("Method declared as returning {0} does not return a value near row {1}, col {2}.",
+                    method.Type.Name, node.Row, node.Col));
+            }
             else
             {
                 for (int i = 0; i < numReturnStatements; i++)
                 {
                     var returnType = _returnTypes.Pop();
-                    if (!returnType.IsAssignableTo(method.Type)) // the type of object returned by the return statement must match the method's declared return type
-                    {
+                    if (!returnType.IsAssignableTo(method.Type))
+                    { // the type of object returned by the return statement must match the method's declared return type
                         throw new TypeError(String.Format("Cannot convert expression of type {0} to {1} near row {2}, col {3}.",
                             returnType.Name, method.Type.Name, node.Row, node.Col));
                     }
@@ -370,5 +309,68 @@ namespace MiniJavaCompiler.SemanticAnalysis
         }
 
         public void Exit(BlockStatement node) { }
+
+        private void RequireSingleBooleanArgument(SyntaxElement node)
+        {
+            var argType = _operandTypes.Pop();
+            if (!(argType is BuiltinTypeSymbol && argType.Name == MiniJavaInfo.BoolType))
+            {
+                throw new TypeError(String.Format("Cannot convert expression of type {0} to boolean near row {1}, col {2}.",
+                                                  argType.Name, node.Row, node.Col));
+            }
+        }
+
+        private void ValidateMethodCall(MethodSymbol method, MethodInvocation node)
+        {
+            if (method == null) // method does not exist
+            {
+                throw new ReferenceError(String.Format("Cannot resolve symbol {0} near row {1}, col {2}.",
+                    node.MethodName, node.Row, node.Col));
+            }
+            if (method.IsStatic)
+            {
+                throw new ReferenceError(String.Format("Cannot call static method {0} on an instance near row {1}, col {2}.",
+                    node.MethodName, node.Row, node.Col));
+            }
+            var methodDecl = (MethodDeclaration)_symbolTable.Definitions[method];
+            if (node.CallParameters.Count != methodDecl.Formals.Count)
+            {
+                throw new TypeError(String.Format("Wrong number of arguments to method {0} near row {1}, col {2}.",
+                    node.MethodName, node.Row, node.Col));
+            }
+
+            ValidateCallParameterTypes(node, methodDecl);
+        }
+
+        private void ValidateCallParameterTypes(MethodInvocation node, MethodDeclaration methodDecl)
+        {
+            var callParams = new Stack<IType>();
+            foreach (var arg in node.CallParameters)
+            {
+                callParams.Push(_operandTypes.Pop());
+            }
+            foreach (var formalParameter in methodDecl.Formals)
+            {
+                var callParamType = callParams.Pop();
+                var formalParamSimpleType = (ISimpleType) _symbolTable.ResolveType(formalParameter.Type);
+                var formalParamType = formalParameter.IsArray ? (IType) new MiniJavaArrayType(formalParamSimpleType) : formalParamSimpleType;
+                if (!callParamType.IsAssignableTo(formalParamType))
+                {
+                    throw new TypeError(String.Format(
+                        "Wrong type of argument to method {0} near row {1}, col {2}. Expected {3} but got {4}.",
+                        node.MethodName, node.Row, node.Col, formalParamType.Name, callParamType.Name));
+                }
+            }
+        }
+
+        private bool VariableDeclaredBeforeReference(VariableSymbol varSymbol, VariableReferenceExpression reference)
+        {
+            if (varSymbol.EnclosingScope is UserDefinedTypeSymbol)
+            { // Variables defined on the class level are visible in all internal scopes.
+                return true;
+            }
+            var declaration = (VariableDeclaration)_symbolTable.Definitions[varSymbol];
+            return declaration.Row < reference.Row || (declaration.Row == reference.Row && declaration.Col < reference.Col);
+        }
     }
 }
