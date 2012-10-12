@@ -553,12 +553,33 @@ namespace MiniJavaCompilerTest.Frontend
                                  "class A {\n" +
                                  "\tA foo;\n" +
                                  "\tpublic boolean alwaysTrue() {\n" +
-                                 "\t\tfoo = new A(); // pointless side effect\n" +
+                                 "\t\tfoo = new A();\n" +
+                                 "\t\tA[] bar;\n" +
+                                 "\t\tbar[0] = foo;\n" + // can insert an object of type A into an array of type A
+                                 "\t\tbar[1] = new B();\n" + // can also insert an object of type B that inherits from A, even though corresponding array types would be incompatible
                                  "\t\treturn true;\n\n" +
                                  "\t}\n" +
-                                 "}\n";
+                                 "}\n" +
+                                 "class B extends A { }\n";
                 var checker = SetUpTypeAndReferenceChecker(program);
                 Assert.DoesNotThrow(checker.CheckTypesAndReferences);
+            }
+
+            [Test]
+            public void InvalidArrayIndexAssignment()
+            {
+                string program = "class Foo {\n" +
+                                 "\tpublic static void main() {\n" +
+                                 "\t\tA[] foo;\n" +
+                                 "\t\tfoo[0] = new B();\n" +
+                                 "\t}\n" +
+                                 "}\n" +
+                                 "class A { }\n" +
+                                 "class B { }\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Cannot assign").And.
+                    StringContaining("A").And.StringContaining("B"));
             }
 
             [Test]
@@ -1003,6 +1024,5 @@ namespace MiniJavaCompilerTest.Frontend
         }
 
         // TODO: test other type checks
-        // TODO: test assignment to array index
     }
 }

@@ -105,7 +105,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
           // variable)
             var lhsType = _operandTypes.Pop();
             var rhsType = _operandTypes.Pop();
-            if (node.LeftHandSide is VariableReferenceExpression)
+            if (node.LeftHandSide is VariableReferenceExpression || node.LeftHandSide is ArrayIndexingExpression)
             {
                 if (!(rhsType.IsAssignableTo(lhsType)))
                 {
