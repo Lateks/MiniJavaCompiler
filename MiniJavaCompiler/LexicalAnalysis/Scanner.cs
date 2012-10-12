@@ -26,26 +26,19 @@ namespace MiniJavaCompiler.LexicalAnalysis
         private readonly Queue<IToken> _tokens;
         private int _startRow;
         private int _startCol;
-        private bool _endOfFileReached;
 
         public MiniJavaScanner(TextReader input)
         {
             _input = new ScannerInputReader(input);
             _tokens = new Queue<IToken>();
             BuildTokenList();
-            _endOfFileReached = false;
         }
 
         public IToken NextToken()
         {
-            if (_endOfFileReached)
-            {
-                throw new OutOfInput("Reached end of file while parsing.");
-            }
             if (_tokens.Count > 0)
                 return _tokens.Dequeue();
-            _endOfFileReached = true;
-            return new EndOfFile(_input.Row, _input.Col);
+            throw new OutOfInput("Reached end of file while parsing.");
         }
 
         // Passes through the code once and builds a queue of tokens.

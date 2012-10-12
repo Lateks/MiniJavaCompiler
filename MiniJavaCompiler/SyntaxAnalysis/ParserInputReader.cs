@@ -42,18 +42,27 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         private readonly IScanner _scanner;
         private readonly Stack<IToken> _inputBuffer; // This stack is used for buffering when we need to peek forward.
         private readonly IErrorReporter _errorReporter;
+        private IToken _inputToken;
 
+        // TODO: The token stream could be encapsulated in a private inner class
         private IToken InputToken
         {
-            get;
-            set;
+            get
+            {
+                if (_inputToken == null)
+                {
+                    _inputToken = _inputBuffer.Count > 0 ? _inputBuffer.Pop() : _scanner.NextToken();
+                }
+                return _inputToken;
+            }
+            set { _inputToken = value; }
         }
 
         public ParserInputReader(IScanner scanner, IErrorReporter errorReporter)
         {
-            this._scanner = scanner;
-            this._errorReporter = errorReporter;
-            this._inputBuffer = new Stack<IToken>();
+            _scanner = scanner;
+            _errorReporter = errorReporter;
+            _inputBuffer = new Stack<IToken>();
             InputToken = scanner.NextToken();
         }
 
@@ -128,9 +137,9 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         // (Unless consuming tokens as type Token for e.g. recovery purposes.)
         public TTokenType Consume<TTokenType>() where TTokenType : IToken
         {
-            var temp = GetTokenOrReportError<TTokenType>();
-            InputToken = _inputBuffer.Count > 0 ? _inputBuffer.Pop() : _scanner.NextToken();
-            return temp;
+            var returnToken = GetTokenOrReportError<TTokenType>();
+            InputToken = null; // The next token is not fetched here. We do not want an out of input error e.g. when consuming an EndOfFile.
+            return returnToken;
         }
 
         private dynamic GetTokenOrReportError<TTokenType>() where TTokenType : IToken

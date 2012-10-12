@@ -235,5 +235,13 @@ namespace MiniJavaCompilerTest.Frontend
             Assert.AreEqual(token.Row, 2);
             Assert.AreEqual(token.Col, 3);
         }
+
+        [Test]
+        public void ThrowsAnExceptionIfInputExhausted()
+        {
+            var scanner = new MiniJavaScanner(new StringReader(""));
+            Assert.That(scanner.NextToken(), Is.InstanceOf<EndOfFile>());
+            Assert.Throws<OutOfInput>(() => scanner.NextToken());
+        }
     }
 }
