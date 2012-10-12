@@ -288,14 +288,15 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
     public class WhileStatement : SyntaxElement, IStatement
     {
         public IExpression BooleanExpression { get; private set; }
-        public IStatement LoopBody { get; private set; }
+        public BlockStatement LoopBody { get; private set; }
 
         public WhileStatement(IExpression booleanExp, IStatement loopBody,
             int row, int col)
             : base(row, col)
         {
             BooleanExpression = booleanExp;
-            LoopBody = loopBody;
+            LoopBody = loopBody is BlockStatement ? loopBody as BlockStatement :
+                new BlockStatement(new List<IStatement>() {loopBody}, row, col);
         }
 
         public override void Accept(INodeVisitor visitor)

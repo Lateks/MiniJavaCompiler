@@ -188,6 +188,8 @@ namespace MiniJavaCompilerTest.Frontend
                                  "\tpublic int foo()" +
                                  "\t{\n" +
                                  "\t\tfoo = 42;" +
+                                 "\t\t while (foo > 0)\n" +
+                                 "\t\t\t foo = foo - 1;\n" +
                                  "\t\treturn foo;" +
                                  "\t}\n" +
                                  "}\n";
@@ -237,6 +239,21 @@ namespace MiniJavaCompilerTest.Frontend
                 string program = "class Factorial {\n" +
                                  "\t public static void main () {\n" +
                                  "\t\t if (true)\n" +
+                                 "\t\t\t int foo;" +
+                                 "\t\t foo = 42;\n" +
+                                 "\t} \n" +
+                                 "} \n\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<ReferenceError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Could not resolve symbol foo"));
+            }
+
+            [Test]
+            public void WhileLoopHasItsOwnScope()
+            {
+                string program = "class Factorial {\n" +
+                                 "\t public static void main () {\n" +
+                                 "\t\t while (true)\n" +
                                  "\t\t\t int foo;" +
                                  "\t\t foo = 42;\n" +
                                  "\t} \n" +
@@ -853,9 +870,10 @@ namespace MiniJavaCompilerTest.Frontend
                                  "\t public int bar(boolean foo) {\n" +
                                  "\t\t int baz;\n" +
                                  "\t\t baz = 0;\n" +
-                                 "\t\t if (foo)\n" +
+                                 "\t\t if (foo) {\n" +
+                                 "\t\t\t baz = baz + 1;\n" +
                                  "\t\t\t return baz;\n" +
-                                 "\t\t else \n" +
+                                 "\t\t } else \n" +
                                  "\t\t\t return 0;\n" +
                                  "}\n" +
                                  "}\n";

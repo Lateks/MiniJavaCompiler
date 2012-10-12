@@ -16,6 +16,11 @@ namespace MiniJavaCompilerTest.Frontend
             this.tokens = tokens;
         }
 
+        public bool InputLeft()
+        {
+            return tokens.Count > 0;
+        }
+
         public IToken NextToken()
         {
             if (tokens.Count > 0)
@@ -178,11 +183,13 @@ namespace MiniJavaCompilerTest.Frontend
             programTokens.Enqueue(new PunctuationToken("(", 0, 0));
             programTokens.Enqueue(new KeywordToken("true", 0, 0));
             programTokens.Enqueue(new PunctuationToken(")", 0, 0));
+            programTokens.Enqueue(new PunctuationToken("{", 0, 0));
             programTokens.Enqueue(new KeywordToken("assert", 0, 0));
             programTokens.Enqueue(new PunctuationToken("(", 0, 0));
             programTokens.Enqueue(new KeywordToken("false", 0, 0));
             programTokens.Enqueue(new PunctuationToken(")", 0, 0));
             programTokens.Enqueue(new PunctuationToken(";", 0, 0));
+            programTokens.Enqueue(new PunctuationToken("}",0, 0));
 
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
@@ -190,7 +197,8 @@ namespace MiniJavaCompilerTest.Frontend
             Assert.That(statement, Is.InstanceOf<WhileStatement>());
             var whileStatement = (WhileStatement)statement;
             Assert.That(whileStatement.BooleanExpression, Is.InstanceOf<BooleanLiteralExpression>());
-            Assert.That(whileStatement.LoopBody, Is.InstanceOf<AssertStatement>());
+            Assert.That(whileStatement.LoopBody, Is.InstanceOf<BlockStatement>());
+            Assert.That(whileStatement.LoopBody.Statements[0], Is.InstanceOf<AssertStatement>());
         }
 
         [Test]
