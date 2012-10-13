@@ -1322,6 +1322,46 @@ namespace MiniJavaCompilerTest.Frontend
             }
 
             [Test]
+            public void ValidPrintStatements()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() {\n" +
+                                 "\t\t System.out.println(true);\n" +
+                                 "\t\t System.out.println(10 + 1 % 2);\n" +
+                                 "}\n" +
+                                 "}\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                Assert.DoesNotThrow(checker.CheckTypesAndReferences);
+            }
+
+            [Test]
+            public void CannotPrintAnArray()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() {\n" +
+                                 "\t\t System.out.println(new int[10]);\n" +
+                                 "}\n" +
+                                 "}\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Cannot print expression of type array[int]"));
+            }
+
+            [Test]
+            public void CannotPrintAUserDefinedType()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() {\n" +
+                                 "\t\t System.out.println(new A());\n" +
+                                 "}\n" +
+                                 "}\n" +
+                                 "class A { }\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Cannot print expression of type A"));
+            }
+
+            [Test]
             public void InvalidIfCondition()
             {
                 string program = "class Foo{\n" +

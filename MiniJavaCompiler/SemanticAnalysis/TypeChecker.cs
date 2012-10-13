@@ -93,7 +93,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
             var type = _operandTypes.Pop();
             if (!(type is BuiltinTypeSymbol))
             {
-                throw new TypeError(String.Format("Cannot convert type {0} to string near row {1}, col {2}.",
+                throw new TypeError(String.Format("Cannot print expression of type {0} near row {1}, col {2}.",
                     type.Name, node.Row, node.Col));
             }
         }
