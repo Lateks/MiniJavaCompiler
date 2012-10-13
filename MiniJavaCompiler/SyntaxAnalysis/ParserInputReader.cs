@@ -39,7 +39,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
     internal class ParserInputReader : IParserInputReader
     {
-        private readonly IScanner _scanner;
+        private readonly ITokenizer _scanner;
         private readonly Stack<IToken> _inputBuffer; // This stack is used for buffering when we need to peek forward.
         private readonly IErrorReporter _errorReporter;
         private IToken _inputToken;
@@ -58,7 +58,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             set { _inputToken = value; }
         }
 
-        public ParserInputReader(IScanner scanner, IErrorReporter errorReporter)
+        public ParserInputReader(ITokenizer scanner, IErrorReporter errorReporter)
         {
             _scanner = scanner;
             _errorReporter = errorReporter;

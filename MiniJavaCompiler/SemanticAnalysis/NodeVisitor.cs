@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using MiniJavaCompiler.AbstractSyntaxTree;
+﻿using MiniJavaCompiler.AbstractSyntaxTree;
 
 namespace MiniJavaCompiler.SemanticAnalysis
 {
@@ -30,6 +26,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
         void Visit(VariableReferenceExpression node);
         void Visit(IntegerLiteralExpression node);
 
+        // These are for handling e.g. scope exits when needed.
         void Exit(ClassDeclaration node);
         void Exit(MainClassDeclaration node);
         void Exit(MethodDeclaration node);

@@ -69,17 +69,6 @@ namespace MiniJavaCompiler.LexicalAnalysis
             return symbol.ToString();
         }
 
-        private void AdvanceScannerPosition(char currentSymbol)
-        {
-            if (currentSymbol.Equals('\n'))
-            {
-                Row++;
-                Col = 0;
-            }
-            else
-                Col++;
-        }
-
         internal void SkipWhiteSpaceAndComments()
         {
             while (InputLeft())
@@ -89,6 +78,17 @@ namespace MiniJavaCompiler.LexicalAnalysis
                 if ((noCommentsFound && !NextCharIsWhiteSpace()))
                     return;
             }
+        }
+
+        private void AdvanceScannerPosition(char currentSymbol)
+        {
+            if (currentSymbol.Equals('\n'))
+            {
+                Row++;
+                Col = 0;
+            }
+            else
+                Col++;
         }
 
         private void SkipWhiteSpace()

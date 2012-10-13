@@ -69,7 +69,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
         internal bool IsStatic { get; set; }
 
         public MethodSymbol(string name, IType returnType, UserDefinedTypeSymbol enclosingScope)
-            : base(name, returnType ?? VoidType.GetInstance(), enclosingScope)
+            : base(name, returnType, enclosingScope)
         {
             IsStatic = false;
             _variableTable = new Dictionary<string, Symbol>();

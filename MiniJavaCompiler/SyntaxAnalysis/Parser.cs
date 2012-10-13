@@ -262,7 +262,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
                 case "return":
                     return MakeReturnStatement();
                 default:
-                    throw new SyntaxError("Invalid keyword " + token.Value + " starting a statement.",
+                    throw new SyntaxError(String.Format("Invalid keyword {0} starting a statement.", token.Value),
                         token.Row, token.Col);
             }
         }
@@ -406,8 +406,8 @@ namespace MiniJavaCompiler.SyntaxAnalysis
                 else
                 {
                     var token = Input.Consume<IToken>();
-                    throw new SyntaxError("Invalid token of type " + token.GetType().Name +
-                        " starting a declaration.", token.Row, token.Col);
+                    throw new SyntaxError(String.Format("Invalid token of type {0} starting a declaration.",
+                        token.GetType().Name), token.Row, token.Col);
                 }
             }
             catch (SyntaxError e)

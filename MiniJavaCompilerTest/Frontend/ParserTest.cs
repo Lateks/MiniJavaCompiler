@@ -7,7 +7,7 @@ using MiniJavaCompiler.Support;
 
 namespace MiniJavaCompilerTest.Frontend
 {
-    public class StubScanner : IScanner
+    public class StubScanner : ITokenizer
     {
         Queue<IToken> tokens;
 

@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Collections;
 using System.IO;
 using MiniJavaCompiler.Support;
 
@@ -13,12 +11,12 @@ namespace MiniJavaCompiler.LexicalAnalysis
         public OutOfInput(string message) : base(message) { }
     }
 
-    public interface IScanner
+    public interface ITokenizer
     {
         IToken NextToken();
     }
 
-    public class MiniJavaScanner : IScanner
+    public class MiniJavaScanner : ITokenizer
     {
         private readonly ScannerInputReader _input;
         private readonly Queue<IToken> _tokens;

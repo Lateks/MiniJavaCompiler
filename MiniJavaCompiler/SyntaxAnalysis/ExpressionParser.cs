@@ -130,9 +130,8 @@ namespace MiniJavaCompiler.SyntaxAnalysis
                 else
                 {
                     var token = Input.Consume<IToken>();
-                    throw new SyntaxError("Invalid start token of type " +
-                        token.GetType().Name + " for a term in an expression.",
-                        token.Row, token.Col);
+                    throw new SyntaxError(String.Format("Invalid start token {0} for a term in an expression.",
+                        token is StringToken ? (token as StringToken).Value : token.GetType().Name), token.Row, token.Col);
                 }
             }
             catch (SyntaxError e)
@@ -199,7 +198,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
                     return MakeBooleanLiteral(false);
                 default:
                     throw new SyntaxError("Invalid start token " + token.Value +
-                        " for expression.", token.Row, token.Col);
+                        " for an expression.", token.Row, token.Col);
             }
         }
 
