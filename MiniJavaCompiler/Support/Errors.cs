@@ -31,20 +31,6 @@ namespace MiniJavaCompiler.Support
         }
     }
 
-    public class ErrorReport : Exception
-    {
-        public List<ErrorMessage> ErrorMsgs
-        {
-            get;
-            private set;
-        }
-
-        public ErrorReport(List<ErrorMessage> messages)
-        {
-            ErrorMsgs = messages;
-        }
-    }
-
     public class ErrorMessage
     {
         public string Content

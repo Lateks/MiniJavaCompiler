@@ -318,6 +318,28 @@ namespace MiniJavaCompilerTest.Frontend
                 var checker = SetUpTypeAndReferenceChecker(program);
                 Assert.DoesNotThrow(checker.CheckTypesAndReferences);
             }
+
+            [Test]
+            public void TypeMustBeResolvableInInstanceCreation()
+            {
+                string program = "class Foo {\n" +
+                                 "\tpublic static void main() { int foo; foo = new A().foo(); }\n" +
+                                 "}\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<ReferenceError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Cannot resolve symbol A"));
+            }
+
+            [Test]
+            public void TypeMustBeResolvableInArrayCreation()
+            {
+                string program = "class Foo {\n" +
+                                 "\tpublic static void main() { int foo; foo = new A[10].length; }\n" +
+                                 "}\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<ReferenceError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Cannot resolve symbol A"));
+            }
         }
 
         [TestFixture]
@@ -379,6 +401,27 @@ namespace MiniJavaCompilerTest.Frontend
                 var checker = SetUpTypeAndReferenceChecker(program);
                 var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
                 Assert.That(exception.Message, Is.StringContaining("Invalid array index"));
+            }
+
+            [Test]
+            public void ArraySizeMustBeAnInteger()
+            {
+                string program = "class Foo {\n" +
+                                 "\tpublic static void main() { int foo; foo = new int[true].length; }\n" +
+                                 "}\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<ReferenceError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Array size must be numeric"));
+            }
+
+            [Test]
+            public void ValidArraySize()
+            {
+                string program = "class Foo {\n" +
+                                 "\tpublic static void main() { int foo; foo = new int[10 + 11 % 2].length; }\n" +
+                                 "}\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                Assert.DoesNotThrow(checker.CheckTypesAndReferences);
             }
         }
 
@@ -725,6 +768,20 @@ namespace MiniJavaCompilerTest.Frontend
                 var checker = SetUpTypeAndReferenceChecker(program);
                 var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
                 Assert.That(exception.Message, Is.StringContaining("is not assignable"));
+            }
+
+            [Test]
+            public void CannotAssignReturnTypeOfVoidMethod()
+            {
+                string program = "class Foo {\n" +
+                                 "\tpublic static void main() {\n" +
+                                 "\t int foo; foo = new A().foo();\n" +
+                                 "\t}\n" +
+                                 "}\n" +
+                                 "class A { public void foo() { } }\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Cannot assign expression of type void"));
             }
         }
 
