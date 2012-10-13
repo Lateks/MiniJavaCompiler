@@ -351,6 +351,35 @@ namespace MiniJavaCompilerTest.Frontend
                 var checker = SetUpTypeAndReferenceChecker(program);
                 Assert.DoesNotThrow(checker.CheckTypesAndReferences);
             }
+
+            [Test]
+            public void CannotIndexNonArrayExpression()
+            {
+                string program = "class Foo {\n" +
+                                 "\tpublic static void main() {\n" +
+                                 "\t\tint foo;\n" +
+                                 "\t\tfoo[0] = 42;\n" +
+                                 "\t}\n" +
+                                 "}\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Cannot index into"));
+            }
+
+            [Test]
+            public void ArrayIndexExpressionMustBeAnInteger()
+            {
+                string program = "class Foo {\n" +
+                                 "\tpublic static void main() {\n" +
+                                 "\t\tint[] foo;\n" +
+                                 "\t\tfoo = new int[10];\n" +
+                                 "\t\tfoo[true] = 0;\n" +
+                                 "\t}\n" +
+                                 "}\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Invalid array index"));
+            }
         }
 
         [TestFixture]
@@ -950,11 +979,19 @@ namespace MiniJavaCompilerTest.Frontend
                                  "}\n" +
                                  "class A {\n" +
                                  "\t public int foo() {\n" +
+                                 "\t\t int foo;\n" +
+                                 "\t\t foo = 42;\n" +
                                  "\t\t {\n" +
                                  "\t\t\t {\n" +
-                                 "\t\t\t\t return 0;\n" +
+                                 "\t\t\t\t return foo;\n" +
                                  "\t\t\t }\n" +
                                  "\t\t }\n" +
+                                 "}\n" +
+                                 "\t public int bar() {\n" +
+                                 "\t\t {\n" +
+                                 "\t\t\t { }\n" +
+                                 "\t\t }\n" +
+                                 "\t\t return 0;\n" +
                                  "}\n" +
                                  "}\n";
                 var checker = SetUpTypeAndReferenceChecker(program);
@@ -1039,6 +1076,21 @@ namespace MiniJavaCompilerTest.Frontend
                 Assert.That(exception.Message, Is.StringContaining("Cannot convert").
                     And.StringContaining("type array[B] to array[A]"));
             }
+
+            [Test]
+            public void ReturnTypeChecksTakeArraysIntoAccountCorrectly()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() { }\n" +
+                                 "}\n" +
+                                 "class A {\n" +
+                                 "\t public A[] foo() { return new A(); }\n" +
+                                 "}\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Cannot convert").
+                    And.StringContaining("type A to array[A]"));
+            }
         }
 
         [TestFixture]
@@ -1109,6 +1161,204 @@ namespace MiniJavaCompilerTest.Frontend
                                  "}\n";
                 var checker = SetUpTypeAndReferenceChecker(program);
                 Assert.DoesNotThrow(checker.CheckTypesAndReferences);
+            }
+        }
+
+        [TestFixture]
+        public class MethodCallParametersAndSimilarTypeChecks
+        {
+            [Test]
+            public void ValidAssertions()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() {\n" +
+                                 "\t\t assert(true);\n" +
+                                 "\t\t assert(false);\n" +
+                                 "\t\t boolean foo;\n" +
+                                 "\t\t foo = true;\n" +
+                                 "\t\t assert(foo && true && !(10 == 9));\n" +
+                                 "\t\t int bar;\n" +
+                                 "\t\t bar = 10;\n" +
+                                 "\t\t assert(bar > 9);\n" +
+                                 "\t\t assert(bar == 10);\n" +
+                                 "}\n" +
+                                 "}\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                Assert.DoesNotThrow(checker.CheckTypesAndReferences);
+            }
+
+            [Test]
+            public void InvalidIntAssertion()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() {\n" +
+                                 "\t\t assert(10 + 1);" +
+                                 "}\n" +
+                                 "}\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Cannot convert expression of type int to boolean"));
+            }
+
+            [Test]
+            public void InvalidUserDefinedTypeAssertion()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() {\n" +
+                                 "\t\t assert(new A());" +
+                                 "}\n" +
+                                 "}\n" +
+                                 "class A { }";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Cannot convert expression of type A to boolean"));
+            }
+
+            [Test]
+            public void ValidWhileLoopConditions()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() {\n" +
+                                 "\t\t while (true) { }\n" +
+                                 "\t\t boolean foo;\n" +
+                                 "\t\t foo = true;\n" +
+                                 "\t\t while (foo) { }\n" +
+                                 "\t\t int bar;\n" +
+                                 "\t\t bar = 10;\n" +
+                                 "\t\t while (bar > 9) { }\n" +
+                                 "\t\t while (bar == 10) { }\n" +
+                                 "}\n" +
+                                 "}\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                Assert.DoesNotThrow(checker.CheckTypesAndReferences);
+            }
+
+            [Test]
+            public void InvalidWhileLoopCondition()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() {\n" +
+                                 "\t\t while (10 + 1 % 2) { }\n" +
+                                 "}\n" +
+                                 "}\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Cannot convert expression of type int to boolean"));
+            }
+
+            [Test]
+            public void ValidIfConditions()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() {\n" +
+                                 "\t\t if (true) { }\n" +
+                                 "\t\t boolean foo;\n" +
+                                 "\t\t foo = true;\n" +
+                                 "\t\t if (foo) { }\n" +
+                                 "\t\t int bar;\n" +
+                                 "\t\t bar = 10;\n" +
+                                 "\t\t if (bar > 9 && bar < 15 && !(bar == 14) || bar % 2 == 0) { }\n" +
+                                 "}\n" +
+                                 "}\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                Assert.DoesNotThrow(checker.CheckTypesAndReferences);
+            }
+
+            [Test]
+            public void InvalidIfCondition()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() {\n" +
+                                 "\t\t if (10 % 2) { }\n" +
+                                 "}\n" +
+                                 "}\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Cannot convert expression of type int to boolean"));
+            }
+
+            [Test]
+            public void ValidMethodCallParameters()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() {\n" +
+                                 "\t\t System.out.println(new A().foo(10, new B(), new B[10]));" +
+                                 "}\n" +
+                                 "}\n" +
+                                 "class A {\n" +
+                                 "\t public int foo(int bar, B baz, B[] bs) { return 0; }" +
+                                 "}\n" +
+                                 "class B { }\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                Assert.DoesNotThrow(checker.CheckTypesAndReferences);
+            }
+
+            [Test]
+            public void MethodCallParameterChecksTakeArraysIntoAccountCorrectly()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() {\n" +
+                                 "\t\t System.out.println(new A().foo(10, new B(), new B()));" +
+                                 "}\n" +
+                                 "}\n" +
+                                 "class A {\n" +
+                                 "\t public int foo(int bar, B baz, B[] bs) { return 0; }" +
+                                 "}\n" +
+                                 "class B { }\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Wrong type of argument to method foo"));
+            }
+
+            [Test]
+            public void InvalidMethodCallParameters()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() {\n" +
+                                 "\t\t System.out.println(new A().foo(10, new B(), 11));\n" +
+                                 "}\n" +
+                                 "}\n" +
+                                 "class A {\n" +
+                                 "\t public int foo(int bar, B baz, B b) { return 0; }" +
+                                 "}\n" +
+                                 "class B { }\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Wrong type of argument to method foo"));
+            }
+
+            [Test]
+            public void WrongNumberOfArgumentsToFunctionCall()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() {\n" +
+                                 "\t\t System.out.println(new A().foo(10, new B()));\n" +
+                                 "}\n" +
+                                 "}\n" +
+                                 "class A {\n" +
+                                 "\t public int foo(int bar, B baz, B b) { return 0; }" +
+                                 "}\n" +
+                                 "class B { }\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Wrong number of arguments"));
+            }
+
+            [Test]
+            public void NoArgumentsToMethodCallThatRequiresThem()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() {\n" +
+                                 "\t\t System.out.println(new A().foo());\n" +
+                                 "}\n" +
+                                 "}\n" +
+                                 "class A {\n" +
+                                 "\t public int foo(int bar, B baz, B b) { return 0; }" +
+                                 "}\n" +
+                                 "class B { }\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Wrong number of arguments"));
             }
         }
 

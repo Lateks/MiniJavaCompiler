@@ -33,6 +33,7 @@ namespace MiniJavaCompilerTest.Frontend
     [TestFixture]
     public class ParserTest
     { // TODO: Add integration tests (with scanner) and test recovery strategies
+      // TODO: Test operator precedences and parenthesised expressions
         Queue<IToken> programTokens;
 
         [SetUp]
