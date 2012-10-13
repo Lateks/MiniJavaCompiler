@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Linq;
 using MiniJavaCompiler.AbstractSyntaxTree;
 using MiniJavaCompiler.Support;
@@ -17,7 +16,6 @@ namespace MiniJavaCompiler.SemanticAnalysis
         public ReferenceError(string message) : base(message) { }
     }
 
-    // TODO: Test checking parameter types when overriding methods in superclasses
     public class TypeChecker : INodeVisitor
     {
         private readonly SymbolTable _symbolTable;
@@ -140,6 +138,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
         public void Visit(WhileStatement node)
         {
+            // TODO: if the single boolean argument is a literal false, this is unreachable code
             RequireSingleBooleanArgument(node);
         }
 
@@ -269,7 +268,16 @@ namespace MiniJavaCompiler.SemanticAnalysis
         }
 
         public void Visit(IntegerLiteralExpression node)
-        { // TODO: check that integer literals fit into a 32-bit integer (the only numeric type in Mini-Java)
+        {
+            try
+            {
+                Int32.Parse(node.Value);
+            }
+            catch (OverflowException)
+            {
+                throw new TypeError(String.Format("Cannot fit integer literal {0} into a 32 bit integer variable near row {1}, col {2}.",
+                    node.Value, node.Row, node.Col));
+            }
             _operandTypes.Push(_symbolTable.ResolveType(MiniJavaInfo.IntType));
         }
 

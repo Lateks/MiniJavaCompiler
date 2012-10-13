@@ -1459,6 +1459,40 @@ namespace MiniJavaCompilerTest.Frontend
             }
         }
 
+        [TestFixture]
+        public class IntegerLiterals
+        {
+            [Test]
+            public void ValidIntegerLiterals()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() {\n" +
+                                 "\t\t int foo;\n" +
+                                 "\t\t foo = 0;\n" +
+                                 "\t\t foo = 999999999;\n" +
+                                 "\t\t foo = 2147483647;\n" +
+                                 "}\n" +
+                                 "}\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                Assert.DoesNotThrow(checker.CheckTypesAndReferences);
+            }
+
+            [Test]
+            public void InvalidIntegerLiteral()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() {\n" +
+                                 "\t\t int foo;\n" +
+                                 "\t\t foo = 2147483648;\n" +
+                                 "}\n" +
+                                 "}\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("2147483648").
+                    And.StringContaining("Cannot fit").And.StringContaining("32 bit integer"));
+            }
+        }
+
         // TODO: test other type checks
     }
 }
