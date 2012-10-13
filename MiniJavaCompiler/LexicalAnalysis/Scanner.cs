@@ -10,8 +10,6 @@ namespace MiniJavaCompiler.LexicalAnalysis
 {
     public class OutOfInput : Exception
     {
-        public OutOfInput() { }
-
         public OutOfInput(string message) : base(message) { }
     }
 

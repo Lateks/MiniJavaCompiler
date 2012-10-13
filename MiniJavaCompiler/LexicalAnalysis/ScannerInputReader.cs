@@ -127,18 +127,14 @@ namespace MiniJavaCompiler.LexicalAnalysis
 
         private void SkipMultilineComment()
         {
-            Read(); Read();
-            while (true)
+            Read(); Read(); // discard the starting characters of the comment
+            do
             {
                 if (!ReadUntil('*'))
                     throw new EndlessCommentError("Reached end of input while scanning for a comment.",
-                    _commentStartRow, _commentStartCol);
-                if (Peek().Equals('/'))
-                {
-                    Read();
-                    return;
-                }
-            }
+                                                  _commentStartRow, _commentStartCol);
+            } while (!Peek().Equals('/'));
+            Read();
         }
 
         private bool ReadUntil(char symbol)
@@ -147,7 +143,7 @@ namespace MiniJavaCompiler.LexicalAnalysis
                 Read();
             if (!InputLeft()) // reached end of input but did not see symbol
                 return false;
-            Read();
+            Read(); // discard symbol
             return true;
         }
     }

@@ -56,22 +56,35 @@ namespace MiniJavaCompiler.SemanticAnalysis
             {
                 return;
             }
-            if (OverloadsSuperClassMethod(node, (MethodDeclaration) _symbolTable.Definitions[superClassMethod]))
+            var superClassMethodDeclaration = (MethodDeclaration) _symbolTable.Definitions[superClassMethod];
+            if (OverloadsSuperClassMethod(node, superClassMethodDeclaration))
             {
                 throw new TypeError(String.Format(
-                    "Method {0} in class {1} on row {2}, col {3} overloads method {4} in class {5}.",
+                    "Method {0} in class {1} on row {2}, col {3} overloads method {4} in class {5}. Overloading is not allowed.",
+                    node.Name, classScope.Name, node.Row, node.Col, superClassMethod.Name, classScope.SuperClass.Name));
+            }
+            if (SuperClassMethodHasADifferentTypeSignature(node, superClassMethodDeclaration))
+            {
+                throw new TypeError(String.Format(
+                    "Method {0} in class {1} on row {2}, col {3} has a different type signature from overridden method {4} in class {5}.",
                     node.Name, classScope.Name, node.Row, node.Col, superClassMethod.Name, classScope.SuperClass.Name));
             }
         }
 
-        public bool OverloadsSuperClassMethod(MethodDeclaration method, MethodDeclaration superClassMethod)
+        private bool SuperClassMethodHasADifferentTypeSignature(MethodDeclaration method, MethodDeclaration superClassMethod)
+        {
+            return !_symbolTable.ResolveType(method.Type, method.IsArray).Equals(
+                _symbolTable.ResolveType(superClassMethod.Type, superClassMethod.IsArray));
+        }
+
+        private bool OverloadsSuperClassMethod(MethodDeclaration method, MethodDeclaration superClassMethod)
         {
             if (method.Formals.Count != superClassMethod.Formals.Count)
             {
                 return true;
             }
             var paramsEqual = method.Formals.Zip(superClassMethod.Formals,
-                (a, b) => _symbolTable.ResolveType(a.Type).Equals(_symbolTable.ResolveType(b.Type)));
+                (a, b) => _symbolTable.ResolveType(a.Type, a.IsArray).Equals(_symbolTable.ResolveType(b.Type, b.IsArray)));
             return paramsEqual.Contains(false);
         }
 
@@ -175,26 +188,22 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
         public void Visit(InstanceCreationExpression node)
         {
-            var createdType = (ISimpleType) _symbolTable.ResolveType(node.Type);
+            var createdType = _symbolTable.ResolveType(node.Type, node.IsArrayCreation);
             if (createdType == null)
             {
                 throw new ReferenceError(String.Format("Cannot resolve symbol {0} near row {1}, col {2}.",
                     node.Type, node.Row, node.Col));
             }
             if (node.IsArrayCreation)
-            {
+            { // check that the array size expression is valid
                 var arraySizeType = _operandTypes.Pop();
                 if (!arraySizeType.IsAssignableTo(_symbolTable.ResolveType(MiniJavaInfo.IntType)))
                 {
                     throw new ReferenceError(String.Format("Array size must be numeric near row {0}, col {1}.",
                                                            node.Row, node.Col));
                 }
-                _operandTypes.Push(new MiniJavaArrayType(createdType));
             }
-            else
-            {
-                _operandTypes.Push(createdType);
-            }
+            _operandTypes.Push(createdType);
         }
 
         public void Visit(UnaryOperatorExpression node)
@@ -404,8 +413,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
             foreach (var formalParameter in methodDecl.Formals)
             {
                 var callParamType = callParams.Pop();
-                var formalParamSimpleType = (ISimpleType) _symbolTable.ResolveType(formalParameter.Type);
-                var formalParamType = formalParameter.IsArray ? (IType) new MiniJavaArrayType(formalParamSimpleType) : formalParamSimpleType;
+                var formalParamType = _symbolTable.ResolveType(formalParameter.Type, formalParameter.IsArray);
                 if (!callParamType.IsAssignableTo(formalParamType))
                 {
                     throw new TypeError(String.Format(

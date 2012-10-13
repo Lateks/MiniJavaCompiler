@@ -1041,6 +1041,77 @@ namespace MiniJavaCompilerTest.Frontend
             }
         }
 
+        [TestFixture]
+        public class OverloadingIsNotAllowed
+        {
+            [Test]
+            public void CannotOverloadASuperClassMethod()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() { }\n" +
+                                 "}\n" +
+                                 "class A {\n" +
+                                 "\t public int foo() { return 10; }\n" +
+                                 "}\n" +
+                                 "class B extends A {\n" +
+                                 "\t public int foo(int bar) { return bar; }\n" +
+                                 "}\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Overloading is not allowed"));
+            }
+
+            [Test]
+            public void OverloadCheckTakesArraysIntoAccountCorrectly()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() { }\n" +
+                                 "}\n" +
+                                 "class A {\n" +
+                                 "\t public int foo(int[] bar) { return 10; }\n" +
+                                 "}\n" +
+                                 "class B extends A {\n" +
+                                 "\t public int foo(int bar) { return bar; }\n" +
+                                 "}\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("Overloading is not allowed"));
+            }
+
+            [Test]
+            public void CannotOverrideASuperClassMethodWithADifferentTypeSignature()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() { }\n" +
+                                 "}\n" +
+                                 "class A {\n" +
+                                 "\t public int foo() { return 10; }\n" +
+                                 "}\n" +
+                                 "class B extends A {\n" +
+                                 "\t public boolean foo() { return true; }\n" +
+                                 "}\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
+                Assert.That(exception.Message, Is.StringContaining("different type signature"));
+            }
+
+            [Test]
+            public void CanOverrideASuperClassMethodWithTheSameTypeSignature()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() { }\n" +
+                                 "}\n" +
+                                 "class A {\n" +
+                                 "\t public int foo() { return 10; }\n" +
+                                 "}\n" +
+                                 "class B extends A {\n" +
+                                 "\t public int foo() { return 5; }\n" +
+                                 "}\n";
+                var checker = SetUpTypeAndReferenceChecker(program);
+                Assert.DoesNotThrow(checker.CheckTypesAndReferences);
+            }
+        }
+
         // TODO: test other type checks
     }
 }

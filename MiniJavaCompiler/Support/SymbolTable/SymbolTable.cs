@@ -19,9 +19,14 @@ namespace MiniJavaCompiler.Support.SymbolTable
             Definitions = new Dictionary<Symbol, ISyntaxTreeNode>();
         }
 
-        public IType ResolveType(string typeName)
+        public IType ResolveType(string typeName, bool array = false)
         {
-            return (IType) GlobalScope.Resolve<TypeSymbol>(typeName);
+            var simpleType = (ISimpleType) GlobalScope.Resolve<TypeSymbol>(typeName);
+            if (simpleType == null)
+            {
+                return null;
+            }
+            return array ? new MiniJavaArrayType(simpleType) : (IType) simpleType;
         }
 
         public UserDefinedTypeSymbol ResolveSurroundingClass(ISyntaxTreeNode node)
