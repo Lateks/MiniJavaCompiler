@@ -151,10 +151,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
             {
                 method = (MethodSymbol)_symbolTable.Scopes[node].Resolve<MethodSymbol>(node.MethodName);
             }
-            else if (node.MethodOwner is VariableReferenceExpression ||
-                node.MethodOwner is MethodInvocation ||
-                node.MethodOwner is InstanceCreationExpression ||
-                node.MethodOwner is ArrayIndexingExpression)
+            else
             {
                 if (expressionType is MiniJavaArrayType) // method is called on an array (can only be a built in array method)
                 {
@@ -176,11 +173,6 @@ namespace MiniJavaCompiler.SemanticAnalysis
                     var enclosingClass = (UserDefinedTypeSymbol) expressionType;
                     method = (MethodSymbol)enclosingClass.Resolve<MethodSymbol>(node.MethodName);
                 }
-            }
-            else
-            {
-                throw new ReferenceError(String.Format("Cannot call a method on expression near row {0}, col {1}.",
-                    node.Row, node.Col));
             }
             ValidateMethodCall(method, node);
             _operandTypes.Push(method.Type); // return type, can be void
