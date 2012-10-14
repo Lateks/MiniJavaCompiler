@@ -1,3 +1,5 @@
+using System;
+
 namespace MiniJavaCompiler.Support.SymbolTable
 {
     public interface IType
@@ -15,7 +17,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
 
         public MiniJavaArrayType(ISimpleType elementType)
         {
-            Name = "array[" + elementType.Name + "]";
+            Name = String.Format("{0}[]", elementType.Name);
             ElementType = elementType;
         }
 

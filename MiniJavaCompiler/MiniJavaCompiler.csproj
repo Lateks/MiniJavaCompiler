@@ -63,7 +63,6 @@
     <Compile Include="LexicalAnalysis\ScannerInputReader.cs" />
     <Compile Include="SemanticAnalysis\SymbolTableBuilder.cs" />
     <Compile Include="SyntaxAnalysis\ParserInputReader.cs" />
-    <Compile Include="SyntaxAnalysis\SyntaxAnalysisErrors.cs" />
     <Compile Include="LexicalAnalysis\Tokens.cs" />
     <Compile Include="SemanticAnalysis\TypeChecker.cs" />
     <Compile Include="SemanticAnalysis\TypeSetBuilder.cs" />

@@ -720,7 +720,7 @@ namespace MiniJavaCompilerTest.Frontend
                 var checker = SetUpTypeAndReferenceChecker(program);
                 var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
                 Assert.That(exception.Message, Is.StringContaining("Cannot assign").And.
-                    StringContaining("A").And.StringContaining("array[A]"));
+                    StringContaining("A").And.StringContaining("A[]"));
             }
 
             [Test]
@@ -736,7 +736,7 @@ namespace MiniJavaCompilerTest.Frontend
                 var checker = SetUpTypeAndReferenceChecker(program);
                 var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
                 Assert.That(exception.Message, Is.StringContaining("Cannot assign").And.
-                    StringContaining("A").And.StringContaining("array[A]"));
+                    StringContaining("A").And.StringContaining("A[]"));
             }
 
             [Test]
@@ -889,7 +889,7 @@ namespace MiniJavaCompilerTest.Frontend
                 var checker = SetUpTypeAndReferenceChecker(program);
                 var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
                 Assert.That(exception.Message, Is.StringContaining("Cannot assign").
-                    And.StringContaining("array[B]").And.StringContaining("array[A]"));
+                    And.StringContaining("B[]").And.StringContaining("A[]"));
             }
 
             [Test]
@@ -905,7 +905,7 @@ namespace MiniJavaCompilerTest.Frontend
                 var checker = SetUpTypeAndReferenceChecker(program);
                 var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
                 Assert.That(exception.Message, Is.StringContaining("Wrong type of argument").
-                    And.StringContaining("array[B]").And.StringContaining("array[A]"));
+                    And.StringContaining("B[]").And.StringContaining("A[]"));
             }
         }
 
@@ -1131,7 +1131,7 @@ namespace MiniJavaCompilerTest.Frontend
                 var checker = SetUpTypeAndReferenceChecker(program);
                 var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
                 Assert.That(exception.Message, Is.StringContaining("Cannot convert").
-                    And.StringContaining("type array[B] to array[A]"));
+                    And.StringContaining("type B[] to A[]"));
             }
 
             [Test]
@@ -1146,7 +1146,7 @@ namespace MiniJavaCompilerTest.Frontend
                 var checker = SetUpTypeAndReferenceChecker(program);
                 var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
                 Assert.That(exception.Message, Is.StringContaining("Cannot convert").
-                    And.StringContaining("type A to array[A]"));
+                    And.StringContaining("type A to A[]"));
             }
         }
 
@@ -1344,7 +1344,7 @@ namespace MiniJavaCompilerTest.Frontend
                                  "}\n";
                 var checker = SetUpTypeAndReferenceChecker(program);
                 var exception = Assert.Throws<TypeError>(checker.CheckTypesAndReferences);
-                Assert.That(exception.Message, Is.StringContaining("Cannot print expression of type array[int]"));
+                Assert.That(exception.Message, Is.StringContaining("Cannot print expression of type int[]"));
             }
 
             [Test]
