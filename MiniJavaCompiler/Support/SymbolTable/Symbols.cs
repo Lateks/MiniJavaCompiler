@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace MiniJavaCompiler.Support.SymbolTable
 {
@@ -176,15 +177,15 @@ namespace MiniJavaCompiler.Support.SymbolTable
 
         public bool Define(Symbol sym)
         {
+            Debug.Assert(sym is MethodSymbol || sym is VariableSymbol);
             if (sym is MethodSymbol)
             {
                 return DefineSymbolIn(sym, _methods);
             }
-            else if (sym is VariableSymbol)
+            else
             {
                 return DefineSymbolIn(sym, _fields);
             }
-            throw new NotSupportedException("Only variable and method symbols can be defined in this scope.");
         }
 
         private bool DefineSymbolIn(Symbol sym, IDictionary<string, Symbol> lookupTable)

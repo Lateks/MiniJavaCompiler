@@ -54,22 +54,13 @@ namespace MiniJavaCompiler.SyntaxAnalysis
                 throw new SyntaxAnalysisFailed();
             }
 
-            try
-            {
-                Input.MatchAndConsume<EndOfFile>();
-            }
-            catch (SyntaxError e)
-            { // Found something other than end of file.
-                if (DebugMode) throw;
-                ErrorReporter.ReportError(e.Message, e.Row, e.Col);
-                throw new SyntaxAnalysisFailed();
-            }
-            catch (OutOfInput e)
-            {
-                if (DebugMode) throw;
-                ErrorReporter.ReportError(e.Message, 0, 0);
-                throw new SyntaxAnalysisFailed();
-            }
+            // Invariant:
+            // If end of file has been consumed (in place of a different, expected token),
+            // it should have led into recovery that would have ended up in an OutOfInput error.
+            // ClassDeclarationList stops parsing at the end of file.
+            // => Therefore the next token here should always be EndOfFile.
+            Debug.Assert(Input.NextTokenIs<EndOfFile>());
+            Input.MatchAndConsume<EndOfFile>();
 
             if (ParsingFailed)
             {

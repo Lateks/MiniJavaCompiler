@@ -1112,5 +1112,16 @@ namespace MiniJavaCompilerTest.Frontend
             SetUpParser(program);
             Assert.DoesNotThrow(() => _parser.Parse());
         }
+
+        // TODO: test invalid keyword starting an expression
+        // TODO: -"- a statement
+        // TODO: lexical errors in expression terms
+        // TODO: lexical error in place of an operator
+        // TODO: valid non-operator token in place of an operator
+        // TODO: a unary operator token in place of a binary operator token
+        // TODO: syntax error in class declaration
+        // TODO: error token starting a declaration
+        // TODO: lexical error in a class declaration
+        // TODO: syntax or lexical error in a method's parameter list
     }
 }

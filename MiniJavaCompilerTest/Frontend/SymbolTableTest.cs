@@ -49,12 +49,6 @@ namespace MiniJavaCompilerTest.Frontend
         }
 
         [Test]
-        public void NewClassesCannotBeDefined()
-        {
-            Assert.Throws<NotSupportedException>(() => testClass.Define(new UserDefinedTypeSymbol("Foo", testClass)));
-        }
-
-        [Test]
         public void MethodsAreResolvedInSuperClasses()
         {
             superSuperClass.Define(new MethodSymbol("foo", someType, superSuperClass));
