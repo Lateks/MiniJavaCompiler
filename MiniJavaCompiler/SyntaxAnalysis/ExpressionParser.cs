@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using MiniJavaCompiler.AbstractSyntaxTree;
 using MiniJavaCompiler.Support;
@@ -130,8 +131,22 @@ namespace MiniJavaCompiler.SyntaxAnalysis
                 else
                 {
                     var token = Input.Consume<IToken>();
-                    throw new SyntaxError(String.Format("Invalid start token {0} for a term in an expression.",
-                        token is StringToken ? (token as StringToken).Value : token.GetType().Name), token.Row, token.Col);
+                    var errorMessage = "";
+                    if (token is ErrorToken)
+                    {
+                        errorMessage = "Encountered a lexical error while parsing an expression.";
+                    }
+                    else if (token is EndOfFile)
+                    {
+                        errorMessage = "Reached end of file while parsing an expression.";
+                    }
+                    else
+                    {
+                        Debug.Assert(token is StringToken);
+                        errorMessage = String.Format("Invalid start token '{0}' for a term in an expression.",
+                            (token as StringToken).Value);
+                    }
+                    throw new SyntaxError(errorMessage, token.Row, token.Col);
                 }
             }
             catch (SyntaxError e)
@@ -197,8 +212,8 @@ namespace MiniJavaCompiler.SyntaxAnalysis
                 case "false":
                     return MakeBooleanLiteral(false);
                 default:
-                    throw new SyntaxError("Invalid start token " + token.Value +
-                        " for an expression.", token.Row, token.Col);
+                    throw new SyntaxError(String.Format("Invalid start token '{0}' for an expression.", token.Value),
+                        token.Row, token.Col);
             }
         }
 

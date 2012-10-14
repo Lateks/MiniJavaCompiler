@@ -82,7 +82,7 @@ namespace MiniJavaCompiler.LexicalAnalysis
             else
             {
                 string token = _input.Read();
-                return new ErrorToken(token, "Invalid token " + token + ".",
+                return new ErrorToken(token, String.Format("Unexpected token '{0}'.", token),
                     _startRow, _startCol);
             }
         }
@@ -103,7 +103,7 @@ namespace MiniJavaCompiler.LexicalAnalysis
             else if (symbol.Equals("="))
                 return new OperatorToken(symbol, _startRow, _startCol);
             else
-                return new ErrorToken(symbol, "Unexpected token " + symbol + ".",
+                return new ErrorToken(symbol, String.Format("Unexpected token '{0}'", symbol),
                     _startRow, _startCol);
         }
 

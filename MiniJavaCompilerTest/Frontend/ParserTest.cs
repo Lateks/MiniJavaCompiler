@@ -897,7 +897,7 @@ namespace MiniJavaCompilerTest.Frontend
             SetUpParser(program);
             Assert.Throws<SyntaxAnalysisFailed>(() => _parser.Parse());
             Assert.That(_errorLog.Errors().Count, Is.EqualTo(2));
-            Assert.That(_errorLog.Errors()[0].Message, Is.StringContaining("Invalid token"));
+            Assert.That(_errorLog.Errors()[0].Message, Is.StringContaining("Unexpected token '$'"));
             Assert.That(_errorLog.Errors()[1].Message, Is.StringContaining("Expected type name but got punctuation token ','"));
         }
 
@@ -921,6 +921,160 @@ namespace MiniJavaCompilerTest.Frontend
             Assert.That(_errorLog.Errors().Count, Is.EqualTo(2));
             Assert.That(_errorLog.Errors()[0].Message, Is.StringContaining("Reached end of file while parsing for '}'")); // encountered end of file instead of the expected token
             Assert.That(_errorLog.Errors()[1].Message, Is.StringContaining("Reached end of file while parsing")); // scanner is out of input
+        }
+
+        [Test]
+        public void MissingClosingParenthesisForAMethod()
+        {
+            string program = "class Foo { public static void main() { System.out.println(42); } }\n" +
+                             "class A {\n" +
+                             "\t public void foo() {\n" +
+                             "\t\t int foo;\n" +
+                             "\t\t\n" + // missing closing parenthesis
+                             "\t int bar;\n" +
+                             "}" + // closes class A
+                             "class B { }\n";
+            SetUpParser(program);
+            Assert.Throws<SyntaxAnalysisFailed>(() => _parser.Parse());
+            Assert.That(_errorLog.Errors().Count, Is.EqualTo(3));
+            Assert.That(_errorLog.Errors()[0].Message, Is.StringContaining("Expected 'public' but got keyword 'class'")); // expects another method definition (because token is not a type name)
+            Assert.That(_errorLog.Errors()[1].Message, Is.StringContaining("Reached end of file while parsing a declaration"));
+            Assert.That(_errorLog.Errors()[2].Message, Is.StringContaining("Reached end of file")); // scanner is out of input
+        }
+
+        [Test]
+        public void LexicalErrorInADeclaration()
+        {
+            string program = "class Foo { public static void main() { System.out.println(42); } }\n" +
+                             "class A {\n" +
+                             "\t public void foo() {\n" +
+                             "\t\t int foo$;?\n" +
+                             "\t}\n" +
+                             "\t int bar;\n" +
+                             "}" +
+                             "class B { }\n";
+            SetUpParser(program);
+            Assert.Throws<SyntaxAnalysisFailed>(() => _parser.Parse());
+            Assert.That(_errorLog.Errors().Count, Is.EqualTo(6));
+            Assert.That(_errorLog.Errors()[0].Message, Is.StringContaining("Unexpected token '$'"));
+            Assert.That(_errorLog.Errors()[1].Message, Is.StringContaining("Unexpected token '?'"));
+            Assert.That(_errorLog.Errors()[2].Message, Is.StringContaining("Encountered a lexical error while parsing an expression")); // recovery ends after the line "int bar;"
+            Assert.That(_errorLog.Errors()[3].Message, Is.StringContaining("Expected 'public' but got keyword 'class'")); // expecting a method declaration but found "class B"
+            Assert.That(_errorLog.Errors()[4].Message, Is.StringContaining("Reached end of file while parsing a declaration")); // attempted to recover but recovery ended at end of file
+            Assert.That(_errorLog.Errors()[5].Message, Is.StringContaining("Reached end of file")); // scanner is out of input
+        }
+
+        [Test]
+        public void MissingSemicolonInAVariableDeclaration()
+        {
+            string program = "class Foo { public static void main() { System.out.println(42); } }\n" +
+                             "class A {\n" +
+                             "\t int bar\n" +
+                             "\t int foo;\n" +
+                             "\t public foo;\n" +
+                             "}" +
+                             "class B { }\n";
+            SetUpParser(program);
+            Assert.Throws<SyntaxAnalysisFailed>(() => _parser.Parse());
+            Assert.That(_errorLog.Errors().Count, Is.EqualTo(5));
+            Assert.That(_errorLog.Errors()[0].Message, Is.StringContaining("Expected ';' but got builtin type 'int'")); // recovers until the end of the statement "int foo;"
+            Assert.That(_errorLog.Errors()[1].Message, Is.StringContaining("Expected identifier but got punctuation token ';'")); // invalid method declaration caught, recovers until the next }
+            Assert.That(_errorLog.Errors()[2].Message, Is.StringContaining("Expected 'public' but got keyword 'class'")); // expected a method declaration because the next token was a keyword
+            Assert.That(_errorLog.Errors()[3].Message, Is.StringContaining("Reached end of file while parsing a declaration")); // recovery ended by end of file
+            Assert.That(_errorLog.Errors()[4].Message, Is.StringContaining("Reached end of file while parsing")); // scanner is out of input
+        }
+
+        [Test]
+        public void MissingSemicolonInALocalVariableDeclaration()
+        {
+            string program = "class Foo { public static void main() { System.out.println(42); } }\n" +
+                             "class A {\n" +
+                             "\t public int foo() {\n" +
+                             "\t\t int bar\n" +
+                             "\t\t bar = @$#;\n" + // this error (invalid assignment) will be missed because of recovery but the lexical errors are still reported
+                             "\t\t return bar;\n" +
+                             "\t }\n" +
+                             "}" +
+                             "class B { }\n";
+            SetUpParser(program);
+            Assert.Throws<SyntaxAnalysisFailed>(() => _parser.Parse());
+            Assert.That(_errorLog.Errors().Count, Is.EqualTo(4));
+            Assert.That(_errorLog.Errors()[0].Message, Is.StringContaining("Expected ';' but got identifier 'bar'")); // recovers until the end of the statement "bar = @;"
+            Assert.That(_errorLog.Errors()[1].Message, Is.StringContaining("Unexpected token '@'"));
+            Assert.That(_errorLog.Errors()[2].Message, Is.StringContaining("Unexpected token '$'"));
+            Assert.That(_errorLog.Errors()[3].Message, Is.StringContaining("Unexpected token '#'"));
+        }
+
+        [Test]
+        public void MissingSemicolonsInStatements()
+        {
+            string program = "class Foo { public static void main() { System.out.println(42); } }\n" +
+                             "class A {\n" +
+                             "\t int max;\n" +
+                             "\t public int foo(int bar) {\n" +
+                             "\t\t max = 99999999;\n" +
+                             "\t\t assert(bar > 0)\n" + // missing semicolon
+                             "\t\t assert(bar < max);\n" +
+                             "\t\t max = max + 1\n" + // missing semicolon
+                             "\t\t return bar;\n" +
+                             "\t }\n" +
+                             "}" +
+                             "class B { }\n";
+            SetUpParser(program);
+            Assert.Throws<SyntaxAnalysisFailed>(() => _parser.Parse());
+            Assert.That(_errorLog.Errors().Count, Is.EqualTo(2));
+            Assert.That(_errorLog.Errors()[0].Message, Is.StringContaining("Expected ';' but got keyword 'assert'")); // recovers until the end of the second assertion
+            Assert.That(_errorLog.Errors()[1].Message, Is.StringContaining("Expected ';' but got keyword 'return'")); // recovers until the end of the return statement
+        }
+
+        [Test]
+        public void MultipleLexicalErrorsInAnExpression()
+        {
+            string program = "class Foo { public static void main() { System.out.println(42); } }\n" +
+                 "class A {\n" +
+                 "\t int max;\n" +
+                 "\t public int foo(int bar) {\n" +
+                 "\t\t max = 1 + @$ - #0;\n" + // multiple lexical errors
+                 "\t\t return max;" +
+                 "\t }\n" +
+                 "}" +
+                 "class B { }\n";
+            SetUpParser(program);
+            Assert.Throws<SyntaxAnalysisFailed>(() => _parser.Parse());
+            Assert.That(_errorLog.Errors().Count, Is.EqualTo(5));
+            Assert.That(_errorLog.Errors()[0].Message, Is.StringContaining("Unexpected token '@'"));
+            Assert.That(_errorLog.Errors()[1].Message, Is.StringContaining("Encountered a lexical error while parsing an expression"));
+            Assert.That(_errorLog.Errors()[2].Message, Is.StringContaining("Unexpected token '$'"));
+            Assert.That(_errorLog.Errors()[3].Message, Is.StringContaining("Unexpected token '#'"));
+            Assert.That(_errorLog.Errors()[4].Message, Is.StringContaining("Encountered a lexical error while parsing an expression"));
+        }
+
+        [Test]
+        [Ignore("TODO")]
+        public void InvalidTokenAsIdentifier()
+        {
+            Assert.Fail();
+        }
+
+        [Test]
+        [Ignore("TODO")]
+        public void ExtraSemicolonAfterMethodDeclaration()
+        {
+            Assert.Fail();
+        }
+
+        [Test]
+        [Ignore("TODO")]
+        public void ExtraSemicolonAfterBlock()
+        {
+            Assert.Fail();
+        }
+
+        [Test]
+        [Ignore("TODO")]
+        public void SingleLineCommentCanEndInEndOfFileWithoutErrors()
+        {
+            Assert.Fail();
         }
     }
 }

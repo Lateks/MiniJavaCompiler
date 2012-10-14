@@ -192,21 +192,24 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
         private IStatement CompleteStatement(IExpression expression)
         {
-            if (Input.NextTokenIs<OperatorToken>("="))
+            if (expression == null) // there was a parse error in the expression
+            {
+                RecoverUntilPunctuationToken(";");
+                return null;
+            }
+            else if (Input.NextTokenIs<OperatorToken>("="))
+            {
                 return MakeAssignmentStatement(expression);
-            else
-                return MakeMethodInvocationStatement(expression);
-        }
-
-        private IStatement MakeMethodInvocationStatement(IExpression expression)
-        {
-            Input.MatchAndConsume<PunctuationToken>(";");
-            if (expression is MethodInvocation)
+            }
+            else if (expression is MethodInvocation)
+            {
+                Input.MatchAndConsume<PunctuationToken>(";");
                 return (MethodInvocation)expression;
+            }
             else
             {
                 var expr = (SyntaxElement)expression;
-                throw new SyntaxError("Expression of type " + expression.GetType().Name +
+                throw new SyntaxError("Expression of type " + expression.GetType().Name + // TODO: better error message needed here (do not use the type name directly)
                     " cannot form a statement on its own.", expr.Row, expr.Col);
             }
         }
@@ -332,7 +335,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         {
             var expressionParser = new ExpressionParser(Input, ErrorReporter, DebugMode);
             var expr = expressionParser.Parse();
-            ParsingFailed = ParsingFailed && expressionParser.ParsingFailed;
+            ParsingFailed = ParsingFailed || expressionParser.ParsingFailed;
             return expr;
         }
 
@@ -395,8 +398,22 @@ namespace MiniJavaCompiler.SyntaxAnalysis
                 {
                     followSet = new string[] { ";", "}" }; // If we're here, we don't know what kind of a declaration they tried to make, so just let
                     var token = Input.Consume<IToken>();   // the recovery routine parse until whichever punctuation token comes first and try to continue.
-                    throw new SyntaxError(String.Format("Invalid token of type {0} starting a declaration.",
-                        token.GetType().Name), token.Row, token.Col);
+                    string errorMsg = "";
+                    if (token is EndOfFile)
+                    {
+                        errorMsg = String.Format("Reached end of file while parsing a declaration.");
+                    }
+                    else if (token is ErrorToken)
+                    {
+                        errorMsg = String.Format("Lexical error while parsing a declaration.");
+                    }
+                    else
+                    {
+                        Debug.Assert(token is StringToken);
+                        errorMsg = String.Format("Invalid token '{0}' of type {1} starting a declaration.",
+                            (token as StringToken).Value, TokenDescriptions.Describe(token.GetType()));
+                    }
+                    throw new SyntaxError(errorMsg, token.Row, token.Col);
                 }
             }
             catch (SyntaxError e)

@@ -72,7 +72,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             return InputToken;
         }
 
-        // Pushes an already consumed token back into the input.
+        // Pushes an already consumed token back into the input to allow looking ahead.
         public void PushBack(IToken token)
         {
             _inputBuffer.Push(InputToken);
@@ -98,8 +98,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
                 else
                 {
                     var token = Consume<StringToken>();
-                    throw new SyntaxError("Expected value \"" + expectedValue + "\" but got " +
-                        token.Value + ".", token.Row, token.Col);
+                    throw ConstructMatchException<TExpectedType>(token, expectedValue);
                 }
             }
             else
@@ -125,17 +124,21 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         {
             if (token is ErrorToken)
                 return new LexicalErrorEncountered();
-            else if (token is EndOfFile)
-                return new SyntaxError(String.Format("Reached end of file while parsing for {0}.",
-                    String.IsNullOrEmpty(expectedValue) ? TokenDescriptions.Describe(typeof(TExpectedType)) : "'" + expectedValue + "'"),
-                    token.Row, token.Col);
             else
             {
-                Debug.Assert(token is StringToken);
-                return new SyntaxError(String.Format("Expected {0} but got {1}.",
-                    String.IsNullOrEmpty(expectedValue) ? TokenDescriptions.Describe(typeof (TExpectedType)) : "'" + expectedValue + "'",
-                    TokenDescriptions.Describe(token.GetType()) + " '" + (token as StringToken).Value + "'"),
-                    token.Row, token.Col);
+                var expected = String.IsNullOrEmpty(expectedValue)
+                                   ? TokenDescriptions.Describe(typeof (TExpectedType))
+                                   : "'" + expectedValue + "'";
+                if (token is EndOfFile)
+                    return new SyntaxError(String.Format("Reached end of file while parsing for {0}.", expected),
+                                           token.Row, token.Col);
+                else
+                {
+                    Debug.Assert(token is StringToken);
+                    return new SyntaxError(String.Format("Expected {0} but got {1}.", expected,
+                        TokenDescriptions.Describe(token.GetType()) + " '" + (token as StringToken).Value + "'"),
+                        token.Row, token.Col);
+                }
             }
         }
 
@@ -180,6 +183,8 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         }
 
 
+        // Checks that the next token is of the expected type and matches one of the expected string values.
+        // Used to match e.g. a subset of punctuation or operator symbols.
         public bool NextTokenOneOf<TExpectedType>(params string[] valueCollection) where TExpectedType : StringToken
         {
             if (!NextTokenIs<TExpectedType>())
