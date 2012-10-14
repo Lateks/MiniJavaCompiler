@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using MiniJavaCompiler.LexicalAnalysis;
 using MiniJavaCompiler.Support;
@@ -103,7 +104,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             }
             else
             {
-                throw ConstructMatchException<TExpectedType>(Consume<IToken>());
+                throw ConstructMatchException<TExpectedType>(Consume<IToken>(), expectedValue);
             }
         }
 
@@ -119,13 +120,23 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             }
         }
 
-        private Exception ConstructMatchException<TExpectedType>(IToken token)
+        private Exception ConstructMatchException<TExpectedType>(IToken token, string expectedValue = null)
+            where TExpectedType : IToken
         {
             if (token is ErrorToken)
                 return new LexicalErrorEncountered();
+            else if (token is EndOfFile)
+                return new SyntaxError(String.Format("Reached end of file while parsing for {0}.",
+                    String.IsNullOrEmpty(expectedValue) ? TokenDescriptions.Describe(typeof(TExpectedType)) : "'" + expectedValue + "'"),
+                    token.Row, token.Col);
             else
-                return new SyntaxError("Expected type " + typeof(TExpectedType).Name +
-                    " but got " + token.GetType().Name + ".", token.Row, token.Col);
+            {
+                Debug.Assert(token is StringToken);
+                return new SyntaxError(String.Format("Expected {0} but got {1}.",
+                    String.IsNullOrEmpty(expectedValue) ? TokenDescriptions.Describe(typeof (TExpectedType)) : "'" + expectedValue + "'",
+                    TokenDescriptions.Describe(token.GetType()) + " '" + (token as StringToken).Value + "'"),
+                    token.Row, token.Col);
+            }
         }
 
         // Consumes a token from input and returns it after casting to the

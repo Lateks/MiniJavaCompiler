@@ -131,7 +131,7 @@ namespace MiniJavaCompiler.LexicalAnalysis
                 return new MiniJavaTypeToken(token, _startRow, _startCol);
             if (MiniJavaInfo.Keywords.Contains(token))
                 return new KeywordToken(token, _startRow, _startCol);
-            return new Identifier(token, _startRow, _startCol);
+            return new IdentifierToken(token, _startRow, _startCol);
         }
     }
 }

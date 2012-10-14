@@ -1,9 +1,45 @@
-﻿namespace MiniJavaCompiler.LexicalAnalysis
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+
+namespace MiniJavaCompiler.LexicalAnalysis
 {
     public interface IToken
     {
         int Row { get; }
         int Col { get; }
+    }
+
+    public static class TokenDescriptions
+    {
+        private static readonly Dictionary<Type, string> Descriptions =
+            new Dictionary<Type, string>()
+                {
+                    {typeof(TokenElement), "token"},
+                    {typeof(StringToken), "token"},
+                    {typeof(ErrorToken), "lexical error"},
+                    {typeof(IntegerLiteralToken), "integer literal"},
+                    {typeof(IdentifierToken), "identifier"},
+                    {typeof(KeywordToken), "keyword"},
+                    {typeof(MiniJavaTypeToken), "builtin type"},
+                    {typeof(OperatorToken), "operator"},
+                    {typeof(PunctuationToken), "punctuation token"},
+                    {typeof(EndOfFile), "end of file"},
+                    {typeof(ITypeToken), "type name"}
+                };
+
+        internal static string Describe(Type type)
+        {
+            Debug.Assert(typeof (IToken).IsAssignableFrom(type));
+            try
+            {
+                return Descriptions[type];
+            }
+            catch (KeyNotFoundException)
+            {
+                return "token";
+            }
+        }
     }
 
     // ITypeToken is a token that can appear representing a type
@@ -36,11 +72,11 @@
         }
     }
 
-    public class StringToken : TokenElement
+    public abstract class StringToken : TokenElement
     {
         public string Value { get; private set; }
 
-        public StringToken(string name, int row, int col)
+        protected StringToken(string name, int row, int col)
             : base(row, col)
         {
             Value = name;
@@ -53,9 +89,9 @@
             : base(value, row, col) { }
     }
 
-    public class Identifier : StringToken, ITypeToken
+    public class IdentifierToken : StringToken, ITypeToken
     {
-        public Identifier(string name, int row, int col)
+        public IdentifierToken(string name, int row, int col)
             : base(name, row, col) { }
     }
 

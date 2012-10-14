@@ -121,7 +121,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             {
                 if (Input.NextTokenIs<KeywordToken>())
                     return MakeKeywordExpression();
-                else if (Input.NextTokenIs<Identifier>())
+                else if (Input.NextTokenIs<IdentifierToken>())
                     return MakeVariableReferenceExpression();
                 else if (Input.NextTokenIs<IntegerLiteralToken>())
                     return MakeIntegerLiteralExpression();
@@ -176,7 +176,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
         private IExpression MakeVariableReferenceExpression()
         {
-            var identifier = Input.MatchAndConsume<Identifier>();
+            var identifier = Input.MatchAndConsume<IdentifierToken>();
             return OptionalTermTail(new VariableReferenceExpression(
                 identifier.Value, identifier.Row, identifier.Col));
         }
@@ -253,7 +253,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             }
             else
             {
-                methodName = Input.MatchAndConsume<Identifier>();
+                methodName = Input.MatchAndConsume<IdentifierToken>();
             }
             Input.MatchAndConsume<PunctuationToken>("(");
             var parameters = ExpressionList();

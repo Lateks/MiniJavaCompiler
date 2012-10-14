@@ -100,9 +100,9 @@ namespace MiniJavaCompilerTest.Frontend
         public void MethodInvocation()
         {
             var lexer = new MiniJavaScanner(new StringReader("foo.bar()"));
-            Assert.That(lexer.NextToken(), Is.InstanceOf<Identifier>());
+            Assert.That(lexer.NextToken(), Is.InstanceOf<IdentifierToken>());
             Assert.That(lexer.NextToken(), Is.InstanceOf<PunctuationToken>());
-            Assert.That(lexer.NextToken(), Is.InstanceOf<Identifier>());
+            Assert.That(lexer.NextToken(), Is.InstanceOf<IdentifierToken>());
             Assert.That(lexer.NextToken(), Is.InstanceOf<PunctuationToken>());
             Assert.That(lexer.NextToken(), Is.InstanceOf<PunctuationToken>());
             Assert.That(lexer.NextToken(), Is.InstanceOf<EndOfFile>());
@@ -137,41 +137,41 @@ namespace MiniJavaCompilerTest.Frontend
             var lexer = new MiniJavaScanner(new StringReader("42foo"));
             Assert.That(((IntegerLiteralToken)lexer.NextToken()).Value, Is.EqualTo("42"));
             IToken next = lexer.NextToken();
-            Assert.That(next, Is.InstanceOf<Identifier>());
-            Assert.That(((Identifier)next).Value, Is.EqualTo("foo"));
+            Assert.That(next, Is.InstanceOf<IdentifierToken>());
+            Assert.That(((IdentifierToken)next).Value, Is.EqualTo("foo"));
             lexer = new MiniJavaScanner(new StringReader("f_o12a"));
-            Assert.That(((Identifier)lexer.NextToken()).Value, Is.EqualTo("f_o12a"));
+            Assert.That(((IdentifierToken)lexer.NextToken()).Value, Is.EqualTo("f_o12a"));
         }
 
         [Test]
         public void WhiteSpaceIsSkipped()
         {
             var lexer = new MiniJavaScanner(new StringReader("\n\t\v\n  foo"));
-            Assert.That(((Identifier)lexer.NextToken()).Value, Is.EqualTo("foo"));
+            Assert.That(((IdentifierToken)lexer.NextToken()).Value, Is.EqualTo("foo"));
         }
 
         [Test]
         public void CommentsAreSkipped()
         {
             var lexer = new MiniJavaScanner(new StringReader("// ... \n // ... \n foo"));
-            var token = (Identifier)lexer.NextToken();
+            var token = (IdentifierToken)lexer.NextToken();
             Assert.That(token.Value, Is.EqualTo("foo"));
             Assert.That(token.Row, Is.EqualTo(3));
             Assert.That(token.Col, Is.EqualTo(2));
             lexer = new MiniJavaScanner(new StringReader("/* ... \n\n*/ \tfoo"));
-            token = (Identifier)lexer.NextToken();
+            token = (IdentifierToken)lexer.NextToken();
             Assert.That(token.Value, Is.EqualTo("foo"));
             Assert.That(token.Row, Is.EqualTo(3));
             Assert.That(token.Col, Is.EqualTo(5));
             lexer = new MiniJavaScanner(new StringReader("\n\n// ...//\n// ... \n\n/* ... */ foo"));
-            Assert.That(((Identifier)lexer.NextToken()).Value, Is.EqualTo("foo"));
+            Assert.That(((IdentifierToken)lexer.NextToken()).Value, Is.EqualTo("foo"));
         }
 
         [Test]
         public void CombinedWhiteSpaceAndComments()
         {
             var lexer = new MiniJavaScanner(new StringReader("\n\t\t// ... \n // ... \n     foo"));
-            Assert.That(((Identifier)lexer.NextToken()).Value, Is.EqualTo("foo"));
+            Assert.That(((IdentifierToken)lexer.NextToken()).Value, Is.EqualTo("foo"));
         }
 
         [Test]

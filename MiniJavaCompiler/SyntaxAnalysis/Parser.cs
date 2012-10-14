@@ -83,7 +83,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             try
             {
                 IToken startToken = Input.MatchAndConsume<KeywordToken>("class");
-                var classIdent = Input.MatchAndConsume<Identifier>();
+                var classIdent = Input.MatchAndConsume<IdentifierToken>();
                 Input.MatchAndConsume<PunctuationToken>("{");
                 IToken methodStartToken = Input.MatchAndConsume<KeywordToken>("public");
                 Input.MatchAndConsume<KeywordToken>("static");
@@ -155,9 +155,9 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         private IStatement MakeExpressionStatementOrVariableDeclaration()
         {
             IExpression expression;
-            if (Input.NextTokenIs<Identifier>())
+            if (Input.NextTokenIs<IdentifierToken>())
             {
-                var ident = Input.Consume<Identifier>();
+                var ident = Input.Consume<IdentifierToken>();
                 if (Input.NextTokenIs<PunctuationToken>("["))
                 {
                     var leftBracket = Input.Consume<PunctuationToken>();
@@ -175,7 +175,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
                         expression = Expression();
                     }
                 }
-                else if (Input.NextTokenIs<Identifier>())
+                else if (Input.NextTokenIs<IdentifierToken>())
                     return FinishParsingLocalVariableDeclaration(ident, false);
                 else
                 {   // The consumed identifier token is a reference to a variable
@@ -309,9 +309,9 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             return new AssertStatement(expr, assertToken.Row, assertToken.Col);
         }
 
-        private IStatement FinishParsingLocalVariableDeclaration(Identifier variableTypeName, bool isArray)
+        private IStatement FinishParsingLocalVariableDeclaration(IdentifierToken variableTypeName, bool isArray)
         {
-            var variableName = Input.MatchAndConsume<Identifier>();
+            var variableName = Input.MatchAndConsume<IdentifierToken>();
             Input.MatchAndConsume<PunctuationToken>(";");
             return new VariableDeclaration(variableName.Value, variableTypeName.Value, isArray,
                 variableTypeName.Row, variableTypeName.Col);
@@ -341,7 +341,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             try
             {
                 IToken startToken = Input.MatchAndConsume<KeywordToken>("class");
-                var classIdent = Input.MatchAndConsume<Identifier>();
+                var classIdent = Input.MatchAndConsume<IdentifierToken>();
                 var inheritedClass = OptionalInheritance();
                 Input.MatchAndConsume<PunctuationToken>("{");
                 var declarations = DeclarationList();
@@ -373,7 +373,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
                 return null;
             }
             Input.MatchAndConsume<KeywordToken>("extends");
-            return Input.MatchAndConsume<Identifier>().Value;
+            return Input.MatchAndConsume<IdentifierToken>().Value;
         }
 
         public Declaration Declaration()
@@ -381,7 +381,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             string[] followSet = null;
             try
             {
-                if (Input.NextTokenIs<MiniJavaTypeToken>() || Input.NextTokenIs<Identifier>())
+                if (Input.NextTokenIs<MiniJavaTypeToken>() || Input.NextTokenIs<IdentifierToken>())
                 {
                     followSet = new string[] { ";" };
                     return VariableDeclaration();
@@ -430,7 +430,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             {
                 var typeInfo = Type();
                 var type = (StringToken)typeInfo.Item1;
-                var variableIdent = Input.MatchAndConsume<Identifier>();
+                var variableIdent = Input.MatchAndConsume<IdentifierToken>();
                 return new VariableDeclaration(variableIdent.Value, type.Value,
                     typeInfo.Item2, type.Row, type.Col);
             }
@@ -455,7 +455,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             IToken startToken = Input.MatchAndConsume<KeywordToken>("public");
             var typeInfo = Type();
             var type = (StringToken)typeInfo.Item1;
-            var methodName = Input.MatchAndConsume<Identifier>();
+            var methodName = Input.MatchAndConsume<IdentifierToken>();
             Input.MatchAndConsume<PunctuationToken>("(");
             List<VariableDeclaration> parameters = FormalParameters();
             Input.MatchAndConsume<PunctuationToken>(")");
