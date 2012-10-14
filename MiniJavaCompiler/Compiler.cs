@@ -7,6 +7,7 @@ namespace MiniJavaCompiler
 {
     class Compiler
     {
+        // TODO: file IO
         static void Main(string[] args)
         {
         }

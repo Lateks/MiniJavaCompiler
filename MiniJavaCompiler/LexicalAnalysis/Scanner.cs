@@ -30,6 +30,8 @@ namespace MiniJavaCompiler.LexicalAnalysis
             BuildTokenList();
         }
 
+        // Note: the parser outputs an error token whenever an unexpected token is encountered
+        // (such as an endless comment or a character that is not allowed).
         public IToken NextToken()
         {
             if (_tokens.Count > 0)
@@ -38,6 +40,8 @@ namespace MiniJavaCompiler.LexicalAnalysis
         }
 
         // Passes through the code once and builds a queue of tokens.
+        // This could also be done lazily so that the next token is matched
+        // every time NextToken is called.
         private void BuildTokenList()
         {
             IToken token;
@@ -68,7 +72,7 @@ namespace MiniJavaCompiler.LexicalAnalysis
             if (MiniJavaInfo.SingleCharOperatorSymbols.Contains(inputSymbol))
                 return MakeSingleCharBinaryOperatorToken();
             else if (MiniJavaInfo.MultiCharOperatorSymbols.Contains(inputSymbol))
-                return MakeAssignmentOrMultiCharOperatorToken();
+                return MakeMultiCharOperatorToken();
             else if (MiniJavaInfo.Punctuation.Contains(inputSymbol))
                 return MakePunctuationToken();
             else if (Char.IsDigit(inputSymbol))
@@ -78,7 +82,7 @@ namespace MiniJavaCompiler.LexicalAnalysis
             else
             {
                 string token = _input.Read();
-                return new ErrorToken(token, "Invalid token \"" + token + ".",
+                return new ErrorToken(token, "Invalid token " + token + ".",
                     _startRow, _startCol);
             }
         }
@@ -88,7 +92,7 @@ namespace MiniJavaCompiler.LexicalAnalysis
             return new OperatorToken(_input.Read(), _startRow, _startCol);
         }
 
-        private IToken MakeAssignmentOrMultiCharOperatorToken()
+        private IToken MakeMultiCharOperatorToken()
         {
             string symbol = _input.Read();
             if (_input.InputLeft() && _input.Peek().ToString().Equals(symbol))

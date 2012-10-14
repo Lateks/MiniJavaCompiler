@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using NUnit.Framework;
 using MiniJavaCompiler.SyntaxAnalysis;
 using MiniJavaCompiler.AbstractSyntaxTree;
@@ -31,8 +32,8 @@ namespace MiniJavaCompilerTest.Frontend
     }
 
     [TestFixture]
-    public class ParserTest
-    { // TODO: Add integration tests (with scanner) and test recovery strategies
+    public class ParserUnitTest
+    {
       // TODO: Test operator precedences and parenthesised expressions
         Queue<IToken> programTokens;
 
@@ -857,6 +858,58 @@ namespace MiniJavaCompilerTest.Frontend
             programTokens.Enqueue(new PunctuationToken("]", 0, 0));
             programTokens.Enqueue(new Identifier(name, 0, 0));
             EndLine();
+        }
+    }
+
+    [TestFixture]
+    public class RecoveryTest
+    {
+        private ErrorLogger _errorLog;
+        private IParser _parser;
+
+        public void SetUpForParser(string program)
+        {
+            var scanner = new MiniJavaScanner(new StringReader(program));
+            _errorLog = new ErrorLogger();
+            _parser = new Parser(new ParserInputReader(scanner, _errorLog), _errorLog);
+        }
+
+        [Test]
+        public void RecoveryFromClassMatchingWhenParenthesesNotBalanced()
+        {
+            string program = "class Foo {\n" +
+                             "\t public static void main() { }\n" + // Class Foo is not closed: consumes the class keyword (assumed to be }) from
+                                                                    // the next class declaration and discards tokens until the next class keyword (on the last row).
+                             "class Bar { pblic int foo() { }}\n" + // Typo in keyword: missed due to recovery.
+                             "class Baz { public int bar(+ foo) { } }\n"; // There should be an identifier or a type token in place of +. This error is caught.
+            SetUpForParser(program);
+            Assert.Throws<SyntaxAnalysisFailed>(() => _parser.Parse());
+            Assert.That(_errorLog.Errors().Count, Is.EqualTo(2));
+            Assert.That(_errorLog.Errors()[0].Message, Is.StringContaining("Expected type PunctuationToken but got KeywordToken"));
+            Assert.That(_errorLog.Errors()[1].Message, Is.StringContaining("Expected type ITypeToken but got OperatorToken"));
+        }
+
+        [Test]
+        public void RecoveryFromClassMatchingWhenLexicalErrors()
+        {
+            string program = "class Foo_Bar$ { }\n" +
+                             "class Bar { public Foo_Bar bar(, int foo) { } }"; // should detect the error here
+            SetUpForParser(program);
+            Assert.Throws<SyntaxAnalysisFailed>(() => _parser.Parse());
+            Assert.That(_errorLog.Errors().Count, Is.EqualTo(2));
+            Assert.That(_errorLog.Errors()[0].Message, Is.StringContaining("Invalid token"));
+            Assert.That(_errorLog.Errors()[1].Message, Is.StringContaining("Expected type ITypeToken but got PunctuationToken"));
+        }
+
+        [Test]
+        public void TestErrorsWhenEndlessCommentEncountered()
+        {
+            string program = "class Foo { /* public static void main() { } }\n" +
+                             "class Bar { public Foo bar(int foo) { return new Foo() } }";
+            SetUpForParser(program);
+            Assert.Throws<SyntaxAnalysisFailed>(() => _parser.Parse());
+            Assert.That(_errorLog.Errors().Count, Is.EqualTo(1));
+            Assert.That(_errorLog.Errors()[0].Message, Is.StringContaining("Reached end of input while scanning for a comment"));
         }
     }
 }

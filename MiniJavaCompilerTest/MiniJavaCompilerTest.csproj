@@ -49,7 +49,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Frontend\LexerTest.cs" />
+    <Compile Include="Frontend\ScannerTest.cs" />
     <Compile Include="Frontend\ParserTest.cs" />
     <Compile Include="Frontend\TypeCheckerTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
