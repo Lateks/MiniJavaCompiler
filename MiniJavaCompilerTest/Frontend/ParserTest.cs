@@ -1031,14 +1031,14 @@ namespace MiniJavaCompilerTest.Frontend
         public void MultipleLexicalErrorsInAnExpression()
         {
             string program = "class Foo { public static void main() { System.out.println(42); } }\n" +
-                 "class A {\n" +
-                 "\t int max;\n" +
-                 "\t public int foo(int bar) {\n" +
-                 "\t\t max = 1 + @$ - #0;\n" + // multiple lexical errors
-                 "\t\t return max;" +
-                 "\t }\n" +
-                 "}" +
-                 "class B { }\n";
+                             "class A {\n" +
+                             "\t int max;\n" +
+                             "\t public int foo(int bar) {\n" +
+                             "\t\t max = 1 + @$ - #0;\n" + // multiple lexical errors
+                             "\t\t return max;" +
+                             "\t }\n" +
+                             "}" +
+                             "class B { }\n";
             SetUpParser(program);
             Assert.Throws<SyntaxAnalysisFailed>(() => _parser.Parse());
             Assert.That(_errorLog.Errors().Count, Is.EqualTo(5));
@@ -1050,31 +1050,67 @@ namespace MiniJavaCompilerTest.Frontend
         }
 
         [Test]
-        [Ignore("TODO")]
         public void InvalidTokenAsIdentifier()
-        {
-            Assert.Fail();
+        { // Just reports the lexical errors.
+            string program = "class Foo { public static void main() { System.out.println(42); } }\n" +
+                             "class A {\n" +
+                             "\t int $;\n" +
+                             "\t int foo;\n" +
+                             "}" +
+                             "class ^ { }\n";
+            SetUpParser(program);
+            Assert.Throws<SyntaxAnalysisFailed>(() => _parser.Parse());
+            Assert.That(_errorLog.Errors().Count, Is.EqualTo(2));
+            Assert.That(_errorLog.Errors()[0].Message, Is.StringContaining("Unexpected token '$'"));
+            Assert.That(_errorLog.Errors()[1].Message, Is.StringContaining("Unexpected token '^'"));
         }
 
         [Test]
-        [Ignore("TODO")]
         public void ExtraSemicolonAfterMethodDeclaration()
         {
-            Assert.Fail();
+            string program = "class Foo { public static void main() { System.out.println(42); } }\n" +
+                             "class A {\n" +
+                             "\t public void foo() { };\n" +
+                             "}" +
+                             "class B { }\n";
+            SetUpParser(program);
+            Assert.Throws<SyntaxAnalysisFailed>(() => _parser.Parse());
+            Assert.That(_errorLog.Errors().Count, Is.EqualTo(4));
+            Assert.That(_errorLog.Errors()[0].Message, Is.StringContaining("Invalid token ';' of type punctuation token starting a declaration"));
+            Assert.That(_errorLog.Errors()[1].Message, Is.StringContaining("Expected 'public' but got keyword 'class'")); // recovered until the end of the class declaration
+            Assert.That(_errorLog.Errors()[2].Message, Is.StringContaining("Reached end of file while parsing a declaration"));
+            Assert.That(_errorLog.Errors()[3].Message, Is.StringContaining("Reached end of file while parsing"));
         }
 
         [Test]
-        [Ignore("TODO")]
         public void ExtraSemicolonAfterBlock()
         {
-            Assert.Fail();
+            string program = "class Foo { public static void main() { System.out.println(42); } }\n" +
+                             "class A {\n" +
+                             "\t public void foo() { { int foo; foo = 42; }; }\n" +
+                             "}" +
+                             "class B { }\n";
+            SetUpParser(program);
+            Assert.Throws<SyntaxAnalysisFailed>(() => _parser.Parse());
+            Assert.That(_errorLog.Errors().Count, Is.EqualTo(3));
+            Assert.That(_errorLog.Errors()[0].Message, Is.StringContaining("Invalid start token ';' for a term in an expression")); // Expected an expression because a punctuation token other than {
+                                                                                                                              // cannot start another kind of statement.
+            Assert.That(_errorLog.Errors()[1].Message, Is.StringContaining("Reached end of file while parsing an expression")); // Trying to parse another statement, beginning with an expression,
+                                                                                                                                // but recovery has ended up at the end of file.
+            Assert.That(_errorLog.Errors()[2].Message, Is.StringContaining("Reached end of file while parsing"));
+
         }
 
         [Test]
-        [Ignore("TODO")]
         public void SingleLineCommentCanEndInEndOfFileWithoutErrors()
         {
-            Assert.Fail();
+            string program = "class Foo {\n" +
+                            "\t public static void main() {\n" +
+                            "\t\t System.out.println(42);\n" +
+                            "\t }\n" +
+                            "} // this is a comment ending in EOF";
+            SetUpParser(program);
+            Assert.DoesNotThrow(() => _parser.Parse());
         }
     }
 }

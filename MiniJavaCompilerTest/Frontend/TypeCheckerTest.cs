@@ -1029,7 +1029,7 @@ namespace MiniJavaCompilerTest.Frontend
             }
 
             [Test]
-            public void ReturnStatementChecksTakeNakedBlocksIntoAccount()
+            public void ReturnStatementChecksTakeAnonymousBlocksIntoAccount()
             {
                 string program = "class Foo{\n" +
                                  "\t public static void main() { }\n" +

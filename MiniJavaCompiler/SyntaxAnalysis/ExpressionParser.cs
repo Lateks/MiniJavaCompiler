@@ -14,7 +14,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
     // parser (no explicit stack).
     internal class ExpressionParser : ParserBase
     {
-        private readonly string[][] _operatorsByLevel = new []
+        private readonly string[][] _operatorsByPrecedenceLevel = new []
             {
                 new [] { "||" },                                           
                 new [] { "&&" },
@@ -55,14 +55,6 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             return parser.ParseList<IExpression, PunctuationToken>(Parse, ")");
         }
 
-        private void RecoverFromExpressionParsing()
-        {
-            while (!(Input.NextTokenIs<EndOfFile>()
-                || Input.NextTokenIs<PunctuationToken>(")")
-                || Input.NextTokenIs<PunctuationToken>(";")))
-                Input.Consume<IToken>();
-        }
-
         private IExpression ParseExpression()
         {
             return ParseBinaryOpExpression(0);
@@ -70,13 +62,15 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
         private IExpression ParseBinaryOpExpression(int precedenceLevel)
         {
+            Debug.Assert(precedenceLevel >= 0 && precedenceLevel < _operatorsByPrecedenceLevel.Count());
             var parseOperand = GetParserFunction(precedenceLevel);
-            return ParseBinaryOpTail(parseOperand(), parseOperand, _operatorsByLevel[precedenceLevel]);
+            return ParseBinaryOpTail(parseOperand(), parseOperand, _operatorsByPrecedenceLevel[precedenceLevel]);
         }
 
         private Func<IExpression> GetParserFunction(int precedenceLevel)
         {
-            if (precedenceLevel == _operatorsByLevel.Count() - 1)
+            Debug.Assert(precedenceLevel >= 0 && precedenceLevel < _operatorsByPrecedenceLevel.Count());
+            if (precedenceLevel == _operatorsByPrecedenceLevel.Count() - 1)
             {
                 return MultiplicationOperand;
             }
@@ -154,23 +148,14 @@ namespace MiniJavaCompiler.SyntaxAnalysis
                 if (DebugMode) throw;
                 ErrorReporter.ReportError(e.Message, e.Row, e.Col);
                 ParsingFailed = true;
-                return RecoverFromTermMatching();
+                RecoverFromTermParsing();
             }
             catch (LexicalErrorEncountered)
             {
                 if (DebugMode) throw;
                 ParsingFailed = true;
-                return RecoverFromTermMatching();
+                RecoverFromTermParsing();
             }
-        }
-
-        private IExpression RecoverFromTermMatching()
-        { // TODO: could be parameterised on follow set
-            while (!(Input.NextTokenIs<EndOfFile>()
-                || Input.NextTokenIs<PunctuationToken>(")")
-                || Input.NextTokenIs<PunctuationToken>(";")
-                || Input.NextTokenIs<OperatorToken>()))
-                Input.Consume<IToken>();
             return null;
         }
 
@@ -277,6 +262,9 @@ namespace MiniJavaCompiler.SyntaxAnalysis
                 methodName.Value, parameters, methodName.Row, methodName.Col));
         }
 
+        // The length field in Array class is treated as a method invocation in the syntax tree
+        // since there are no other public fields in Mini-Java, so the distinction would not
+        // be very meaningful.
         private IExpression MakeLengthMethodInvocation(IExpression methodOwner)
         {
             var methodName = Input.MatchAndConsume<KeywordToken>("length");
@@ -297,7 +285,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         public Tuple<ITypeToken, IExpression> NewType()
         {
             var type = Input.MatchAndConsume<ITypeToken>();
-            if (type is MiniJavaTypeToken || !(Input.NextTokenIs<PunctuationToken>("(")))
+            if (type is MiniJavaTypeToken || Input.NextTokenIs<PunctuationToken>("["))
             { // must be an array
                 Input.MatchAndConsume<PunctuationToken>("[");
                 var arraySize = Parse();
@@ -310,6 +298,28 @@ namespace MiniJavaCompiler.SyntaxAnalysis
                 Input.MatchAndConsume<PunctuationToken>(")");
                 return new Tuple<ITypeToken, IExpression>(type, null);
             }
+        }
+
+        // Recovery routines
+
+        private void RecoverFromExpressionParsing()
+        {
+            while (!(Input.NextTokenIs<EndOfFile>()
+                     || Input.NextTokenOneOf<PunctuationToken>(")", "]", ",", ";")))
+                Input.Consume<IToken>();
+        }
+
+        // This is not a very efficient recovery routine since the whole follow set for expression terms is rather large.
+        //
+        // E.g. the brackets are slightly problematic here because they could either be a part of the term
+        // itself (if the term contains an array type) or they could be a part of the term tail (in which case they
+        // do belong in the follow set). This may cause a slight cascade of errors in some cases.
+        private void RecoverFromTermParsing()
+        {
+            while (!(Input.NextTokenIs<EndOfFile>()
+                     || Input.NextTokenOneOf<PunctuationToken>(")", ";", ".", ",", "[", "]")
+                     || Input.NextTokenIs<OperatorToken>()))
+                Input.Consume<IToken>();
         }
     }
 }
