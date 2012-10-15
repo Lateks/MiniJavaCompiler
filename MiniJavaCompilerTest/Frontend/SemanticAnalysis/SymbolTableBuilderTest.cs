@@ -124,9 +124,10 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                              "\t int foo; \n" +
                              "\t int foo; \n" + // first error
                              "\t public int foo() { } \n" +
-                             "\t public int foo() { int foo; int bar; int bar; } \n" + // second error
-                             "\t public int foo() { } \n" + // third error
-                             "\t int foo; \n" + // fourth error
+                             "\t public int foo() { int foo; int bar; int bar; } \n" + // second error (method name) and third error
+                                                                                       // (two variable declarations with the same name inside method)
+                             "\t public int foo() { } \n" + // fourth error
+                             "\t int foo; \n" + // fifth error
                              "} \n\n";
             Assert.False(BuildSymbolTableFor(program));
             Assert.AreEqual(5, errors.Errors().Count);
