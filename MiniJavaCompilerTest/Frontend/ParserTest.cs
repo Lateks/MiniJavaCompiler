@@ -947,6 +947,8 @@ namespace MiniJavaCompilerTest.Frontend
         {
             string program = "class Foo { public static void main() { System.out.println(42); } }\n" +
                              "class A {\n" +
+                             "\t int #;\n" +
+                             "\t public $ foo() { }\n" +
                              "\t public void foo() {\n" +
                              "\t\t int foo$;?\n" +
                              "\t}\n" +
@@ -955,13 +957,15 @@ namespace MiniJavaCompilerTest.Frontend
                              "class B { }\n";
             SetUpParser(program);
             Assert.Throws<SyntaxAnalysisFailed>(() => _parser.Parse());
-            Assert.That(_errorLog.Errors().Count, Is.EqualTo(6));
-            Assert.That(_errorLog.Errors()[0].Message, Is.StringContaining("Unexpected token '$'"));
-            Assert.That(_errorLog.Errors()[1].Message, Is.StringContaining("Unexpected token '?'"));
-            Assert.That(_errorLog.Errors()[2].Message, Is.StringContaining("Encountered a lexical error while parsing an expression")); // recovery ends after the line "int bar;"
-            Assert.That(_errorLog.Errors()[3].Message, Is.StringContaining("Invalid token 'class' of type keyword starting a declaration")); // expecting a method declaration but found "class B"
-            Assert.That(_errorLog.Errors()[4].Message, Is.StringContaining("Reached end of file while parsing a declaration")); // attempted to recover but recovery ended at end of file
-            Assert.That(_errorLog.Errors()[5].Message, Is.StringContaining("Reached end of file")); // scanner is out of input
+            Assert.That(_errorLog.Errors().Count, Is.EqualTo(8));
+            Assert.That(_errorLog.Errors()[0].Message, Is.StringContaining("Unexpected token '#'"));
+            Assert.That(_errorLog.Errors()[1].Message, Is.StringContaining("Unexpected token '$'"));
+            Assert.That(_errorLog.Errors()[2].Message, Is.StringContaining("Unexpected token '$'"));
+            Assert.That(_errorLog.Errors()[3].Message, Is.StringContaining("Unexpected token '?'"));
+            Assert.That(_errorLog.Errors()[4].Message, Is.StringContaining("Encountered a lexical error while parsing an expression")); // recovery ends after the line "int bar;"
+            Assert.That(_errorLog.Errors()[5].Message, Is.StringContaining("Invalid token 'class' of type keyword starting a declaration")); // expecting a method declaration but found "class B"
+            Assert.That(_errorLog.Errors()[6].Message, Is.StringContaining("Reached end of file while parsing a declaration")); // attempted to recover but recovery ended at end of file
+            Assert.That(_errorLog.Errors()[7].Message, Is.StringContaining("Reached end of file")); // scanner is out of input
         }
 
         [Test]
@@ -1227,12 +1231,12 @@ namespace MiniJavaCompilerTest.Frontend
         }
 
         [Test]
-        public void LexicalErrorStartsAnExpression()
+        public void LexicalErrorStartsADeclaration()
         {
             string program = "class Foo {\n" +
-                 "\t public static void main() { }\n" +
-                 "}" +
-                 "class B { ¤ foo; $ int foo() { } }\n";
+                             "\t public static void main() { }\n" +
+                             "}" +
+                             "class B { ¤ foo; $ int foo() { } }\n";
             SetUpParser(program);
             Assert.Throws<SyntaxAnalysisFailed>(() => _parser.Parse());
             Assert.That(_errorLog.Errors().Count, Is.EqualTo(4));
