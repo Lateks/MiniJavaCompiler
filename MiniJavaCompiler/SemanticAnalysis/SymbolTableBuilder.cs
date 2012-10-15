@@ -12,7 +12,6 @@ namespace MiniJavaCompiler.SemanticAnalysis
         private readonly Program _syntaxTree;
         private readonly IErrorReporter _errorReporter;
         private bool _errorsFound;
-        private bool _methodScopeDefinitionFailed;
 
         private readonly Stack<IScope> _scopeStack;
         private IScope CurrentScope
@@ -35,7 +34,6 @@ namespace MiniJavaCompiler.SemanticAnalysis
             _errorReporter = errorReporter;
             _errorsFound = false;
             _syntaxTree = node;
-            _methodScopeDefinitionFailed = false;
 
             _symbolTable = new SymbolTable();
 
@@ -103,7 +101,6 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
         public void Visit(VariableDeclaration node)
         {
-            if (_methodScopeDefinitionFailed) return;
             Debug.Assert(CurrentScope is IVariableScope);
 
             var variableType = CheckDeclaredType(node);
@@ -129,8 +126,9 @@ namespace MiniJavaCompiler.SemanticAnalysis
             if (!methodScope.Define(methodSymbol))
             {
                 ReportSymbolDefinitionError(node);
-                _methodScopeDefinitionFailed = true; // set recovery flag (recover until method scope ends)
-                return; // TODO: could also just replace the method scope with a local scope for recovery
+                var recoveryScope = new LocalScope(CurrentScope); // Make a local scope to stand in for the method scope for purposes of recovery.
+                EnterScope(recoveryScope);                        // (Both are IVariableScopes. Note: normally a class does not hold local (block) scopes.)
+                return;
             }
 
             _symbolTable.Definitions.Add(methodSymbol, node);
@@ -163,17 +161,11 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
         public void Exit(MethodDeclaration node)
         {
-            if (_methodScopeDefinitionFailed)
-            {
-                _methodScopeDefinitionFailed = false; // recovery ends here
-                return;
-            }
             ExitScope();
         }
 
         public void Visit(BlockStatement node)
         {
-            if (_methodScopeDefinitionFailed) return;
             var blockScope = new LocalScope(CurrentScope);
             _symbolTable.Scopes.Add(node, blockScope);
             EnterScope(blockScope);
@@ -181,7 +173,6 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
         public void Exit(BlockStatement node)
         {
-            if (_methodScopeDefinitionFailed) return;
             ExitScope();
         }
 
@@ -262,7 +253,6 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
         private void HandleExpressionOrStatementNode(ISyntaxTreeNode node)
         {
-            if (_methodScopeDefinitionFailed) return;
             _symbolTable.Scopes.Add(node, CurrentScope);
         }
     }

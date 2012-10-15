@@ -124,16 +124,14 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                              "\t int foo; \n" +
                              "\t int foo; \n" + // first error
                              "\t public int foo() { } \n" +
-                             "\t public int foo() { int foo; int bar; int bar; } \n" + // second error, error inside method definition is skipped in recovery
+                             "\t public int foo() { int foo; int bar; int bar; } \n" + // second error
                              "\t public int foo() { } \n" + // third error
                              "\t int foo; \n" + // fourth error
                              "} \n\n";
             Assert.False(BuildSymbolTableFor(program));
-            Assert.AreEqual(4, errors.Errors().Count);
-            foreach (var error in errors.Errors())
-            {
-                Assert.That(error.Content, Is.StringContaining("Symbol 'foo' is already defined"));
-            }
+            Assert.AreEqual(5, errors.Errors().Count);
+            Assert.AreEqual(4, errors.Errors().Count(err => err.Message.Contains("Symbol 'foo' is already defined")));
+            Assert.AreEqual(1, errors.Errors().Count(err => err.Message.Contains("Symbol 'bar' is already defined")));
         }
 
         [Test]
