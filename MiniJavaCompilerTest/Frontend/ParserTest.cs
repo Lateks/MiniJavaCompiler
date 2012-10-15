@@ -937,7 +937,7 @@ namespace MiniJavaCompilerTest.Frontend
             SetUpParser(program);
             Assert.Throws<SyntaxAnalysisFailed>(() => _parser.Parse());
             Assert.That(_errorLog.Errors().Count, Is.EqualTo(3));
-            Assert.That(_errorLog.Errors()[0].Message, Is.StringContaining("Expected 'public' but got keyword 'class'")); // expects another method definition (because token is not a type name)
+            Assert.That(_errorLog.Errors()[0].Message, Is.StringContaining("Invalid token 'class' of type keyword starting a declaration"));
             Assert.That(_errorLog.Errors()[1].Message, Is.StringContaining("Reached end of file while parsing a declaration"));
             Assert.That(_errorLog.Errors()[2].Message, Is.StringContaining("Reached end of file")); // scanner is out of input
         }
@@ -959,7 +959,7 @@ namespace MiniJavaCompilerTest.Frontend
             Assert.That(_errorLog.Errors()[0].Message, Is.StringContaining("Unexpected token '$'"));
             Assert.That(_errorLog.Errors()[1].Message, Is.StringContaining("Unexpected token '?'"));
             Assert.That(_errorLog.Errors()[2].Message, Is.StringContaining("Encountered a lexical error while parsing an expression")); // recovery ends after the line "int bar;"
-            Assert.That(_errorLog.Errors()[3].Message, Is.StringContaining("Expected 'public' but got keyword 'class'")); // expecting a method declaration but found "class B"
+            Assert.That(_errorLog.Errors()[3].Message, Is.StringContaining("Invalid token 'class' of type keyword starting a declaration")); // expecting a method declaration but found "class B"
             Assert.That(_errorLog.Errors()[4].Message, Is.StringContaining("Reached end of file while parsing a declaration")); // attempted to recover but recovery ended at end of file
             Assert.That(_errorLog.Errors()[5].Message, Is.StringContaining("Reached end of file")); // scanner is out of input
         }
@@ -979,7 +979,7 @@ namespace MiniJavaCompilerTest.Frontend
             Assert.That(_errorLog.Errors().Count, Is.EqualTo(5));
             Assert.That(_errorLog.Errors()[0].Message, Is.StringContaining("Expected ';' but got builtin type 'int'")); // recovers until the end of the statement "int foo;"
             Assert.That(_errorLog.Errors()[1].Message, Is.StringContaining("Expected identifier but got punctuation token ';'")); // invalid method declaration caught, recovers until the next }
-            Assert.That(_errorLog.Errors()[2].Message, Is.StringContaining("Expected 'public' but got keyword 'class'")); // expected a method declaration because the next token was a keyword
+            Assert.That(_errorLog.Errors()[2].Message, Is.StringContaining("Invalid token 'class' of type keyword starting a declaration"));
             Assert.That(_errorLog.Errors()[3].Message, Is.StringContaining("Reached end of file while parsing a declaration")); // recovery ended by end of file
             Assert.That(_errorLog.Errors()[4].Message, Is.StringContaining("Reached end of file while parsing")); // scanner is out of input
         }
@@ -1077,7 +1077,7 @@ namespace MiniJavaCompilerTest.Frontend
             Assert.Throws<SyntaxAnalysisFailed>(() => _parser.Parse());
             Assert.That(_errorLog.Errors().Count, Is.EqualTo(4));
             Assert.That(_errorLog.Errors()[0].Message, Is.StringContaining("Invalid token ';' of type punctuation token starting a declaration"));
-            Assert.That(_errorLog.Errors()[1].Message, Is.StringContaining("Expected 'public' but got keyword 'class'")); // recovered until the end of the class declaration
+            Assert.That(_errorLog.Errors()[1].Message, Is.StringContaining("Invalid token 'class' of type keyword starting a declaration")); // recovered until the end of the class declaration
             Assert.That(_errorLog.Errors()[2].Message, Is.StringContaining("Reached end of file while parsing a declaration"));
             Assert.That(_errorLog.Errors()[3].Message, Is.StringContaining("Reached end of file while parsing"));
         }

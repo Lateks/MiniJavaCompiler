@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 using MiniJavaCompiler.AbstractSyntaxTree;
 
 namespace MiniJavaCompiler.Support.SymbolTable
@@ -20,7 +17,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
         }
 
         public IType ResolveType(string typeName, bool array = false)
-        {
+        { // In Mini-Java types are always defined in the global scope.
             var simpleType = (SimpleTypeSymbol) GlobalScope.Resolve<SimpleTypeSymbol>(typeName);
             if (simpleType == null)
             {

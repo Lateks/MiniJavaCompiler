@@ -112,6 +112,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
         public IStatement Statement()
         {
+            var followSet = new string[] {";"}; // Possible recovery is done until the statement end symbol (usually ;), which is also consumed.
             try
             {
                 if (Input.NextTokenIs<MiniJavaTypeToken>())
@@ -119,7 +120,10 @@ namespace MiniJavaCompiler.SyntaxAnalysis
                 else if (Input.NextTokenOneOf<KeywordToken>("assert", "if", "while", "System", "return"))
                     return MakeKeywordStatement();
                 else if (Input.NextTokenIs<PunctuationToken>("{"))
+                {
+                    followSet = new string[] {"}"};
                     return MakeBlockStatement();
+                }
                 else // Can be an assignment, a method invocation or a variable
                     // declaration for a user defined type.
                     return MakeExpressionStatementOrVariableDeclaration();
@@ -129,13 +133,13 @@ namespace MiniJavaCompiler.SyntaxAnalysis
                 if (DebugMode) throw;
                 ErrorReporter.ReportError(e.Message, e.Col, e.Row);
                 ParsingFailed = true;
-                RecoverUntilPunctuationToken(";");
+                RecoverUntilPunctuationToken(followSet);
             }
             catch (LexicalErrorEncountered)
             {
                 if (DebugMode) throw;
                 ParsingFailed = true;
-                RecoverUntilPunctuationToken(";");
+                RecoverUntilPunctuationToken(followSet);
             }
             return null;
         }
@@ -200,8 +204,8 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             else
             {
                 var expr = (SyntaxElement)expression;
-                throw new SyntaxError("Expression of type " + expression.GetType().Name + // TODO: better error message needed here (do not use the type name directly)
-                    " cannot form a statement on its own.", expr.Row, expr.Col);
+                throw new SyntaxError(String.Format("Expression of type {0} cannot form a statement on its own.", expression.Describe()),
+                    expr.Row, expr.Col);
             }
         }
 
@@ -380,7 +384,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
                     followSet = new string[] { ";" };
                     return VariableDeclaration();
                 }
-                else if (Input.NextTokenIs<KeywordToken>()) // method declarations start with the 'public' keyword
+                else if (Input.NextTokenIs<KeywordToken>("public"))
                 {
                     followSet = new string[] { "}" };
                     return MethodDeclaration();

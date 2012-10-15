@@ -38,45 +38,66 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         }
     }
 
+    // This class handles matching individual tokens, reporting lexical errors and peeking at input.
     internal class ParserInputReader : IParserInputReader
     {
-        private readonly ITokenizer _scanner;
-        private readonly Stack<IToken> _inputBuffer; // This stack is used for buffering when we need to peek forward.
-        private readonly IErrorReporter _errorReporter;
-        private IToken _inputToken;
-
-        // TODO: The token stream could be encapsulated in a private inner class
-        private IToken InputToken
+        private class TokenStreamBuffer // This class separates token stream handling from the main input reader.
         {
-            get
+            private readonly ITokenizer _scanner;
+            private IToken _inputToken;
+            private readonly Stack<IToken> _inputBuffer; // This stack is used for buffering when we need to peek forward.
+
+            internal TokenStreamBuffer(ITokenizer scanner)
             {
-                if (_inputToken == null)
-                {
-                    _inputToken = _inputBuffer.Count > 0 ? _inputBuffer.Pop() : _scanner.NextToken();
-                }
-                return _inputToken;
+                _scanner = scanner;
+                _inputBuffer = new Stack<IToken>();
+                _inputToken = null;
             }
-            set { _inputToken = value; }
+
+            internal IToken CurrentToken
+            {
+                get
+                {
+                    if (_inputToken == null)
+                    {
+                        _inputToken = _inputBuffer.Count > 0 ? _inputBuffer.Pop() : _scanner.NextToken();
+                    }
+                    return _inputToken;
+                }
+                private set { _inputToken = value; }
+            }
+
+            internal void Consume()
+            {
+                CurrentToken = null; // The next token is not fetched here. We do not want an out of input error e.g. when consuming an EndOfFile.
+            }
+
+            internal void Buffer(IToken token)
+            {
+                _inputBuffer.Push(CurrentToken);
+                CurrentToken = token;
+            }
         }
+
+        private readonly IErrorReporter _errorReporter;
+        private readonly TokenStreamBuffer _tokenStream;
 
         public ParserInputReader(ITokenizer scanner, IErrorReporter errorReporter)
         {
-            _scanner = scanner;
+            _tokenStream = new TokenStreamBuffer(scanner);
             _errorReporter = errorReporter;
-            _inputBuffer = new Stack<IToken>();
-            InputToken = scanner.NextToken();
         }
 
+        // Throws an exception if called after input is completely consumed.
         public IToken Peek()
         {
-            return InputToken;
+            return _tokenStream.CurrentToken;
         }
 
         // Pushes an already consumed token back into the input to allow looking ahead.
         public void PushBack(IToken token)
         {
-            _inputBuffer.Push(InputToken);
-            InputToken = token;
+            _tokenStream.Buffer(token);
         }
 
         // Checks that the input token is of the expected type and matches the
@@ -89,9 +110,9 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         public TExpectedType MatchAndConsume<TExpectedType>(string expectedValue)
             where TExpectedType : StringToken
         {
-            if (InputToken is TExpectedType)
+            if (_tokenStream.CurrentToken is TExpectedType)
             {
-                if (((StringToken)InputToken).Value == expectedValue)
+                if (((StringToken)_tokenStream.CurrentToken).Value == expectedValue)
                 {
                     return Consume<TExpectedType>();
                 }
@@ -152,34 +173,34 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         public TTokenType Consume<TTokenType>() where TTokenType : IToken
         {
             var returnToken = GetTokenOrReportError<TTokenType>();
-            InputToken = null; // The next token is not fetched here. We do not want an out of input error e.g. when consuming an EndOfFile.
+            _tokenStream.Consume();
             return returnToken;
         }
 
         private dynamic GetTokenOrReportError<TTokenType>() where TTokenType : IToken
         {
-            if (InputToken is ErrorToken)
+            if (_tokenStream.CurrentToken is ErrorToken)
             {   // Lexical errors are reported here, so no errors are left unreported
                 // when consuming tokens because of recovery.
-                var temp = (ErrorToken)InputToken;
+                var temp = (ErrorToken)_tokenStream.CurrentToken;
                 _errorReporter.ReportError(temp.Message, temp.Row, temp.Col);
                 return temp;
             }
             else
-                return (TTokenType)InputToken;
+                return (TTokenType)_tokenStream.CurrentToken;
         }
 
         // Checks whether the input token matches the expected type and value or not.
         public bool NextTokenIs<TExpectedType>(string expectedValue)
             where TExpectedType : StringToken
         {
-            return NextTokenIs<TExpectedType>() && ((StringToken)InputToken).Value == expectedValue;
+            return NextTokenIs<TExpectedType>() && ((StringToken)_tokenStream.CurrentToken).Value == expectedValue;
         }
 
         public bool NextTokenIs<TExpectedType>()
             where TExpectedType : IToken
         {
-            return InputToken is TExpectedType;
+            return _tokenStream.CurrentToken is TExpectedType;
         }
 
 
@@ -190,7 +211,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             if (!NextTokenIs<TExpectedType>())
                 return false;
             else
-                return valueCollection.Contains(((StringToken) InputToken).Value);
+                return valueCollection.Contains(((StringToken) _tokenStream.CurrentToken).Value);
         }
     }
 }

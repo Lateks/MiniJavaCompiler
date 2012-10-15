@@ -10,7 +10,10 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
 
     public interface IStatement : ISyntaxTreeNode { }
 
-    public interface IExpression : ISyntaxTreeNode { }
+    public interface IExpression : ISyntaxTreeNode
+    {
+        string Describe();
+    }
 
     public abstract class SyntaxElement : ISyntaxTreeNode
     {
@@ -331,6 +334,11 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
             MethodOwner.Accept(visitor);
             visitor.Visit(this);
         }
+
+        public string Describe()
+        {
+            return "method invocation";
+        }
     }
 
     public class InstanceCreationExpression : SyntaxElement, IExpression
@@ -355,6 +363,11 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
             }
             visitor.Visit(this);
         }
+
+        public string Describe()
+        {
+            return "instance creation expression";
+        }
     }
 
     public class UnaryOperatorExpression : SyntaxElement, IExpression
@@ -373,6 +386,11 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
         {
             ArgumentExpression.Accept(visitor);
             visitor.Visit(this);
+        }
+
+        public string Describe()
+        {
+            return "unary operator expression";
         }
     }
 
@@ -397,6 +415,11 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
             LeftOperand.Accept(visitor);
             visitor.Visit(this);
         }
+
+        public string Describe()
+        {
+            return "binary operator expression";
+        }
     }
 
     public class BooleanLiteralExpression : SyntaxElement, IExpression
@@ -413,6 +436,11 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
         {
             visitor.Visit(this);
         }
+
+        public string Describe()
+        {
+            return "boolean literal";
+        }
     }
 
     public class ThisExpression : SyntaxElement, IExpression
@@ -423,6 +451,11 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
         public override void Accept(INodeVisitor visitor)
         {
             visitor.Visit(this);
+        }
+
+        public string Describe()
+        {
+            return "self reference (this)";
         }
     }
 
@@ -445,6 +478,11 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
             Array.Accept(visitor);
             visitor.Visit(this);
         }
+
+        public string Describe()
+        {
+            return "array indexing expression";
+        }
     }
 
     public class VariableReferenceExpression : SyntaxElement, IExpression
@@ -461,6 +499,11 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
         {
             visitor.Visit(this);
         }
+
+        public string Describe()
+        {
+            return "variable reference";
+        }
     }
 
     public class IntegerLiteralExpression : SyntaxElement, IExpression
@@ -476,6 +519,11 @@ namespace MiniJavaCompiler.AbstractSyntaxTree
         public override void Accept(INodeVisitor visitor)
         {
             visitor.Visit(this);
+        }
+
+        public string Describe()
+        {
+            return "integer literal";
         }
     }
 }

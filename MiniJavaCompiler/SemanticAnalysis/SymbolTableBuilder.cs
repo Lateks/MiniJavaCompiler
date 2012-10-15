@@ -130,7 +130,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
             {
                 ReportSymbolDefinitionError(node);
                 _methodScopeDefinitionFailed = true; // set recovery flag (recover until method scope ends)
-                return;
+                return; // TODO: could also just replace the method scope with a local scope for recovery
             }
 
             _symbolTable.Definitions.Add(methodSymbol, node);
