@@ -46,7 +46,7 @@ namespace MiniJavaCompilerTest.Frontend
                              "\t} \n" +
                              "} \n\n";
             Assert.True(BuildSymbolTableFor(program));
-            var fooClass = (UserDefinedTypeSymbol)symbolTable.GlobalScope.Resolve<TypeSymbol>("Foo");
+            var fooClass = (UserDefinedTypeSymbol)symbolTable.GlobalScope.Resolve<SimpleTypeSymbol>("Foo");
             var fooMethod = fooClass.Resolve<MethodSymbol>("foo");
             Assert.That(fooMethod.Type, Is.InstanceOf<VoidType>());
         }
@@ -84,8 +84,8 @@ namespace MiniJavaCompilerTest.Frontend
                              "\t int foo; \n" +
                              "} \n";
             Assert.True(BuildSymbolTableFor(program));
-            var fooClass = (UserDefinedTypeSymbol)symbolTable.GlobalScope.Resolve<TypeSymbol>("Foo");
-            var barClass = (UserDefinedTypeSymbol)symbolTable.GlobalScope.Resolve<TypeSymbol>("Bar");
+            var fooClass = (UserDefinedTypeSymbol)symbolTable.GlobalScope.Resolve<SimpleTypeSymbol>("Foo");
+            var barClass = (UserDefinedTypeSymbol)symbolTable.GlobalScope.Resolve<SimpleTypeSymbol>("Bar");
             Assert.That(barClass.SuperClass, Is.EqualTo(fooClass));
             Assert.That(barClass.Resolve<MethodSymbol>("foo"), Is.Not.Null);
         }
@@ -136,12 +136,12 @@ namespace MiniJavaCompilerTest.Frontend
                              "}\n";
             Assert.True(BuildSymbolTableFor(program));
 
-            var firstClass = symbolTable.GlobalScope.Resolve<TypeSymbol>("Factorial");
+            var firstClass = symbolTable.GlobalScope.Resolve<SimpleTypeSymbol>("Factorial");
             Assert.That(firstClass, Is.InstanceOf<UserDefinedTypeSymbol>());
 
             Assert.That(((UserDefinedTypeSymbol)firstClass).Resolve<MethodSymbol>("main"), Is.Not.Null);
 
-            var secondClass = symbolTable.GlobalScope.Resolve<TypeSymbol>("Fac");
+            var secondClass = symbolTable.GlobalScope.Resolve<SimpleTypeSymbol>("Fac");
             Assert.That(secondClass, Is.Not.Null);
 
             var FacClassScope = (UserDefinedTypeSymbol) secondClass;

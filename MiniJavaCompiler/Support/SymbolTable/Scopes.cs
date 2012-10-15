@@ -22,7 +22,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
 
     public interface ITypeScope : IScope
     {
-        bool Define(ISimpleType sym);
+        bool Define(SimpleTypeSymbol sym);
     }
 
     public abstract class ScopeBase : IScope
@@ -108,9 +108,8 @@ namespace MiniJavaCompiler.Support.SymbolTable
 
     public class GlobalScope : ScopeBase, ITypeScope
     {
-        public bool Define(ISimpleType sym)
+        public bool Define(SimpleTypeSymbol sym)
         {
-            Debug.Assert(sym is Symbol);
             return base.Define((Symbol) sym);
         }
     }

@@ -23,17 +23,18 @@ namespace MiniJavaCompiler.Support.SymbolTable
             : base(name, type, enclosingScope) { }
     }
 
-    public abstract class TypeSymbol : Symbol
+    public abstract class SimpleTypeSymbol : Symbol, IType
     {
-        protected TypeSymbol(string name, IType type, IScope enclosingScope) : base(name, type, enclosingScope) { }
+        protected SimpleTypeSymbol(string name, IType type, IScope enclosingScope) : base(name, type, enclosingScope) { }
+        public abstract bool IsAssignableTo(IType other);
     }
 
-    public class BuiltinTypeSymbol : TypeSymbol, ISimpleType
+    public class BuiltinTypeSymbol : SimpleTypeSymbol
     {
         public BuiltinTypeSymbol(string name, IScope enclosingScope)
             : base(name, null, enclosingScope) { }
 
-        public bool IsAssignableTo(IType other)
+        public override bool IsAssignableTo(IType other)
         {
             return Equals(other);
         }
@@ -82,7 +83,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
         }
     }
 
-    public class UserDefinedTypeSymbol : TypeSymbol, IMethodScope, IVariableScope, ISimpleType
+    public class UserDefinedTypeSymbol : SimpleTypeSymbol, IMethodScope, IVariableScope
     {
         internal UserDefinedTypeSymbol SuperClass { get; set; }
         private readonly Dictionary<string, Symbol> _methods;
@@ -96,7 +97,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
             SuperClass = null;
         }
 
-        public bool IsAssignableTo(IType other)
+        public override bool IsAssignableTo(IType other)
         {
             return IsDerivedFrom(other as UserDefinedTypeSymbol);
         }

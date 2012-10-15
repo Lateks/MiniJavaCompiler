@@ -8,14 +8,12 @@ namespace MiniJavaCompiler.Support.SymbolTable
         bool IsAssignableTo(IType other);
     }
 
-    public interface ISimpleType : IType { }
-
     public class MiniJavaArrayType : IType
     {
-        public ISimpleType ElementType { get; private set; }
+        public SimpleTypeSymbol ElementType { get; private set; }
         public string Name { get; protected set; }
 
-        public MiniJavaArrayType(ISimpleType elementType)
+        public MiniJavaArrayType(SimpleTypeSymbol elementType)
         {
             Name = String.Format("{0}[]", elementType.Name);
             ElementType = elementType;

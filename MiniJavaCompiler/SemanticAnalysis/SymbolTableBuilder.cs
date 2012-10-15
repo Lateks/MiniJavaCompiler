@@ -83,10 +83,10 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
         public void Visit(ClassDeclaration node)
         {
-            var typeSymbol = (UserDefinedTypeSymbol)CurrentScope.Resolve<TypeSymbol>(node.Name);
+            var typeSymbol = (UserDefinedTypeSymbol)CurrentScope.Resolve<SimpleTypeSymbol>(node.Name);
             if (node.InheritedClass != null)
             {
-                var inheritedType = (UserDefinedTypeSymbol)CurrentScope.Resolve<TypeSymbol>(node.InheritedClass);
+                var inheritedType = (UserDefinedTypeSymbol)CurrentScope.Resolve<SimpleTypeSymbol>(node.InheritedClass);
                 typeSymbol.SuperClass = inheritedType;
             }
             _symbolTable.Scopes.Add(node, typeSymbol);
@@ -101,7 +101,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
         public void Visit(MainClassDeclaration node)
         {
-            var typeSymbol = (UserDefinedTypeSymbol)CurrentScope.Resolve<TypeSymbol>(node.Name);
+            var typeSymbol = (UserDefinedTypeSymbol)CurrentScope.Resolve<SimpleTypeSymbol>(node.Name);
             _symbolTable.Scopes.Add(node, typeSymbol);
             _symbolTable.Definitions.Add(typeSymbol, node);
             EnterScope(typeSymbol);
@@ -151,7 +151,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
         private IType CheckDeclaredType(Declaration node)
         {
-            Symbol nodeSimpleType = _symbolTable.GlobalScope.Resolve<TypeSymbol>(node.Type);
+            var nodeSimpleType = (SimpleTypeSymbol)_symbolTable.GlobalScope.Resolve<SimpleTypeSymbol>(node.Type);
             if (nodeSimpleType == null)
             {
                 _errorReporter.ReportError("Unknown type '" + node.Type + "'.", node.Row, node.Col);
@@ -159,7 +159,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
                 return null;
             }
             IType actualType = node.IsArray ?
-                new MiniJavaArrayType((ISimpleType)nodeSimpleType) :
+                new MiniJavaArrayType(nodeSimpleType) :
                 (IType)nodeSimpleType;
 
             return actualType;

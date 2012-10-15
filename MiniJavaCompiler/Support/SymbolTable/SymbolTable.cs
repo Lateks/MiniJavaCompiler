@@ -21,7 +21,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
 
         public IType ResolveType(string typeName, bool array = false)
         {
-            var simpleType = (ISimpleType) GlobalScope.Resolve<TypeSymbol>(typeName);
+            var simpleType = (SimpleTypeSymbol) GlobalScope.Resolve<SimpleTypeSymbol>(typeName);
             if (simpleType == null)
             {
                 return null;
