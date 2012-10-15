@@ -3,13 +3,13 @@ using System.Linq;
 
 namespace MiniJavaCompiler.Support
 {
-    // Collects information on the syntax and semantics of Mini-Java.
+    // Collects static information on the syntax and semantics of Mini-Java.
     internal static class MiniJavaInfo
     {
-        public static readonly string IntType = "int";
-        public static readonly string BoolType = "boolean";
-        public static readonly string AnyType = "$any";
-        public static readonly string VoidType = "void";
+        internal const string IntType = "int";
+        internal const string BoolType = "boolean";
+        internal const string AnyType = "$any";
+        internal const string VoidType = "void";
 
         internal static readonly char[]
             Punctuation = new[] { ';', '(', ')', '[', ']', '.', '{', '}', ',' },
@@ -25,7 +25,8 @@ namespace MiniJavaCompiler.Support
         internal static readonly string[] BuiltIns = new [] { "int", "boolean" };
         internal static readonly string[] UnaryOperators = new [] { "!" };
 
-        internal static Dictionary<string, BuiltinOperator> Operators =
+        // Defines the operand and result types of operators for purposes of semantic analysis.
+        internal static readonly Dictionary<string, BuiltinOperator> Operators =
             new Dictionary<string, BuiltinOperator>()
                 {
                     { "+", new BuiltinOperator { OperandType = IntType, ResultType = IntType } },
@@ -38,7 +39,8 @@ namespace MiniJavaCompiler.Support
                     { "!", new BuiltinOperator { OperandType = BoolType, ResultType = BoolType } },
                     { "&&", new BuiltinOperator { OperandType = BoolType, ResultType = BoolType } },
                     { "||", new BuiltinOperator { OperandType = BoolType, ResultType = BoolType } },
-                    { "==", new BuiltinOperator { OperandType = AnyType, ResultType = BoolType } } // is defined for ints and booleans but not user defined types
+                    { "==", new BuiltinOperator { OperandType = AnyType, ResultType = BoolType } } // '==' is defined for any type, including user defined types
+                                                                                                   // (in which case it tests reference equality).
                 };
 
         internal static bool IsBuiltinType(string typeName)
