@@ -9,11 +9,10 @@ using MiniJavaCompiler.LexicalAnalysis;
 namespace MiniJavaCompiler.SyntaxAnalysis
 {
     // A sub-parser that parses expressions and solves operator precedences.
-    // Precedences are solved using an implementation of the Shunting Yard
-    // algorithm with the stack structure encoded into the recursive descent
-    // parser (no explicit stack).
+    // The grammar has a separate level for each operator precedence level.
     internal class ExpressionParser : ParserBase
     {
+        // Note: all operators are left-associative.
         private readonly string[][] _operatorsByPrecedenceLevel = new []
             {
                 new [] { "||" },                                           
@@ -85,8 +84,8 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             if (Input.NextTokenOneOf<OperatorToken>(operators))
             {
                 var opToken = Input.Consume<OperatorToken>();
-                var rhs = parseRightHandSideOperand();
-                var operatorExp = new BinaryOpExpression(opToken.Value, leftHandOperand, rhs, opToken.Row, opToken.Col);
+                var rightHandOperand = parseRightHandSideOperand();
+                var operatorExp = new BinaryOpExpression(opToken.Value, leftHandOperand, rightHandOperand, opToken.Row, opToken.Col);
                 return ParseBinaryOpTail(operatorExp, parseRightHandSideOperand, operators);
             }
             else

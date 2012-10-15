@@ -49,6 +49,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Frontend\Parsing\OperatorPrecedenceTest.cs" />
     <Compile Include="Frontend\Parsing\ParserRecoveryTest.cs" />
     <Compile Include="Frontend\Parsing\ParserTest.cs" />
     <Compile Include="Frontend\Scanning\ScannerTest.cs" />
