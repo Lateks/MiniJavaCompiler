@@ -149,7 +149,8 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         // which kind of statement should be parsed.
         private IStatement MakeExpressionStatementOrVariableDeclaration()
         {
-            IExpression expression;
+            IExpression expression = null;
+            IStatement statement = null;
             if (Input.NextTokenIs<IdentifierToken>())
             {
                 var ident = Input.Consume<IdentifierToken>();
@@ -159,7 +160,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
                     if (Input.NextTokenIs<PunctuationToken>("]"))
                     { // The statement is a local array variable declaration.
                         Input.Consume<PunctuationToken>();
-                        return FinishParsingLocalVariableDeclaration(ident, true);
+                        statement = FinishParsingLocalVariableDeclaration(ident, true);
                     }
                     else
                     {   // Brackets are used to index into an array, beginning an expression.
@@ -171,7 +172,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
                     }
                 }
                 else if (Input.NextTokenIs<IdentifierToken>())
-                    return FinishParsingLocalVariableDeclaration(ident, false);
+                    statement = FinishParsingLocalVariableDeclaration(ident, false);
                 else
                 {   // The consumed identifier token is a reference to a variable
                     // and begins an expression.
@@ -182,7 +183,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             else
                 expression = Expression();
 
-            return CompleteStatement(expression);
+            return statement ?? CompleteStatement(expression);
         }
 
         private IStatement CompleteStatement(IExpression expression)
