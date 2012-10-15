@@ -110,7 +110,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
     {
         public bool Define(SimpleTypeSymbol sym)
         {
-            return base.Define((Symbol) sym);
+            return base.Define(sym);
         }
     }
 

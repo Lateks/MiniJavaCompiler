@@ -113,6 +113,30 @@ namespace MiniJavaCompilerTest.Frontend
         }
 
         [Test]
+        public void RecoversFromMethodAndVariableDefinitionFailure()
+        {
+            string program = "class Factorial {\n" +
+                             "\t public static void main () {\n" +
+                             "\t\t System.out.println(42);\n" +
+                             "\t} \n" +
+                             "} \n\n" +
+                             "class Foo {\n" +
+                             "\t int foo; \n" +
+                             "\t int foo; \n" + // first error
+                             "\t public int foo() { } \n" +
+                             "\t public int foo() { int foo; int bar; int bar; } \n" + // second error, error inside method definition is skipped in recovery
+                             "\t public int foo() { } \n" + // third error
+                             "\t int foo; \n" + // fourth error
+                             "} \n\n";
+            Assert.False(BuildSymbolTableFor(program));
+            Assert.AreEqual(4, errors.Errors().Count);
+            foreach (var error in errors.Errors())
+            {
+                Assert.That(error.Content, Is.StringContaining("Symbol 'foo' is already defined"));
+            }
+        }
+
+        [Test]
         public void BuildsSymbolTableRightForSampleProgram()
         {
             // Note: The sample program from the site uses a unary minus that
