@@ -1093,8 +1093,8 @@ namespace MiniJavaCompilerTest.Frontend
             SetUpParser(program);
             Assert.Throws<SyntaxAnalysisFailed>(() => _parser.Parse());
             Assert.That(_errorLog.Errors().Count, Is.EqualTo(3));
-            Assert.That(_errorLog.Errors()[0].Message, Is.StringContaining("Invalid start token ';' for a term in an expression")); // Expected an expression because a punctuation token other than {
-                                                                                                                              // cannot start another kind of statement.
+            Assert.That(_errorLog.Errors()[0].Message, Is.StringContaining("Invalid start token ';' of type punctuation token for an expression")); // Expected an expression because a punctuation token other than {
+                                                                                                                                                              // cannot start another kind of statement.
             Assert.That(_errorLog.Errors()[1].Message, Is.StringContaining("Reached end of file while parsing an expression")); // Trying to parse another statement, beginning with an expression,
                                                                                                                                 // but recovery has ended up at the end of file.
             Assert.That(_errorLog.Errors()[2].Message, Is.StringContaining("Reached end of file while parsing"));
@@ -1113,15 +1113,187 @@ namespace MiniJavaCompilerTest.Frontend
             Assert.DoesNotThrow(() => _parser.Parse());
         }
 
-        // TODO: test invalid keyword starting an expression
-        // TODO: -"- a statement
-        // TODO: lexical errors in expression terms
-        // TODO: lexical error in place of an operator
-        // TODO: valid non-operator token in place of an operator
-        // TODO: a unary operator token in place of a binary operator token
-        // TODO: syntax error in class declaration
-        // TODO: error token starting a declaration
-        // TODO: lexical error in a class declaration
-        // TODO: syntax or lexical error in a method's parameter list
+        [Test]
+        public void InvalidStartTokensForExpressions()
+        {
+            string program = "class Foo {\n" +
+                             "\t public static void main() {\n" +
+                             "\t\t boolean foo;\n" +
+                             "\t\t foo = assert(true);\n" +
+                             "\t\t int bar;\n" +
+                             "\t\t bar = { };\n" +
+                             "\t\t return if foo 1 else 0;\n" +
+                             "\t }\n" +
+                             "}";
+            SetUpParser(program);
+            Assert.Throws<SyntaxAnalysisFailed>(() => _parser.Parse());
+            Assert.That(_errorLog.Errors().Count, Is.EqualTo(4));
+            Assert.That(_errorLog.Errors()[0].Message, Is.StringContaining("Invalid start token 'assert' of type keyword for an expression"));
+            Assert.That(_errorLog.Errors()[1].Message, Is.StringContaining("Expected ';' but got punctuation token ')'")); // recovery was done until ), so we get this extra error
+            Assert.That(_errorLog.Errors()[2].Message, Is.StringContaining("Invalid start token '{' of type punctuation token for an expression"));
+            Assert.That(_errorLog.Errors()[3].Message, Is.StringContaining("Invalid start token 'if' of type keyword for an expression"));
+        }
+
+        [Test]
+        public void InvalidKeywordStartingAStatement()
+        {
+            string program = "class Foo {\n" +
+                             "\t public static void main() {\n" +
+                             "\t\t boolean foo;\n" +
+                             "\t\t foo = assert(true);\n" +
+                             "\t\t int bar;\n" +
+                             "\t\t bar = { };\n" +
+                             "\t\t return if foo 1 else 0;\n" +
+                             "\t }\n" +
+                             "}";
+            SetUpParser(program);
+            Assert.Throws<SyntaxAnalysisFailed>(() => _parser.Parse());
+            Assert.That(_errorLog.Errors().Count, Is.EqualTo(4));
+            Assert.That(_errorLog.Errors()[0].Message, Is.StringContaining("Invalid start token 'assert' of type keyword for an expression"));
+            Assert.That(_errorLog.Errors()[1].Message, Is.StringContaining("Expected ';' but got punctuation token ')'")); // recovery was done until ), so we get this extra error
+            Assert.That(_errorLog.Errors()[2].Message, Is.StringContaining("Invalid start token '{' of type punctuation token for an expression"));
+            Assert.That(_errorLog.Errors()[3].Message, Is.StringContaining("Invalid start token 'if' of type keyword for an expression"));
+        }
+
+        [Test]
+        public void LexicalErrorsInPlaceOfOperators()
+        {
+            string program = "class Foo {\n" +
+                             "\t public static void main() {\n" +
+                             "\t\t int foo;\n" +
+                             "\t\t foo = ~42;\n" +
+                             "\t\t int bar;\n" +
+                             "\t\t bar = 10 $ 45 ~ @;\n" +
+                             "\t }\n" +
+                             "}";
+            SetUpParser(program);
+            Assert.Throws<SyntaxAnalysisFailed>(() => _parser.Parse());
+            Assert.That(_errorLog.Errors().Count, Is.EqualTo(5));
+            Assert.That(_errorLog.Errors()[0].Message, Is.StringContaining("Unexpected token '~'"));
+            Assert.That(_errorLog.Errors()[1].Message, Is.StringContaining("Encountered a lexical error while parsing an expression")); // term parsing fails
+            Assert.That(_errorLog.Errors()[2].Message, Is.StringContaining("Unexpected token '$'")); // Was expecting an operator but found this. => Returns the left hand side of the expression (the numeric literal).
+                                                                                                     // The error is reported when trying to match end of statement (;).
+            Assert.That(_errorLog.Errors()[3].Message, Is.StringContaining("Unexpected token '~'")); // The recovery routine then runs until the next statement end symbol and reports other lexical errors.
+            Assert.That(_errorLog.Errors()[4].Message, Is.StringContaining("Unexpected token '@'"));
+        }
+
+        [Test]
+        public void ValidNonOperatorTokenInPlaceOfAnOperator()
+        {
+            string program = "class Foo {\n" +
+                             "\t public static void main() {\n" +
+                             "\t\t int foo;\n" +
+                             "\t\t foo = 10 ; 45;\n" +
+                             "\t\t foo = foo = 1;\n" +
+                             "\t }\n" +
+                             "}";
+            SetUpParser(program);
+            Assert.Throws<SyntaxAnalysisFailed>(() => _parser.Parse());
+            Assert.That(_errorLog.Errors().Count, Is.EqualTo(2));
+            Assert.That(_errorLog.Errors()[0].Message, Is.StringContaining("Expression of type integer literal cannot form a statement"));
+            Assert.That(_errorLog.Errors()[1].Message, Is.StringContaining("Expected ';' but got operator '='"));
+        }
+
+        [Test]
+        public void UnaryOperatorTokenInPlaceOfABinaryOperatorToken()
+        {
+            string program = "class Foo {\n" +
+                             "\t public static void main() {\n" +
+                             "\t\t int foo;\n" +
+                             "\t\t foo = 10 ! 45;\n" +
+                             "\t\t foo = foo = 1;\n" +
+                             "\t }\n" +
+                             "}";
+            SetUpParser(program);
+            Assert.Throws<SyntaxAnalysisFailed>(() => _parser.Parse());
+            Assert.That(_errorLog.Errors().Count, Is.EqualTo(2));
+            Assert.That(_errorLog.Errors()[0].Message, Is.StringContaining("Expected ';' but got operator '!'"));
+            Assert.That(_errorLog.Errors()[1].Message, Is.StringContaining("Expected ';' but got operator '='"));
+        }
+
+        [Test]
+        public void RecoversWhenThereIsASyntaxErrorInAClassDeclaration()
+        {
+            string program = "class Foo {\n" +
+                             "\t public static void main() { }\n" +
+                             "}" +
+                             "class public { }\n" +
+                             "class B extends int { }\n";
+            SetUpParser(program);
+            Assert.Throws<SyntaxAnalysisFailed>(() => _parser.Parse());
+            Assert.That(_errorLog.Errors().Count, Is.EqualTo(2));
+            Assert.That(_errorLog.Errors()[0].Message, Is.StringContaining("Expected identifier but got keyword 'public'"));
+            Assert.That(_errorLog.Errors()[1].Message, Is.StringContaining("Expected identifier but got builtin type 'int'"));
+        }
+
+        [Test]
+        public void LexicalErrorStartsAnExpression()
+        {
+            string program = "class Foo {\n" +
+                 "\t public static void main() { }\n" +
+                 "}" +
+                 "class B { ¤ foo; $ int foo() { } }\n";
+            SetUpParser(program);
+            Assert.Throws<SyntaxAnalysisFailed>(() => _parser.Parse());
+            Assert.That(_errorLog.Errors().Count, Is.EqualTo(4));
+            Assert.That(_errorLog.Errors()[0].Message, Is.StringContaining("Unexpected token '¤'"));
+            Assert.That(_errorLog.Errors()[1].Message, Is.StringContaining("Lexical error while parsing a declaration"));
+            Assert.That(_errorLog.Errors()[2].Message, Is.StringContaining("Unexpected token '$'"));
+            Assert.That(_errorLog.Errors()[3].Message, Is.StringContaining("Lexical error while parsing a declaration"));
+        }
+
+        [Test]
+        public void LexicalErrorInAClassDeclaration()
+        {
+            string program = "class Foo {\n" +
+                             "\t public static void main() { }\n" +
+                             "}" +
+                             "class B & { }\n" +
+                             "class $ { }\n";
+            SetUpParser(program);
+            Assert.Throws<SyntaxAnalysisFailed>(() => _parser.Parse());
+            Assert.That(_errorLog.Errors().Count, Is.EqualTo(2));
+            Assert.That(_errorLog.Errors()[0].Message, Is.StringContaining("Unexpected token '&'"));
+            Assert.That(_errorLog.Errors()[1].Message, Is.StringContaining("Unexpected token '$'"));
+        }
+
+
+        [Test]
+        public void SyntaxOrLexicalErrorInAParameterList()
+        {
+            string program = "class Foo {\n" +
+                             "\t public static void main() { }\n" +
+                             "}" +
+                             "class B {\n" +
+                             "\t public int foo($ foo, boolean boolean) { return 0; }\n" +
+                             "\t public int bar() { boolean public; public = false; return this.foo($, public); }\n" +
+                             "}\n";
+            SetUpParser(program);
+            Assert.Throws<SyntaxAnalysisFailed>(() => _parser.Parse());
+            Assert.That(_errorLog.Errors().Count, Is.EqualTo(7));
+            Assert.That(_errorLog.Errors()[0].Message, Is.StringContaining("Unexpected token '$'"));
+            Assert.That(_errorLog.Errors()[1].Message, Is.StringContaining("Expected identifier but got builtin type 'boolean'"));
+            Assert.That(_errorLog.Errors()[2].Message, Is.StringContaining("Expected identifier but got keyword 'public'"));
+            Assert.That(_errorLog.Errors()[3].Message, Is.StringContaining("Invalid start token 'public' of type keyword for an expression"));
+            Assert.That(_errorLog.Errors()[4].Message, Is.StringContaining("Unexpected token '$'"));
+            Assert.That(_errorLog.Errors()[5].Message, Is.StringContaining("Encountered a lexical error while parsing an expression"));
+            Assert.That(_errorLog.Errors()[6].Message, Is.StringContaining("Invalid start token 'public' of type keyword for an expression"));
+        }
+
+        [Test]
+        public void ErrorInAKeywordExpression()
+        {
+            string program = "class Foo {\n" +
+                             "\t public static void main() { int foo; foo = new int(); B bar; bar = new $[10]; }\n" +
+                             "}" +
+                             "class B { }\n";
+            SetUpParser(program);
+            Assert.Throws<SyntaxAnalysisFailed>(() => _parser.Parse());
+            Assert.That(_errorLog.Errors().Count, Is.EqualTo(4));
+            Assert.That(_errorLog.Errors()[0].Message, Is.StringContaining("Expected '[' but got punctuation token '('"));
+            Assert.That(_errorLog.Errors()[1].Message, Is.StringContaining("Expected ';' but got punctuation token ')'")); // incomplete recovery due to large follow set
+            Assert.That(_errorLog.Errors()[2].Message, Is.StringContaining("Unexpected token '$'"));
+            Assert.That(_errorLog.Errors()[3].Message, Is.StringContaining("Expected ';' but got punctuation token '['")); // same as above
+        }
     }
 }

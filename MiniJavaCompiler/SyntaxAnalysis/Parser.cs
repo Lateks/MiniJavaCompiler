@@ -110,6 +110,46 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             }
         }
 
+        public ClassDeclaration ClassDeclaration()
+        {
+            try
+            {
+                IToken startToken = Input.MatchAndConsume<KeywordToken>("class");
+                var classIdent = Input.MatchAndConsume<IdentifierToken>();
+                var inheritedClass = OptionalInheritance();
+                Input.MatchAndConsume<PunctuationToken>("{");
+                var declarations = DeclarationList();
+                Input.MatchAndConsume<PunctuationToken>("}");
+                return new ClassDeclaration(classIdent.Value, inheritedClass,
+                    declarations, startToken.Row, startToken.Col);
+            }
+            catch (SyntaxError e)
+            {
+                if (DebugMode) throw;
+                ErrorReporter.ReportError(e.Message, e.Row, e.Col);
+                ParsingFailed = true;
+                RecoverFromClassMatching();
+                return null;
+            }
+            catch (LexicalErrorEncountered)
+            {
+                if (DebugMode) throw;
+                ParsingFailed = true;
+                RecoverFromClassMatching();
+                return null;
+            }
+        }
+
+        public string OptionalInheritance()
+        {
+            if (Input.NextTokenIs<PunctuationToken>("{"))
+            {
+                return null;
+            }
+            Input.MatchAndConsume<KeywordToken>("extends");
+            return Input.MatchAndConsume<IdentifierToken>().Value;
+        }
+
         public IStatement Statement()
         {
             var followSet = new string[] {";"}; // Possible recovery is done until the statement end symbol (usually ;), which is also consumed.
@@ -171,7 +211,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
                         expression = Expression();
                     }
                 }
-                else if (Input.NextTokenIs<IdentifierToken>())
+                else if (Input.NextTokenIs<IdentifierToken>()) // non-array variable declaration
                     statement = FinishParsingLocalVariableDeclaration(ident, false);
                 else
                 {   // The consumed identifier token is a reference to a variable
@@ -232,6 +272,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         // also begin a statement.)
         private IStatement MakeKeywordStatement()
         {
+            Debug.Assert(Input.NextTokenOneOf<KeywordToken>("assert", "if", "while", "System", "return")); // should not be here otherwise
             var token = (KeywordToken) Input.Peek();
             switch (token.Value)
             {
@@ -246,8 +287,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
                 case "return":
                     return MakeReturnStatement();
                 default:
-                    throw new SyntaxError(String.Format("Invalid keyword {0} starting a statement.", token.Value),
-                        token.Row, token.Col);
+                    return null;
             }
         }
 
@@ -333,46 +373,6 @@ namespace MiniJavaCompiler.SyntaxAnalysis
             var expr = expressionParser.Parse();
             ParsingFailed = ParsingFailed || expressionParser.ParsingFailed;
             return expr;
-        }
-
-        public ClassDeclaration ClassDeclaration()
-        {
-            try
-            {
-                IToken startToken = Input.MatchAndConsume<KeywordToken>("class");
-                var classIdent = Input.MatchAndConsume<IdentifierToken>();
-                var inheritedClass = OptionalInheritance();
-                Input.MatchAndConsume<PunctuationToken>("{");
-                var declarations = DeclarationList();
-                Input.MatchAndConsume<PunctuationToken>("}");
-                return new ClassDeclaration(classIdent.Value, inheritedClass,
-                    declarations, startToken.Row, startToken.Col);
-            }
-            catch (SyntaxError e)
-            {
-                if (DebugMode) throw;
-                ErrorReporter.ReportError(e.Message, e.Row, e.Col);
-                ParsingFailed = true;
-                RecoverFromClassMatching();
-                return null;
-            }
-            catch (LexicalErrorEncountered)
-            {
-                if (DebugMode) throw;
-                ParsingFailed = true;
-                RecoverFromClassMatching();
-                return null;
-            }
-        }
-
-        public string OptionalInheritance()
-        {
-            if (Input.NextTokenIs<PunctuationToken>("{"))
-            {
-                return null;
-            }
-            Input.MatchAndConsume<KeywordToken>("extends");
-            return Input.MatchAndConsume<IdentifierToken>().Value;
         }
 
         public Declaration Declaration()

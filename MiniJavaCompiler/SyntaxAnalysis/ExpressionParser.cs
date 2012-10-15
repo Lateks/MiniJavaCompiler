@@ -29,24 +29,7 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
         public IExpression Parse()
         {
-            try
-            {
-                return ParseExpression();
-            }
-            catch (SyntaxError e)
-            {
-                if (DebugMode) throw;
-                ErrorReporter.ReportError(e.Message, e.Row, e.Col);
-                ParsingFailed = true;
-                RecoverFromExpressionParsing();
-            }
-            catch (LexicalErrorEncountered)
-            {
-                if (DebugMode) throw;
-                ParsingFailed = true;
-                RecoverFromExpressionParsing();
-            }
-            return null;
+            return ParseExpression(); // All syntax and lexical errors should be caught on the term level, so they should not propagate this far.
         }
 
         private List<IExpression> ExpressionList()
@@ -137,8 +120,8 @@ namespace MiniJavaCompiler.SyntaxAnalysis
                     else
                     {
                         Debug.Assert(token is StringToken);
-                        errorMessage = String.Format("Invalid start token '{0}' for a term in an expression.",
-                            (token as StringToken).Value);
+                        errorMessage = String.Format("Invalid start token '{0}' of type {1} for an expression.",
+                            (token as StringToken).Value, TokenDescriptions.Describe(token.GetType()));
                     }
                     throw new SyntaxError(errorMessage, token.Row, token.Col);
                 }
@@ -197,8 +180,8 @@ namespace MiniJavaCompiler.SyntaxAnalysis
                 case "false":
                     return MakeBooleanLiteral(false);
                 default:
-                    throw new SyntaxError(String.Format("Invalid start token '{0}' for an expression.", token.Value),
-                        token.Row, token.Col);
+                    throw new SyntaxError(String.Format("Invalid start token '{0}' of type {1} for an expression.",
+                        token.Value, TokenDescriptions.Describe(token.GetType())), token.Row, token.Col);
             }
         }
 
@@ -301,13 +284,6 @@ namespace MiniJavaCompiler.SyntaxAnalysis
         }
 
         // Recovery routines
-
-        private void RecoverFromExpressionParsing()
-        {
-            while (!(Input.NextTokenIs<EndOfFile>()
-                     || Input.NextTokenOneOf<PunctuationToken>(")", "]", ",", ";")))
-                Input.Consume<IToken>();
-        }
 
         // This is not a very efficient recovery routine since the whole follow set for expression terms is rather large.
         //
