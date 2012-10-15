@@ -1,7 +1,7 @@
-﻿using NUnit.Framework;
 using MiniJavaCompiler.Support.SymbolTable;
+using NUnit.Framework;
 
-namespace MiniJavaCompilerTest.Frontend
+namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
 {
     internal static class SymbolCreationHelper
     {

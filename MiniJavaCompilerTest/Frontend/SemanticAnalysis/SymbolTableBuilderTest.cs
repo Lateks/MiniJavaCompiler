@@ -1,14 +1,14 @@
-﻿using System.Linq;
 using System.IO;
-using NUnit.Framework;
-using MiniJavaCompiler.LexicalAnalysis;
-using MiniJavaCompiler.SyntaxAnalysis;
+using System.Linq;
 using MiniJavaCompiler.AbstractSyntaxTree;
-using MiniJavaCompiler.Support.SymbolTable;
-using MiniJavaCompiler.Support;
+using MiniJavaCompiler.LexicalAnalysis;
 using MiniJavaCompiler.SemanticAnalysis;
+using MiniJavaCompiler.Support;
+using MiniJavaCompiler.Support.SymbolTable;
+using MiniJavaCompiler.SyntaxAnalysis;
+using NUnit.Framework;
 
-namespace MiniJavaCompilerTest.Frontend
+namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
 {
     [TestFixture]
     class SymbolTableBuilderTest

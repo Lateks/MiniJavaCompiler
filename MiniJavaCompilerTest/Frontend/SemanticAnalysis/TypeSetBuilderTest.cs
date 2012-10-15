@@ -1,11 +1,11 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
-using NUnit.Framework;
 using MiniJavaCompiler.AbstractSyntaxTree;
-using MiniJavaCompiler.Support;
 using MiniJavaCompiler.SemanticAnalysis;
+using MiniJavaCompiler.Support;
+using NUnit.Framework;
 
-namespace MiniJavaCompilerTest.Frontend
+namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
 {
     [TestFixture]
     public class TypeSetBuilderTest

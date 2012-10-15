@@ -1,13 +1,13 @@
-﻿using System.IO;
+using System.IO;
 using MiniJavaCompiler.AbstractSyntaxTree;
 using MiniJavaCompiler.LexicalAnalysis;
+using MiniJavaCompiler.SemanticAnalysis;
 using MiniJavaCompiler.Support;
 using MiniJavaCompiler.Support.SymbolTable;
 using MiniJavaCompiler.SyntaxAnalysis;
 using NUnit.Framework;
-using MiniJavaCompiler.SemanticAnalysis;
 
-namespace MiniJavaCompilerTest.Frontend
+namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
 {
     internal class TypeCheckerTest
     {

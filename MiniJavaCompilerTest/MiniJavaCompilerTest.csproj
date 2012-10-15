@@ -49,13 +49,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Frontend\ScannerTest.cs" />
-    <Compile Include="Frontend\ParserTest.cs" />
-    <Compile Include="Frontend\TypeCheckerTest.cs" />
+    <Compile Include="Frontend\Parsing\ParserRecoveryTest.cs" />
+    <Compile Include="Frontend\Parsing\ParserTest.cs" />
+    <Compile Include="Frontend\Scanning\ScannerTest.cs" />
+    <Compile Include="Frontend\SemanticAnalysis\SymbolTableBuilderTest.cs" />
+    <Compile Include="Frontend\SemanticAnalysis\SymbolTableTest.cs" />
+    <Compile Include="Frontend\SemanticAnalysis\TypeCheckerTest.cs" />
+    <Compile Include="Frontend\SemanticAnalysis\TypeSetBuilderTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Frontend\SymbolTableBuilderTest.cs" />
-    <Compile Include="Frontend\SymbolTableTest.cs" />
-    <Compile Include="Frontend\TypeSetBuilderTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MiniJavaCompiler\MiniJavaCompiler.csproj">
@@ -66,6 +67,7 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
