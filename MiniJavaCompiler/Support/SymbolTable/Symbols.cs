@@ -1,38 +1,13 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace MiniJavaCompiler.Support.SymbolTable
 {
     public abstract class Symbol
-    {
+    {   // This class provides the base information for all symbol classes.
         public string Name { get; private set; }
         public IType Type { get; private set; }
         public IScope EnclosingScope { get; private set; }
-
-        // Returns the created symbol if defining succeeds. Otherwise returns null.
-        public static Symbol CreateAndDefine<TSymbolType>(string name, IScope enclosingScope)
-            where TSymbolType : Symbol, IType
-        {
-            return CreateAndDefine<TSymbolType>(enclosingScope, name, enclosingScope);
-        }
-
-        public static Symbol CreateAndDefine<TSymbolType>(string name, IType type, IScope enclosingScope)
-            where TSymbolType : Symbol
-        {
-            if (typeof(TSymbolType) == typeof(UserDefinedTypeSymbol))
-            {
-                throw new NotSupportedException("This type of constructor not supported for the given type.");
-            }
-            return CreateAndDefine<TSymbolType>(enclosingScope, name, type, enclosingScope);
-        }
-
-        private static Symbol CreateAndDefine<TSymbolType>(IScope enclosingScope, params Object[] constructorParams)
-            where TSymbolType : Symbol
-        {
-            var sym = (Symbol) Activator.CreateInstance(typeof (TSymbolType), constructorParams);
-            return enclosingScope.Define(sym) ? sym : null;
-        }
 
         protected Symbol(string name, IType type, IScope enclosingScope)
         {
@@ -64,15 +39,15 @@ namespace MiniJavaCompiler.Support.SymbolTable
         }
     }
 
-    public class MethodSymbol : Symbol, IScope
+    public class MethodSymbol : Symbol, IVariableScope
     {
         private readonly Dictionary<string, Symbol> _variableTable;
         internal bool IsStatic { get; set; }
 
-        public MethodSymbol(string name, IType returnType, UserDefinedTypeSymbol enclosingScope)
+        public MethodSymbol(string name, IType returnType, IMethodScope enclosingScope, bool isStatic = false)
             : base(name, returnType, enclosingScope)
         {
-            IsStatic = false;
+            IsStatic = isStatic;
             _variableTable = new Dictionary<string, Symbol>();
         }
 
@@ -93,12 +68,8 @@ namespace MiniJavaCompiler.Support.SymbolTable
             }
         }
 
-        public bool Define(Symbol sym)
+        public bool Define(VariableSymbol sym)
         {
-            if (!(sym is VariableSymbol))
-            {
-                throw new NotSupportedException("Only variable symbols can be defined in this scope.");
-            }
             try
             {
                 _variableTable.Add(sym.Name, sym);
@@ -111,7 +82,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
         }
     }
 
-    public class UserDefinedTypeSymbol : TypeSymbol, IScope, ISimpleType
+    public class UserDefinedTypeSymbol : TypeSymbol, IMethodScope, IVariableScope, ISimpleType
     {
         internal UserDefinedTypeSymbol SuperClass { get; set; }
         private readonly Dictionary<string, Symbol> _methods;
@@ -148,7 +119,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
         {
             if (typeof(TSymbolType) == typeof(MethodSymbol))
                 return ResolveMethodInSuperClasses(name);
-            if (typeof(TSymbolType) != typeof(VariableSymbol))
+            if (typeof(TSymbolType) == typeof(UserDefinedTypeSymbol))
                 return EnclosingScope.Resolve<TSymbolType>(name);
 
             try
@@ -175,17 +146,14 @@ namespace MiniJavaCompiler.Support.SymbolTable
             }
         }
 
-        public bool Define(Symbol sym)
+        public bool Define(VariableSymbol sym)
         {
-            Debug.Assert(sym is MethodSymbol || sym is VariableSymbol);
-            if (sym is MethodSymbol)
-            {
-                return DefineSymbolIn(sym, _methods);
-            }
-            else
-            {
-                return DefineSymbolIn(sym, _fields);
-            }
+            return DefineSymbolIn(sym, _fields);
+        }
+
+        public bool Define(MethodSymbol sym)
+        {
+            return DefineSymbolIn(sym, _methods);
         }
 
         private bool DefineSymbolIn(Symbol sym, IDictionary<string, Symbol> lookupTable)

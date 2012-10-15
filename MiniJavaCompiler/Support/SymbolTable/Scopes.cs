@@ -1,13 +1,28 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace MiniJavaCompiler.Support.SymbolTable
 {
     public interface IScope
     {
         Symbol Resolve<TSymbolType>(string name) where TSymbolType : Symbol;
-        bool Define(Symbol sym);
         IScope EnclosingScope { get; }
+    }
+
+    public interface IVariableScope : IScope
+    {
+        bool Define(VariableSymbol sym);
+    }
+
+    public interface IMethodScope : IScope
+    {
+        bool Define(MethodSymbol sym);
+    }
+
+    public interface ITypeScope : IScope
+    {
+        bool Define(ISimpleType sym);
     }
 
     public abstract class ScopeBase : IScope
@@ -64,7 +79,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
             }
         }
 
-        public bool Define(Symbol sym)
+        protected bool Define(Symbol sym)
         {
             try
             {
@@ -91,11 +106,23 @@ namespace MiniJavaCompiler.Support.SymbolTable
         }
     }
 
-    public class GlobalScope : ScopeBase { }
+    public class GlobalScope : ScopeBase, ITypeScope
+    {
+        public bool Define(ISimpleType sym)
+        {
+            Debug.Assert(sym is Symbol);
+            return base.Define((Symbol) sym);
+        }
+    }
 
-    public class LocalScope : ScopeBase
+    public class LocalScope : ScopeBase, IVariableScope
     {
         public LocalScope(IScope enclosingScope) : base(enclosingScope) { }
+
+        public bool Define(VariableSymbol sym)
+        {
+            return base.Define(sym);
+        }
     }
 
 }

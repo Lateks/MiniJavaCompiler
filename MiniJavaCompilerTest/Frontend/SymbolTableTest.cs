@@ -1,60 +1,84 @@
-﻿using System;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using MiniJavaCompiler.Support.SymbolTable;
 
 namespace MiniJavaCompilerTest.Frontend
 {
+    internal static class SymbolCreationHelper
+    {
+        internal static UserDefinedTypeSymbol CreateAndDefineClass(string name, ITypeScope scope)
+        {
+            var sym = new UserDefinedTypeSymbol(name, scope);
+            scope.Define(sym);
+            return sym;
+        }
+
+        internal static MethodSymbol CreateAndDefineMethod(string name, IType type, IMethodScope scope)
+        {
+            var sym = new MethodSymbol(name, type, scope);
+            scope.Define(sym);
+            return sym;
+        }
+
+        internal static VariableSymbol CreateAndDefineVariable(string name, IType type, IVariableScope scope)
+        {
+            var sym = new VariableSymbol(name, type, scope);
+            scope.Define(sym);
+            return sym;
+        }
+
+    }
+
     [TestFixture]
     class ClassScopeTest
     {
-        private GlobalScope globalScope;
-        private UserDefinedTypeSymbol testClass;
-        private UserDefinedTypeSymbol superClass;
-        private UserDefinedTypeSymbol superSuperClass;
-        private IType someType;
+        private GlobalScope _globalScope;
+        private UserDefinedTypeSymbol _testClass;
+        private UserDefinedTypeSymbol _superClass;
+        private UserDefinedTypeSymbol _superSuperClass;
+        private IType _someType;
 
         [SetUp]
         public void SetUp()
         {
-            globalScope = new GlobalScope();
-            superSuperClass = (UserDefinedTypeSymbol) Symbol.CreateAndDefine<UserDefinedTypeSymbol>("Foo", globalScope);
-            superClass = (UserDefinedTypeSymbol) Symbol.CreateAndDefine<UserDefinedTypeSymbol>("Bar", globalScope);
-            superClass.SuperClass = superSuperClass;
-            testClass = (UserDefinedTypeSymbol) Symbol.CreateAndDefine<UserDefinedTypeSymbol>("Baz", globalScope);
-            testClass.SuperClass = superClass;
-            someType = new BuiltinTypeSymbol("int", globalScope);
+            _globalScope = new GlobalScope();
+            _superSuperClass = SymbolCreationHelper.CreateAndDefineClass("Foo", _globalScope);
+            _superClass = SymbolCreationHelper.CreateAndDefineClass("Bar", _globalScope);
+            _superClass.SuperClass = _superSuperClass;
+            _testClass = SymbolCreationHelper.CreateAndDefineClass("Baz", _globalScope);
+            _testClass.SuperClass = _superClass;
+            _someType = new BuiltinTypeSymbol("int", _globalScope);
         }
 
         [Test]
         public void MethodsCanBeDefined()
         {
-            testClass.Define(new MethodSymbol("foo", someType, testClass));
-            Assert.That(testClass.Resolve<MethodSymbol>("foo"), Is.InstanceOf<MethodSymbol>());
+            _testClass.Define(new MethodSymbol("foo", _someType, _testClass));
+            Assert.That(_testClass.Resolve<MethodSymbol>("foo"), Is.InstanceOf<MethodSymbol>());
         }
 
         [Test]
         public void VariablesCanBeDefined()
         {
-            testClass.Define(new VariableSymbol("foo", someType, testClass));
-            Assert.That(testClass.Resolve<VariableSymbol>("foo"), Is.InstanceOf<VariableSymbol>());
+            _testClass.Define(new VariableSymbol("foo", _someType, _testClass));
+            Assert.That(_testClass.Resolve<VariableSymbol>("foo"), Is.InstanceOf<VariableSymbol>());
         }
 
         [Test]
         public void MethodsAndVariablesCanShareAName()
         {
-            testClass.Define(new MethodSymbol("foo", someType, testClass));
-            testClass.Define(new VariableSymbol("foo", someType, testClass));
-            Assert.That(testClass.Resolve<VariableSymbol>("foo"), Is.InstanceOf<VariableSymbol>());
-            Assert.That(testClass.Resolve<MethodSymbol>("foo"), Is.InstanceOf<MethodSymbol>());
+            _testClass.Define(new MethodSymbol("foo", _someType, _testClass));
+            _testClass.Define(new VariableSymbol("foo", _someType, _testClass));
+            Assert.That(_testClass.Resolve<VariableSymbol>("foo"), Is.InstanceOf<VariableSymbol>());
+            Assert.That(_testClass.Resolve<MethodSymbol>("foo"), Is.InstanceOf<MethodSymbol>());
         }
 
         [Test]
         public void MethodsAreResolvedInSuperClasses()
         {
-            superSuperClass.Define(new MethodSymbol("foo", someType, superSuperClass));
-            superClass.Define(new MethodSymbol("bar", someType, superClass));
-            var foo = testClass.Resolve<MethodSymbol>("foo");
-            var bar = testClass.Resolve<MethodSymbol>("bar");
+            _superSuperClass.Define(new MethodSymbol("foo", _someType, _superSuperClass));
+            _superClass.Define(new MethodSymbol("bar", _someType, _superClass));
+            var foo = _testClass.Resolve<MethodSymbol>("foo");
+            var bar = _testClass.Resolve<MethodSymbol>("bar");
             Assert.That(foo, Is.InstanceOf<MethodSymbol>());
             Assert.That(foo.Name, Is.EqualTo("foo"));
             Assert.That(bar, Is.InstanceOf<MethodSymbol>());
@@ -64,132 +88,102 @@ namespace MiniJavaCompilerTest.Frontend
         [Test]
         public void VariablesAreNotResolvedInSuperClasses()
         {
-            superSuperClass.Define(new VariableSymbol("foo", someType, superSuperClass));
-            Assert.That(testClass.Resolve<VariableSymbol>("foo"), Is.Null);
-        }
-
-        [Test]
-        public void VariablesCanOnlyBeResolvedInsideDefiningClass()
-        {
-            globalScope.Define(new VariableSymbol("bar", someType, superClass));
-            Assert.That(testClass.Resolve<VariableSymbol>("bar"), Is.Null);
-        }
-
-        [Test]
-        public void NamesCanHideNamesInOtherScopes()
-        {
-            superClass.Define(new MethodSymbol("foo", someType, superClass));
-            testClass.Define(new MethodSymbol("foo", someType, testClass));
-            globalScope.Define(new VariableSymbol("bar", someType, globalScope));
-            testClass.Define(new VariableSymbol("bar", someType, testClass));
-            Assert.That(testClass.Resolve<MethodSymbol>("foo").EnclosingScope, Is.EqualTo(testClass));
-            Assert.That(testClass.Resolve<VariableSymbol>("bar").EnclosingScope, Is.EqualTo(testClass));
+            _superSuperClass.Define(new VariableSymbol("foo", _someType, _superSuperClass));
+            Assert.That(_testClass.Resolve<VariableSymbol>("foo"), Is.Null);
         }
 
         [Test]
         public void CannotRedefineNames()
         {
-            testClass.Define(new VariableSymbol("foo", someType, testClass));
-            Assert.False(testClass.Define(new VariableSymbol("foo", someType, testClass)));
+            _testClass.Define(new VariableSymbol("foo", _someType, _testClass));
+            Assert.False(_testClass.Define(new VariableSymbol("foo", _someType, _testClass)));
         }
     }
 
     [TestFixture]
     class MethodScopeTest
     {
-        private GlobalScope globalScope;
-        private UserDefinedTypeSymbol testClass;
-        private MethodSymbol testMethod;
-        private IType someType;
+        private GlobalScope _globalScope;
+        private UserDefinedTypeSymbol _testClass;
+        private MethodSymbol _testMethod;
+        private IType _someType;
 
         [SetUp]
         public void SetUp()
         {
-            globalScope = new GlobalScope();
-            testClass = (UserDefinedTypeSymbol)Symbol.CreateAndDefine<UserDefinedTypeSymbol>("Foo", globalScope);
-            testMethod = (MethodSymbol) Symbol.CreateAndDefine<MethodSymbol>(
-                "foo", new BuiltinTypeSymbol("int", globalScope), testClass);
-            someType = new BuiltinTypeSymbol("int", globalScope);
+            _globalScope = new GlobalScope();
+            _testClass = SymbolCreationHelper.CreateAndDefineClass("Foo", _globalScope);
+            _testMethod = SymbolCreationHelper.CreateAndDefineMethod(
+                "foo", new BuiltinTypeSymbol("int", _globalScope), _testClass);
+            _someType = new BuiltinTypeSymbol("int", _globalScope);
         }
 
         [Test]
         public void CanDefineVariables()
         {
-            testMethod.Define(new VariableSymbol("foo", someType, testMethod));
-            Assert.That(testMethod.Resolve<VariableSymbol>("foo"), Is.InstanceOf<VariableSymbol>());
-        }
-
-        [Test]
-        public void CannotDefineMethods()
-        {
-            Assert.Throws<NotSupportedException>(() =>
-                testMethod.Define(new MethodSymbol("bar", someType, testClass)));
-        }
-
-        [Test]
-        public void CannotDefineClasses()
-        {
-            Assert.Throws<NotSupportedException>(() =>
-                                                 testMethod.Define(new UserDefinedTypeSymbol("Bar", testMethod)));
+            _testMethod.Define(new VariableSymbol("foo", _someType, _testMethod));
+            Assert.That(_testMethod.Resolve<VariableSymbol>("foo"), Is.InstanceOf<VariableSymbol>());
         }
 
         [Test]
         public void ResolvesMethodsInEnclosingScope()
         {
-            testClass.Define(new MethodSymbol("bar", someType, testClass));
-            Assert.That(testMethod.Resolve<MethodSymbol>("bar"), Is.InstanceOf<MethodSymbol>());
+            _testClass.Define(new MethodSymbol("bar", _someType, _testClass));
+            Assert.That(_testMethod.Resolve<MethodSymbol>("bar"), Is.InstanceOf<MethodSymbol>());
         }
 
         [Test]
         public void ResolvesVariablesInEnclosingScopes()
         {
-            testClass.Define(new VariableSymbol("bar", someType, testClass));
-            Assert.That(testMethod.Resolve<VariableSymbol>("bar"), Is.InstanceOf<VariableSymbol>());
+            _testClass.Define(new VariableSymbol("bar", _someType, _testClass));
+            Assert.That(_testMethod.Resolve<VariableSymbol>("bar"), Is.InstanceOf<VariableSymbol>());
         }
 
         [Test]
         public void CannotRedefineNames()
         {
-            testMethod.Define(new VariableSymbol("foo", someType, testMethod));
-            Assert.False(testMethod.Define(new VariableSymbol("foo", someType, testMethod)));
+            _testMethod.Define(new VariableSymbol("foo", _someType, _testMethod));
+            Assert.False(_testMethod.Define(new VariableSymbol("foo", _someType, _testMethod)));
         }
     }
 
     [TestFixture]
     class GenericScopeTest
     {
-        private GlobalScope globalScope;
-        private LocalScope blockScope;
-        private IType someType;
+        private GlobalScope _globalScope;
+        private LocalScope _blockScope;
+        private LocalScope _internalBlockScope;
+        private IType _someType;
 
         [SetUp]
         public void SetUp()
         {
-            globalScope = new GlobalScope();
-            blockScope = new LocalScope(globalScope);
-            someType = new BuiltinTypeSymbol("int", globalScope);
+            _globalScope = new GlobalScope();
+            _blockScope = new LocalScope(_globalScope);
+            _internalBlockScope = new LocalScope(_blockScope);
+            _someType = new BuiltinTypeSymbol("int", _globalScope);
         }
 
         [Test]
         public void NamesCanHideNamesInEnclosingScopes()
         {
-            Symbol.CreateAndDefine<VariableSymbol>("foo", someType, globalScope);
-            Symbol.CreateAndDefine<VariableSymbol>("foo", someType, blockScope);
-            Assert.That(blockScope.Resolve<VariableSymbol>("foo").EnclosingScope, Is.EqualTo(blockScope));
+            SymbolCreationHelper.CreateAndDefineVariable("foo", _someType, _blockScope);
+            SymbolCreationHelper.CreateAndDefineVariable("foo", _someType, _internalBlockScope);
+            Assert.That(_internalBlockScope.Resolve<VariableSymbol>("foo").EnclosingScope, Is.EqualTo(_internalBlockScope));
         }
 
         [Test]
         public void VariablesAreResolvedInEnclosingScopes()
         {
-            Symbol.CreateAndDefine<VariableSymbol>("foo", someType, globalScope);
-            Assert.That(blockScope.Resolve<VariableSymbol>("foo"), Is.InstanceOf<VariableSymbol>());
+            SymbolCreationHelper.CreateAndDefineVariable("foo", _someType, _blockScope);
+            Assert.That(_internalBlockScope.Resolve<VariableSymbol>("foo"), Is.InstanceOf<VariableSymbol>());
         }
 
         [Test]
         public void CannotRedefineNames()
         {
-            globalScope.Define(new VariableSymbol("foo", someType, globalScope));
-            Assert.False(globalScope.Define(new VariableSymbol("foo", someType, globalScope)));
+            _globalScope.Define(new UserDefinedTypeSymbol("foo", _globalScope));
+            Assert.False(_globalScope.Define(new UserDefinedTypeSymbol("foo", _globalScope)));
         }
     }
 }

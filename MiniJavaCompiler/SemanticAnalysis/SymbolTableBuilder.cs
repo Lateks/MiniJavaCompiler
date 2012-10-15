@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using MiniJavaCompiler.AbstractSyntaxTree;
 using MiniJavaCompiler.Support.SymbolTable;
 using MiniJavaCompiler.Support;
@@ -31,7 +32,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
             _scopeStack.Pop();
         }
 
-        public SymbolTableBuilder(Program node, IEnumerable<string> types, IErrorReporter errorReporter)
+        public SymbolTableBuilder(Program node, IEnumerable<string> userDefinedTypes, IErrorReporter errorReporter)
         {
             _errorReporter = errorReporter;
             _errors = 0;
@@ -39,20 +40,22 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
             _symbolTable = new SymbolTable();
 
-            SetupGlobalScope(types);
+            SetupGlobalScope(userDefinedTypes);
             _scopeStack = new Stack<IScope>();
             EnterScope(_symbolTable.GlobalScope);
         }
 
-        private void SetupGlobalScope(IEnumerable<string> types)
+        private void SetupGlobalScope(IEnumerable<string> userDefinedTypes)
         {
             foreach (var type in MiniJavaInfo.BuiltIns)
             {
-                Symbol.CreateAndDefine<BuiltinTypeSymbol>(type, _symbolTable.GlobalScope);
+                var sym = new BuiltinTypeSymbol(type, _symbolTable.GlobalScope);
+                _symbolTable.GlobalScope.Define(sym);
             }
-            foreach (var type in types)
+            foreach (var type in userDefinedTypes)
             {
-                Symbol.CreateAndDefine<UserDefinedTypeSymbol>(type, _symbolTable.GlobalScope);
+                var sym = new UserDefinedTypeSymbol(type, _symbolTable.GlobalScope);
+                _symbolTable.GlobalScope.Define(sym);
             }
         }
 
@@ -111,24 +114,34 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
         public void Visit(VariableDeclaration node)
         {
+            Debug.Assert(CurrentScope is IVariableScope);
+
             var variableType = CheckDeclaredType(node);
-            var symbol = TryDefineSymbol<VariableSymbol>(node, variableType);
-            if (symbol != null)
+            var symbol = new VariableSymbol(node.Name, variableType, CurrentScope);
+            if ((CurrentScope as IVariableScope).Define(symbol))
             {
                 _symbolTable.Definitions.Add(symbol, node);
                 _symbolTable.Scopes.Add(node, CurrentScope);
+            }
+            else
+            {
+                ReportSymbolDefinitionError(node);
             }
         }
 
         public void Visit(MethodDeclaration node)
         {
+            Debug.Assert(CurrentScope is IMethodScope);
+
             var methodReturnType = node.Type == "void" ? VoidType.GetInstance() : CheckDeclaredType(node);
-            var methodSymbol = (MethodSymbol)TryDefineSymbol<MethodSymbol>(node, methodReturnType);
-            if (methodSymbol == null)
+            var methodScope = (IMethodScope) CurrentScope;
+            var methodSymbol = new MethodSymbol(node.Name, methodReturnType, methodScope, node.IsStatic);
+            if (!methodScope.Define(methodSymbol))
             {
-                throw new DefinitionException();
+                ReportSymbolDefinitionError(node);
+                throw new DefinitionException(); // quit analysis if the defining attempt fails
+                                                 // TODO: recovery could be done here by skipping to the end of this method's scope
             }
-            methodSymbol.IsStatic = node.IsStatic;
 
             _symbolTable.Definitions.Add(methodSymbol, node);
             _symbolTable.Scopes.Add(node, methodSymbol);
@@ -152,20 +165,10 @@ namespace MiniJavaCompiler.SemanticAnalysis
             return actualType;
         }
 
-        private Symbol TryDefineSymbol<TSymbolType>(Declaration node, IType symbolType)
-            where TSymbolType : Symbol
+        private void ReportSymbolDefinitionError(Declaration node)
         {
-            var symbol = Symbol.CreateAndDefine<TSymbolType>(
-                node.Name, symbolType, CurrentScope);
-
-            if (symbol == null)
-            {
-                _errorReporter.ReportError("Symbol '" + node.Name + "' is already defined.", node.Row, node.Col);
-                _errors++;
-                return null;
-            }
-
-            return symbol;
+            _errorReporter.ReportError("Symbol '" + node.Name + "' is already defined.", node.Row, node.Col);
+            _errors++;
         }
 
         public void Exit(MethodDeclaration node)
