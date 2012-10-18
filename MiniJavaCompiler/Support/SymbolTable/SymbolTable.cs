@@ -23,7 +23,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
             {
                 return null;
             }
-            return array ? new MiniJavaArrayType(simpleType) : (IType) simpleType;
+            return array ? MiniJavaArrayType.OfType(simpleType) : (IType) simpleType;
         }
 
         public UserDefinedTypeSymbol ResolveSurroundingClass(ISyntaxTreeNode node)

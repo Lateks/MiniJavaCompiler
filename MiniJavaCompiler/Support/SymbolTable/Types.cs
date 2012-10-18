@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using MiniJavaCompiler.SemanticAnalysis;
 
 namespace MiniJavaCompiler.Support.SymbolTable
@@ -35,11 +36,24 @@ namespace MiniJavaCompiler.Support.SymbolTable
     {
         public SimpleTypeSymbol ElementType { get; private set; }
         public string Name { get; protected set; }
+        private static readonly Dictionary<SimpleTypeSymbol, MiniJavaArrayType> ArrayTypes =
+            new Dictionary<SimpleTypeSymbol, MiniJavaArrayType>();
 
-        public MiniJavaArrayType(SimpleTypeSymbol elementType)
+        private MiniJavaArrayType(SimpleTypeSymbol elementType)
         {
             Name = String.Format("{0}[]", elementType.Name);
             ElementType = elementType;
+        }
+
+        public static MiniJavaArrayType OfType(SimpleTypeSymbol elementType)
+        {
+            if (ArrayTypes.ContainsKey(elementType))
+            {
+                return ArrayTypes[elementType];
+            }
+            var arrayType = new MiniJavaArrayType(elementType);
+            ArrayTypes[elementType] = arrayType;
+            return arrayType;
         }
 
         public bool IsAssignableTo(IType other)
@@ -48,36 +62,12 @@ namespace MiniJavaCompiler.Support.SymbolTable
             {
                 return true;
             }
-            if (!(other is MiniJavaArrayType))
-            {
-                return false;
-            }
-            // Element types must be the same.
-            return ElementType.Equals((other as MiniJavaArrayType).ElementType);
+            return Equals(other);
         }
 
         public static bool IsPredefinedArrayMethod(string name)
         {
             return name == "length";
-        }
-
-        public override bool Equals(object other)
-        {
-            if (other == null)
-            {
-                return false;
-            }
-            return other is MiniJavaArrayType && Equals(other as MiniJavaArrayType);
-        }
-
-        public bool Equals(MiniJavaArrayType other)
-        {
-            return ElementType.Equals(other.ElementType);
-        }
-
-        public override int GetHashCode()
-        {
-            return (ElementType != null ? ElementType.GetHashCode() : 0);
         }
     }
 

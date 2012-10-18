@@ -147,7 +147,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
                 return null;
             }
             IType actualType = node.IsArray ?
-                new MiniJavaArrayType(nodeSimpleType) :
+                MiniJavaArrayType.OfType(nodeSimpleType) :
                 (IType)nodeSimpleType;
 
             return actualType;
