@@ -8,32 +8,27 @@ namespace MiniJavaCompiler.Support
     public interface IErrorReporter
     {
         void ReportError(string message, int row, int col);
-        List<ErrorMessage> Errors();
+        List<ErrorMessage> Errors { get; }
         int Count { get; }
     }
 
     public class ErrorLogger : IErrorReporter
     {
-        private readonly List<ErrorMessage> _errorMessages;
+        public List<ErrorMessage> Errors { get; private set; }
 
         public ErrorLogger()
         {
-            _errorMessages = new List<ErrorMessage>();
+            Errors = new List<ErrorMessage>();
         }
 
         public void ReportError(string message, int row, int col)
         {
-            _errorMessages.Add(new ErrorMessage(message, row, col));
-        }
-
-        public List<ErrorMessage> Errors()
-        {
-            return _errorMessages;
+            Errors.Add(new ErrorMessage(message, row, col));
         }
 
         public int Count
         {
-            get { return _errorMessages.Count; }
+            get { return Errors.Count; }
         }
     }
 

@@ -281,7 +281,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
             Assert.Null(parser.Statement());
-            Assert.That(errorReporter.Errors(), Is.Not.Empty);
+            Assert.That(errorReporter.Errors, Is.Not.Empty);
         }
 
         [Test]
@@ -293,7 +293,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
             Assert.Null(parser.Statement());
-            Assert.That(errorReporter.Errors(), Is.Not.Empty);
+            Assert.That(errorReporter.Errors, Is.Not.Empty);
         }
 
         [Test]

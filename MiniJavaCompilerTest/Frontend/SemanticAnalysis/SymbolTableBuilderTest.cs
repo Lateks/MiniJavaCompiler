@@ -23,11 +23,11 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
             var parserInputReader = new ParserInputReader(scanner, errors);
             var parser = new Parser(parserInputReader, errors);
             Program syntaxTree = parser.Parse();
-            Assert.That(errors.Errors(), Is.Empty);
+            Assert.That(errors.Errors, Is.Empty);
 
             var types = new TypeSetBuilder(syntaxTree, errors).BuildTypeSet();
             var symbolTableBuilder = new SymbolTableBuilder(syntaxTree, types, errors);
-            Assert.That(errors.Errors(), Is.Empty);
+            Assert.That(errors.Errors, Is.Empty);
 
             return symbolTableBuilder.BuildSymbolTable(out symbolTable);
         }
@@ -63,7 +63,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                              "\t void foo; \n" +
                              "} \n\n";
             Assert.False(BuildSymbolTableFor(program));
-            Assert.That(errors.Errors().First().Content, Is.StringContaining("Unknown type 'void'"));
+            Assert.That(errors.Errors.First().Content, Is.StringContaining("Unknown type 'void'"));
         }
 
         [Test]
@@ -105,8 +105,8 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                              "\t public int foo() { } \n" +
                              "} \n\n";
             Assert.False(BuildSymbolTableFor(program));
-            Assert.AreEqual(2, errors.Errors().Count);
-            foreach (var error in errors.Errors())
+            Assert.AreEqual(2, errors.Errors.Count);
+            foreach (var error in errors.Errors)
             {
                 Assert.That(error.Content, Is.StringContaining("Symbol 'foo' is already defined"));
             }
@@ -130,9 +130,9 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                              "\t int foo; \n" + // fifth error
                              "} \n\n";
             Assert.False(BuildSymbolTableFor(program));
-            Assert.AreEqual(5, errors.Errors().Count);
-            Assert.AreEqual(4, errors.Errors().Count(err => err.Message.Contains("Symbol 'foo' is already defined")));
-            Assert.AreEqual(1, errors.Errors().Count(err => err.Message.Contains("Symbol 'bar' is already defined")));
+            Assert.AreEqual(5, errors.Errors.Count);
+            Assert.AreEqual(4, errors.Errors.Count(err => err.Message.Contains("Symbol 'foo' is already defined")));
+            Assert.AreEqual(1, errors.Errors.Count(err => err.Message.Contains("Symbol 'bar' is already defined")));
         }
 
         [Test]
