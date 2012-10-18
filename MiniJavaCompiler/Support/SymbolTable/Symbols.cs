@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using MiniJavaCompiler.SemanticAnalysis;
 
 namespace MiniJavaCompiler.Support.SymbolTable
 {
@@ -36,6 +37,10 @@ namespace MiniJavaCompiler.Support.SymbolTable
 
         public override bool IsAssignableTo(IType other)
         {
+            if (other == ErrorType.GetInstance())
+            {
+                return true;
+            }
             return Equals(other);
         }
     }
@@ -99,6 +104,10 @@ namespace MiniJavaCompiler.Support.SymbolTable
 
         public override bool IsAssignableTo(IType other)
         {
+            if (other == ErrorType.GetInstance())
+            {
+                return false;
+            }
             return IsDerivedFrom(other as UserDefinedTypeSymbol);
         }
 

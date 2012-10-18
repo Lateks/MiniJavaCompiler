@@ -9,6 +9,7 @@ namespace MiniJavaCompiler.Support
     {
         void ReportError(string message, int row, int col);
         List<ErrorMessage> Errors();
+        int Count { get; }
     }
 
     public class ErrorLogger : IErrorReporter
@@ -28,6 +29,11 @@ namespace MiniJavaCompiler.Support
         public List<ErrorMessage> Errors()
         {
             return _errorMessages;
+        }
+
+        public int Count
+        {
+            get { return _errorMessages.Count; }
         }
     }
 

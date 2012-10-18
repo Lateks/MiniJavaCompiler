@@ -12,19 +12,13 @@ namespace MiniJavaCompiler.SyntaxAnalysis
     // The grammar has a separate level for each operator precedence level.
     internal class ExpressionParser : ParserBase
     {
-        // Note: all operators are left-associative.
-        private readonly string[][] _operatorsByPrecedenceLevel = new []
-            {
-                new [] { "||" },                                           
-                new [] { "&&" },
-                new [] { "==" },
-                new [] { "<", ">" },
-                new [] { "+", "-" },
-                new [] { "*", "/", "%" }, 
-            };
+        private int _maxPrecedenceLevel;
 
         public ExpressionParser(IParserInputReader input, IErrorReporter reporter, bool debugMode = false)
-            : base(input, reporter, debugMode) { }
+            : base(input, reporter, debugMode)
+        {
+            _maxPrecedenceLevel = MiniJavaInfo.OperatorsByPrecedenceLevel.Count() - 1;
+        }
 
         public IExpression Parse()
         {
@@ -44,15 +38,15 @@ namespace MiniJavaCompiler.SyntaxAnalysis
 
         private IExpression ParseBinaryOpExpression(int precedenceLevel)
         {
-            Debug.Assert(precedenceLevel >= 0 && precedenceLevel < _operatorsByPrecedenceLevel.Count());
+            Debug.Assert(precedenceLevel >= 0 && precedenceLevel <= _maxPrecedenceLevel);
             var parseOperand = GetParserFunction(precedenceLevel);
-            return ParseBinaryOpTail(parseOperand(), parseOperand, _operatorsByPrecedenceLevel[precedenceLevel]);
+            return ParseBinaryOpTail(parseOperand(), parseOperand, MiniJavaInfo.OperatorsByPrecedenceLevel[precedenceLevel]);
         }
 
         private Func<IExpression> GetParserFunction(int precedenceLevel)
         {
-            Debug.Assert(precedenceLevel >= 0 && precedenceLevel < _operatorsByPrecedenceLevel.Count());
-            if (precedenceLevel == _operatorsByPrecedenceLevel.Count() - 1)
+            Debug.Assert(precedenceLevel >= 0 && precedenceLevel <= _maxPrecedenceLevel);
+            if (precedenceLevel == _maxPrecedenceLevel)
             {
                 return MultiplicationOperand;
             }

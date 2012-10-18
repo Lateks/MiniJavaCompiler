@@ -7,14 +7,7 @@ using MiniJavaCompiler.Support.SymbolTable;
 
 namespace MiniJavaCompiler.SemanticAnalysis
 {
-    public class TypeError : Exception
-    {
-        public TypeError(string message) : base(message) { }
-    }
-    public class ReferenceError : Exception
-    {
-        public ReferenceError(string message) : base(message) { }
-    }
+    public class TypeCheckerError : Exception { }
 
     public class TypeChecker : INodeVisitor
     {
@@ -22,19 +15,27 @@ namespace MiniJavaCompiler.SemanticAnalysis
         private readonly Stack<IType> _operandTypes;
         private readonly Stack<IType> _returnTypes;
         private readonly Program _programRoot;
+        private readonly IErrorReporter _errors;
+        private bool _failed;
 
-        public TypeChecker(Program program, SymbolTable symbolTable)
+        public TypeChecker(Program program, SymbolTable symbolTable, IErrorReporter errorReporter)
         {
+            _failed = false;
             _programRoot = program;
             _symbolTable = symbolTable;
             _operandTypes = new Stack<IType>();
             _returnTypes = new Stack<IType>();
+            _errors = errorReporter;
         }
 
         // Throws an exception if there is a problem with types or references.
         public void CheckTypesAndReferences()
         {
             _programRoot.Accept(this);
+            if (_failed)
+            {
+                throw new TypeCheckerError();
+            }
         }
 
         public void Visit(Program node) { }
@@ -57,42 +58,24 @@ namespace MiniJavaCompiler.SemanticAnalysis
             var superClassMethodDeclaration = (MethodDeclaration) _symbolTable.Definitions[superClassMethod];
             if (OverloadsSuperClassMethod(node, superClassMethodDeclaration))
             {
-                throw new TypeError(String.Format(
-                    "Method {0} in class {1} on row {2}, col {3} overloads method {4} in class {5}. Overloading is not allowed.",
-                    node.Name, classScope.Name, node.Row, node.Col, superClassMethod.Name, classScope.SuperClass.Name));
+                ReportError(String.Format("Method {0} in class {1} overloads method {2} in class {3}. Overloading is not allowed.",
+                    node.Name, classScope.Name, superClassMethod.Name, classScope.SuperClass.Name), node);
             }
             if (SuperClassMethodHasADifferentTypeSignature(node, superClassMethodDeclaration))
             {
-                throw new TypeError(String.Format(
-                    "Method {0} in class {1} on row {2}, col {3} has a different type signature from overridden method {4} in class {5}.",
-                    node.Name, classScope.Name, node.Row, node.Col, superClassMethod.Name, classScope.SuperClass.Name));
+                ReportError(String.Format(
+                    "Method {0} in class {1} has a different type signature from overridden method {2} in class {3}.",
+                    node.Name, classScope.Name, superClassMethod.Name, classScope.SuperClass.Name), node);
             }
-        }
-
-        private bool SuperClassMethodHasADifferentTypeSignature(MethodDeclaration method, MethodDeclaration superClassMethod)
-        {
-            return !_symbolTable.ResolveType(method.Type, method.IsArray).Equals(
-                _symbolTable.ResolveType(superClassMethod.Type, superClassMethod.IsArray));
-        }
-
-        private bool OverloadsSuperClassMethod(MethodDeclaration method, MethodDeclaration superClassMethod)
-        {
-            if (method.Formals.Count != superClassMethod.Formals.Count)
-            {
-                return true;
-            }
-            var paramsEqual = method.Formals.Zip(superClassMethod.Formals,
-                (a, b) => _symbolTable.ResolveType(a.Type, a.IsArray).Equals(_symbolTable.ResolveType(b.Type, b.IsArray)));
-            return paramsEqual.Contains(false);
         }
 
         public void Visit(PrintStatement node)
         { // argument must be a basic type (int or boolean)
             var type = _operandTypes.Pop();
+            if (type is ErrorType) return;
             if (!(type is BuiltinTypeSymbol))
             {
-                throw new TypeError(String.Format("Cannot print expression of type {0} near row {1}, col {2}.",
-                    type.Name, node.Row, node.Col));
+                ReportError(String.Format("Cannot print expression of type {0}.", type.Name), node);
             }
         }
 
@@ -116,18 +99,18 @@ namespace MiniJavaCompiler.SemanticAnalysis
           // variable)
             var lhsType = _operandTypes.Pop();
             var rhsType = _operandTypes.Pop();
-            if (node.LeftHandSide is VariableReferenceExpression || node.LeftHandSide is ArrayIndexingExpression)
+            if (node.LeftHandSide is VariableReferenceExpression || node.LeftHandSide is ArrayIndexingExpression) // the only lvalues in Mini-Java
             {
                 if (!(rhsType.IsAssignableTo(lhsType)))
                 {
-                    throw new TypeError(String.Format("Cannot assign expression of type {0} to variable of type {1} " +
-                        "near row {2}, col {3}.", rhsType.Name, lhsType.Name, node.Row, node.Col));
+                    ReportError(String.Format("Cannot assign expression of type {0} to variable of type {1}.",
+                        rhsType.Name, lhsType.Name), node);
                 }
             }
             else
             {
-                throw new TypeError(String.Format("Assignment receiver expression is not assignable (requires an lvalue) near row {0}, col {1}.",
-                    node.Row, node.Col));
+                ReportError("Assignment receiver expression is not assignable (an lvalue required).",
+                    node);
             }
         }
 
@@ -138,43 +121,43 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
         public void Visit(WhileStatement node)
         {
-            // TODO: if the single boolean argument is a literal false, this is unreachable code
             RequireSingleBooleanArgument(node);
         }
 
         public void Visit(MethodInvocation node)
         {
-            var expressionType = _operandTypes.Pop();
-            MethodSymbol method;
-            if (node.MethodOwner is ThisExpression) // method called is defined by the enclosing class or its superclasses
+            var methodOwnerType = _operandTypes.Pop();
+            MethodSymbol method = null;
+            if (node.MethodOwner is ThisExpression) // Method called is defined by the enclosing class or its superclasses.
             {
                 method = (MethodSymbol)_symbolTable.Scopes[node].Resolve<MethodSymbol>(node.MethodName);
             }
-            else
+            else if (methodOwnerType != ErrorType.GetInstance())
             {
-                if (expressionType is MiniJavaArrayType) // method is called on an array (can only be a built in array method)
+                if (methodOwnerType is MiniJavaArrayType) // Method is called on an array (can only be a built in array method).
                 {
                     if (MiniJavaArrayType.IsPredefinedArrayMethod(node.MethodName))
                     {
                         _operandTypes.Push(_symbolTable.ResolveType(MiniJavaInfo.IntType));
-                        return;
-                    }
-                    throw new ReferenceError(String.Format("Cannot call method {0} for an array near row {1}, col {2}.",
-                        node.MethodName, node.Row, node.Col));
+                        return; // In this case there is nothing further to check, since length is
+                    }           // actually a field and therefore the invocation cannot have parameters.
+                    ReportError(String.Format("Cannot call method {0} for an array.",
+                        node.MethodName), node); // Note: in this case we still want to go into method call validation to pop
+                }                                // out possible arguments for the method invocation.
+                else if (methodOwnerType is BuiltinTypeSymbol)
+                {   // Builtin simple types are not objects, so methods cannot be invoked for them.
+                    // Possible arguments still need to be popped out of the stack.
+                    ReportError(String.Format("Cannot call method {0} on builtin type {1}.",
+                        node.MethodName, methodOwnerType.Name), node);
                 }
-                else if (expressionType is BuiltinTypeSymbol) // no methods are defined for builtin simple types
-                {
-                    throw new ReferenceError(String.Format("Cannot call method {0} on builtin type {1} near row {2}, col {3}.",
-                        node.MethodName, expressionType.Name, node.Row, node.Col));
-                }
-                else // expression evaluates to an object of a user defined type and method must be resolved in the defining class
-                {
-                    var enclosingClass = (UserDefinedTypeSymbol) expressionType;
+                else // Expression evaluates into an object of a user defined type
+                {    // and the method must be resolved in the defining class.
+                    var enclosingClass = (UserDefinedTypeSymbol) methodOwnerType;
                     method = (MethodSymbol)enclosingClass.Resolve<MethodSymbol>(node.MethodName);
                 }
             }
             ValidateMethodCall(method, node);
-            _operandTypes.Push(method.Type); // return type, can be void
+            _operandTypes.Push(method == null ? ErrorType.GetInstance() : method.Type); // return type, can be void
         }
 
         public void Visit(InstanceCreationExpression node)
@@ -182,19 +165,18 @@ namespace MiniJavaCompiler.SemanticAnalysis
             var createdType = _symbolTable.ResolveType(node.Type, node.IsArrayCreation);
             if (createdType == null)
             {
-                throw new ReferenceError(String.Format("Cannot resolve symbol {0} near row {1}, col {2}.",
-                    node.Type, node.Row, node.Col));
+                _errors.ReportError(String.Format("Cannot resolve symbol {0}.",
+                    node.Type), node.Row, node.Col);
             }
             if (node.IsArrayCreation)
             { // check that the array size expression is valid
                 var arraySizeType = _operandTypes.Pop();
                 if (!arraySizeType.IsAssignableTo(_symbolTable.ResolveType(MiniJavaInfo.IntType)))
                 {
-                    throw new ReferenceError(String.Format("Array size must be numeric near row {0}, col {1}.",
-                                                           node.Row, node.Col));
+                    ReportError("Array size must be numeric.", node);
                 }
             }
-            _operandTypes.Push(createdType);
+            _operandTypes.Push(createdType ?? ErrorType.GetInstance());
         }
 
         public void Visit(UnaryOperatorExpression node)
@@ -204,8 +186,8 @@ namespace MiniJavaCompiler.SemanticAnalysis
             var actualArgType = _operandTypes.Pop();
             if (!actualArgType.IsAssignableTo(expectedArgType))
             {
-                throw new TypeError(String.Format("Cannot apply operator {0} on operand of type {1} on row {2}, col {3}.",
-                    node.Operator, actualArgType.Name, node.Row, node.Col));
+                ReportError(String.Format("Cannot apply operator {0} on operand of type {1}.",
+                    node.Operator, actualArgType.Name), node);
             }
             _operandTypes.Push(_symbolTable.ResolveType(op.ResultType));
         }
@@ -220,8 +202,8 @@ namespace MiniJavaCompiler.SemanticAnalysis
                 var expectedOpType = _symbolTable.ResolveType(op.OperandType);
                 if (!leftOperandType.IsAssignableTo(expectedOpType) || !rightOperandType.IsAssignableTo(expectedOpType))
                 { // both arguments (lhs and rhs) must match operator's expected operand type
-                    throw new TypeError(String.Format("Cannot apply operator {0} on arguments of type {1} and {2} near row {3}, col {4}.",
-                        node.Operator, leftOperandType.Name, rightOperandType.Name, node.Row, node.Col));
+                    ReportError(String.Format("Cannot apply operator {0} on arguments of type {1} and {2}.",
+                        node.Operator, leftOperandType.Name, rightOperandType.Name), node);
                 }
             }
             _operandTypes.Push(_symbolTable.ResolveType(op.ResultType));
@@ -241,18 +223,17 @@ namespace MiniJavaCompiler.SemanticAnalysis
         public void Visit(ArrayIndexingExpression node)
         {
             var arrayType = _operandTypes.Pop();
-            if (!(arrayType is MiniJavaArrayType)) // only arrays can be indexed
+            if (!(arrayType is ErrorType) && !(arrayType is MiniJavaArrayType)) // only arrays can be indexed
             {
-                throw new TypeError(String.Format("Cannot index into expression of type {0} near row {1}, col {2}.",
-                    arrayType.Name, node.Row, node.Col));
+                ReportError(String.Format("Cannot index into expression of type {0}.", arrayType.Name), node);
             }
             var indexType = _operandTypes.Pop();
             if (!indexType.IsAssignableTo(_symbolTable.ResolveType(MiniJavaInfo.IntType)))
             { // array must be indexed with an expression that evaluates to an int value
-                throw new TypeError(String.Format("Invalid array index near row {0}, col {1}.",
-                    node.Row, node.Col));
+                ReportError("Invalid array index.", node);
             }
-            _operandTypes.Push((arrayType as MiniJavaArrayType).ElementType);
+            _operandTypes.Push(arrayType is MiniJavaArrayType ?
+                (IType) (arrayType as MiniJavaArrayType).ElementType : ErrorType.GetInstance());
         }
 
         public void Visit(VariableReferenceExpression node)
@@ -261,10 +242,9 @@ namespace MiniJavaCompiler.SemanticAnalysis
             var symbol = (VariableSymbol) scope.Resolve<VariableSymbol>(node.Name);
             if (symbol == null || !VariableDeclaredBeforeReference(symbol, node))
             {
-                throw new ReferenceError(String.Format("Could not resolve symbol {0} near row {1}, col {2}.",
-                    node.Name, node.Row, node.Col));
+                ReportError(String.Format("Could not resolve symbol {0}.", node.Name), node);
             }
-            _operandTypes.Push(symbol.Type);
+            _operandTypes.Push(symbol == null ? ErrorType.GetInstance() : symbol.Type);
         }
 
         public void Visit(IntegerLiteralExpression node)
@@ -275,8 +255,8 @@ namespace MiniJavaCompiler.SemanticAnalysis
             }
             catch (OverflowException)
             {
-                throw new TypeError(String.Format("Cannot fit integer literal {0} into a 32 bit integer variable near row {1}, col {2}.",
-                    node.Value, node.Row, node.Col));
+                ReportError(String.Format("Cannot fit integer literal {0} into a 32-bit integer variable.",
+                    node.Value), node);
             }
             _operandTypes.Push(_symbolTable.ResolveType(MiniJavaInfo.IntType));
         }
@@ -292,32 +272,34 @@ namespace MiniJavaCompiler.SemanticAnalysis
             var method = (MethodSymbol)_symbolTable.Scopes[node].Resolve<MethodSymbol>(node.Name);
             int numReturnStatements = _returnTypes.Count;
             if (method.Type.Equals(VoidType.GetInstance()))
-            { // void methods cannot have return statements (because Mini-Java does not define an empty return statement)
+            { // Void methods cannot have return statements (because Mini-Java does not define an empty return statement).
                 if (numReturnStatements > 0)
                 {
-                    throw new TypeError(String.Format("Method of type {0} cannot have return statements near row {1}, col {2}.",
-                        method.Type.Name, node.Row, node.Col));
+                    ReportError(String.Format("Method of type {0} cannot have return statements.",
+                        method.Type.Name), node);
                 }
             }
             else if (numReturnStatements == 0)
             {
-                throw new TypeError(String.Format("Missing return statement in method {0} near row {1}, col {2}.",
-                    method.Name, node.Row, node.Col));
+                ReportError(String.Format("Missing return statement in method {0}.",
+                    method.Name), node);
             }
             else
             {
                 if (!AllBranchesReturnAValue(node))
                 {
-                    throw new TypeError(String.Format("Missing return statement in method {0} near row {1}, col {2}.",
-                        method.Name, node.Row, node.Col));
+                    ReportError(String.Format("Missing return statement in method {0}.",
+                        method.Name), node);
                 }
-                for (int i = 0; i < numReturnStatements; i++)
+
+                // Return types can be checked even if some branches were missing a return statement.
+                while (_returnTypes.Count > 0)
                 {
                     var returnType = _returnTypes.Pop();
                     if (!returnType.IsAssignableTo(method.Type))
                     { // the type of object returned by the return statement must match the method's declared return type
-                        throw new TypeError(String.Format("Cannot convert expression of type {0} to {1} near row {2}, col {3}.",
-                            returnType.Name, method.Type.Name, node.Row, node.Col));
+                        ReportError(String.Format("Cannot convert expression of type {0} to {1}.",
+                            returnType.Name, method.Type.Name), node);
                     }
                 }
             }
@@ -332,17 +314,20 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
         private bool BlockAlwaysReturnsAValue(List<IStatement> statementsInBlock)
         {
-            var flattenedStatementsInBlock = FlattenStatementList(statementsInBlock);
-            var returnIdx = flattenedStatementsInBlock.FindIndex((statement) => statement is ReturnStatement); // TODO: if this is not the last index in the block, there is unreachable code which should cause an error
+            var flattenedStatementsInBlock = FlattenStatementList(statementsInBlock); // flatten block statements
+            var returnIdx = flattenedStatementsInBlock.FindIndex((statement) => statement is ReturnStatement);
             if (returnIdx >= 0)
             {
                 return true;
             }
+
             var conditionalStatements = new List<IfStatement>(flattenedStatementsInBlock.OfType<IfStatement>());
             if (!conditionalStatements.Any())
-            {
+            { // There was no return statement on this level and there are no conditional branches, so the block
+              // never returns a value.
                 return false;
             }
+
             bool allConditionalsReturnAValue = true;
             foreach (var conditional in conditionalStatements)
             {
@@ -359,14 +344,18 @@ namespace MiniJavaCompiler.SemanticAnalysis
             return allConditionalsReturnAValue;
         }
 
+        // Flattens a list of statements recursively by replacing block statements with
+        // lists of statements.
         private List<IStatement> FlattenStatementList(List<IStatement> statementList)
         {
             if (!statementList.Any(elem => elem is BlockStatement))
             {
                 return statementList;
             }
+            // Convert each block statement into a list of statements and wrap individual
+            // statements into lists to be able to concatenate them.
             var wrappedStatements = statementList.Select(elem => elem is BlockStatement ?
-                new List<IStatement>(FlattenStatementList((elem as BlockStatement).Statements)) :
+                FlattenStatementList((elem as BlockStatement).Statements) :
                 new List<IStatement>() {elem});
             return wrappedStatements.SelectMany(elem => elem).ToList();
         }
@@ -374,10 +363,11 @@ namespace MiniJavaCompiler.SemanticAnalysis
         private void RequireSingleBooleanArgument(SyntaxElement node)
         {
             var argType = _operandTypes.Pop();
+            if (argType == ErrorType.GetInstance()) return;
             if (!(argType is BuiltinTypeSymbol && argType.Name == MiniJavaInfo.BoolType))
             {
-                throw new TypeError(String.Format("Cannot convert expression of type {0} to boolean near row {1}, col {2}.",
-                                                  argType.Name, node.Row, node.Col));
+                ReportError(String.Format("Cannot convert expression of type {0} to boolean.",
+                    argType.Name), node);
             }
         }
 
@@ -385,42 +375,60 @@ namespace MiniJavaCompiler.SemanticAnalysis
         {
             if (method == null) // method does not exist
             {
-                throw new ReferenceError(String.Format("Cannot resolve symbol {0} near row {1}, col {2}.",
-                    node.MethodName, node.Row, node.Col));
+                ReportErrorAndDiscardCallParams(String.Format("Cannot resolve symbol {0}.", node.MethodName), node);
+                return;
             }
             if (method.IsStatic)
             {
-                throw new ReferenceError(String.Format("Cannot call static method {0} on an instance near row {1}, col {2}.",
-                    node.MethodName, node.Row, node.Col));
+                ReportErrorAndDiscardCallParams(String.Format("Cannot call static method {0} on an instance.", node.MethodName), node);
+                return;
             }
             var methodDecl = (MethodDeclaration)_symbolTable.Definitions[method];
             if (node.CallParameters.Count != methodDecl.Formals.Count)
             {
-                throw new TypeError(String.Format("Wrong number of arguments to method {0} near row {1}, col {2}.",
-                    node.MethodName, node.Row, node.Col));
+                ReportErrorAndDiscardCallParams(String.Format("Wrong number of arguments to method {0}.", node.MethodName), node);
+                return;
             }
-
+            
             ValidateCallParameterTypes(node, methodDecl);
+        }
+
+        private void ReportError(string errorMsg, SyntaxElement node)
+        {
+            _errors.ReportError(errorMsg, node.Row, node.Col);
+            _failed = true;
+        }
+
+        private void ReportErrorAndDiscardCallParams(string errorMsg, MethodInvocation node)
+        {
+            _errors.ReportError(errorMsg, node.Row, node.Col);
+            PopCallParams(node);
+            _failed = true;
         }
 
         private void ValidateCallParameterTypes(MethodInvocation node, MethodDeclaration methodDecl)
         {
-            var callParams = new Stack<IType>();
-            foreach (var arg in node.CallParameters)
-            {
-                callParams.Push(_operandTypes.Pop());
-            }
+            var callParams = PopCallParams(node);
             foreach (var formalParameter in methodDecl.Formals)
             {
                 var callParamType = callParams.Pop();
                 var formalParamType = _symbolTable.ResolveType(formalParameter.Type, formalParameter.IsArray);
                 if (!callParamType.IsAssignableTo(formalParamType))
                 {
-                    throw new TypeError(String.Format(
-                        "Wrong type of argument to method {0} near row {1}, col {2}. Expected {3} but got {4}.",
-                        node.MethodName, node.Row, node.Col, formalParamType.Name, callParamType.Name));
+                    ReportError(String.Format("Wrong type of argument to method {0}. Expected {1} but got {2}.",
+                        node.MethodName, formalParamType.Name, callParamType.Name), node);
                 }
             }
+        }
+
+        private Stack<IType> PopCallParams(MethodInvocation node)
+        {
+            var callParams = new Stack<IType>();
+            foreach (var arg in node.CallParameters)
+            {
+                callParams.Push(_operandTypes.Pop());
+            }
+            return callParams;
         }
 
         private bool VariableDeclaredBeforeReference(VariableSymbol varSymbol, VariableReferenceExpression reference)
@@ -431,6 +439,24 @@ namespace MiniJavaCompiler.SemanticAnalysis
             }
             var declaration = (VariableDeclaration)_symbolTable.Definitions[varSymbol];
             return declaration.Row < reference.Row || (declaration.Row == reference.Row && declaration.Col < reference.Col);
+        }
+
+
+        private bool SuperClassMethodHasADifferentTypeSignature(MethodDeclaration method, MethodDeclaration superClassMethod)
+        {
+            return !_symbolTable.ResolveType(method.Type, method.IsArray).Equals(
+                _symbolTable.ResolveType(superClassMethod.Type, superClassMethod.IsArray));
+        }
+
+        private bool OverloadsSuperClassMethod(MethodDeclaration method, MethodDeclaration superClassMethod)
+        {
+            if (method.Formals.Count != superClassMethod.Formals.Count)
+            {
+                return true;
+            }
+            var paramsEqual = method.Formals.Zip(superClassMethod.Formals,
+                (a, b) => _symbolTable.ResolveType(a.Type, a.IsArray).Equals(_symbolTable.ResolveType(b.Type, b.IsArray)));
+            return paramsEqual.Contains(false);
         }
     }
 }

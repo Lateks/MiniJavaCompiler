@@ -14,7 +14,18 @@ namespace MiniJavaCompiler.Support
         internal static readonly char[]
             Punctuation = new[] { ';', '(', ')', '[', ']', '.', '{', '}', ',' },
             SingleCharOperatorSymbols = new[] { '/', '+', '-', '*', '<', '>', '%', '!' },
-            MultiCharOperatorSymbols = new[] { '&', '=', '|' };
+            MultiCharOperatorSymbols = new[] { '&', '=', '|' }; // only one symbol needed because all two-character operators have the same symbol twice
+
+        // Note: all of these operators are left-associative.
+        internal static readonly string[][] OperatorsByPrecedenceLevel = new[]
+            {
+                new [] { "||" },
+                new [] { "&&" },
+                new [] { "==" },
+                new [] { "<", ">" },
+                new [] { "+", "-" },
+                new [] { "*", "/", "%" },
+            };
 
         internal static readonly string[]
             Keywords = new[] { "this", "true", "false", "new", "length", "System", "out",

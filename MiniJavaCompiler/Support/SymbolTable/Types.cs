@@ -1,4 +1,5 @@
 using System;
+using MiniJavaCompiler.SemanticAnalysis;
 
 namespace MiniJavaCompiler.Support.SymbolTable
 {
@@ -6,6 +7,28 @@ namespace MiniJavaCompiler.Support.SymbolTable
     {
         string Name { get; }
         bool IsAssignableTo(IType other);
+    }
+
+    // This is a placeholder type for type stacks when a type cannot be
+    // resolved or is faulty. ErrorTypes _must_ be compatible with
+    // (that is: assignable to and from) every other type to avoid a
+    // cascade of uninformative error messages during type checking.
+    public class ErrorType : IType
+    {
+        private static readonly ErrorType Instance = new ErrorType();
+        public string Name { get { return "error"; } }
+
+        private ErrorType() { }
+
+        public bool IsAssignableTo(IType other)
+        {
+            return true;
+        }
+
+        public static ErrorType GetInstance()
+        {
+            return Instance;
+        }
     }
 
     public class MiniJavaArrayType : IType
@@ -21,11 +44,15 @@ namespace MiniJavaCompiler.Support.SymbolTable
 
         public bool IsAssignableTo(IType other)
         {
+            if (other == ErrorType.GetInstance())
+            {
+                return true;
+            }
             if (!(other is MiniJavaArrayType))
             {
                 return false;
             }
-            // Element types must be the same (not just derived from the same base).
+            // Element types must be the same.
             return ElementType.Equals((other as MiniJavaArrayType).ElementType);
         }
 
@@ -66,7 +93,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
 
         public bool IsAssignableTo(IType other)
         {
-            return false;
+            return other == ErrorType.GetInstance();
         }
 
         public static VoidType GetInstance()
