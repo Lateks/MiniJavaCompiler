@@ -10,7 +10,10 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
         int Col { get; }
     }
 
-    public static class TokenDescriptions
+    /*  A static class for describing token types. These descriptions
+     *  can be used in dynamically generated error messages.
+     */
+    internal static class TokenDescriptions
     {
         private static readonly Dictionary<Type, string> Descriptions =
             new Dictionary<Type, string>()
@@ -55,6 +58,8 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
         }
     }
 
+    // This is used by the scanner: lexical errors end up as error tokens
+    // in the token stream and can be handled by the parser.
     public class ErrorToken : TokenElement
     {
         public string Message { get; private set; }
@@ -69,14 +74,16 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
         }
     }
 
+    // A base class for token types that need to store a lexeme.
+    // TODO: could this be a base class for all token types? And Lexeme could be an interface property.
     public abstract class StringToken : TokenElement
     {
-        public string Value { get; private set; }
+        public string Lexeme { get; private set; }
 
         protected StringToken(string name, int row, int col)
             : base(row, col)
         {
-            Value = name;
+            Lexeme = name;
         }
     }
 

@@ -20,7 +20,7 @@ namespace MiniJavaCompilerTest.Frontend.Scanning
             var lexer = new MiniJavaScanner(reader);
             IToken next = lexer.NextToken();
             Assert.That(next, Is.InstanceOf<KeywordToken>());
-            Assert.That(((KeywordToken)next).Value, Is.EqualTo(@keyword));
+            Assert.That(((KeywordToken)next).Lexeme, Is.EqualTo(@keyword));
             reader.Close();
         }
     }
@@ -38,7 +38,7 @@ namespace MiniJavaCompilerTest.Frontend.Scanning
             var lexer = new MiniJavaScanner(reader);
             IToken token = lexer.NextToken();
             Assert.That(token, Is.InstanceOf<OperatorToken>());
-            Assert.That(((OperatorToken)token).Value, Is.EqualTo(@operator));
+            Assert.That(((OperatorToken)token).Lexeme, Is.EqualTo(@operator));
             reader.Close();
         }
     }
@@ -56,7 +56,7 @@ namespace MiniJavaCompilerTest.Frontend.Scanning
             var lexer = new MiniJavaScanner(reader);
             IToken token = lexer.NextToken();
             Assert.That(token, Is.InstanceOf<OperatorToken>());
-            Assert.That(((OperatorToken)token).Value, Is.EqualTo(@operator));
+            Assert.That(((OperatorToken)token).Lexeme, Is.EqualTo(@operator));
             reader.Close();
         }
     }
@@ -129,16 +129,16 @@ namespace MiniJavaCompilerTest.Frontend.Scanning
         {
             var reader = new StringReader("123");
             var lexer = new MiniJavaScanner(reader);
-            Assert.That(((IntegerLiteralToken)lexer.NextToken()).Value, Is.EqualTo("123"));
+            Assert.That(((IntegerLiteralToken)lexer.NextToken()).Lexeme, Is.EqualTo("123"));
             reader.Close();
 
             reader = new StringReader("1 23");
             lexer = new MiniJavaScanner(reader);
             var token = (IntegerLiteralToken)lexer.NextToken();
-            Assert.That(token.Value, Is.EqualTo("1"));
+            Assert.That(token.Lexeme, Is.EqualTo("1"));
             Assert.That(token.Row, Is.EqualTo(1));
             Assert.That(token.Col, Is.EqualTo(1));
-            Assert.That(((IntegerLiteralToken)lexer.NextToken()).Value, Is.EqualTo("23"));
+            Assert.That(((IntegerLiteralToken)lexer.NextToken()).Lexeme, Is.EqualTo("23"));
             reader.Close();
         }
 
@@ -163,12 +163,12 @@ namespace MiniJavaCompilerTest.Frontend.Scanning
         {
             var reader = new StringReader("42foo");
             var lexer = new MiniJavaScanner(reader);
-            Assert.That(((IntegerLiteralToken)lexer.NextToken()).Value, Is.EqualTo("42"));
+            Assert.That(((IntegerLiteralToken)lexer.NextToken()).Lexeme, Is.EqualTo("42"));
             IToken next = lexer.NextToken();
             Assert.That(next, Is.InstanceOf<IdentifierToken>());
-            Assert.That(((IdentifierToken)next).Value, Is.EqualTo("foo"));
+            Assert.That(((IdentifierToken)next).Lexeme, Is.EqualTo("foo"));
             lexer = new MiniJavaScanner(new StringReader("f_o12a"));
-            Assert.That(((IdentifierToken)lexer.NextToken()).Value, Is.EqualTo("f_o12a"));
+            Assert.That(((IdentifierToken)lexer.NextToken()).Lexeme, Is.EqualTo("f_o12a"));
             reader.Close();
         }
 
@@ -177,7 +177,7 @@ namespace MiniJavaCompilerTest.Frontend.Scanning
         {
             var reader = new StringReader("\n\t\v\n  foo");
             var lexer = new MiniJavaScanner(reader);
-            Assert.That(((IdentifierToken)lexer.NextToken()).Value, Is.EqualTo("foo"));
+            Assert.That(((IdentifierToken)lexer.NextToken()).Lexeme, Is.EqualTo("foo"));
             reader.Close();
         }
 
@@ -187,7 +187,7 @@ namespace MiniJavaCompilerTest.Frontend.Scanning
             var reader = new StringReader("// ... \n // ... \n foo");
             var lexer = new MiniJavaScanner(reader);
             var token = (IdentifierToken)lexer.NextToken();
-            Assert.That(token.Value, Is.EqualTo("foo"));
+            Assert.That(token.Lexeme, Is.EqualTo("foo"));
             Assert.That(token.Row, Is.EqualTo(3));
             Assert.That(token.Col, Is.EqualTo(2));
             reader.Close();
@@ -195,14 +195,14 @@ namespace MiniJavaCompilerTest.Frontend.Scanning
             reader = new StringReader("/* ... \n\n*/ \tfoo");
             lexer = new MiniJavaScanner(reader);
             token = (IdentifierToken)lexer.NextToken();
-            Assert.That(token.Value, Is.EqualTo("foo"));
+            Assert.That(token.Lexeme, Is.EqualTo("foo"));
             Assert.That(token.Row, Is.EqualTo(3));
             Assert.That(token.Col, Is.EqualTo(5));
             reader.Close();
 
             reader = new StringReader("\n\n// ...//\n// ... \n\n/* ... */ foo");
             lexer = new MiniJavaScanner(reader);
-            Assert.That(((IdentifierToken)lexer.NextToken()).Value, Is.EqualTo("foo"));
+            Assert.That(((IdentifierToken)lexer.NextToken()).Lexeme, Is.EqualTo("foo"));
             reader.Close();
         }
 
@@ -211,7 +211,7 @@ namespace MiniJavaCompilerTest.Frontend.Scanning
         {
             var reader = new StringReader("\n\t\t// ... \n // ... \n     foo");
             var lexer = new MiniJavaScanner(reader);
-            Assert.That(((IdentifierToken)lexer.NextToken()).Value, Is.EqualTo("foo"));
+            Assert.That(((IdentifierToken)lexer.NextToken()).Lexeme, Is.EqualTo("foo"));
             reader.Close();
         }
 
@@ -234,7 +234,7 @@ namespace MiniJavaCompilerTest.Frontend.Scanning
 
             reader = new StringReader("// .. / ..\n /");
             lexer = new MiniJavaScanner(reader);
-            Assert.That(((OperatorToken)lexer.NextToken()).Value, Is.EqualTo("/"));
+            Assert.That(((OperatorToken)lexer.NextToken()).Lexeme, Is.EqualTo("/"));
             reader.Close();
         }
 

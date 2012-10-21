@@ -112,7 +112,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
         {
             if (_tokenStream.CurrentToken is TExpectedType)
             {
-                if (((StringToken)_tokenStream.CurrentToken).Value == expectedValue)
+                if (((StringToken)_tokenStream.CurrentToken).Lexeme == expectedValue)
                 {
                     return Consume<TExpectedType>();
                 }
@@ -157,7 +157,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
                 {
                     Debug.Assert(token is StringToken);
                     return new SyntaxError(String.Format("Expected {0} but got {1}.", expected,
-                        TokenDescriptions.Describe(token.GetType()) + " '" + (token as StringToken).Value + "'"),
+                        TokenDescriptions.Describe(token.GetType()) + " '" + (token as StringToken).Lexeme + "'"),
                         token.Row, token.Col);
                 }
             }
@@ -194,7 +194,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
         public bool NextTokenIs<TExpectedType>(string expectedValue)
             where TExpectedType : StringToken
         {
-            return NextTokenIs<TExpectedType>() && ((StringToken)_tokenStream.CurrentToken).Value == expectedValue;
+            return NextTokenIs<TExpectedType>() && ((StringToken)_tokenStream.CurrentToken).Lexeme == expectedValue;
         }
 
         public bool NextTokenIs<TExpectedType>()
@@ -211,7 +211,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
             if (!NextTokenIs<TExpectedType>())
                 return false;
             else
-                return valueCollection.Contains(((StringToken) _tokenStream.CurrentToken).Value);
+                return valueCollection.Contains(((StringToken) _tokenStream.CurrentToken).Lexeme);
         }
     }
 }

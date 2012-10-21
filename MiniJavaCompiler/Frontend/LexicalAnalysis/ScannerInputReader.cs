@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 
 namespace MiniJavaCompiler.Frontend.LexicalAnalysis
@@ -16,6 +17,8 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
         }
     }
 
+    internal class OutOfScannerInput : Exception { }
+
     // Handles reading input from the given TextReader, skipping comments
     // and whitespace, keeping track of row and column numbers in the
     // source code and buffering input when a look-ahead of more than
@@ -25,8 +28,8 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
     {
         private readonly TextReader _input;
         private char? _buffer;
-        private int _commentStartRow;
-        private int _commentStartCol;
+        private int _commentStartRow; // the starting row of the current comment, for error messages
+        private int _commentStartCol; // the starting column of the current comment, for error messages
         internal int Row { get; private set; }
         internal int Col { get; private set; }
 
@@ -34,27 +37,39 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
         {
             _input = input;
             _buffer = null;
-            Row = 1; Col = 0;
+            Row = 1; Col = 0; // The first character in a file will be marked as being on row 1, column 1.
         }
 
+        // Peeks at input.
         internal char Peek()
         {
             if (_buffer != null)
             {
-                var temp = (char)_buffer;
-                return temp;
+                return (char)_buffer;
             }
             else
-                return (char)_input.Peek();
+            {
+                if (!InputLeft())
+                {
+                    throw new OutOfScannerInput();
+                }
+                return (char) _input.Peek();
+            }
         }
 
         internal bool InputLeft()
         {
-            return !(_input.Peek() < 0 && _buffer == null);
+            return _input.Peek() >= 0 || _buffer != null;
         }
 
+        // Reads the next character from input as a string.
         internal string Read()
         {
+            if (!InputLeft())
+            {
+                throw new OutOfScannerInput();
+            }
+
             char symbol;
             if (_buffer != null)
             {
@@ -71,12 +86,11 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
 
         internal void SkipWhiteSpaceAndComments()
         {
-            while (InputLeft())
+            bool commentsFound = true;
+            while (NextCharIsWhiteSpace() || commentsFound)
             {
                 SkipWhiteSpace();
-                bool noCommentsFound = !SkipComments();
-                if ((noCommentsFound && !NextCharIsWhiteSpace()))
-                    return;
+                commentsFound = SkipComments();
             }
         }
 
@@ -99,7 +113,7 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
 
         private bool NextCharIsWhiteSpace()
         {
-            return (InputLeft() && Char.IsWhiteSpace(Peek()));
+            return InputLeft() && Char.IsWhiteSpace(Peek());
         }
 
         // Returns true if something was skipped and false otherwise.
@@ -107,10 +121,11 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
         {
             if (!InputLeft() || !Peek().Equals('/'))
                 return false;
+            Debug.Assert(_buffer == null);
 
             _commentStartRow = Row;
             _commentStartCol = Col + 1;
-            _buffer = (char)_input.Read(); // may be a division symbol, not a comment starter
+            _buffer = (char)_input.Read(); // May be a division symbol, not a comment starter.
             if (_input.Peek().Equals('/'))
                 SkipOneLineComment();
             else if (_input.Peek().Equals('*'))
@@ -134,16 +149,16 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
                     throw new EndlessCommentError("Reached end of input while scanning for a comment.",
                                                   _commentStartRow, _commentStartCol);
             } while (!Peek().Equals('/'));
-            Read();
+            Read(); // discard the comment ending '/' symbol
         }
 
         private bool ReadUntil(char symbol)
         {
             while (InputLeft() && !Peek().Equals(symbol))
                 Read();
-            if (!InputLeft()) // reached end of input but did not see symbol
+            if (!InputLeft()) // Reached end of input but did not see the symbol.
                 return false;
-            Read(); // discard symbol
+            Read(); // Discard symbol.
             return true;
         }
     }

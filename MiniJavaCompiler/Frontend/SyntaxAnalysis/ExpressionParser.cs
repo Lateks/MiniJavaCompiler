@@ -62,7 +62,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
             {
                 var token = Input.Consume<OperatorToken>();
                 var term = Term();
-                return new UnaryOperatorExpression(token.Value, term, token.Row, token.Col);
+                return new UnaryOperatorExpression(token.Lexeme, term, token.Row, token.Col);
             }
             else
                 return Term();
@@ -79,7 +79,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
             {
                 var opToken = Input.Consume<OperatorToken>();
                 var rightHandOperand = parseRightHandSideOperand();
-                var operatorExp = new BinaryOpExpression(opToken.Value, leftHandOperand, rightHandOperand, opToken.Row, opToken.Col);
+                var operatorExp = new BinaryOpExpression(opToken.Lexeme, leftHandOperand, rightHandOperand, opToken.Row, opToken.Col);
                 return ParseBinaryOpTail(operatorExp, parseRightHandSideOperand, operators);
             }
             else
@@ -114,7 +114,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
                     {
                         Debug.Assert(token is StringToken);
                         errorMessage = String.Format("Invalid start token '{0}' of type {1} for an expression.",
-                            (token as StringToken).Value, TokenDescriptions.Describe(token.GetType()));
+                            (token as StringToken).Lexeme, TokenDescriptions.Describe(token.GetType()));
                     }
                     throw new SyntaxError(errorMessage, token.Row, token.Col);
                 }
@@ -146,7 +146,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
         private IExpression MakeIntegerLiteralExpression()
         {
             var token = Input.MatchAndConsume<IntegerLiteralToken>();
-            return OptionalTermTail(new IntegerLiteralExpression(token.Value,
+            return OptionalTermTail(new IntegerLiteralExpression(token.Lexeme,
                 token.Row, token.Col));
         }
 
@@ -154,7 +154,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
         {
             var identifier = Input.MatchAndConsume<IdentifierToken>();
             return OptionalTermTail(new VariableReferenceExpression(
-                identifier.Value, identifier.Row, identifier.Col));
+                identifier.Lexeme, identifier.Row, identifier.Col));
         }
 
         // Similarly to keyword statements, keyword expressions are expressions
@@ -162,7 +162,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
         private IExpression MakeKeywordExpression()
         {
             var token = (KeywordToken)Input.Peek();
-            switch (token.Value)
+            switch (token.Lexeme)
             {
                 case "new":
                     return MakeInstanceCreationExpression();
@@ -174,7 +174,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
                     return MakeBooleanLiteral(false);
                 default:
                     throw new SyntaxError(String.Format("Invalid start token '{0}' of type {1} for an expression.",
-                        token.Value, TokenDescriptions.Describe(token.GetType())), token.Row, token.Col);
+                        token.Lexeme, TokenDescriptions.Describe(token.GetType())), token.Row, token.Col);
             }
         }
 
@@ -197,7 +197,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
             var newToken = Input.Consume<KeywordToken>();
             var typeInfo = NewType();
             var type = (StringToken)typeInfo.Item1;
-            return OptionalTermTail(new InstanceCreationExpression(type.Value,
+            return OptionalTermTail(new InstanceCreationExpression(type.Lexeme,
                 newToken.Row, newToken.Col, typeInfo.Item2));
         }
 
@@ -235,7 +235,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
             var parameters = ExpressionList();
             Input.MatchAndConsume<PunctuationToken>(")");
             return OptionalTermTail(new MethodInvocation(methodOwner,
-                methodName.Value, parameters, methodName.Row, methodName.Col));
+                methodName.Lexeme, parameters, methodName.Row, methodName.Col));
         }
 
         // The length field in Array class is treated as a method invocation in the syntax tree
@@ -245,7 +245,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
         {
             var methodName = Input.MatchAndConsume<KeywordToken>("length");
             var parameters = new List<IExpression>();
-            return OptionalTermTail(new MethodInvocation(methodOwner, methodName.Value,
+            return OptionalTermTail(new MethodInvocation(methodOwner, methodName.Lexeme,
                 parameters, methodName.Row, methodName.Col));
         }
 

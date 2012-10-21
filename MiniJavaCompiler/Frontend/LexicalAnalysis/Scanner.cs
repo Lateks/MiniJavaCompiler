@@ -2,36 +2,43 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
+using System.Text;
 using MiniJavaCompiler.Support;
 
 namespace MiniJavaCompiler.Frontend.LexicalAnalysis
 {
-    public class OutOfInput : Exception
-    {
-        public OutOfInput(string message) : base(message) { }
-    }
-
     public interface ITokenizer
     {
         IToken NextToken();
+    }
+
+    // This exception is thrown by the scanner if NextToken is called after
+    // end of file.
+    public class OutOfInput : Exception
+    {
+        public OutOfInput(string message) : base(message) { }
     }
 
     public class MiniJavaScanner : ITokenizer
     {
         private readonly ScannerInputReader _input;
         private readonly Queue<IToken> _tokens;
-        private int _startRow;
-        private int _startCol;
+        private int _startRow; // the starting row of the current token
+        private int _startCol; // the starting column of the current token
 
         public MiniJavaScanner(TextReader input)
         {
             _input = new ScannerInputReader(input);
             _tokens = new Queue<IToken>();
-            BuildTokenList();
+            BuildTokenQueue(); // The token queue is built right up front. This ensures
+                               // that no one can close the TextReader before we are done.
         }
 
-        // Note: the parser outputs an error token whenever an unexpected token is encountered
-        // (such as an endless comment or a character that is not allowed).
+        /* Note: the parser outputs an error token whenever an unexpected token is encountered
+         * (such as an endless comment or a character that is not allowed).
+         *
+         * If the method is called after end of file, an exception is thrown.
+         */
         public IToken NextToken()
         {
             if (_tokens.Count > 0)
@@ -39,10 +46,15 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
             throw new OutOfInput("Reached end of file while parsing.");
         }
 
-        // Passes through the code once and builds a queue of tokens.
-        // This could also be done lazily so that the next token is matched
-        // every time NextToken is called.
-        private void BuildTokenList()
+        /* Passes through the code once and builds a queue of tokens.
+         * This could also be done lazily so that the next token is produced
+         * every time NextToken is called.
+         * 
+         * In this case, the Scanner would preferably need to manage the
+         * TextReader on its own so it would never be closed before the
+         * whole program has been passed through.
+         */
+        private void BuildTokenQueue()
         {
             IToken token;
             do
@@ -70,15 +82,25 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
 
             char inputSymbol = _input.Peek();
             if (MiniJavaInfo.SingleCharOperatorSymbols.Contains(inputSymbol))
+            {
                 return MakeSingleCharBinaryOperatorToken();
+            }
             else if (MiniJavaInfo.MultiCharOperatorSymbols.Contains(inputSymbol))
-                return MakeMultiCharOperatorToken();
+            {
+                return MakeMultiCharOperatorOrAssignmentToken();
+            }
             else if (MiniJavaInfo.Punctuation.Contains(inputSymbol))
+            {
                 return MakePunctuationToken();
+            }
             else if (Char.IsDigit(inputSymbol))
+            {
                 return MakeIntegerLiteralToken();
+            }
             else if (Char.IsLetter(inputSymbol))
+            {
                 return MakeIdentifierOrKeywordToken();
+            }
             else
             {
                 string token = _input.Read();
@@ -92,15 +114,15 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
             return new OperatorToken(_input.Read(), _startRow, _startCol);
         }
 
-        private IToken MakeMultiCharOperatorToken()
+        private IToken MakeMultiCharOperatorOrAssignmentToken()
         {
             string symbol = _input.Read();
-            if (_input.InputLeft() && _input.Peek().ToString().Equals(symbol))
+            if (_input.InputLeft() && _input.Peek().ToString() == symbol)
             {
                 symbol += _input.Read();
                 return new OperatorToken(symbol, _startRow, _startCol);
             }
-            else if (symbol.Equals("="))
+            else if (symbol.Equals("=")) // An assignment operator.
                 return new OperatorToken(symbol, _startRow, _startCol);
             else
                 return new ErrorToken(symbol, String.Format("Unexpected token '{0}'", symbol),
@@ -115,18 +137,20 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
 
         private IntegerLiteralToken MakeIntegerLiteralToken()
         {
-            string token = "";
+            var token = new StringBuilder();
             while (_input.InputLeft() && Char.IsDigit(_input.Peek()))
-                token += _input.Read();
-            return new IntegerLiteralToken(token, _startRow, _startCol);
+                token.Append(_input.Read());
+            return new IntegerLiteralToken(token.ToString(), _startRow, _startCol);
         }
 
         private IToken MakeIdentifierOrKeywordToken()
         {
-            string token = "";
+            var tokenBuilder = new StringBuilder();
             while (_input.InputLeft() && (Char.IsLetterOrDigit(_input.Peek()) ||
                                          _input.Peek().Equals('_')))
-                token += _input.Read();
+                tokenBuilder.Append(_input.Read());
+            var token = tokenBuilder.ToString();
+
             if (MiniJavaInfo.Types.Contains(token))
                 return new MiniJavaTypeToken(token, _startRow, _startCol);
             if (MiniJavaInfo.Keywords.Contains(token))

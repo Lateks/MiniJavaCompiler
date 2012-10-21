@@ -89,7 +89,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
                 Input.MatchAndConsume<PunctuationToken>("}");
 
                 Input.MatchAndConsume<PunctuationToken>("}");
-                return new MainClassDeclaration(classIdent.Value,
+                return new MainClassDeclaration(classIdent.Lexeme,
                     mainStatements, startToken.Row, startToken.Col,
                     methodStartToken.Row, methodStartToken.Col);
             }
@@ -120,7 +120,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
                 Input.MatchAndConsume<PunctuationToken>("{");
                 var declarations = DeclarationList();
                 Input.MatchAndConsume<PunctuationToken>("}");
-                return new ClassDeclaration(classIdent.Value, inheritedClass,
+                return new ClassDeclaration(classIdent.Lexeme, inheritedClass,
                     declarations, startToken.Row, startToken.Col);
             }
             catch (SyntaxError e)
@@ -147,7 +147,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
                 return null;
             }
             Input.MatchAndConsume<KeywordToken>("extends");
-            return Input.MatchAndConsume<IdentifierToken>().Value;
+            return Input.MatchAndConsume<IdentifierToken>().Lexeme;
         }
 
         public IStatement Statement()
@@ -274,7 +274,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
         {
             Debug.Assert(Input.NextTokenOneOf<KeywordToken>("assert", "if", "while", "System", "return")); // should not be here otherwise
             var token = (KeywordToken) Input.Peek();
-            switch (token.Value)
+            switch (token.Lexeme)
             {
                 case "assert":
                     return MakeAssertStatement();
@@ -352,7 +352,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
         {
             var variableName = Input.MatchAndConsume<IdentifierToken>();
             Input.MatchAndConsume<PunctuationToken>(";");
-            return new VariableDeclaration(variableName.Value, variableTypeName.Value, isArray,
+            return new VariableDeclaration(variableName.Lexeme, variableTypeName.Lexeme, isArray,
                 variableTypeName.Row, variableTypeName.Col);
         }
 
@@ -407,7 +407,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
                     {
                         Debug.Assert(token is StringToken);
                         errorMsg = String.Format("Invalid token '{0}' of type {1} starting a declaration.",
-                            (token as StringToken).Value, TokenDescriptions.Describe(token.GetType()));
+                            (token as StringToken).Lexeme, TokenDescriptions.Describe(token.GetType()));
                     }
                     throw new SyntaxError(errorMsg, token.Row, token.Col);
                 }
@@ -444,7 +444,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
                 var typeInfo = Type();
                 var type = (StringToken)typeInfo.Item1;
                 var variableIdent = Input.MatchAndConsume<IdentifierToken>();
-                return new VariableDeclaration(variableIdent.Value, type.Value,
+                return new VariableDeclaration(variableIdent.Lexeme, type.Lexeme,
                     typeInfo.Item2, type.Row, type.Col);
             }
             catch (SyntaxError e)
@@ -475,7 +475,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
             Input.MatchAndConsume<PunctuationToken>("{");
             List<IStatement> methodBody = StatementList();
             Input.MatchAndConsume<PunctuationToken>("}");
-            return new MethodDeclaration(methodName.Value, type.Value,
+            return new MethodDeclaration(methodName.Lexeme, type.Lexeme,
                 typeInfo.Item2, parameters, methodBody, startToken.Row,
                 startToken.Col);
         }
