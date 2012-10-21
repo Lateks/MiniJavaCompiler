@@ -126,7 +126,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             SetUpParser(program);
             Assert.Throws<SyntaxAnalysisFailed>(() => _parser.Parse());
             Assert.That(_errorLog.Errors.Count, Is.EqualTo(5));
-            Assert.That(_errorLog.Errors[0].Message, Is.StringContaining("Expected ';' but got builtin type 'int'")); // recovers until the end of the statement "int foo;"
+            Assert.That(_errorLog.Errors[0].Message, Is.StringContaining("Expected ';' but got built-in type 'int'")); // recovers until the end of the statement "int foo;"
             Assert.That(_errorLog.Errors[1].Message, Is.StringContaining("Expected identifier but got punctuation token ';'")); // invalid method declaration caught, recovers until the next }
             Assert.That(_errorLog.Errors[2].Message, Is.StringContaining("Invalid token 'class' of type keyword starting a declaration"));
             Assert.That(_errorLog.Errors[3].Message, Is.StringContaining("Reached end of file while parsing a declaration")); // recovery ended by end of file
@@ -372,7 +372,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             Assert.Throws<SyntaxAnalysisFailed>(() => _parser.Parse());
             Assert.That(_errorLog.Errors.Count, Is.EqualTo(2));
             Assert.That(_errorLog.Errors[0].Message, Is.StringContaining("Expected identifier but got keyword 'public'"));
-            Assert.That(_errorLog.Errors[1].Message, Is.StringContaining("Expected identifier but got builtin type 'int'"));
+            Assert.That(_errorLog.Errors[1].Message, Is.StringContaining("Expected identifier but got built-in type 'int'"));
         }
 
         [Test]
@@ -421,7 +421,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             Assert.Throws<SyntaxAnalysisFailed>(() => _parser.Parse());
             Assert.That(_errorLog.Errors.Count, Is.EqualTo(7));
             Assert.That(_errorLog.Errors[0].Message, Is.StringContaining("Unexpected token '$'"));
-            Assert.That(_errorLog.Errors[1].Message, Is.StringContaining("Expected identifier but got builtin type 'boolean'"));
+            Assert.That(_errorLog.Errors[1].Message, Is.StringContaining("Expected identifier but got built-in type 'boolean'"));
             Assert.That(_errorLog.Errors[2].Message, Is.StringContaining("Expected identifier but got keyword 'public'"));
             Assert.That(_errorLog.Errors[3].Message, Is.StringContaining("Invalid start token 'public' of type keyword for an expression"));
             Assert.That(_errorLog.Errors[4].Message, Is.StringContaining("Unexpected token '$'"));

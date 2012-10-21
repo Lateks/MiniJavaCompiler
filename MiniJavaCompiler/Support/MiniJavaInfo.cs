@@ -14,7 +14,7 @@ namespace MiniJavaCompiler.Support
         internal static readonly char[]
             Punctuation = new[] { ';', '(', ')', '[', ']', '.', '{', '}', ',' },
             SingleCharOperatorSymbols = new[] { '/', '+', '-', '*', '<', '>', '%', '!' },
-            MultiCharOperatorSymbols = new[] { '&', '=', '|' }; // only one symbol needed because all two-character operators have the same symbol twice
+            MultiCharOperatorSymbols = new[] { '&', '=', '|' }; // Only one symbol needed because all two-character operators have the same symbol twice.
 
         // Note: all of these operators are left-associative.
         internal static readonly string[][] OperatorsByPrecedenceLevel = new[]
@@ -37,30 +37,30 @@ namespace MiniJavaCompiler.Support
         internal static readonly string[] UnaryOperators = new [] { "!" };
 
         // Defines the operand and result types of operators for purposes of semantic analysis.
-        internal static readonly Dictionary<string, BuiltinOperator> Operators =
-            new Dictionary<string, BuiltinOperator>()
+        internal static readonly Dictionary<string, BuiltInOperator> Operators =
+            new Dictionary<string, BuiltInOperator>()
                 {
-                    { "+", new BuiltinOperator { OperandType = IntType, ResultType = IntType } },
-                    { "-", new BuiltinOperator { OperandType = IntType, ResultType = IntType } },
-                    { "*", new BuiltinOperator { OperandType = IntType, ResultType = IntType } },
-                    { "/", new BuiltinOperator { OperandType = IntType, ResultType = IntType } },
-                    { "<", new BuiltinOperator { OperandType = IntType, ResultType = BoolType } },
-                    { ">", new BuiltinOperator { OperandType = IntType, ResultType = BoolType } },
-                    { "%", new BuiltinOperator { OperandType = IntType, ResultType = IntType } },
-                    { "!", new BuiltinOperator { OperandType = BoolType, ResultType = BoolType } },
-                    { "&&", new BuiltinOperator { OperandType = BoolType, ResultType = BoolType } },
-                    { "||", new BuiltinOperator { OperandType = BoolType, ResultType = BoolType } },
-                    { "==", new BuiltinOperator { OperandType = AnyType, ResultType = BoolType } } // '==' is defined for any type, including user defined types
+                    { "+", new BuiltInOperator { OperandType = IntType, ResultType = IntType } },
+                    { "-", new BuiltInOperator { OperandType = IntType, ResultType = IntType } },
+                    { "*", new BuiltInOperator { OperandType = IntType, ResultType = IntType } },
+                    { "/", new BuiltInOperator { OperandType = IntType, ResultType = IntType } },
+                    { "<", new BuiltInOperator { OperandType = IntType, ResultType = BoolType } },
+                    { ">", new BuiltInOperator { OperandType = IntType, ResultType = BoolType } },
+                    { "%", new BuiltInOperator { OperandType = IntType, ResultType = IntType } },
+                    { "!", new BuiltInOperator { OperandType = BoolType, ResultType = BoolType } },
+                    { "&&", new BuiltInOperator { OperandType = BoolType, ResultType = BoolType } },
+                    { "||", new BuiltInOperator { OperandType = BoolType, ResultType = BoolType } },
+                    { "==", new BuiltInOperator { OperandType = AnyType, ResultType = BoolType } } // '==' is defined for any type, including user defined types
                                                                                                    // (in which case it tests reference equality).
                 };
 
-        internal static bool IsBuiltinType(string typeName)
+        internal static bool IsBuiltInType(string typeName)
         {
             return BuiltIns.Contains(typeName);
         }
     }
 
-    internal struct BuiltinOperator
+    internal struct BuiltInOperator
     {
         public string OperandType;
         public string ResultType;

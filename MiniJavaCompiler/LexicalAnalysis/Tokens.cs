@@ -21,7 +21,7 @@ namespace MiniJavaCompiler.LexicalAnalysis
                     {typeof(IntegerLiteralToken), "integer literal"},
                     {typeof(IdentifierToken), "identifier"},
                     {typeof(KeywordToken), "keyword"},
-                    {typeof(MiniJavaTypeToken), "builtin type"},
+                    {typeof(MiniJavaTypeToken), "built-in type"},
                     {typeof(OperatorToken), "operator"},
                     {typeof(PunctuationToken), "punctuation token"},
                     {typeof(EndOfFile), "end of file"},

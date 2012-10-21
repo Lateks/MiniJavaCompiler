@@ -50,7 +50,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
             }
 
             [Test]
-            public void CannotCallMethodForABuiltinType()
+            public void CannotCallMethodForABuiltInType()
             {
                 string program = "class Foo {\n" +
                                  "\tpublic static void main() {\n" +
@@ -63,7 +63,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<TypeCheckerError>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(2, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("builtin type int"));
+                Assert.That(errors.Errors[0].Message, Is.StringContaining("built-in type int"));
                 Assert.That(errors.Errors[1].Message, Is.StringContaining("Cannot resolve symbol bar"));
             }
 
@@ -741,7 +741,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
             }
 
             [Test]
-            public void InvalidAssignmentToBuiltinFromMethod()
+            public void InvalidAssignmentToBuiltInFromMethod()
             {
                 string program = "class Foo {\n" +
                                  "\tpublic static void main() {\n" +
@@ -763,7 +763,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
             }
 
             [Test]
-            public void InvalidAssignmentToBuiltin()
+            public void InvalidAssignmentToBuiltIn()
             {
                 string program = "class Foo {\n" +
                                  "\tpublic static void main() {\n" +

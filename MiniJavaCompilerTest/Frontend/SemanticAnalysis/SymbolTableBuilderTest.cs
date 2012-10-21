@@ -13,23 +13,23 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
     [TestFixture]
     class SymbolTableBuilderTest
     {
-        private IErrorReporter errors;
-        private SymbolTable symbolTable;
+        private IErrorReporter _errors;
+        private SymbolTable _symbolTable;
 
         private bool BuildSymbolTableFor(string program)
         {
             var scanner = new MiniJavaScanner(new StringReader(program));
-            errors = new ErrorLogger();
-            var parserInputReader = new ParserInputReader(scanner, errors);
-            var parser = new Parser(parserInputReader, errors);
+            _errors = new ErrorLogger();
+            var parserInputReader = new ParserInputReader(scanner, _errors);
+            var parser = new Parser(parserInputReader, _errors);
             Program syntaxTree = parser.Parse();
-            Assert.That(errors.Errors, Is.Empty);
+            Assert.That(_errors.Errors, Is.Empty);
 
-            var types = new TypeSetBuilder(syntaxTree, errors).BuildTypeSet();
-            var symbolTableBuilder = new SymbolTableBuilder(syntaxTree, types, errors);
-            Assert.That(errors.Errors, Is.Empty);
+            var types = new TypeSetBuilder(syntaxTree, _errors).BuildTypeSet();
+            var symbolTableBuilder = new SymbolTableBuilder(syntaxTree, types, _errors);
+            Assert.That(_errors.Errors, Is.Empty);
 
-            return symbolTableBuilder.BuildSymbolTable(out symbolTable);
+            return symbolTableBuilder.BuildSymbolTable(out _symbolTable);
         }
 
         [Test]
@@ -46,7 +46,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                              "\t} \n" +
                              "} \n\n";
             Assert.True(BuildSymbolTableFor(program));
-            var fooClass = (UserDefinedTypeSymbol)symbolTable.GlobalScope.ResolveType("Foo");
+            var fooClass = (UserDefinedTypeSymbol)_symbolTable.GlobalScope.ResolveType("Foo");
             var fooMethod = fooClass.ResolveMethod("foo");
             Assert.That(fooMethod.Type, Is.InstanceOf<VoidType>());
         }
@@ -63,7 +63,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                              "\t void foo; \n" +
                              "} \n\n";
             Assert.False(BuildSymbolTableFor(program));
-            Assert.That(errors.Errors.First().Content, Is.StringContaining("Unknown type 'void'"));
+            Assert.That(_errors.Errors.First().Content, Is.StringContaining("Unknown type 'void'"));
         }
 
         [Test]
@@ -84,8 +84,8 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                              "\t int foo; \n" +
                              "} \n";
             Assert.True(BuildSymbolTableFor(program));
-            var fooClass = (UserDefinedTypeSymbol)symbolTable.GlobalScope.ResolveType("Foo");
-            var barClass = (UserDefinedTypeSymbol)symbolTable.GlobalScope.ResolveType("Bar");
+            var fooClass = (UserDefinedTypeSymbol)_symbolTable.GlobalScope.ResolveType("Foo");
+            var barClass = (UserDefinedTypeSymbol)_symbolTable.GlobalScope.ResolveType("Bar");
             Assert.That(barClass.SuperClass, Is.EqualTo(fooClass));
             Assert.That(barClass.ResolveMethod("foo"), Is.Not.Null);
         }
@@ -105,8 +105,8 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                              "\t public int foo() { } \n" +
                              "} \n\n";
             Assert.False(BuildSymbolTableFor(program));
-            Assert.AreEqual(2, errors.Errors.Count);
-            foreach (var error in errors.Errors)
+            Assert.AreEqual(2, _errors.Errors.Count);
+            foreach (var error in _errors.Errors)
             {
                 Assert.That(error.Content, Is.StringContaining("Symbol 'foo' is already defined"));
             }
@@ -130,9 +130,9 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                              "\t int foo; \n" + // fifth error
                              "} \n\n";
             Assert.False(BuildSymbolTableFor(program));
-            Assert.AreEqual(5, errors.Errors.Count);
-            Assert.AreEqual(4, errors.Errors.Count(err => err.Message.Contains("Symbol 'foo' is already defined")));
-            Assert.AreEqual(1, errors.Errors.Count(err => err.Message.Contains("Symbol 'bar' is already defined")));
+            Assert.AreEqual(5, _errors.Errors.Count);
+            Assert.AreEqual(4, _errors.Errors.Count(err => err.Message.Contains("Symbol 'foo' is already defined")));
+            Assert.AreEqual(1, _errors.Errors.Count(err => err.Message.Contains("Symbol 'bar' is already defined")));
         }
 
         [Test]
@@ -159,12 +159,12 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                              "}\n";
             Assert.True(BuildSymbolTableFor(program));
 
-            var firstClass = symbolTable.GlobalScope.ResolveType("Factorial");
+            var firstClass = _symbolTable.GlobalScope.ResolveType("Factorial");
             Assert.That(firstClass, Is.InstanceOf<UserDefinedTypeSymbol>());
 
             Assert.That(((UserDefinedTypeSymbol)firstClass).ResolveMethod("main"), Is.Not.Null);
 
-            var secondClass = symbolTable.GlobalScope.ResolveType("Fac");
+            var secondClass = _symbolTable.GlobalScope.ResolveType("Fac");
             Assert.That(secondClass, Is.Not.Null);
 
             var FacClassScope = (UserDefinedTypeSymbol) secondClass;
@@ -175,8 +175,8 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
 
             var numVariable = (VariableSymbol)facMethod.ResolveVariable("num");
             Assert.That(numVariable, Is.Not.Null);
-            var numVariableNode = symbolTable.Definitions[numVariable];
-            Assert.That(symbolTable.Scopes[numVariableNode], Is.EqualTo(facMethod));
+            var numVariableNode = _symbolTable.Definitions[numVariable];
+            Assert.That(_symbolTable.Scopes[numVariableNode], Is.EqualTo(facMethod));
             Assert.That(numVariable.Type, Is.InstanceOf<BuiltInTypeSymbol>());
             Assert.That(numVariable.Type.Name, Is.EqualTo("int"));
             Assert.AreEqual(numVariable.Type, facMethod.Type);

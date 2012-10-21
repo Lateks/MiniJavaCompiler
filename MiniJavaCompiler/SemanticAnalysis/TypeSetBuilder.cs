@@ -34,7 +34,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
         private bool NameAlreadyDefined(string name)
         {
-            return _types.Contains(name) || MiniJavaInfo.IsBuiltinType(name);
+            return _types.Contains(name) || MiniJavaInfo.IsBuiltInType(name);
         }
 
         public void Visit(Program node) { }

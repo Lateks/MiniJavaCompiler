@@ -147,7 +147,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
                 else if (methodOwnerType is BuiltInTypeSymbol)
                 {   // Builtin simple types are not objects, so methods cannot be invoked for them.
                     // Possible arguments still need to be popped out of the stack.
-                    ReportError(String.Format("Cannot call method {0} on builtin type {1}.",
+                    ReportError(String.Format("Cannot call method {0} on built-in type {1}.",
                         node.MethodName, methodOwnerType.Name), node);
                 }
                 else // Expression evaluates into an object of a user defined type
