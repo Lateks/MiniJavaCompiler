@@ -249,7 +249,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<TypeCheckerError>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Could not resolve").And.StringContaining("foo"));
+                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot resolve").And.StringContaining("foo"));
 
             }
 
@@ -267,7 +267,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<TypeCheckerError>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Could not resolve symbol foo"));
+                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot resolve symbol foo"));
             }
 
             [Test]
@@ -284,7 +284,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<TypeCheckerError>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Could not resolve symbol foo"));
+                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot resolve symbol foo"));
             }
 
             [Test]
@@ -302,7 +302,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<TypeCheckerError>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Could not resolve symbol foo"));
+                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot resolve symbol foo"));
             }
 
             [Test]
@@ -1647,9 +1647,60 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
         [TestFixture]
         public class Recovery
         {
-            
-        }
+            [Test]
+            public void CanRecoverToFindAllTypeAndReferenceErrors()
+            {
+                string program = "class Foo {\n" +
+                                 "\tpublic static void main() {\n" +
+                                 "\t\tint foo;\n" +
+                                 "\t\tfoo = 10 + new A().alwaysTrue();\n" +
+                                 "\t\tA foo2;\n" +
+                                 "\t\t foo2 = new C();\n" +
+                                 "\t\tint bar;\n" +
+                                 "\t\tbar = new A();\n" +
+                                 "\t\tbar = 99999999999999999;\n" +
+                                 "\t\tboolean baz; baz = 15 && new A().alwaysTrue(10) || new C() || foo;\n" +
+                                 "\t\tbaz = zzz || foo;\n" +
+                                 "\t\tbaz = foo && zzz;\n" +
+                                 "\t\tbaz = zzz || new C();\n" +
+                                 "\t\tfoo = zzz[zzz];\n" +
+                                 "\t\tassert(zzz);\n" +
+                                 "\t}\n" +
+                                 "}\n" +
+                                 "class A {\n" +
+                                 "\tpublic boolean alwaysTrue() {\n" +
+                                 "\t\t if (true) { }\n" +
+                                 "\t\t else { return true; }\n" +
+                                 "\t}\n" +
+                                 "}\n" +
+                                 "class B extends A {" +
+                                 "\tpublic boolean alwaysTrue(int foo) { return true; }\n" +
+                                 "}\n";
+                IErrorReporter errors;
+                var checker = SetUpTypeAndReferenceChecker(program, out errors);
+                Assert.Throws<TypeCheckerError>(checker.CheckTypesAndReferences);
+                Assert.That(errors.Count, Is.EqualTo(19));
+                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot apply operator + on arguments of type int and boolean"));
+                Assert.That(errors.Errors[1].Message, Is.StringContaining("Cannot resolve symbol C"));
+                Assert.That(errors.Errors[2].Message, Is.StringContaining("Cannot assign expression of type A to variable of type int"));
+                Assert.That(errors.Errors[3].Message, Is.StringContaining("Cannot fit integer literal 99999999999999999 into a 32-bit integer variable"));
+                Assert.That(errors.Errors[4].Message, Is.StringContaining("Cannot resolve symbol C"));
+                Assert.That(errors.Errors[5].Message, Is.StringContaining("Wrong number of arguments to method alwaysTrue (1 for 0)"));
+                Assert.That(errors.Errors[6].Message, Is.StringContaining("Cannot apply operator && on arguments of type int and boolean"));
+                Assert.That(errors.Errors[7].Message, Is.StringContaining("Cannot apply operator || on arguments of type boolean and int"));
+                Assert.That(errors.Errors[8].Message, Is.StringContaining("Cannot resolve symbol zzz"));
+                Assert.That(errors.Errors[9].Message, Is.StringContaining("Invalid operand of type int for operator ||"));
+                Assert.That(errors.Errors[10].Message, Is.StringContaining("Cannot resolve symbol zzz"));
+                Assert.That(errors.Errors[11].Message, Is.StringContaining("Invalid operand of type int for operator &&"));
+                Assert.That(errors.Errors[12].Message, Is.StringContaining("Cannot resolve symbol C"));
+                Assert.That(errors.Errors[13].Message, Is.StringContaining("Cannot resolve symbol zzz")); // No error about operands for || because neither one could be resolved.
+                Assert.That(errors.Errors[14].Message, Is.StringContaining("Cannot resolve symbol zzz")); // No error about array indexing because array expr could not be resolved.
+                Assert.That(errors.Errors[15].Message, Is.StringContaining("Cannot resolve symbol zzz")); // No error about array index type because variable could not be resolved.
+                Assert.That(errors.Errors[16].Message, Is.StringContaining("Cannot resolve symbol zzz")); // No error about invalid argument to assert statement because variable could not be resolved.
+                Assert.That(errors.Errors[17].Message, Is.StringContaining("Missing return statement in method alwaysTrue"));
+                Assert.That(errors.Errors[18].Message, Is.StringContaining("Method alwaysTrue in class B overloads method alwaysTrue in class A"));
+            }
 
-        // TODO: test other type checks
+        }
     }
 }

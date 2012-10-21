@@ -201,9 +201,26 @@ namespace MiniJavaCompiler.SemanticAnalysis
             { // types are not checked if operator can be applied to any type of object (like ==)
                 var expectedOpType = _symbolTable.ResolveType(op.OperandType);
                 if (!leftOperandType.IsAssignableTo(expectedOpType) || !rightOperandType.IsAssignableTo(expectedOpType))
-                { // both arguments (lhs and rhs) must match operator's expected operand type
-                    ReportError(String.Format("Cannot apply operator {0} on arguments of type {1} and {2}.",
-                        node.Operator, leftOperandType.Name, rightOperandType.Name), node);
+                { // Both arguments (lhs and rhs) must match operator's expected operand type.
+                  // Note: both arguments cannot be ErrorTypes because in that case they would
+                  // both have passed the assignability test.
+                    string errormsg;
+                    if (leftOperandType is ErrorType)
+                    {
+                        errormsg = String.Format("Invalid operand of type {0} for operator {1}.", rightOperandType.Name,
+                                                 node.Operator);
+                    }
+                    else if (rightOperandType is ErrorType)
+                    {
+                        errormsg = String.Format("Invalid operand of type {0} for operator {1}.", leftOperandType.Name,
+                                                 node.Operator);
+                    }
+                    else
+                    {
+                        errormsg = String.Format("Cannot apply operator {0} on arguments of type {1} and {2}.",
+                                                 node.Operator, leftOperandType.Name, rightOperandType.Name);
+                    }
+                    ReportError(errormsg, node);
                 }
             }
             _operandTypes.Push(_symbolTable.ResolveType(op.ResultType));
@@ -242,7 +259,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
             var symbol = (VariableSymbol) scope.ResolveVariable(node.Name);
             if (symbol == null || !VariableDeclaredBeforeReference(symbol, node))
             {
-                ReportError(String.Format("Could not resolve symbol {0}.", node.Name), node);
+                ReportError(String.Format("Cannot resolve symbol {0}.", node.Name), node);
             }
             _operandTypes.Push(symbol == null ? ErrorType.GetInstance() : symbol.Type);
         }
@@ -383,7 +400,8 @@ namespace MiniJavaCompiler.SemanticAnalysis
             var methodDecl = (MethodDeclaration)_symbolTable.Definitions[method];
             if (node.CallParameters.Count != methodDecl.Formals.Count)
             {
-                ReportErrorAndDiscardCallParams(String.Format("Wrong number of arguments to method {0}.", node.MethodName), node);
+                ReportErrorAndDiscardCallParams(String.Format("Wrong number of arguments to method {0} ({1} for {2}).",
+                    node.MethodName, node.CallParameters.Count, methodDecl.Formals.Count), node);
                 return;
             }
             
