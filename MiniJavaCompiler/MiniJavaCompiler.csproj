@@ -46,6 +46,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Frontend\FrontEnd.cs" />
     <Compile Include="Support\AbstractSyntaxTree\AbstractSyntaxTree.cs" />
     <Compile Include="Compiler.cs" />
     <Compile Include="Support\Errors.cs" />

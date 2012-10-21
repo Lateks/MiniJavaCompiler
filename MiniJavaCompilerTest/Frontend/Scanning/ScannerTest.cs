@@ -8,18 +8,20 @@ namespace MiniJavaCompilerTest.Frontend.Scanning
     public class KeywordTest
     {
         [Datapoints]
-        public string[] keywords = {"this", "true", "false", "new", "length",
+        public string[] Keywords = {"this", "true", "false", "new", "length",
                                        "System", "out", "println", "if", "else", "while",
                                        "return", "assert", "public", "static", "main",
                                        "class", "extends" };
 
         [Theory]
-        public void Keywords(string keyword)
+        public void KeywordsAreRecognised(string @keyword)
         {
-            var lexer = new MiniJavaScanner(new StringReader(keyword));
+            var reader = new StringReader(@keyword);
+            var lexer = new MiniJavaScanner(reader);
             IToken next = lexer.NextToken();
             Assert.That(next, Is.InstanceOf<KeywordToken>());
-            Assert.That(((KeywordToken)next).Value, Is.EqualTo(keyword));
+            Assert.That(((KeywordToken)next).Value, Is.EqualTo(@keyword));
+            reader.Close();
         }
     }
 
@@ -27,15 +29,17 @@ namespace MiniJavaCompilerTest.Frontend.Scanning
     public class ArithmeticOperatorTest
     {
         [Datapoints]
-        public string[] arithmeticOperators = { "+", "-", "*", "/", "%" };
+        public string[] ArithmeticOperators = { "+", "-", "*", "/", "%" };
 
         [Theory]
-        public void ArithmeticOperators(string @operator)
+        public void ArithmeticOperatorsAreRecognised(string @operator)
         {
-            var lexer = new MiniJavaScanner(new StringReader(@operator));
+            var reader = new StringReader(@operator);
+            var lexer = new MiniJavaScanner(reader);
             IToken token = lexer.NextToken();
             Assert.That(token, Is.InstanceOf<OperatorToken>());
             Assert.That(((OperatorToken)token).Value, Is.EqualTo(@operator));
+            reader.Close();
         }
     }
 
@@ -43,15 +47,17 @@ namespace MiniJavaCompilerTest.Frontend.Scanning
     public class LogicalOperatorTest
     {
         [Datapoints]
-        public string[] logicalOperators = { "<", ">", "&&", "==", "||", "!" };
+        public string[] LogicalOperators = { "<", ">", "&&", "==", "||", "!" };
 
         [Theory]
-        public void LogicalOperators(string @operator)
+        public void LogicalOperatorsAreRecognised(string @operator)
         {
-            var lexer = new MiniJavaScanner(new StringReader(@operator));
+            var reader = new StringReader(@operator);
+            var lexer = new MiniJavaScanner(reader);
             IToken token = lexer.NextToken();
             Assert.That(token, Is.InstanceOf<OperatorToken>());
             Assert.That(((OperatorToken)token).Value, Is.EqualTo(@operator));
+            reader.Close();
         }
     }
 
@@ -59,22 +65,26 @@ namespace MiniJavaCompilerTest.Frontend.Scanning
     public class TypeTests
     {
         [Datapoints]
-        public string[] types = { "int", "boolean", "void" };
+        public string[] Types = { "int", "boolean", "void" };
 
         [Theory]
-        public void SimpleTypes(string type)
+        public void SimpleTypes(string @type)
         {
-            var lexer = new MiniJavaScanner(new StringReader(type));
+            var reader = new StringReader(@type);
+            var lexer = new MiniJavaScanner(reader);
             Assert.That(lexer.NextToken(), Is.InstanceOf<MiniJavaTypeToken>());
+            reader.Close();
         }
 
         [Theory]
-        public void ArrayType(string type)
+        public void ArrayType(string @type)
         {
-            var lexer = new MiniJavaScanner(new StringReader(type + "[]"));
+            var reader = new StringReader(@type + "[]");
+            var lexer = new MiniJavaScanner(reader);
             Assert.That(lexer.NextToken(), Is.InstanceOf<MiniJavaTypeToken>());
             Assert.That(lexer.NextToken(), Is.InstanceOf<PunctuationToken>());
             Assert.That(lexer.NextToken(), Is.InstanceOf<PunctuationToken>());
+            reader.Close();
         }
     }
 
@@ -84,136 +94,186 @@ namespace MiniJavaCompilerTest.Frontend.Scanning
         [Test]
         public void ParameterSeparator()
         {
-            var lexer = new MiniJavaScanner(new StringReader(","));
+            var reader = new StringReader(",");
+            var lexer = new MiniJavaScanner(reader);
             Assert.That(lexer.NextToken(), Is.InstanceOf<PunctuationToken>());
+            reader.Close();
         }
 
         [Test]
         public void CurlyBraces()
         {
-            var lexer = new MiniJavaScanner(new StringReader("{}"));
+            var reader = new StringReader("{}");
+            var lexer = new MiniJavaScanner(reader);
             Assert.That(lexer.NextToken(), Is.InstanceOf<PunctuationToken>());
             Assert.That(lexer.NextToken(), Is.InstanceOf<PunctuationToken>());
+            reader.Close();
         }
 
         [Test]
         public void MethodInvocation()
         {
-            var lexer = new MiniJavaScanner(new StringReader("foo.bar()"));
+            var reader = new StringReader("foo.bar()");
+            var lexer = new MiniJavaScanner(reader);
             Assert.That(lexer.NextToken(), Is.InstanceOf<IdentifierToken>());
             Assert.That(lexer.NextToken(), Is.InstanceOf<PunctuationToken>());
             Assert.That(lexer.NextToken(), Is.InstanceOf<IdentifierToken>());
             Assert.That(lexer.NextToken(), Is.InstanceOf<PunctuationToken>());
             Assert.That(lexer.NextToken(), Is.InstanceOf<PunctuationToken>());
             Assert.That(lexer.NextToken(), Is.InstanceOf<EndOfFile>());
+            reader.Close();
         }
 
         [Test]
         public void IntegerConstants()
         {
-            var lexer = new MiniJavaScanner(new StringReader("123"));
+            var reader = new StringReader("123");
+            var lexer = new MiniJavaScanner(reader);
             Assert.That(((IntegerLiteralToken)lexer.NextToken()).Value, Is.EqualTo("123"));
-            lexer = new MiniJavaScanner(new StringReader("1 23"));
+            reader.Close();
+
+            reader = new StringReader("1 23");
+            lexer = new MiniJavaScanner(reader);
             var token = (IntegerLiteralToken)lexer.NextToken();
             Assert.That(token.Value, Is.EqualTo("1"));
             Assert.That(token.Row, Is.EqualTo(1));
             Assert.That(token.Col, Is.EqualTo(1));
             Assert.That(((IntegerLiteralToken)lexer.NextToken()).Value, Is.EqualTo("23"));
+            reader.Close();
         }
 
         [Test]
         public void TestEndOfFile()
         {
-            var lexer = new MiniJavaScanner(new StringReader(""));
+            var reader = new StringReader("");
+            var lexer = new MiniJavaScanner(reader);
             Assert.That(lexer.NextToken(), Is.InstanceOf<EndOfFile>());
-            lexer = new MiniJavaScanner(new StringReader("123"));
+            reader.Close();
+
+            reader = new StringReader("123");
+            lexer = new MiniJavaScanner(reader);
             lexer.NextToken();
             Assert.That(lexer.NextToken(), Is.InstanceOf<EndOfFile>());
+            Assert.Throws<OutOfInput>(() => lexer.NextToken());
+            reader.Close();
         }
 
         [Test]
         public void Identifiers()
         {
-            var lexer = new MiniJavaScanner(new StringReader("42foo"));
+            var reader = new StringReader("42foo");
+            var lexer = new MiniJavaScanner(reader);
             Assert.That(((IntegerLiteralToken)lexer.NextToken()).Value, Is.EqualTo("42"));
             IToken next = lexer.NextToken();
             Assert.That(next, Is.InstanceOf<IdentifierToken>());
             Assert.That(((IdentifierToken)next).Value, Is.EqualTo("foo"));
             lexer = new MiniJavaScanner(new StringReader("f_o12a"));
             Assert.That(((IdentifierToken)lexer.NextToken()).Value, Is.EqualTo("f_o12a"));
+            reader.Close();
         }
 
         [Test]
         public void WhiteSpaceIsSkipped()
         {
-            var lexer = new MiniJavaScanner(new StringReader("\n\t\v\n  foo"));
+            var reader = new StringReader("\n\t\v\n  foo");
+            var lexer = new MiniJavaScanner(reader);
             Assert.That(((IdentifierToken)lexer.NextToken()).Value, Is.EqualTo("foo"));
+            reader.Close();
         }
 
         [Test]
         public void CommentsAreSkipped()
         {
-            var lexer = new MiniJavaScanner(new StringReader("// ... \n // ... \n foo"));
+            var reader = new StringReader("// ... \n // ... \n foo");
+            var lexer = new MiniJavaScanner(reader);
             var token = (IdentifierToken)lexer.NextToken();
             Assert.That(token.Value, Is.EqualTo("foo"));
             Assert.That(token.Row, Is.EqualTo(3));
             Assert.That(token.Col, Is.EqualTo(2));
-            lexer = new MiniJavaScanner(new StringReader("/* ... \n\n*/ \tfoo"));
+            reader.Close();
+
+            reader = new StringReader("/* ... \n\n*/ \tfoo");
+            lexer = new MiniJavaScanner(reader);
             token = (IdentifierToken)lexer.NextToken();
             Assert.That(token.Value, Is.EqualTo("foo"));
             Assert.That(token.Row, Is.EqualTo(3));
             Assert.That(token.Col, Is.EqualTo(5));
-            lexer = new MiniJavaScanner(new StringReader("\n\n// ...//\n// ... \n\n/* ... */ foo"));
+            reader.Close();
+
+            reader = new StringReader("\n\n// ...//\n// ... \n\n/* ... */ foo");
+            lexer = new MiniJavaScanner(reader);
             Assert.That(((IdentifierToken)lexer.NextToken()).Value, Is.EqualTo("foo"));
+            reader.Close();
         }
 
         [Test]
         public void CombinedWhiteSpaceAndComments()
         {
-            var lexer = new MiniJavaScanner(new StringReader("\n\t\t// ... \n // ... \n     foo"));
+            var reader = new StringReader("\n\t\t// ... \n // ... \n     foo");
+            var lexer = new MiniJavaScanner(reader);
             Assert.That(((IdentifierToken)lexer.NextToken()).Value, Is.EqualTo("foo"));
+            reader.Close();
         }
 
         [Test]
         public void InputConsistingOfWhitespaceOnly()
         {
-            var lexer = new MiniJavaScanner(new StringReader("\n   "));
+            var reader = new StringReader("\n   \t\t\v\r\n  ");
+            var lexer = new MiniJavaScanner(reader);
             Assert.That(lexer.NextToken(), Is.InstanceOf<EndOfFile>());
+            reader.Close();
         }
 
         [Test]
         public void DivisionSymbolIsNotConfusedWithAComment()
         {
-            var lexer = new MiniJavaScanner(new StringReader("/"));
+            var reader = new StringReader("/");
+            var lexer = new MiniJavaScanner(reader);
             Assert.That(lexer.NextToken(), Is.InstanceOf<OperatorToken>());
-            lexer = new MiniJavaScanner(new StringReader("// .. / ..\n /"));
+            reader.Close();
+
+            reader = new StringReader("// .. / ..\n /");
+            lexer = new MiniJavaScanner(reader);
             Assert.That(((OperatorToken)lexer.NextToken()).Value, Is.EqualTo("/"));
+            reader.Close();
         }
 
         [Test]
         public void AssignmentToken()
         {
-            var lexer = new MiniJavaScanner(new StringReader("="));
+            var reader = new StringReader("=");
+            var lexer = new MiniJavaScanner(reader);
             Assert.That(lexer.NextToken(), Is.InstanceOf<OperatorToken>());
+            reader.Close();
         }
 
         [Test]
         public void ShouldBeInvalid()
         {
-            var scanner = new MiniJavaScanner(new StringReader("$"));
+            var reader = new StringReader("$");
+            var scanner = new MiniJavaScanner(reader);
             Assert.That(scanner.NextToken(), Is.InstanceOf<ErrorToken>());
-            scanner = new MiniJavaScanner(new StringReader("&|"));
+            reader.Close();
+
+            reader = new StringReader("&|");
+            scanner = new MiniJavaScanner(reader);
             Assert.That(scanner.NextToken(), Is.InstanceOf<ErrorToken>());
             Assert.That(scanner.NextToken(), Is.InstanceOf<ErrorToken>());
+            reader.Close();
         }
 
         [Test]
         public void EndlessComment()
         {
-            var scanner = new MiniJavaScanner(new StringReader("/* ... "));
+            var reader = new StringReader("/* ... ");
+            var scanner = new MiniJavaScanner(reader);
             Assert.That(scanner.NextToken(), Is.InstanceOf<ErrorToken>());
-            scanner = new MiniJavaScanner(new StringReader("/* ... /"));
+            reader.Close();
+
+            reader = new StringReader("/* ... /");
+            scanner = new MiniJavaScanner(reader);
             Assert.That(scanner.NextToken(), Is.InstanceOf<ErrorToken>());
+            reader.Close();
         }
 
         [Test]
@@ -221,7 +281,8 @@ namespace MiniJavaCompilerTest.Frontend.Scanning
         {
             string program = "class Factorial {\n" +
                              "\t public static void main () {\n";
-            var scanner = new MiniJavaScanner(new StringReader(program));
+            var reader = new StringReader(program);
+            var scanner = new MiniJavaScanner(reader);
             var token = scanner.NextToken();
             Assert.AreEqual(token.Row, 1);
             Assert.AreEqual(token.Col, 1);
@@ -234,14 +295,17 @@ namespace MiniJavaCompilerTest.Frontend.Scanning
             token = scanner.NextToken();
             Assert.AreEqual(token.Row, 2);
             Assert.AreEqual(token.Col, 3);
+            reader.Close();
         }
 
         [Test]
         public void ThrowsAnExceptionIfInputExhausted()
         {
-            var scanner = new MiniJavaScanner(new StringReader(""));
+            var reader = new StringReader("");
+            var scanner = new MiniJavaScanner(reader);
             Assert.That(scanner.NextToken(), Is.InstanceOf<EndOfFile>());
             Assert.Throws<OutOfInput>(() => scanner.NextToken());
+            reader.Close();
         }
     }
 }

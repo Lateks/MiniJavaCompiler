@@ -7,7 +7,7 @@ namespace MiniJavaCompiler
 {
     class Compiler
     {
-        // TODO: file IO
+        // The main program will be here when the back end is completed.
         static void Main(string[] args)
         {
         }

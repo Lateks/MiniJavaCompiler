@@ -8,7 +8,7 @@ using MiniJavaCompiler.Support.SymbolTable;
 
 namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 {
-    public class TypeCheckerError : Exception { }
+    public class SemanticAnalysisFailed : Exception { }
 
     public class TypeChecker : INodeVisitor
     {
@@ -36,7 +36,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             _programRoot.Accept(this);
             if (_failed)
             {
-                throw new TypeCheckerError();
+                throw new SemanticAnalysisFailed();
             }
         }
 

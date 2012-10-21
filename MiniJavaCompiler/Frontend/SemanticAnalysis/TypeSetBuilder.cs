@@ -7,19 +7,25 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
     public class TypeSetBuilder : INodeVisitor
     {
         private readonly Program _syntaxTree;
-        private readonly HashSet<string> _types;
+        private readonly List<string> _types;
         private readonly IErrorReporter _errorReporter;
+        private bool _errorsFound;
 
         public TypeSetBuilder(Program node, IErrorReporter errorReporter)
         {
             _syntaxTree = node;
             _errorReporter = errorReporter;
-            _types = new HashSet<string>();
+            _types = new List<string>();
+            _errorsFound = false;
         }
 
         public IEnumerable<string> BuildTypeSet()
         {
             _syntaxTree.Accept(this);
+            if (_errorsFound)
+            {
+                throw new SemanticAnalysisFailed();
+            }
             return _types;
         }
 
@@ -27,6 +33,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         {
             _errorReporter.ReportError("Conflicting definitions for " +
                     typeName + ".", row, col);
+            _errorsFound = true;
         }
 
         private bool NameAlreadyDefined(string name)

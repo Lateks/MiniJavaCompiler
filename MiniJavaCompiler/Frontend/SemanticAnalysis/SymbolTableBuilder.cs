@@ -19,16 +19,6 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             get { return _scopeStack.Peek(); }
         }
 
-        private void EnterScope(IScope scope)
-        {
-            _scopeStack.Push(scope);
-        }
-
-        private void ExitScope()
-        {
-            _scopeStack.Pop();
-        }
-
         public SymbolTableBuilder(Program node, IEnumerable<string> userDefinedTypes, IErrorReporter errorReporter)
         {
             _errorReporter = errorReporter;
@@ -42,25 +32,14 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             EnterScope(_symbolTable.GlobalScope);
         }
 
-        private void SetupGlobalScope(IEnumerable<string> userDefinedTypes)
-        {
-            foreach (var type in MiniJavaInfo.BuiltIns)
-            {
-                var sym = new BuiltInTypeSymbol(type, _symbolTable.GlobalScope);
-                _symbolTable.GlobalScope.Define(sym);
-            }
-            foreach (var type in userDefinedTypes)
-            {
-                var sym = new UserDefinedTypeSymbol(type, _symbolTable.GlobalScope);
-                _symbolTable.GlobalScope.Define(sym);
-            }
-        }
-
-        public bool BuildSymbolTable(out SymbolTable symbolTable)
+        public SymbolTable BuildSymbolTable()
         {
             _syntaxTree.Accept(this);
-            symbolTable = _symbolTable;
-            return !_errorsFound;
+            if (_errorsFound)
+            {
+                throw new SemanticAnalysisFailed();
+            }
+            return _symbolTable;
         }
 
         public void Visit(Program node)
@@ -254,6 +233,30 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         private void HandleExpressionOrStatementNode(ISyntaxTreeNode node)
         {
             _symbolTable.Scopes.Add(node, CurrentScope);
+        }
+
+        private void SetupGlobalScope(IEnumerable<string> userDefinedTypes)
+        {
+            foreach (var type in MiniJavaInfo.BuiltIns)
+            {
+                var sym = new BuiltInTypeSymbol(type, _symbolTable.GlobalScope);
+                _symbolTable.GlobalScope.Define(sym);
+            }
+            foreach (var type in userDefinedTypes)
+            {
+                var sym = new UserDefinedTypeSymbol(type, _symbolTable.GlobalScope);
+                _symbolTable.GlobalScope.Define(sym);
+            }
+        }
+
+        private void EnterScope(IScope scope)
+        {
+            _scopeStack.Push(scope);
+        }
+
+        private void ExitScope()
+        {
+            _scopeStack.Pop();
         }
     }
 }

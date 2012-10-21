@@ -18,18 +18,28 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
 
         private bool BuildSymbolTableFor(string program)
         {
-            var scanner = new MiniJavaScanner(new StringReader(program));
+            var reader = new StringReader(program);
+            var scanner = new MiniJavaScanner(reader);
             _errors = new ErrorLogger();
             var parserInputReader = new ParserInputReader(scanner, _errors);
             var parser = new Parser(parserInputReader, _errors);
             Program syntaxTree = parser.Parse();
+            reader.Close();
             Assert.That(_errors.Errors, Is.Empty);
 
             var types = new TypeSetBuilder(syntaxTree, _errors).BuildTypeSet();
             var symbolTableBuilder = new SymbolTableBuilder(syntaxTree, types, _errors);
             Assert.That(_errors.Errors, Is.Empty);
 
-            return symbolTableBuilder.BuildSymbolTable(out _symbolTable);
+            try
+            {
+                _symbolTable = symbolTableBuilder.BuildSymbolTable();
+                return true;
+            }
+            catch (SemanticAnalysisFailed)
+            {
+                return false;
+            }
         }
 
         [Test]

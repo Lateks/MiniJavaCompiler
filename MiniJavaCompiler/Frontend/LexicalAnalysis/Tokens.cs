@@ -31,14 +31,11 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
         internal static string Describe(Type type)
         {
             Debug.Assert(typeof (IToken).IsAssignableFrom(type));
-            try
+            if (Descriptions.ContainsKey(type))
             {
                 return Descriptions[type];
             }
-            catch (KeyNotFoundException)
-            {
-                return "token";
-            }
+            return "token";
         }
     }
 
