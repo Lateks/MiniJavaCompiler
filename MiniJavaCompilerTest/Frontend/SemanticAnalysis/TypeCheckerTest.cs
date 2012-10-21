@@ -1644,6 +1644,12 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
             }
         }
 
+        [TestFixture]
+        public class Recovery
+        {
+            
+        }
+
         // TODO: test other type checks
     }
 }

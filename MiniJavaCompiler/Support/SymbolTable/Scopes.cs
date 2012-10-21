@@ -6,10 +6,17 @@ namespace MiniJavaCompiler.Support.SymbolTable
 {
     public interface IScope
     {
-        Symbol Resolve<TSymbolType>(string name) where TSymbolType : Symbol;
+        Symbol ResolveMethod(string name);
+        Symbol ResolveVariable(string name);
+        Symbol ResolveType(string name);
         IScope EnclosingScope { get; }
     }
 
+    /* Note: All Define methods in different scope interfaces return a boolean
+     * value indicating whether or not the attempt to define the symbol succeeded.
+     * The same kind of symbol with the same name cannot be defined twice in the
+     * same scope.
+     */
     public interface IVariableScope : IScope
     {
         bool Define(VariableSymbol sym);
@@ -30,6 +37,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
         private readonly Dictionary<string, Symbol> _typeTable;
         private readonly Dictionary<string, Symbol> _methodTable;
         private readonly Dictionary<string, Symbol> _variableTable;
+
         public IScope EnclosingScope
         {
             get;
@@ -46,23 +54,6 @@ namespace MiniJavaCompiler.Support.SymbolTable
             EnclosingScope = enclosingScope;
         }
 
-        protected Dictionary<string, Symbol> LookupTableFor<TSymbolType>()
-            where TSymbolType : Symbol
-        {
-            if (typeof(TSymbolType) == typeof(MethodSymbol))
-            {
-                return _methodTable;
-            }
-            else if (typeof(TSymbolType) == typeof(VariableSymbol))
-            {
-                return _variableTable;
-            }
-            else
-            {
-                return _typeTable;
-            }
-        }
-
         protected Dictionary<string, Symbol> LookupTableFor(Symbol sym)
         {
             if (sym is MethodSymbol)
@@ -73,36 +64,52 @@ namespace MiniJavaCompiler.Support.SymbolTable
             {
                 return _variableTable;
             }
-            else
+            else if (sym is UserDefinedTypeSymbol || sym is BuiltInTypeSymbol)
             {
                 return _typeTable;
+            }
+            else
+            {
+                throw new ArgumentException("Cannot define symbol of type " + sym.GetType().Name);
             }
         }
 
         protected bool Define(Symbol sym)
         {
-            try
-            {
-                LookupTableFor(sym).Add(sym.Name, sym);
-                return true;
-            }
-            catch (ArgumentException)
+            var lookupTable = LookupTableFor(sym);
+            if (lookupTable.ContainsKey(sym.Name))
             {
                 return false;
             }
+            lookupTable.Add(sym.Name, sym);
+            return true;
         }
 
-        public Symbol Resolve<TSymbolType>(string name)
-            where TSymbolType : Symbol
+        public Symbol ResolveMethod(string name)
         {
-            try
+            if (_methodTable.ContainsKey(name))
             {
-                return LookupTableFor<TSymbolType>()[name];
+                return _methodTable[name];
             }
-            catch (KeyNotFoundException)
+            return EnclosingScope == null ? null : EnclosingScope.ResolveMethod(name);
+        }
+
+        public Symbol ResolveVariable(string name)
+        {
+            if (_variableTable.ContainsKey(name))
             {
-                return EnclosingScope == null ? null : EnclosingScope.Resolve<TSymbolType>(name);
+                return _variableTable[name];
             }
+            return EnclosingScope == null ? null : EnclosingScope.ResolveVariable(name);
+        }
+
+        public Symbol ResolveType(string name)
+        {
+            if (_typeTable.ContainsKey(name))
+            {
+                return _typeTable[name];
+            }
+            return EnclosingScope == null ? null : EnclosingScope.ResolveType(name);
         }
     }
 

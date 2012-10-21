@@ -46,7 +46,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
         {
             foreach (var type in MiniJavaInfo.BuiltIns)
             {
-                var sym = new BuiltinTypeSymbol(type, _symbolTable.GlobalScope);
+                var sym = new BuiltInTypeSymbol(type, _symbolTable.GlobalScope);
                 _symbolTable.GlobalScope.Define(sym);
             }
             foreach (var type in userDefinedTypes)
@@ -70,10 +70,10 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
         public void Visit(ClassDeclaration node)
         {
-            var typeSymbol = (UserDefinedTypeSymbol)CurrentScope.Resolve<SimpleTypeSymbol>(node.Name);
+            var typeSymbol = (UserDefinedTypeSymbol)CurrentScope.ResolveType(node.Name);
             if (node.InheritedClass != null)
             {
-                var inheritedType = (UserDefinedTypeSymbol)CurrentScope.Resolve<SimpleTypeSymbol>(node.InheritedClass);
+                var inheritedType = (UserDefinedTypeSymbol)CurrentScope.ResolveType(node.InheritedClass);
                 typeSymbol.SuperClass = inheritedType;
             }
             _symbolTable.Scopes.Add(node, typeSymbol);
@@ -88,7 +88,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
         public void Visit(MainClassDeclaration node)
         {
-            var typeSymbol = (UserDefinedTypeSymbol)CurrentScope.Resolve<SimpleTypeSymbol>(node.Name);
+            var typeSymbol = (UserDefinedTypeSymbol)CurrentScope.ResolveType(node.Name);
             _symbolTable.Scopes.Add(node, typeSymbol);
             _symbolTable.Definitions.Add(typeSymbol, node);
             EnterScope(typeSymbol);
@@ -139,7 +139,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
         private IType CheckDeclaredType(Declaration node)
         {
-            var nodeSimpleType = (SimpleTypeSymbol)_symbolTable.GlobalScope.Resolve<SimpleTypeSymbol>(node.Type);
+            var nodeSimpleType = (SimpleTypeSymbol)_symbolTable.GlobalScope.ResolveType(node.Type);
             if (nodeSimpleType == null)
             {
                 _errorReporter.ReportError("Unknown type '" + node.Type + "'.", node.Row, node.Col);

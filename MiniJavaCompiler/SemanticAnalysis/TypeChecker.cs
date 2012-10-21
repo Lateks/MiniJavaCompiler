@@ -50,7 +50,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
         { // Check that the method does not overload a method in a superclass.
           // Only overriding is allowed.
             var classScope = _symbolTable.ResolveSurroundingClass(node);
-            var superClassMethod = classScope.SuperClass == null ? null : classScope.SuperClass.Resolve<MethodSymbol>(node.Name);
+            var superClassMethod = classScope.SuperClass == null ? null : classScope.SuperClass.ResolveMethod(node.Name);
             if (superClassMethod == null)
             {
                 return;
@@ -73,7 +73,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
         { // argument must be a basic type (int or boolean)
             var type = _operandTypes.Pop();
             if (type is ErrorType) return;
-            if (!(type is BuiltinTypeSymbol))
+            if (!(type is BuiltInTypeSymbol))
             {
                 ReportError(String.Format("Cannot print expression of type {0}.", type.Name), node);
             }
@@ -130,7 +130,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
             MethodSymbol method = null;
             if (node.MethodOwner is ThisExpression) // Method called is defined by the enclosing class or its superclasses.
             {
-                method = (MethodSymbol)_symbolTable.Scopes[node].Resolve<MethodSymbol>(node.MethodName);
+                method = (MethodSymbol)_symbolTable.Scopes[node].ResolveMethod(node.MethodName);
             }
             else if (methodOwnerType != ErrorType.GetInstance())
             {
@@ -144,7 +144,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
                     ReportError(String.Format("Cannot call method {0} for an array.",
                         node.MethodName), node); // Note: in this case we still want to go into method call validation to pop
                 }                                // out possible arguments for the method invocation.
-                else if (methodOwnerType is BuiltinTypeSymbol)
+                else if (methodOwnerType is BuiltInTypeSymbol)
                 {   // Builtin simple types are not objects, so methods cannot be invoked for them.
                     // Possible arguments still need to be popped out of the stack.
                     ReportError(String.Format("Cannot call method {0} on builtin type {1}.",
@@ -153,7 +153,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
                 else // Expression evaluates into an object of a user defined type
                 {    // and the method must be resolved in the defining class.
                     var enclosingClass = (UserDefinedTypeSymbol) methodOwnerType;
-                    method = (MethodSymbol)enclosingClass.Resolve<MethodSymbol>(node.MethodName);
+                    method = (MethodSymbol)enclosingClass.ResolveMethod(node.MethodName);
                 }
             }
             ValidateMethodCall(method, node);
@@ -239,7 +239,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
         public void Visit(VariableReferenceExpression node)
         { // check that the reference is valid and take note of the type
             var scope = _symbolTable.Scopes[node];
-            var symbol = (VariableSymbol) scope.Resolve<VariableSymbol>(node.Name);
+            var symbol = (VariableSymbol) scope.ResolveVariable(node.Name);
             if (symbol == null || !VariableDeclaredBeforeReference(symbol, node))
             {
                 ReportError(String.Format("Could not resolve symbol {0}.", node.Name), node);
@@ -249,11 +249,8 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
         public void Visit(IntegerLiteralExpression node)
         {
-            try
-            {
-                Int32.Parse(node.Value);
-            }
-            catch (OverflowException)
+            int value;
+            if (!Int32.TryParse(node.Value, out value))
             {
                 ReportError(String.Format("Cannot fit integer literal {0} into a 32-bit integer variable.",
                     node.Value), node);
@@ -269,7 +266,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
         { // Note: in this implementation the main method cannot be called from inside the program
           // because there would be no sensible use for such a method call - and there are no other
           // static methods - so implementing it would have been pointless.
-            var method = (MethodSymbol)_symbolTable.Scopes[node].Resolve<MethodSymbol>(node.Name);
+            var method = (MethodSymbol)_symbolTable.Scopes[node].ResolveMethod(node.Name);
             int numReturnStatements = _returnTypes.Count;
             if (method.Type.Equals(VoidType.GetInstance()))
             { // Void methods cannot have return statements (because Mini-Java does not define an empty return statement).
@@ -364,7 +361,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
         {
             var argType = _operandTypes.Pop();
             if (argType == ErrorType.GetInstance()) return;
-            if (!(argType is BuiltinTypeSymbol && argType.Name == MiniJavaInfo.BoolType))
+            if (!(argType is BuiltInTypeSymbol && argType.Name == MiniJavaInfo.BoolType))
             {
                 ReportError(String.Format("Cannot convert expression of type {0} to boolean.",
                     argType.Name), node);

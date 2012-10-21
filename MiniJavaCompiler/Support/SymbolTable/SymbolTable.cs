@@ -18,7 +18,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
 
         public IType ResolveType(string typeName, bool array = false)
         { // In Mini-Java types are always defined in the global scope.
-            var simpleType = (SimpleTypeSymbol) GlobalScope.Resolve<SimpleTypeSymbol>(typeName);
+            var simpleType = (SimpleTypeSymbol) GlobalScope.ResolveType(typeName);
             if (simpleType == null)
             {
                 return null;

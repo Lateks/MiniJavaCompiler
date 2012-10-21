@@ -30,9 +30,9 @@ namespace MiniJavaCompiler.Support.SymbolTable
         public abstract bool IsAssignableTo(IType other);
     }
 
-    public class BuiltinTypeSymbol : SimpleTypeSymbol
+    public class BuiltInTypeSymbol : SimpleTypeSymbol
     {
-        public BuiltinTypeSymbol(string name, IScope enclosingScope)
+        public BuiltInTypeSymbol(string name, IScope enclosingScope)
             : base(name, null, enclosingScope) { }
 
         public override bool IsAssignableTo(IType other)
@@ -57,34 +57,36 @@ namespace MiniJavaCompiler.Support.SymbolTable
             _variableTable = new Dictionary<string, Symbol>();
         }
 
-        public Symbol Resolve<TSymbolType>(string name)
-            where TSymbolType : Symbol
-        {
-            if (typeof(TSymbolType) != typeof(VariableSymbol))
-            {
-                return EnclosingScope.Resolve<TSymbolType>(name);
-            }
-            try
-            {
-                return _variableTable[name];
-            }
-            catch (KeyNotFoundException)
-            {
-                return EnclosingScope.Resolve<TSymbolType>(name);
-            }
-        }
-
         public bool Define(VariableSymbol sym)
         {
-            try
-            {
-                _variableTable.Add(sym.Name, sym);
-                return true;
-            }
-            catch (ArgumentException)
+            if (_variableTable.ContainsKey(sym.Name))
             {
                 return false;
             }
+            _variableTable.Add(sym.Name, sym);
+            return true;
+        }
+
+        public Symbol ResolveMethod(string name)
+        {
+            return EnclosingScope.ResolveMethod(name);
+        }
+
+        public Symbol ResolveVariable(string name)
+        {
+            if (_variableTable.ContainsKey(name))
+            {
+                return _variableTable[name];
+            }
+            else
+            {
+                return EnclosingScope.ResolveVariable(name);
+            }
+        }
+
+        public Symbol ResolveType(string name)
+        {
+            return EnclosingScope.ResolveType(name);
         }
     }
 
@@ -124,38 +126,6 @@ namespace MiniJavaCompiler.Support.SymbolTable
             return SuperClass != null && SuperClass.IsDerivedFrom(other);
         }
 
-        public Symbol Resolve<TSymbolType>(string name)
-            where TSymbolType : Symbol
-        {
-            if (typeof(TSymbolType) == typeof(MethodSymbol))
-                return ResolveMethodInSuperClasses(name);
-            if (typeof(TSymbolType) == typeof(UserDefinedTypeSymbol))
-                return EnclosingScope.Resolve<TSymbolType>(name);
-
-            try
-            {
-                return _fields[name];
-            }
-            catch (KeyNotFoundException)
-            { // Because fields are private, they are not resolved from superclasses.
-              // In Mini-Java the enclosing scope of a class is the global scope which
-              // cannot contain variable declarations, so resolving stops here.
-                return null;
-            }
-        }
-
-        private Symbol ResolveMethodInSuperClasses(string name)
-        {
-            try
-            {
-                return _methods[name];
-            }
-            catch (KeyNotFoundException)
-            {
-                return SuperClass == null ? null : SuperClass.ResolveMethodInSuperClasses(name);
-            }
-        }
-
         public bool Define(VariableSymbol sym)
         {
             return DefineSymbolIn(sym, _fields);
@@ -166,17 +136,50 @@ namespace MiniJavaCompiler.Support.SymbolTable
             return DefineSymbolIn(sym, _methods);
         }
 
+        public Symbol ResolveMethod(string name)
+        {
+            return ResolveMethodInSuperClasses(name);
+        }
+
+        public Symbol ResolveVariable(string name)
+        {
+            if (_fields.ContainsKey(name))
+            {
+                return _fields[name];
+            }
+            else
+            { // Because fields are private, they are not resolved from superclasses.
+                // In Mini-Java the enclosing scope of a class is the global scope which
+                // cannot contain variable declarations, so resolving stops here.
+                return null;
+            }
+        }
+
+        public Symbol ResolveType(string name)
+        {
+            return EnclosingScope.ResolveType(name);
+        }
+
+        private Symbol ResolveMethodInSuperClasses(string name)
+        {
+            if (_methods.ContainsKey(name))
+            {
+                return _methods[name];
+            }
+            else
+            {
+                return SuperClass == null ? null : SuperClass.ResolveMethodInSuperClasses(name);
+            }
+        }
+
         private bool DefineSymbolIn(Symbol sym, IDictionary<string, Symbol> lookupTable)
         {
-            try
-            {
-                lookupTable.Add(sym.Name, sym);
-                return true;
-            }
-            catch (ArgumentException)
+            if (lookupTable.ContainsKey(sym.Name))
             {
                 return false;
             }
+            lookupTable.Add(sym.Name, sym);
+            return true;
         }
     }
 }
