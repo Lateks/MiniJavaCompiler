@@ -112,9 +112,8 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
                     }
                     else
                     {
-                        Debug.Assert(token is StringToken);
                         errorMessage = String.Format("Invalid start token '{0}' of type {1} for an expression.",
-                            (token as StringToken).Lexeme, TokenDescriptions.Describe(token.GetType()));
+                            token.Lexeme, TokenDescriptions.Describe(token.GetType()));
                     }
                     throw new SyntaxError(errorMessage, token.Row, token.Col);
                 }
@@ -196,7 +195,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
         {
             var newToken = Input.Consume<KeywordToken>();
             var typeInfo = NewType();
-            var type = (StringToken)typeInfo.Item1;
+            var type = typeInfo.Item1;
             return OptionalTermTail(new InstanceCreationExpression(type.Lexeme,
                 newToken.Row, newToken.Col, typeInfo.Item2));
         }
@@ -222,7 +221,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
 
         private IExpression MakeUserDefinedMethodInvocation(IExpression methodOwner)
         {
-            StringToken methodName;
+            IToken methodName;
             if (Input.NextTokenIs<KeywordToken>("main"))
             {
                 methodName = Input.MatchAndConsume<KeywordToken>();

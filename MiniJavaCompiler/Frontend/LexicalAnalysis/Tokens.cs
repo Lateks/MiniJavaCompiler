@@ -8,6 +8,7 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
     {
         int Row { get; }
         int Col { get; }
+        string Lexeme { get; }
     }
 
     /*  A static class for describing token types. These descriptions
@@ -19,7 +20,6 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
             new Dictionary<Type, string>()
                 {
                     {typeof(TokenElement), "token"},
-                    {typeof(StringToken), "token"},
                     {typeof(ErrorToken), "lexical error"},
                     {typeof(IntegerLiteralToken), "integer literal"},
                     {typeof(IdentifierToken), "identifier"},
@@ -46,15 +46,18 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
     // by itself.
     public interface ITypeToken : IToken { }
 
+    // This is a base class for all token types.
     public abstract class TokenElement : IToken
     {
         public int Row { get; private set; }
         public int Col { get; private set; }
+        public string Lexeme { get; private set; }
 
-        protected TokenElement(int row, int col)
+        protected TokenElement(string lexeme, int row, int col)
         {
             Row = row;
             Col = col;
+            Lexeme = lexeme;
         }
     }
 
@@ -64,42 +67,26 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
     {
         public string Message { get; private set; }
 
-        public string Lexeme { get; private set; }
-
         public ErrorToken(string lexeme, string message, int row, int col)
-            : base(row, col)
+            : base(lexeme, row, col)
         {
             Message = message;
-            Lexeme = lexeme;
         }
     }
 
-    // A base class for token types that need to store a lexeme.
-    // TODO: could this be a base class for all token types? And Lexeme could be an interface property.
-    public abstract class StringToken : TokenElement
-    {
-        public string Lexeme { get; private set; }
-
-        protected StringToken(string name, int row, int col)
-            : base(row, col)
-        {
-            Lexeme = name;
-        }
-    }
-
-    public class IntegerLiteralToken : StringToken
+    public class IntegerLiteralToken : TokenElement
     {
         public IntegerLiteralToken(string value, int row, int col)
             : base(value, row, col) { }
     }
 
-    public class IdentifierToken : StringToken, ITypeToken
+    public class IdentifierToken : TokenElement, ITypeToken
     {
         public IdentifierToken(string name, int row, int col)
             : base(name, row, col) { }
     }
 
-    public class KeywordToken : StringToken
+    public class KeywordToken : TokenElement
     {
         public KeywordToken(string name, int row, int col)
             : base(name, row, col) { }
@@ -111,13 +98,13 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
             : base(name, row, col) { }
     }
 
-    public class OperatorToken : StringToken
+    public class OperatorToken : TokenElement
     {
         public OperatorToken(string symbol, int row, int col)
             : base(symbol, row, col) { }
     }
 
-    public class PunctuationToken : StringToken
+    public class PunctuationToken : TokenElement
     {
         public PunctuationToken(string symbol, int row, int col)
             : base(symbol, row, col) { }
@@ -125,6 +112,6 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
 
     public class EndOfFile : TokenElement
     {
-        public EndOfFile(int row, int col) : base(row, col) { }
+        public EndOfFile(int row, int col) : base(String.Empty, row, col) { }
     }
 }

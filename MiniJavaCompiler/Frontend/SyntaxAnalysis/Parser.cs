@@ -405,9 +405,8 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
                     }
                     else
                     {
-                        Debug.Assert(token is StringToken);
                         errorMsg = String.Format("Invalid token '{0}' of type {1} starting a declaration.",
-                            (token as StringToken).Lexeme, TokenDescriptions.Describe(token.GetType()));
+                            token.Lexeme, TokenDescriptions.Describe(token.GetType()));
                     }
                     throw new SyntaxError(errorMsg, token.Row, token.Col);
                 }
@@ -442,7 +441,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
             try
             {
                 var typeInfo = Type();
-                var type = (StringToken)typeInfo.Item1;
+                var type = typeInfo.Item1;
                 var variableIdent = Input.MatchAndConsume<IdentifierToken>();
                 return new VariableDeclaration(variableIdent.Lexeme, type.Lexeme,
                     typeInfo.Item2, type.Row, type.Col);
@@ -467,7 +466,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
         {
             IToken startToken = Input.MatchAndConsume<KeywordToken>("public");
             var typeInfo = Type();
-            var type = (StringToken)typeInfo.Item1;
+            var type = typeInfo.Item1;
             var methodName = Input.MatchAndConsume<IdentifierToken>();
             Input.MatchAndConsume<PunctuationToken>("(");
             List<VariableDeclaration> parameters = FormalParameters();

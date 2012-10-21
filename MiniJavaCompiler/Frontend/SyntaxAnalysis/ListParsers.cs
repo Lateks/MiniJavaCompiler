@@ -10,7 +10,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
     {
         List<TNodeType> ParseList<TNodeType, TFollowToken>(Func<TNodeType> parseNode, string followTokenValue)
             where TNodeType : ISyntaxTreeNode
-            where TFollowToken : StringToken;
+            where TFollowToken : IToken;
     }
 
     public interface IListEndingInEndOfFileParser
@@ -33,7 +33,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
 
         public List<TNodeType> ParseList<TNodeType, TFollowToken>(Func<TNodeType> parseNode, string followTokenValue)
             where TNodeType : ISyntaxTreeNode
-            where TFollowToken : StringToken
+            where TFollowToken : IToken
         {
             return Parse(parseNode, () => Input.NextTokenIs<TFollowToken>(followTokenValue));
         }
@@ -58,7 +58,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
 
         public List<TNodeType> ParseList<TNodeType, TFollowToken>(Func<TNodeType> parseNode, string followTokenValue)
             where TNodeType : ISyntaxTreeNode
-            where TFollowToken : StringToken
+            where TFollowToken : IToken
         {
             return ParseList<TNodeType, TFollowToken>(parseNode, followTokenValue, false);
         }
@@ -66,7 +66,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
         private List<TNodeType> ParseList<TNodeType, TFollowToken>
             (Func<TNodeType> parseNode, string followTokenValue, bool isListTail)
             where TNodeType : ISyntaxTreeNode
-            where TFollowToken : StringToken
+            where TFollowToken : IToken
         {
             var list = new List<TNodeType>();
             if (!(Input.NextTokenIs<TFollowToken>(followTokenValue)))

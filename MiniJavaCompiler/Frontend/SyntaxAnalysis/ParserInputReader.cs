@@ -11,12 +11,12 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
     {
         IToken Peek();
         void PushBack(IToken token);
-        TExpectedType MatchAndConsume<TExpectedType>(string expectedValue) where TExpectedType : StringToken;
+        TExpectedType MatchAndConsume<TExpectedType>(string expectedValue) where TExpectedType : IToken;
         TExpectedType MatchAndConsume<TExpectedType>() where TExpectedType : IToken;
         TTokenType Consume<TTokenType>() where TTokenType : IToken;
         bool NextTokenIs<TExpectedType>() where TExpectedType : IToken;
-        bool NextTokenIs<TExpectedType>(string expectedValue) where TExpectedType : StringToken;
-        bool NextTokenOneOf<TExpectedType>(params string[] valueCollection) where TExpectedType : StringToken;
+        bool NextTokenIs<TExpectedType>(string expectedValue) where TExpectedType : IToken;
+        bool NextTokenOneOf<TExpectedType>(params string[] valueCollection) where TExpectedType : IToken;
     }
 
     internal class LexicalErrorEncountered : Exception { }
@@ -108,24 +108,13 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
         // Note: MatchAndConsume always consumes the next token regardless of match
         // failure.
         public TExpectedType MatchAndConsume<TExpectedType>(string expectedValue)
-            where TExpectedType : StringToken
+            where TExpectedType : IToken
         {
-            if (_tokenStream.CurrentToken is TExpectedType)
+            if (_tokenStream.CurrentToken is TExpectedType && _tokenStream.CurrentToken.Lexeme == expectedValue)
             {
-                if (((StringToken)_tokenStream.CurrentToken).Lexeme == expectedValue)
-                {
-                    return Consume<TExpectedType>();
-                }
-                else
-                {
-                    var token = Consume<StringToken>();
-                    throw ConstructMatchException<TExpectedType>(token, expectedValue);
-                }
+                return Consume<TExpectedType>();
             }
-            else
-            {
-                throw ConstructMatchException<TExpectedType>(Consume<IToken>(), expectedValue);
-            }
+            throw ConstructMatchException<TExpectedType>(Consume<IToken>(), expectedValue);
         }
 
         // Like above but does not check value and accepts all kinds of tokens.
@@ -155,9 +144,8 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
                                            token.Row, token.Col);
                 else
                 {
-                    Debug.Assert(token is StringToken);
                     return new SyntaxError(String.Format("Expected {0} but got {1}.", expected,
-                        TokenDescriptions.Describe(token.GetType()) + " '" + (token as StringToken).Lexeme + "'"),
+                        TokenDescriptions.Describe(token.GetType()) + " '" + token.Lexeme + "'"),
                         token.Row, token.Col);
                 }
             }
@@ -178,10 +166,10 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
         }
 
         private dynamic GetTokenOrReportError<TTokenType>() where TTokenType : IToken
-        {
+        {   // Lexical errors are reported here, so no errors are left unreported
+            // when consuming tokens because of recovery.
             if (_tokenStream.CurrentToken is ErrorToken)
-            {   // Lexical errors are reported here, so no errors are left unreported
-                // when consuming tokens because of recovery.
+            {
                 var temp = (ErrorToken)_tokenStream.CurrentToken;
                 _errorReporter.ReportError(temp.Message, temp.Row, temp.Col);
                 return temp;
@@ -192,9 +180,9 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
 
         // Checks whether the input token matches the expected type and value or not.
         public bool NextTokenIs<TExpectedType>(string expectedValue)
-            where TExpectedType : StringToken
+            where TExpectedType : IToken
         {
-            return NextTokenIs<TExpectedType>() && ((StringToken)_tokenStream.CurrentToken).Lexeme == expectedValue;
+            return NextTokenIs<TExpectedType>() && _tokenStream.CurrentToken.Lexeme == expectedValue;
         }
 
         public bool NextTokenIs<TExpectedType>()
@@ -206,12 +194,12 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
 
         // Checks that the next token is of the expected type and matches one of the expected string values.
         // Used to match e.g. a subset of punctuation or operator symbols.
-        public bool NextTokenOneOf<TExpectedType>(params string[] valueCollection) where TExpectedType : StringToken
+        public bool NextTokenOneOf<TExpectedType>(params string[] valueCollection) where TExpectedType : IToken
         {
             if (!NextTokenIs<TExpectedType>())
                 return false;
             else
-                return valueCollection.Contains(((StringToken) _tokenStream.CurrentToken).Lexeme);
+                return valueCollection.Contains(_tokenStream.CurrentToken.Lexeme);
         }
     }
 }
