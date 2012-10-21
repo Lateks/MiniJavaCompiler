@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using MiniJavaCompiler.AbstractSyntaxTree;
 using MiniJavaCompiler.Support;
@@ -13,7 +14,8 @@ namespace MiniJavaCompiler.SemanticAnalysis
     {
         private readonly SymbolTable _symbolTable;
         private readonly Stack<IType> _operandTypes;
-        private readonly Stack<IType> _returnTypes;
+        private readonly Stack<IType> _returnTypes; // When return statements are encountered, the types of the expressions they return
+                                                    // will be stored here and checked when exiting the method declaration.
         private readonly Program _programRoot;
         private readonly IErrorReporter _errors;
         private bool _failed;
@@ -93,16 +95,15 @@ namespace MiniJavaCompiler.SemanticAnalysis
         }
 
         public void Visit(AssignmentStatement node)
-        { // the type of right hand side must match the left hand side
-          // and left hand side needs to be an lvalue (in MiniJava
-          // that practically means an identifier that references a
-          // variable)
+        { // The type of right hand side must match the left hand side
+          // and left hand side needs to be an lvalue.
             var lhsType = _operandTypes.Pop();
             var rhsType = _operandTypes.Pop();
-            if (node.LeftHandSide is VariableReferenceExpression || node.LeftHandSide is ArrayIndexingExpression) // the only lvalues in Mini-Java
+            if (node.LeftHandSide is VariableReferenceExpression || node.LeftHandSide is ArrayIndexingExpression) // The only lvalues in Mini-Java.
             {
                 if (!(rhsType.IsAssignableTo(lhsType)))
                 {
+                    Debug.Assert(!(lhsType is ErrorType || rhsType is ErrorType)); // ErrorType should be assignable both ways.
                     ReportError(String.Format("Cannot assign expression of type {0} to variable of type {1}.",
                         rhsType.Name, lhsType.Name), node);
                 }
@@ -125,7 +126,9 @@ namespace MiniJavaCompiler.SemanticAnalysis
         }
 
         public void Visit(MethodInvocation node)
-        {
+        {   // Note: in this implementation the main method cannot be called from inside the program
+            // because there would be no sensible use for such a method call - and there are no other
+            // static methods - so implementing it would have been pointless.
             var methodOwnerType = _operandTypes.Pop();
             MethodSymbol method = null;
             if (node.MethodOwner is ThisExpression) // Method called is defined by the enclosing class or its superclasses.
@@ -138,14 +141,14 @@ namespace MiniJavaCompiler.SemanticAnalysis
                 {
                     if (MiniJavaArrayType.IsPredefinedArrayMethod(node.MethodName))
                     {
-                        _operandTypes.Push(_symbolTable.ResolveType(MiniJavaInfo.IntType));
-                        return; // In this case there is nothing further to check, since length is
-                    }           // actually a field and therefore the invocation cannot have parameters.
+                        _operandTypes.Push(_symbolTable.ResolveType(MiniJavaInfo.IntType)); // In this case there is nothing further to check, since length is
+                        return;                                                             // actually a field and therefore the invocation cannot have parameters.
+                    }
                     ReportError(String.Format("Cannot call method {0} for an array.",
-                        node.MethodName), node); // Note: in this case we still want to go into method call validation to pop
+                        node.MethodName), node); // In this case we still need to go into method call validation to pop
                 }                                // out possible arguments for the method invocation.
                 else if (methodOwnerType is BuiltInTypeSymbol)
-                {   // Builtin simple types are not objects, so methods cannot be invoked for them.
+                {   // Built-in simple types are not objects, so methods cannot be invoked for them.
                     // Possible arguments still need to be popped out of the stack.
                     ReportError(String.Format("Cannot call method {0} on built-in type {1}.",
                         node.MethodName, methodOwnerType.Name), node);
@@ -157,7 +160,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
                 }
             }
             ValidateMethodCall(method, node);
-            _operandTypes.Push(method == null ? ErrorType.GetInstance() : method.Type); // return type, can be void
+            _operandTypes.Push(method == null ? ErrorType.GetInstance() : method.Type); // Expected return type, can be void.
         }
 
         public void Visit(InstanceCreationExpression node)
@@ -198,12 +201,13 @@ namespace MiniJavaCompiler.SemanticAnalysis
             var rightOperandType = _operandTypes.Pop();
             var op = MiniJavaInfo.Operators[node.Operator];
             if (op.OperandType != MiniJavaInfo.AnyType)
-            { // types are not checked if operator can be applied to any type of object (like ==)
+            {   // Types are not checked if operator can be applied to any type of object (like ==).
                 var expectedOpType = _symbolTable.ResolveType(op.OperandType);
                 if (!leftOperandType.IsAssignableTo(expectedOpType) || !rightOperandType.IsAssignableTo(expectedOpType))
-                { // Both arguments (lhs and rhs) must match operator's expected operand type.
-                  // Note: both arguments cannot be ErrorTypes because in that case they would
-                  // both have passed the assignability test.
+                {   // Both arguments (lhs and rhs) must match operator's expected operand type.
+                    // Note: both arguments cannot be ErrorTypes because in that case they would
+                    // both have passed the assignability test.
+                    Debug.Assert(!(leftOperandType is ErrorType && rightOperandType is ErrorType));
                     string errormsg;
                     if (leftOperandType is ErrorType)
                     {
@@ -240,13 +244,13 @@ namespace MiniJavaCompiler.SemanticAnalysis
         public void Visit(ArrayIndexingExpression node)
         {
             var arrayType = _operandTypes.Pop();
-            if (!(arrayType is ErrorType) && !(arrayType is MiniJavaArrayType)) // only arrays can be indexed
+            if (!(arrayType is ErrorType) && !(arrayType is MiniJavaArrayType)) // Only arrays can be indexed. Resolving errors are ignored.
             {
                 ReportError(String.Format("Cannot index into expression of type {0}.", arrayType.Name), node);
             }
             var indexType = _operandTypes.Pop();
             if (!indexType.IsAssignableTo(_symbolTable.ResolveType(MiniJavaInfo.IntType)))
-            { // array must be indexed with an expression that evaluates to an int value
+            { // Array must be indexed with an expression that evaluates into an int value.
                 ReportError("Invalid array index.", node);
             }
             _operandTypes.Push(arrayType is MiniJavaArrayType ?
@@ -254,7 +258,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
         }
 
         public void Visit(VariableReferenceExpression node)
-        { // check that the reference is valid and take note of the type
+        {
             var scope = _symbolTable.Scopes[node];
             var symbol = (VariableSymbol) scope.ResolveVariable(node.Name);
             if (symbol == null || !VariableDeclaredBeforeReference(symbol, node))
@@ -280,9 +284,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
         public void Exit(MainClassDeclaration node) { }
 
         public void Exit(MethodDeclaration node)
-        { // Note: in this implementation the main method cannot be called from inside the program
-          // because there would be no sensible use for such a method call - and there are no other
-          // static methods - so implementing it would have been pointless.
+        {
             var method = (MethodSymbol)_symbolTable.Scopes[node].ResolveMethod(node.Name);
             int numReturnStatements = _returnTypes.Count;
             if (method.Type.Equals(VoidType.GetInstance()))
@@ -291,6 +293,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
                 {
                     ReportError(String.Format("Method of type {0} cannot have return statements.",
                         method.Type.Name), node);
+                    _returnTypes.Clear();
                 }
             }
             else if (numReturnStatements == 0)
@@ -311,7 +314,8 @@ namespace MiniJavaCompiler.SemanticAnalysis
                 {
                     var returnType = _returnTypes.Pop();
                     if (!returnType.IsAssignableTo(method.Type))
-                    { // the type of object returned by the return statement must match the method's declared return type
+                    {   // The type of object returned by the return statement must match the method's
+                        // declared return type.
                         ReportError(String.Format("Cannot convert expression of type {0} to {1}.",
                             returnType.Name, method.Type.Name), node);
                     }
@@ -328,7 +332,7 @@ namespace MiniJavaCompiler.SemanticAnalysis
 
         private bool BlockAlwaysReturnsAValue(List<IStatement> statementsInBlock)
         {
-            var flattenedStatementsInBlock = FlattenStatementList(statementsInBlock); // flatten block statements
+            var flattenedStatementsInBlock = FlattenStatementList(statementsInBlock); // Flatten block statements.
             var returnIdx = flattenedStatementsInBlock.FindIndex((statement) => statement is ReturnStatement);
             if (returnIdx >= 0)
             {
@@ -362,16 +366,16 @@ namespace MiniJavaCompiler.SemanticAnalysis
         // lists of statements.
         private List<IStatement> FlattenStatementList(List<IStatement> statementList)
         {
-            if (!statementList.Any(elem => elem is BlockStatement))
+            if (!statementList.Any(elem => elem is BlockStatement)) // If there are no block statements, there is nothing to flatten.
             {
                 return statementList;
             }
             // Convert each block statement into a list of statements and wrap individual
             // statements into lists to be able to concatenate them.
-            var wrappedStatements = statementList.Select(elem => elem is BlockStatement ?
-                FlattenStatementList((elem as BlockStatement).Statements) :
-                new List<IStatement>() {elem});
-            return wrappedStatements.SelectMany(elem => elem).ToList();
+            var wrappedStatements = statementList.Select(elem => elem is BlockStatement
+                ? FlattenStatementList((elem as BlockStatement).Statements)
+                : new List<IStatement>() { elem });
+            return wrappedStatements.SelectMany(elem => elem).ToList(); // Concatenate lists.
         }
 
         private void RequireSingleBooleanArgument(SyntaxElement node)
