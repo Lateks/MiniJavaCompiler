@@ -1672,6 +1672,8 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                                  "\t\t if (true) { }\n" +
                                  "\t\t else { return true; }\n" +
                                  "\t}\n" +
+                                 "\tpublic void foo() { return 10; }\n" +
+                                 "\tpublic boolean bar() { return true; }\n" +
                                  "}\n" +
                                  "class B extends A {" +
                                  "\tpublic boolean alwaysTrue(int foo) { return true; }\n" +
@@ -1679,7 +1681,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<TypeCheckerError>(checker.CheckTypesAndReferences);
-                Assert.That(errors.Count, Is.EqualTo(19));
+                Assert.That(errors.Count, Is.EqualTo(20));
                 Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot apply operator + on arguments of type int and boolean"));
                 Assert.That(errors.Errors[1].Message, Is.StringContaining("Cannot resolve symbol C"));
                 Assert.That(errors.Errors[2].Message, Is.StringContaining("Cannot assign expression of type A to variable of type int"));
@@ -1698,7 +1700,8 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 Assert.That(errors.Errors[15].Message, Is.StringContaining("Cannot resolve symbol zzz")); // No error about array index type because variable could not be resolved.
                 Assert.That(errors.Errors[16].Message, Is.StringContaining("Cannot resolve symbol zzz")); // No error about invalid argument to assert statement because variable could not be resolved.
                 Assert.That(errors.Errors[17].Message, Is.StringContaining("Missing return statement in method alwaysTrue"));
-                Assert.That(errors.Errors[18].Message, Is.StringContaining("Method alwaysTrue in class B overloads method alwaysTrue in class A"));
+                Assert.That(errors.Errors[18].Message, Is.StringContaining("Method of type void cannot have return statements"));
+                Assert.That(errors.Errors[19].Message, Is.StringContaining("Method alwaysTrue in class B overloads method alwaysTrue in class A"));
             }
 
         }

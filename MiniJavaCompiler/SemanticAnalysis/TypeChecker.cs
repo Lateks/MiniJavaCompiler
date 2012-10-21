@@ -288,7 +288,8 @@ namespace MiniJavaCompiler.SemanticAnalysis
             var method = (MethodSymbol)_symbolTable.Scopes[node].ResolveMethod(node.Name);
             int numReturnStatements = _returnTypes.Count;
             if (method.Type.Equals(VoidType.GetInstance()))
-            { // Void methods cannot have return statements (because Mini-Java does not define an empty return statement).
+            {  // Void methods cannot have return statements
+               // (because Mini-Java does not allow empty return statements).
                 if (numReturnStatements > 0)
                 {
                     ReportError(String.Format("Method of type {0} cannot have return statements.",
