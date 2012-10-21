@@ -266,6 +266,10 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
 
         private BlockStatement WrapInBlock(IStatement statement)
         {
+            if (statement == null) // Can be null if errors are encountered in the parsing phase.
+            {
+                return null;
+            }
             if (statement is BlockStatement)
             {
                 return statement as BlockStatement;
@@ -297,8 +301,16 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
             : base(row, col)
         {
             BooleanExpression = booleanExp;
-            LoopBody = loopBody is BlockStatement ? loopBody as BlockStatement :
-                new BlockStatement(new List<IStatement>() {loopBody}, row, col);
+            if (loopBody == null)
+            {
+                LoopBody = null;
+            }
+            else
+            {
+                LoopBody = loopBody is BlockStatement
+                               ? loopBody as BlockStatement
+                               : new BlockStatement(new List<IStatement>() { loopBody }, row, col);
+            }
         }
 
         public override void Accept(INodeVisitor visitor)

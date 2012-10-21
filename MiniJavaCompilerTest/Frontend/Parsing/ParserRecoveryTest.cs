@@ -24,7 +24,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
         {
             string program = "class Foo {\n" +
                              "\t public static void main() { }\n" + // Class Foo is not closed: recovery consumes the class keyword (assumed to be }) from
-                // the next class declaration and discards tokens until the next class keyword (on the last row).
+                                                                    // the next class declaration and discards tokens until the next class keyword (on the last row).
                              "class Bar { pblic int foo() { }}\n" + // Typo in keyword: missed due to recovery.
                              "class Baz { public int bar(+ foo) { } }\n"; // There should be an identifier or a type token in place of +. This error is caught.
             SetUpParser(program);
