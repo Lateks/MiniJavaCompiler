@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace MiniJavaCompiler.LexicalAnalysis
+namespace MiniJavaCompiler.Frontend.LexicalAnalysis
 {
     public interface IToken
     {

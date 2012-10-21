@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
-using MiniJavaCompiler.AbstractSyntaxTree;
-using MiniJavaCompiler.SemanticAnalysis;
+using MiniJavaCompiler.Frontend.SemanticAnalysis;
 using MiniJavaCompiler.Support;
+using MiniJavaCompiler.Support.AbstractSyntaxTree;
 using NUnit.Framework;
 
 namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis

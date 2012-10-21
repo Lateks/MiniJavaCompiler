@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using MiniJavaCompiler.AbstractSyntaxTree;
-using MiniJavaCompiler.LexicalAnalysis;
+using MiniJavaCompiler.Frontend.LexicalAnalysis;
+using MiniJavaCompiler.Frontend.SyntaxAnalysis;
 using MiniJavaCompiler.Support;
-using MiniJavaCompiler.SyntaxAnalysis;
+using MiniJavaCompiler.Support.AbstractSyntaxTree;
 using NUnit.Framework;
 
 namespace MiniJavaCompilerTest.Frontend.Parsing

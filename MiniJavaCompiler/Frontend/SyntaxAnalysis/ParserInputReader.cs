@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using MiniJavaCompiler.LexicalAnalysis;
+using MiniJavaCompiler.Frontend.LexicalAnalysis;
 using MiniJavaCompiler.Support;
 
-namespace MiniJavaCompiler.SyntaxAnalysis
+namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
 {
     public interface IParserInputReader
     {

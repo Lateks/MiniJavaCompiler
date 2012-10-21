@@ -4,7 +4,7 @@ using System.Linq;
 using System.IO;
 using MiniJavaCompiler.Support;
 
-namespace MiniJavaCompiler.LexicalAnalysis
+namespace MiniJavaCompiler.Frontend.LexicalAnalysis
 {
     public class OutOfInput : Exception
     {

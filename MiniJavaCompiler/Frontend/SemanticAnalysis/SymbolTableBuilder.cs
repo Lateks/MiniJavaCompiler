@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
-using MiniJavaCompiler.AbstractSyntaxTree;
+using MiniJavaCompiler.Support.AbstractSyntaxTree;
 using MiniJavaCompiler.Support.SymbolTable;
 using MiniJavaCompiler.Support;
 
-namespace MiniJavaCompiler.SemanticAnalysis
+namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 {
     public class SymbolTableBuilder : INodeVisitor
     {

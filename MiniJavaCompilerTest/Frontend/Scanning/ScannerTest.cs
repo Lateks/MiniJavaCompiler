@@ -1,5 +1,5 @@
 using System.IO;
-using MiniJavaCompiler.LexicalAnalysis;
+using MiniJavaCompiler.Frontend.LexicalAnalysis;
 using NUnit.Framework;
 
 namespace MiniJavaCompilerTest.Frontend.Scanning

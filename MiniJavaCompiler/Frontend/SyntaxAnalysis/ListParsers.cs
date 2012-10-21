@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using MiniJavaCompiler.AbstractSyntaxTree;
-using MiniJavaCompiler.LexicalAnalysis;
+using MiniJavaCompiler.Frontend.LexicalAnalysis;
 using MiniJavaCompiler.Support;
+using MiniJavaCompiler.Support.AbstractSyntaxTree;
 
-namespace MiniJavaCompiler.SyntaxAnalysis
+namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
 {
     public interface IListEndingInStringTokenParser
     {

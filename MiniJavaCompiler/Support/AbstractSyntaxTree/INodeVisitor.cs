@@ -1,6 +1,4 @@
-﻿using MiniJavaCompiler.AbstractSyntaxTree;
-
-namespace MiniJavaCompiler.SemanticAnalysis
+﻿namespace MiniJavaCompiler.Support.AbstractSyntaxTree
 {
     public interface INodeVisitor
     {

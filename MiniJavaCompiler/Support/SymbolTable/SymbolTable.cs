@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using MiniJavaCompiler.AbstractSyntaxTree;
+using MiniJavaCompiler.Support.AbstractSyntaxTree;
 
 namespace MiniJavaCompiler.Support.SymbolTable
 {

@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using MiniJavaCompiler.AbstractSyntaxTree;
+﻿using System.Collections.Generic;
 using MiniJavaCompiler.Support;
+using MiniJavaCompiler.Support.AbstractSyntaxTree;
 
-namespace MiniJavaCompiler.SemanticAnalysis
+namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 {
     public class TypeSetBuilder : INodeVisitor
     {

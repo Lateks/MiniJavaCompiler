@@ -2,17 +2,17 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using MiniJavaCompiler.AbstractSyntaxTree;
+using MiniJavaCompiler.Frontend.LexicalAnalysis;
 using MiniJavaCompiler.Support;
-using MiniJavaCompiler.LexicalAnalysis;
+using MiniJavaCompiler.Support.AbstractSyntaxTree;
 
-namespace MiniJavaCompiler.SyntaxAnalysis
+namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
 {
     // A sub-parser that parses expressions and solves operator precedences.
     // The grammar has a separate level for each operator precedence level.
     internal class ExpressionParser : ParserBase
     {
-        private int _maxPrecedenceLevel;
+        private readonly int _maxPrecedenceLevel;
 
         public ExpressionParser(IParserInputReader input, IErrorReporter reporter, bool debugMode = false)
             : base(input, reporter, debugMode)

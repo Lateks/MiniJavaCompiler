@@ -1,9 +1,9 @@
 ﻿using System;
 using System.IO;
 
-namespace MiniJavaCompiler.LexicalAnalysis
+namespace MiniJavaCompiler.Frontend.LexicalAnalysis
 {
-    public class EndlessCommentError : Exception
+    internal class EndlessCommentError : Exception
     {
         public int Row { get; private set; }
         public int Col { get; private set; }

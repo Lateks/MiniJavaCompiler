@@ -1,10 +1,10 @@
 using System.IO;
-using MiniJavaCompiler.AbstractSyntaxTree;
-using MiniJavaCompiler.LexicalAnalysis;
-using MiniJavaCompiler.SemanticAnalysis;
+using MiniJavaCompiler.Frontend.LexicalAnalysis;
+using MiniJavaCompiler.Frontend.SemanticAnalysis;
+using MiniJavaCompiler.Frontend.SyntaxAnalysis;
 using MiniJavaCompiler.Support;
+using MiniJavaCompiler.Support.AbstractSyntaxTree;
 using MiniJavaCompiler.Support.SymbolTable;
-using MiniJavaCompiler.SyntaxAnalysis;
 using NUnit.Framework;
 
 namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis

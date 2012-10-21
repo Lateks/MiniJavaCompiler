@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using MiniJavaCompiler.AbstractSyntaxTree;
 using MiniJavaCompiler.Support;
+using MiniJavaCompiler.Support.AbstractSyntaxTree;
 using MiniJavaCompiler.Support.SymbolTable;
 
-namespace MiniJavaCompiler.SemanticAnalysis
+namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 {
     public class TypeCheckerError : Exception { }
 
