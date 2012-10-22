@@ -98,7 +98,7 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
 
         private void AdvanceScannerPosition(char currentSymbol)
         {
-            if (currentSymbol.Equals('\n'))
+            if (currentSymbol == '\n')
             {
                 Row++;
                 Col = 0;
@@ -121,17 +121,22 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
         // Returns true if something was skipped and false otherwise.
         private bool SkipComments()
         {
-            if (!InputLeft() || !Peek().Equals('/'))
+            if (!InputLeft() || !(Peek() == '/'))
                 return false;
             Debug.Assert(_buffer == null);
 
             _commentStartRow = Row;
             _commentStartCol = Col + 1;
             _buffer = (char)_input.Read(); // May be a division symbol, not a comment starter.
-            if (_input.Peek().Equals('/'))
+            if (_input.Peek() == '/')
+            {
                 SkipOneLineComment();
-            else if (_input.Peek().Equals('*'))
+            }
+            else if (_input.Peek() == '*')
+            {
+                Read(); Read(); // discard the starting characters of the comment (/*)
                 SkipMultilineComment();
+            }
             else
                 return false;
             return true;
@@ -142,13 +147,25 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
             ReadUntil('\n'); // may also end in EndOfFile
         }
 
+        // Skip nested comments recursively.
         private void SkipMultilineComment()
         {
-            Read(); Read(); // discard the starting characters of the comment (/*)
             do
             {
-                ReadUntil('*');
-            } while (InputLeft() && !Peek().Equals('/'));
+                int lastReadChar;
+                do
+                {
+                    lastReadChar = ReadUntil('*', '/');
+                    if (lastReadChar == '/')
+                    {
+                        if (InputLeft() && Peek() == '*')
+                        {
+                            Read(); // discard '*'
+                            SkipMultilineComment(); // skip a nested comment
+                        }
+                    }
+                } while (InputLeft() && lastReadChar != '*');
+            } while (InputLeft() && !(Peek() == '/'));
 
             if (!InputLeft())
                 throw new EndlessCommentError("Reached end of input while scanning for a comment.",
@@ -156,14 +173,17 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
             Read(); // discard the comment ending '/' symbol
         }
 
-        // Reads until the specified character or end of file, whichever comes first.
-        // The symbol itself is also consumed.
-        private void ReadUntil(char symbol)
+        // Reads until one of the specified symbols or end of file,
+        // whichever comes first. The symbol itself is also consumed.
+        //
+        // Returns the value of the character or -1 if end of file was reached.
+        private int ReadUntil(params char[] symbols)
         {
-            while (InputLeft() && !Peek().Equals(symbol))
+            while (InputLeft() && Array.Find(symbols, (val) => val == _input.Peek()) == '\0')
                 Read();
             if (InputLeft())
-                Read(); // Discard symbol.
+                 return (int) Read()[0];
+            return -1;
         }
     }
 }

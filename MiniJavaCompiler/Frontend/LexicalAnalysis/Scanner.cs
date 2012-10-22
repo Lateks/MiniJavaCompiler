@@ -122,7 +122,7 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
                 symbol += _input.Read();
                 return new OperatorToken(symbol, _startRow, _startCol);
             }
-            else if (symbol.Equals("=")) // An assignment operator.
+            else if (symbol == "=") // An assignment operator.
                 return new OperatorToken(symbol, _startRow, _startCol);
             else
                 return new ErrorToken(symbol, String.Format("Unexpected token '{0}'.", symbol),
@@ -146,7 +146,7 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
         {
             var tokenBuilder = new StringBuilder();
             while (_input.InputLeft() && (Char.IsLetterOrDigit(_input.Peek()) ||
-                                         _input.Peek().Equals('_')))
+                                         _input.Peek() == '_'))
                 tokenBuilder.Append(_input.Read());
             var token = tokenBuilder.ToString();
 

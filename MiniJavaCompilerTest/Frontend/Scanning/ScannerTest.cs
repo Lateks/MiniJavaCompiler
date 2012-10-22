@@ -207,6 +207,15 @@ namespace MiniJavaCompilerTest.Frontend.Scanning
         }
 
         [Test]
+        public void CommentsMayBeNested()
+        {
+            var reader = new StringReader("\n\n// ...//\n// ... \n\n/* ... /* ... */ ... */ foo");
+            var lexer = new MiniJavaScanner(reader);
+            Assert.That((lexer.NextToken()).Lexeme, Is.EqualTo("foo"));
+            reader.Close();
+        }
+
+        [Test]
         public void CombinedWhiteSpaceAndComments()
         {
             var reader = new StringReader("\n\t\t// ... \n // ... \n     foo");
@@ -276,6 +285,11 @@ namespace MiniJavaCompilerTest.Frontend.Scanning
             reader.Close();
 
             reader = new StringReader("/* ... *");
+            scanner = new MiniJavaScanner(reader);
+            Assert.That(scanner.NextToken(), Is.InstanceOf<ErrorToken>());
+            reader.Close();
+
+            reader = new StringReader("/* ... /* ... /*");
             scanner = new MiniJavaScanner(reader);
             Assert.That(scanner.NextToken(), Is.InstanceOf<ErrorToken>());
             reader.Close();
