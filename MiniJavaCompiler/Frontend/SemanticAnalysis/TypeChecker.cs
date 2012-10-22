@@ -78,10 +78,10 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         }
 
         public void Visit(PrintStatement node)
-        {   // Argument must be a basic type (int or boolean).
+        {   // Argument must be an integer.
             var type = _operandTypes.Pop();
             if (type is ErrorType) return; // Type errors are never checked in recovery.
-            if (!(type is BuiltInTypeSymbol))
+            if (!(type is BuiltInTypeSymbol && type.Name == MiniJavaInfo.IntType))
             {
                 ReportError(String.Format("Cannot print expression of type {0}.", type.Name), node);
             }

@@ -1495,13 +1495,27 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
             {
                 string program = "class Foo{\n" +
                                  "\t public static void main() {\n" +
-                                 "\t\t System.out.println(true);\n" +
                                  "\t\t System.out.println(10 + 1 % 2);\n" +
                                  "}\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.DoesNotThrow(checker.CheckTypesAndReferences);
+            }
+
+            [Test]
+            public void CannotPrintABooleanValue()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() {\n" +
+                                 "\t\t System.out.println(true);\n" +
+                                 "}\n" +
+                                 "}\n";
+                IErrorReporter errors;
+                var checker = SetUpTypeAndReferenceChecker(program, out errors);
+                Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
+                Assert.AreEqual(1, errors.Count);
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot print expression of type boolean"));
             }
 
             [Test]
