@@ -32,7 +32,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 
         private void ReportConflict(string typeName, int row, int col)
         {
-            _errorReporter.ReportError(String.Format("Conflicting definitions for {0}", typeName), row, col);
+            _errorReporter.ReportError(String.Format("Conflicting definitions for {0}.", typeName), row, col);
             _errorsFound = true;
         }
 

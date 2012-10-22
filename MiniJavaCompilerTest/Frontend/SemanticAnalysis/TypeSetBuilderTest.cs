@@ -24,11 +24,11 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
             Assert.Throws<SemanticAnalysisFailed>(() => builder.BuildTypeSet());
             var errors = errorReporter.Errors;
             Assert.AreEqual(errors.Count, 3);
-            Assert.AreEqual("Conflicting definitions for int", errors[0].Content);
+            Assert.AreEqual("Conflicting definitions for int.", errors[0].Content);
             Assert.AreEqual(errors[0].Row, 1);
-            Assert.AreEqual("Conflicting definitions for boolean", errors[1].Content);
+            Assert.AreEqual("Conflicting definitions for boolean.", errors[1].Content);
             Assert.AreEqual(errors[1].Row, 2);
-            Assert.AreEqual("Conflicting definitions for int", errors[2].Content);
+            Assert.AreEqual("Conflicting definitions for int.", errors[2].Content);
             Assert.AreEqual(errors[2].Row, 3);
         }
 
@@ -45,7 +45,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
             Assert.Throws<SemanticAnalysisFailed>(() => builder.BuildTypeSet());
             var errors = errorReporter.Errors;
             Assert.AreEqual(errors.Count, 1);
-            Assert.AreEqual("Conflicting definitions for Foo", errors[0].Content);
+            Assert.AreEqual("Conflicting definitions for Foo.", errors[0].Content);
             Assert.AreEqual(errors[0].Row, 2);
         }
 
@@ -63,7 +63,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
             Assert.Throws<SemanticAnalysisFailed>(() => builder.BuildTypeSet());
             var errors = errorReporter.Errors;
             Assert.AreEqual(errors.Count, 1);
-            Assert.AreEqual("Conflicting definitions for Bar", errors[0].Content);
+            Assert.AreEqual("Conflicting definitions for Bar.", errors[0].Content);
             Assert.AreEqual(errors[0].Row, 3);
         }
 

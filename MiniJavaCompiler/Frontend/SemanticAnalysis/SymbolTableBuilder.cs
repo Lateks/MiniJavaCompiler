@@ -108,10 +108,10 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             Debug.Assert(CurrentScope is IVariableScope);
 
             var variableType = CheckDeclaredType(node);
-            var symbol = new VariableSymbol(node.Name, variableType, CurrentScope);
-            if ((CurrentScope as IVariableScope).Define(symbol))
+            var variableSymbol = new VariableSymbol(node.Name, variableType, CurrentScope);
+            if ((CurrentScope as IVariableScope).Define(variableSymbol))
             {
-                _symbolTable.Definitions.Add(symbol, node);
+                _symbolTable.Definitions.Add(variableSymbol, node);
                 _symbolTable.Scopes.Add(node, CurrentScope);
             }
             else

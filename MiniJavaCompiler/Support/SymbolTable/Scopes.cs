@@ -70,7 +70,8 @@ namespace MiniJavaCompiler.Support.SymbolTable
             }
             else
             {
-                throw new ArgumentException("Cannot define symbol of type " + sym.GetType().Name);
+                throw new ArgumentException(String.Format("Cannot define symbol of type {0}.",
+                    sym.GetType().Name));
             }
         }
 

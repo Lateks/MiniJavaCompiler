@@ -261,7 +261,7 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
         {
             BooleanExpression = booleanExp;
             ThenBranch = WrapInBlock(thenBranch);
-            ElseBranch =  elseBranch == null ? null : WrapInBlock(elseBranch);
+            ElseBranch = WrapInBlock(elseBranch);
         }
 
         private BlockStatement WrapInBlock(IStatement statement)

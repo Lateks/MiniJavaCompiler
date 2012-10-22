@@ -3,8 +3,9 @@ using System.Collections.Generic;
 
 namespace MiniJavaCompiler.Support.SymbolTable
 {
+    // This class provides the base information for all symbol classes.
     public abstract class Symbol
-    {   // This class provides the base information for all symbol classes.
+    {
         public string Name { get; private set; }
         public IType Type { get; private set; }
         public IScope EnclosingScope { get; private set; }
@@ -151,7 +152,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
                 return _fields[name];
             }
             else
-            { // Because fields are private, they are not resolved from superclasses.
+            {   // Because fields are private, they are not resolved from superclasses.
                 // In Mini-Java the enclosing scope of a class is the global scope which
                 // cannot contain variable declarations, so resolving stops here.
                 return null;

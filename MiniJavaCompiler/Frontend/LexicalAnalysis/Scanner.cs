@@ -125,7 +125,7 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
             else if (symbol.Equals("=")) // An assignment operator.
                 return new OperatorToken(symbol, _startRow, _startCol);
             else
-                return new ErrorToken(symbol, String.Format("Unexpected token '{0}'", symbol),
+                return new ErrorToken(symbol, String.Format("Unexpected token '{0}'.", symbol),
                     _startRow, _startCol);
         }
 
