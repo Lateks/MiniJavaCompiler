@@ -17,7 +17,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
         public ExpressionParser(IParserInputReader input, IErrorReporter reporter, bool debugMode = false)
             : base(input, reporter, debugMode)
         {
-            _maxPrecedenceLevel = MiniJavaInfo.OperatorsByPrecedenceLevel.Count() - 1;
+            _maxPrecedenceLevel = MiniJavaInfo.MaxPrecedenceLevel();
         }
 
         public IExpression Parse()
@@ -35,7 +35,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
             Debug.Assert(precedenceLevel >= 0 && precedenceLevel <= _maxPrecedenceLevel);
 
             var parseOperand = GetParserFunction(precedenceLevel);
-            return ParseBinaryOpTail(parseOperand(), parseOperand, MiniJavaInfo.OperatorsByPrecedenceLevel[precedenceLevel]);
+            return ParseBinaryOpTail(parseOperand(), parseOperand, MiniJavaInfo.GetOperatorsForPrecedenceLevel(precedenceLevel));
         }
 
         private Func<IExpression> GetParserFunction(int precedenceLevel)
@@ -53,7 +53,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
 
         private IExpression MultiplicationOperand()
         {
-            if (Input.NextTokenOneOf<OperatorToken>(MiniJavaInfo.UnaryOperators))
+            if (Input.NextTokenOneOf<OperatorToken>(MiniJavaInfo.UnaryOperatorSymbols()))
             {
                 var token = Input.Consume<OperatorToken>();
                 var term = Term();

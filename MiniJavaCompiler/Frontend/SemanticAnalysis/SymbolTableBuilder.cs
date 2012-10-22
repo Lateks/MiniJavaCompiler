@@ -55,7 +55,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 
         private void SetupGlobalScope(IEnumerable<string> userDefinedTypes)
         {
-            foreach (var type in MiniJavaInfo.BuiltIns)
+            foreach (var type in MiniJavaInfo.BuiltInTypes())
             {
                 var sym = new BuiltInTypeSymbol(type, _symbolTable.GlobalScope);
                 _symbolTable.GlobalScope.Define(sym);

@@ -81,15 +81,15 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
             _startCol = _input.Col + 1;
 
             char inputSymbol = _input.Peek();
-            if (MiniJavaInfo.SingleCharOperatorSymbols.Contains(inputSymbol))
+            if (MiniJavaInfo.IsSingleCharOperatorSymbol(inputSymbol))
             {
                 return MakeSingleCharBinaryOperatorToken();
             }
-            else if (MiniJavaInfo.MultiCharOperatorStartSymbols.Contains(inputSymbol))
+            else if (MiniJavaInfo.IsMultiCharOperatorSymbol(inputSymbol))
             {
                 return MakeMultiCharOperatorOrAssignmentToken();
             }
-            else if (MiniJavaInfo.Punctuation.Contains(inputSymbol))
+            else if (MiniJavaInfo.IsPunctuationCharacter(inputSymbol))
             {
                 return MakePunctuationToken();
             }
@@ -150,9 +150,9 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
                 tokenBuilder.Append(_input.Read());
             var token = tokenBuilder.ToString();
 
-            if (MiniJavaInfo.Types.Contains(token))
+            if (MiniJavaInfo.IsTypeKeyword(token))
                 return new MiniJavaTypeToken(token, _startRow, _startCol);
-            if (MiniJavaInfo.Keywords.Contains(token))
+            if (MiniJavaInfo.IsKeyword(token))
                 return new KeywordToken(token, _startRow, _startCol);
             return new IdentifierToken(token, _startRow, _startCol);
         }

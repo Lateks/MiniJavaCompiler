@@ -189,7 +189,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 
         public void Visit(UnaryOperatorExpression node)
         {
-            var op = MiniJavaInfo.Operators[node.Operator];
+            var op = MiniJavaInfo.GetOperator(node.Operator);
             var expectedArgType = _symbolTable.ResolveType(op.OperandType);
             var actualArgType = _operandTypes.Pop();
             if (!actualArgType.IsAssignableTo(expectedArgType))
@@ -204,7 +204,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         {
             var leftOperandType = _operandTypes.Pop();
             var rightOperandType = _operandTypes.Pop();
-            var op = MiniJavaInfo.Operators[node.Operator];
+            var op = MiniJavaInfo.GetOperator(node.Operator);
             if (op.OperandType != MiniJavaInfo.AnyType) // Types are not checked if operator can be applied to any type of object (like ==).
             {
                 var expectedOpType = _symbolTable.ResolveType(op.OperandType);
