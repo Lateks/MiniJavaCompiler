@@ -101,7 +101,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
                 RecoverFromClassMatching();
                 return null;
             }
-            catch (LexicalErrorEncountered)
+            catch (LexicalError)
             {
                 if (DebugMode) throw;
                 RecoverFromClassMatching();
@@ -131,7 +131,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
                 RecoverFromClassMatching();
                 return null;
             }
-            catch (LexicalErrorEncountered)
+            catch (LexicalError)
             {
                 if (DebugMode) throw;
                 ParsingFailed = true;
@@ -175,7 +175,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
                 ParsingFailed = true;
                 RecoverUntilPunctuationToken(followSet);
             }
-            catch (LexicalErrorEncountered)
+            catch (LexicalError)
             {
                 if (DebugMode) throw;
                 ParsingFailed = true;
@@ -419,7 +419,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
                 ParsingFailed = true;
                 RecoverUntilPunctuationToken(followSet);
             }
-            catch (LexicalErrorEncountered)
+            catch (LexicalError)
             {
                 Debug.Assert(followSet != null);
                 if (DebugMode) throw;
@@ -453,7 +453,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
                 ParsingFailed = true;
                 RecoverFromVariableDeclarationMatching(followSet);
             }
-            catch (LexicalErrorEncountered)
+            catch (LexicalError)
             {
                 if (DebugMode) throw;
                 ParsingFailed = true;

@@ -125,7 +125,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
                 ParsingFailed = true;
                 RecoverFromTermParsing();
             }
-            catch (LexicalErrorEncountered)
+            catch (LexicalError)
             {
                 if (DebugMode) throw;
                 ParsingFailed = true;

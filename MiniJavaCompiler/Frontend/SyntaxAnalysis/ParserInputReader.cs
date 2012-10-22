@@ -9,26 +9,45 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
 {
     public interface IParserInputReader
     {
+        // Returns the next token without consuming it.
         IToken Peek();
+
+        // Pushes a token back into the input.
         void PushBack(IToken token);
+
+        /* Checks that the current input token is of the expected type and matches the expected value.
+         * If the check succeeds, the token is consumed and returned. Otherwise a syntax error or a
+         * lexical error is thrown.
+         */
         TExpectedType MatchAndConsume<TExpectedType>(string expectedValue) where TExpectedType : IToken;
+
+        /* Checks that the current input token is of the expected type. If the check succeeds, the
+         * token is consumed and returned. Otherwise a syntax error or a lexical error is thrown.
+         */
         TExpectedType MatchAndConsume<TExpectedType>() where TExpectedType : IToken;
+
+        // Consumes the current input token, casts it to the type given as parameter
+        // and returns it.
         TTokenType Consume<TTokenType>() where TTokenType : IToken;
+
+        // Checks whether the current input token is of the expected type without consuming it.
         bool NextTokenIs<TExpectedType>() where TExpectedType : IToken;
+
+        // Checks whether the current input token is of the expected type and bears the
+        // expected value (lexeme) without consuming it.
         bool NextTokenIs<TExpectedType>(string expectedValue) where TExpectedType : IToken;
+
+        // Checks whether the current input token is of the expected type and matches one
+        // of the values given in the parameter list. Does not consume the token.
         bool NextTokenOneOf<TExpectedType>(params string[] valueCollection) where TExpectedType : IToken;
     }
 
-    internal class LexicalErrorEncountered : Exception { }
+    public class LexicalError : Exception { }
 
-    internal class SyntaxError : Exception
+    public class SyntaxError : Exception
     {
         public int Row { get; private set; }
         public int Col { get; private set; }
-        public new string Message
-        {
-            get { return String.Format("{0} (On row {1}, col {2}.)", base.Message, Row, Col); }
-        }
 
         public SyntaxError(string message, int row, int col)
             : base(message)
@@ -39,7 +58,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
     }
 
     // This class handles matching individual tokens, reporting lexical errors and peeking at input.
-    internal class ParserInputReader : IParserInputReader
+    public class ParserInputReader : IParserInputReader
     {
         private class TokenStreamBuffer // This class separates token stream handling from the main input reader.
         {
@@ -47,14 +66,14 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
             private IToken _inputToken;
             private readonly Stack<IToken> _inputBuffer; // This stack is used for buffering when we need to peek forward.
 
-            internal TokenStreamBuffer(ITokenizer scanner)
+            public TokenStreamBuffer(ITokenizer scanner)
             {
                 _scanner = scanner;
                 _inputBuffer = new Stack<IToken>();
                 _inputToken = null;
             }
 
-            internal IToken CurrentToken
+            public IToken CurrentToken
             {
                 get
                 {
@@ -67,12 +86,12 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
                 private set { _inputToken = value; }
             }
 
-            internal void Consume()
+            public void Consume()
             {
                 CurrentToken = null; // The next token is not fetched here. We do not want an out of input error e.g. when consuming an EndOfFile.
             }
 
-            internal void Buffer(IToken token)
+            public void Buffer(IToken token)
             {
                 _inputBuffer.Push(CurrentToken);
                 CurrentToken = token;
@@ -100,13 +119,6 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
             _tokenStream.Buffer(token);
         }
 
-        // Checks that the input token is of the expected type and matches the
-        // expected value. If the input token matches, it is returned and
-        // cast to the expected type. Otherwise an error is reported.
-        // The token is consumed even when it does not match expectations.
-        // 
-        // Note: MatchAndConsume always consumes the next token regardless of match
-        // failure.
         public TExpectedType MatchAndConsume<TExpectedType>(string expectedValue)
             where TExpectedType : IToken
         {
@@ -117,80 +129,42 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
             throw ConstructMatchException<TExpectedType>(Consume<IToken>(), expectedValue);
         }
 
-        // Like above but does not check value and accepts all kinds of tokens.
         public TExpectedType MatchAndConsume<TExpectedType>()
             where TExpectedType : IToken
         {
             if (NextTokenIs<TExpectedType>())
+            {
                 return Consume<TExpectedType>();
-            else
-            {
-                throw ConstructMatchException<TExpectedType>(Consume<IToken>());
             }
-        }
-
-        private Exception ConstructMatchException<TExpectedType>(IToken token, string expectedValue = null)
-            where TExpectedType : IToken
-        {
-            if (token is ErrorToken)
-                return new LexicalErrorEncountered();
-            else
-            {
-                var expected = String.IsNullOrEmpty(expectedValue)
-                                   ? TokenDescriptions.Describe(typeof (TExpectedType))
-                                   : "'" + expectedValue + "'";
-                if (token is EndOfFile)
-                    return new SyntaxError(String.Format("Reached end of file while parsing for {0}.", expected),
-                                           token.Row, token.Col);
-                else
-                {
-                    return new SyntaxError(String.Format("Expected {0} but got {1}.", expected,
-                        TokenDescriptions.Describe(token.GetType()) + " '" + token.Lexeme + "'"),
-                        token.Row, token.Col);
-                }
-            }
+            throw ConstructMatchException<TExpectedType>(Consume<IToken>());
         }
 
         // Consumes a token from input and returns it after casting to the
-        // given type (unless input token is an error token, in which case
-        // an ErrorToken is returned regardless of the type parameter).
+        // given type.
         //
         // This method should only be called when the input token's type
         // has already been verified to avoid errors in class casting.
         // (Unless consuming tokens as type Token for e.g. recovery purposes.)
         public TTokenType Consume<TTokenType>() where TTokenType : IToken
         {
-            var returnToken = GetTokenOrReportError<TTokenType>();
+            var returnToken = GetTokenAndReportErrors();
             _tokenStream.Consume();
-            return returnToken;
+            return (TTokenType) returnToken;
         }
 
-        private dynamic GetTokenOrReportError<TTokenType>() where TTokenType : IToken
-        {   // Lexical errors are reported here, so no errors are left unreported
-            // when consuming tokens because of recovery.
-            if (_tokenStream.CurrentToken is ErrorToken)
-            {
-                var temp = (ErrorToken)_tokenStream.CurrentToken;
-                _errorReporter.ReportError(temp.Message, temp.Row, temp.Col);
-                return temp;
-            }
-            else
-                return (TTokenType)_tokenStream.CurrentToken;
-        }
-
-        // Checks whether the input token matches the expected type and value or not.
+        // Checks the type and lexeme of the current input token without consuming it.
         public bool NextTokenIs<TExpectedType>(string expectedValue)
             where TExpectedType : IToken
         {
             return NextTokenIs<TExpectedType>() && _tokenStream.CurrentToken.Lexeme == expectedValue;
         }
 
+        // Checks the type of the current input token without consuming it.
         public bool NextTokenIs<TExpectedType>()
             where TExpectedType : IToken
         {
             return _tokenStream.CurrentToken is TExpectedType;
         }
-
 
         // Checks that the next token is of the expected type and matches one of the expected string values.
         // Used to match e.g. a subset of punctuation or operator symbols.
@@ -200,6 +174,42 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
                 return false;
             else
                 return valueCollection.Contains(_tokenStream.CurrentToken.Lexeme);
+        }
+
+        private IToken GetTokenAndReportErrors()
+        {   // Lexical errors are reported here, so no errors are left unreported
+            // when consuming tokens because of recovery.
+            if (_tokenStream.CurrentToken is ErrorToken)
+            {
+                var error = (ErrorToken)_tokenStream.CurrentToken;
+                _errorReporter.ReportError(error.Message, error.Row, error.Col);
+                return error;
+            }
+            else
+                return _tokenStream.CurrentToken;
+        }
+
+        // Constructs an appropriate exception for a token when matching has failed.
+        private Exception ConstructMatchException<TExpectedType>(IToken token, string expectedValue = null)
+            where TExpectedType : IToken
+        {
+            if (token is ErrorToken)
+            {
+                return new LexicalError(); // No message needed: this error has already been reported when the token was consumed,
+            }                              // but we probably need to recover.
+
+            var expected = String.IsNullOrEmpty(expectedValue)
+                               ? TokenDescriptions.Describe(typeof(TExpectedType))
+                               : "'" + expectedValue + "'";
+            if (token is EndOfFile)
+                return new SyntaxError(String.Format("Reached end of file while parsing for {0}.", expected),
+                                       token.Row, token.Col);
+            else
+            {
+                return new SyntaxError(String.Format("Expected {0} but got {1} '{2}'.", expected,
+                    TokenDescriptions.Describe(token.GetType()), token.Lexeme),
+                    token.Row, token.Col);
+            }
         }
     }
 }
