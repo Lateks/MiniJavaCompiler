@@ -25,15 +25,15 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
             return ParseExpression(); // All syntax and lexical errors should be caught on the term level, so they should not propagate this far.
         }
 
-        private List<IExpression> ExpressionList()
-        {
-            var parser = new CommaSeparatedListParser(Input, ErrorReporter);
-            return parser.ParseList<IExpression, PunctuationToken>(Parse, ")");
-        }
-
         private IExpression ParseExpression()
         {
             return ParseBinaryOpExpression(0);
+        }
+
+        private List<IExpression> ExpressionList()
+        {
+            var parser = new CommaSeparatedListParser(Input, ErrorReporter);
+            return parser.ParseList<IExpression, PunctuationToken>(ParseExpression, ")");
         }
 
         private IExpression ParseBinaryOpExpression(int precedenceLevel)

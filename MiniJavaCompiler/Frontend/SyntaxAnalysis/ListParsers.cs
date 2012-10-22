@@ -6,20 +6,20 @@ using MiniJavaCompiler.Support.AbstractSyntaxTree;
 
 namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
 {
-    public interface IListEndingInStringTokenParser
+    public interface IValueListParser
     {
         List<TNodeType> ParseList<TNodeType, TFollowToken>(Func<TNodeType> parseNode, string followTokenValue)
             where TNodeType : ISyntaxTreeNode
             where TFollowToken : IToken;
     }
 
-    public interface IListEndingInEndOfFileParser
+    public interface IListParser
     {
         List<TNodeType> ParseList<TNodeType>(Func<TNodeType> parseNode)
             where TNodeType : ISyntaxTreeNode;
     }
 
-    internal class ListParser : ParserBase, IListEndingInEndOfFileParser, IListEndingInStringTokenParser
+    internal class ListParser : ParserBase, IListParser, IValueListParser
     {
         public ListParser(IParserInputReader input, IErrorReporter errorReporter)
             : base(input, errorReporter) { }
@@ -28,17 +28,16 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
             where TNodeType : ISyntaxTreeNode
         {
             return Parse(parseNode, Input.NextTokenIs<EndOfFile>);
-
         }
 
         public List<TNodeType> ParseList<TNodeType, TFollowToken>(Func<TNodeType> parseNode, string followTokenValue)
             where TNodeType : ISyntaxTreeNode
             where TFollowToken : IToken
         {
-            return Parse(parseNode, () => Input.NextTokenIs<TFollowToken>(followTokenValue));
+            return Parse(parseNode, () => Input.NextTokenIs<EndOfFile>() || Input.NextTokenIs<TFollowToken>(followTokenValue));
         }
 
-        private static List<TNodeType> Parse<TNodeType>(Func<TNodeType> parseNode, Func<bool> nextTokenIsFollowToken)
+        private List<TNodeType> Parse<TNodeType>(Func<TNodeType> parseNode, Func<bool> nextTokenIsFollowToken)
             where TNodeType : ISyntaxTreeNode
         {
             var nodeList = new List<TNodeType>();
@@ -51,7 +50,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
         }
     }
 
-    internal class CommaSeparatedListParser : ParserBase, IListEndingInStringTokenParser
+    internal class CommaSeparatedListParser : ParserBase, IValueListParser
     {
         public CommaSeparatedListParser(IParserInputReader input, IErrorReporter errorReporter)
             : base(input, errorReporter) { }
@@ -69,7 +68,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
             where TFollowToken : IToken
         {
             var list = new List<TNodeType>();
-            if (!(Input.NextTokenIs<TFollowToken>(followTokenValue)))
+            if (!(Input.NextTokenIs<EndOfFile>() || Input.NextTokenIs<TFollowToken>(followTokenValue)))
             {
                 if (isListTail) Input.MatchAndConsume<PunctuationToken>(",");
                 list.Add(parseNode());

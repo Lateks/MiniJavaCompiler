@@ -39,23 +39,25 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
         private Program GetProgramTree()
         {
             var errorReporter = new ErrorLogger();
-            var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
+            var parser = new Parser(new StubScanner(programTokens), errorReporter);
             return parser.Parse();
         }
 
         [Test]
         public void ValidClassDeclarationWithExtension()
         { // class ClassName extends OtherClass { }
+            DeclareMainClass("MainClass");
             programTokens.Enqueue(new KeywordToken("class", 0, 0));
             programTokens.Enqueue(new IdentifierToken("ClassName", 0, 0));
             programTokens.Enqueue(new KeywordToken("extends", 0, 0));
             programTokens.Enqueue(new IdentifierToken("OtherClass", 0, 0));
             programTokens.Enqueue(new PunctuationToken("{", 0, 0));
             programTokens.Enqueue(new PunctuationToken("}", 0, 0));
+            EndFile();
 
             var errorReporter = new ErrorLogger();
-            var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
-            var classDecl = parser.ClassDeclaration();
+            var parser = new Parser(new StubScanner(programTokens), errorReporter);
+            var classDecl = parser.Parse().Classes[0];
             Assert.That(classDecl.InheritedClass, Is.EqualTo("OtherClass"));
             Assert.That(classDecl.Name, Is.EqualTo("ClassName"));
             Assert.NotNull(classDecl.Declarations);
@@ -65,6 +67,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
         [Test]
         public void ValidClassDeclarationWithInternalDeclarations()
         { // class ClassName { int foo; public void bar() { } }
+            DeclareMainClass("MainClass");
             programTokens.Enqueue(new KeywordToken("class", 0, 0));
             programTokens.Enqueue(new IdentifierToken("ClassName", 0, 0));
             programTokens.Enqueue(new PunctuationToken("{", 0, 0));
@@ -77,12 +80,12 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             programTokens.Enqueue(new PunctuationToken("(", 0, 0));
             programTokens.Enqueue(new PunctuationToken(")", 0, 0));
             programTokens.Enqueue(new PunctuationToken("{", 0, 0));
-            programTokens.Enqueue(new PunctuationToken("}", 0, 0));
-            programTokens.Enqueue(new PunctuationToken("}", 0, 0));
+            ClosingCurlyBrace(); ClosingCurlyBrace();
+            EndFile();
 
             var errorReporter = new ErrorLogger();
-            var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
-            var classDecl = parser.ClassDeclaration();
+            var parser = new Parser(new StubScanner(programTokens), errorReporter);
+            var classDecl = parser.Parse().Classes[0];
             Assert.IsNull(classDecl.InheritedClass);
             Assert.NotNull(classDecl.Declarations);
             Assert.That(classDecl.Declarations.Count, Is.EqualTo(2));
@@ -91,13 +94,16 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
         [Test]
         public void BasicTypeVariableDeclaration()
         { // int foo;
+            DeclareMainClassUntilMainMethod("MainClass");
             programTokens.Enqueue(new MiniJavaTypeToken("int", 0, 0));
             programTokens.Enqueue(new IdentifierToken("foo", 0, 0));
-            EndLine();
+            EndStatement();
+            ClosingCurlyBrace(); ClosingCurlyBrace();
+            EndFile();
 
             var errorReporter = new ErrorLogger();
-            var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
-            var variableDecl = parser.VariableDeclaration();
+            var parser = new Parser(new StubScanner(programTokens), errorReporter);
+            var variableDecl = (VariableDeclaration) parser.Parse().MainClass.MainMethod.MethodBody[0];
             Assert.False(variableDecl.IsArray);
             Assert.That(variableDecl.Name, Is.EqualTo("foo"));
             Assert.That(variableDecl.Type, Is.EqualTo("int"));
@@ -105,14 +111,17 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
 
         [Test]
         public void UserDefinedTypeVariableDeclaration()
-        { // someType foo;
+        { // SomeType foo;
+            DeclareMainClassUntilMainMethod("MainClass");
             programTokens.Enqueue(new IdentifierToken("SomeType", 0, 0));
             programTokens.Enqueue(new IdentifierToken("foo", 0, 0));
-            EndLine();
+            EndStatement();
+            ClosingCurlyBrace(); ClosingCurlyBrace();
+            EndFile();
 
             var errorReporter = new ErrorLogger();
-            var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
-            var variableDecl = parser.VariableDeclaration();
+            var parser = new Parser(new StubScanner(programTokens), errorReporter);
+            var variableDecl = (VariableDeclaration) parser.Parse().MainClass.MainMethod.MethodBody[0];
             Assert.False(variableDecl.IsArray);
             Assert.That(variableDecl.Name, Is.EqualTo("foo"));
             Assert.That(variableDecl.Type, Is.EqualTo("SomeType"));
@@ -121,15 +130,18 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
         [Test]
         public void ArrayVariableDeclaration()
         { // int[] foo;
+            DeclareMainClassUntilMainMethod("MainClass");
             programTokens.Enqueue(new MiniJavaTypeToken("int", 0, 0));
             programTokens.Enqueue(new PunctuationToken("[", 0, 0));
             programTokens.Enqueue(new PunctuationToken("]", 0, 0));
             programTokens.Enqueue(new IdentifierToken("foo", 0, 0));
-            EndLine();
+            EndStatement();
+            ClosingCurlyBrace(); ClosingCurlyBrace();
+            EndFile();
 
             var errorReporter = new ErrorLogger();
-            var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
-            var variableDecl = parser.VariableDeclaration();
+            var parser = new Parser(new StubScanner(programTokens), errorReporter);
+            var variableDecl = (VariableDeclaration)parser.Parse().MainClass.MainMethod.MethodBody[0];
             Assert.True(variableDecl.IsArray);
             Assert.That(variableDecl.Name, Is.EqualTo("foo"));
             Assert.That(variableDecl.Type, Is.EqualTo("int"));
@@ -138,15 +150,18 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
         [Test]
         public void AssertStatement()
         { // assert(true);
+            DeclareMainClassUntilMainMethod("MainClass");
             programTokens.Enqueue(new KeywordToken("assert", 0, 0));
             programTokens.Enqueue(new PunctuationToken("(", 0, 0));
             programTokens.Enqueue(new KeywordToken("true", 0, 0));
             programTokens.Enqueue(new PunctuationToken(")", 0, 0));
-            EndLine();
+            EndStatement();
+            ClosingCurlyBrace(); ClosingCurlyBrace();
+            EndFile();
 
             var errorReporter = new ErrorLogger();
-            var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
-            var statement = parser.Statement();
+            var parser = new Parser(new StubScanner(programTokens), errorReporter);
+            var statement = parser.Parse().MainClass.MainMethod.MethodBody[0];
             Assert.That(statement, Is.InstanceOf<AssertStatement>());
             Assert.That(((AssertStatement)statement).Expression, Is.InstanceOf<BooleanLiteralExpression>());
         }
@@ -154,6 +169,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
         [Test]
         public void PrintStatement()
         { // System.out.println(5);
+            DeclareMainClassUntilMainMethod("MainClass");
             programTokens.Enqueue(new KeywordToken("System", 0, 0));
             programTokens.Enqueue(new PunctuationToken(".", 0, 0));
             programTokens.Enqueue(new KeywordToken("out", 0, 0));
@@ -163,10 +179,12 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             programTokens.Enqueue(new IntegerLiteralToken("5", 0, 0));
             programTokens.Enqueue(new PunctuationToken(")", 0, 0));
             programTokens.Enqueue(new PunctuationToken(";", 0, 0));
+            ClosingCurlyBrace(); ClosingCurlyBrace();
+            EndFile();
 
             var errorReporter = new ErrorLogger();
-            var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
-            var statement = parser.Statement();
+            var parser = new Parser(new StubScanner(programTokens), errorReporter);
+            var statement = parser.Parse().MainClass.MainMethod.MethodBody[0];
             Assert.That(statement, Is.InstanceOf<PrintStatement>());
             Assert.That(((PrintStatement)statement).Expression, Is.InstanceOf<IntegerLiteralExpression>());
         }
@@ -174,21 +192,22 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
         [Test]
         public void WhileStatement()
         { // while (true) assert(false);
+            DeclareMainClassUntilMainMethod("MainClass");
             programTokens.Enqueue(new KeywordToken("while", 0, 0));
             programTokens.Enqueue(new PunctuationToken("(", 0, 0));
             programTokens.Enqueue(new KeywordToken("true", 0, 0));
             programTokens.Enqueue(new PunctuationToken(")", 0, 0));
-            programTokens.Enqueue(new PunctuationToken("{", 0, 0));
             programTokens.Enqueue(new KeywordToken("assert", 0, 0));
             programTokens.Enqueue(new PunctuationToken("(", 0, 0));
             programTokens.Enqueue(new KeywordToken("false", 0, 0));
             programTokens.Enqueue(new PunctuationToken(")", 0, 0));
             programTokens.Enqueue(new PunctuationToken(";", 0, 0));
-            programTokens.Enqueue(new PunctuationToken("}",0, 0));
+            ClosingCurlyBrace(); ClosingCurlyBrace();
+            EndFile();
 
             var errorReporter = new ErrorLogger();
-            var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
-            var statement = parser.Statement();
+            var parser = new Parser(new StubScanner(programTokens), errorReporter);
+            var statement = parser.Parse().MainClass.MainMethod.MethodBody[0];
             Assert.That(statement, Is.InstanceOf<WhileStatement>());
             var whileStatement = (WhileStatement)statement;
             Assert.That(whileStatement.BooleanExpression, Is.InstanceOf<BooleanLiteralExpression>());
@@ -199,13 +218,16 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
         [Test]
         public void ReturnStatement()
         { // return foo;
+            DeclareMainClassUntilMainMethod("MainClass");
             programTokens.Enqueue(new KeywordToken("return", 0, 0));
             programTokens.Enqueue(new IdentifierToken("foo", 0, 0));
             programTokens.Enqueue(new PunctuationToken(";", 0, 0));
+            ClosingCurlyBrace(); ClosingCurlyBrace();
+            EndFile();
 
             var errorReporter = new ErrorLogger();
-            var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
-            var statement = parser.Statement();
+            var parser = new Parser(new StubScanner(programTokens), errorReporter);
+            var statement = parser.Parse().MainClass.MainMethod.MethodBody[0];
             Assert.That(statement, Is.InstanceOf<ReturnStatement>());
             Assert.That(((ReturnStatement)statement).Expression, Is.InstanceOf<VariableReferenceExpression>());
         }
@@ -213,16 +235,19 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
         [Test]
         public void MethodInvocationStatement()
         { // foo.bar();
+            DeclareMainClassUntilMainMethod("MainClass");
             programTokens.Enqueue(new IdentifierToken("foo", 0, 0));
             programTokens.Enqueue(new PunctuationToken(".", 0, 0));
             programTokens.Enqueue(new IdentifierToken("bar", 0, 0));
             programTokens.Enqueue(new PunctuationToken("(", 0, 0));
             programTokens.Enqueue(new PunctuationToken(")", 0, 0));
             programTokens.Enqueue(new PunctuationToken(";", 0, 0));
+            ClosingCurlyBrace(); ClosingCurlyBrace();
+            EndFile();
 
             var errorReporter = new ErrorLogger();
-            var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
-            var statement = parser.Statement();
+            var parser = new Parser(new StubScanner(programTokens), errorReporter);
+            var statement = parser.Parse().MainClass.MainMethod.MethodBody[0];
             Assert.That(statement, Is.InstanceOf<MethodInvocation>());
             var invocation = (MethodInvocation)statement;
             Assert.That(invocation.MethodName, Is.EqualTo("bar"));
@@ -235,15 +260,18 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
         [Test]
         public void VariableDeclarationStatement()
         { // foo[] bar;
+            DeclareMainClassUntilMainMethod("MainClass");
             programTokens.Enqueue(new IdentifierToken("foo", 0, 0));
             programTokens.Enqueue(new PunctuationToken("[", 0, 0));
             programTokens.Enqueue(new PunctuationToken("]", 0, 0));
             programTokens.Enqueue(new IdentifierToken("bar", 0, 0));
             programTokens.Enqueue(new PunctuationToken(";", 0, 0));
+            ClosingCurlyBrace(); ClosingCurlyBrace();
+            EndFile();
 
             var errorReporter = new ErrorLogger();
-            var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
-            var statement = parser.Statement();
+            var parser = new Parser(new StubScanner(programTokens), errorReporter);
+            var statement = parser.Parse().MainClass.MainMethod.MethodBody[0];
             Assert.That(statement, Is.InstanceOf<VariableDeclaration>());
             Assert.True(((VariableDeclaration)statement).IsArray);
         }
@@ -251,6 +279,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
         [Test]
         public void AssignmentToArrayStatement()
         { // foo[5] = true;
+            DeclareMainClassUntilMainMethod("MainClass");
             programTokens.Enqueue(new IdentifierToken("foo", 0, 0));
             programTokens.Enqueue(new PunctuationToken("[", 0, 0));
             programTokens.Enqueue(new IntegerLiteralToken("5", 0, 0));
@@ -258,10 +287,12 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             programTokens.Enqueue(new OperatorToken("=", 0, 0));
             programTokens.Enqueue(new KeywordToken("true", 0, 0));
             programTokens.Enqueue(new PunctuationToken(";", 0, 0));
+            ClosingCurlyBrace(); ClosingCurlyBrace();
+            EndFile();
 
             var errorReporter = new ErrorLogger();
-            var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
-            var statement = parser.Statement();
+            var parser = new Parser(new StubScanner(programTokens), errorReporter);
+            var statement = parser.Parse().MainClass.MainMethod.MethodBody[0];
             Assert.That(statement, Is.InstanceOf<AssignmentStatement>());
             var assignment = (AssignmentStatement)statement;
             Assert.That(assignment.RightHandSide, Is.InstanceOf<BooleanLiteralExpression>());
@@ -271,45 +302,59 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
         [Test]
         public void TryingToAssignToArrayWithoutAnIndexExpression()
         { // foo[] = 42;
+            DeclareMainClassUntilMainMethod("MainClass");
             programTokens.Enqueue(new IdentifierToken("foo", 0, 0));
             programTokens.Enqueue(new PunctuationToken("[", 0, 0));
             programTokens.Enqueue(new PunctuationToken("]", 0, 0));
             programTokens.Enqueue(new OperatorToken("=", 0, 0));
             programTokens.Enqueue(new IntegerLiteralToken("42", 0, 0));
             programTokens.Enqueue(new PunctuationToken(";", 0, 0));
+            ClosingCurlyBrace(); ClosingCurlyBrace();
+            EndFile();
 
             var errorReporter = new ErrorLogger();
-            var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
-            Assert.Null(parser.Statement());
+            var parser = new Parser(new StubScanner(programTokens), errorReporter);
+            Assert.Throws<SyntaxAnalysisFailed>(() => parser.Parse());
             Assert.That(errorReporter.Errors, Is.Not.Empty);
         }
 
         [Test]
         public void AllExpressionsDoNotQualifyAsAStatements()
         { // 42;
+            DeclareMainClassUntilMainMethod("MainClass");
             programTokens.Enqueue(new IntegerLiteralToken("42", 0, 0));
             programTokens.Enqueue(new PunctuationToken(";", 0, 0));
+            ClosingCurlyBrace(); ClosingCurlyBrace();
+            EndFile();
 
             var errorReporter = new ErrorLogger();
-            var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
-            Assert.Null(parser.Statement());
+            var parser = new Parser(new StubScanner(programTokens), errorReporter);
+            Assert.Throws<SyntaxAnalysisFailed>(() => parser.Parse());
             Assert.That(errorReporter.Errors, Is.Not.Empty);
         }
 
         [Test]
         public void BinaryOperatorExpression()
         { // 7 % foo == 0
+            DeclareMainClassUntilMainMethod("MainClass");
+            programTokens.Enqueue(new IdentifierToken("foo", 0, 0));
+            programTokens.Enqueue(new OperatorToken("=", 0, 0));
             programTokens.Enqueue(new IntegerLiteralToken("7", 0, 0));
             programTokens.Enqueue(new OperatorToken("%", 0, 0));
             programTokens.Enqueue(new IdentifierToken("foo", 0, 0));
             programTokens.Enqueue(new OperatorToken("==", 0, 0));
             programTokens.Enqueue(new IntegerLiteralToken("0", 0, 0));
+            EndStatement();
+            ClosingCurlyBrace(); ClosingCurlyBrace();
+            EndFile();
 
             var errorReporter = new ErrorLogger();
-            var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
-            var expression = parser.Expression();
-            Assert.That(expression, Is.InstanceOf<BinaryOpExpression>());
-            var logicalOp = (BinaryOpExpression)expression;
+            var parser = new Parser(new StubScanner(programTokens), errorReporter);
+            var expression = parser.Parse().MainClass.MainMethod.MethodBody[0];
+            Assert.That(expression, Is.InstanceOf<AssignmentStatement>());
+            var assignment = (AssignmentStatement)expression;
+            Assert.That(assignment.RightHandSide, Is.InstanceOf<BinaryOpExpression>());
+            var logicalOp = (BinaryOpExpression)assignment.RightHandSide;
             Assert.That(logicalOp.RightOperand, Is.InstanceOf<IntegerLiteralExpression>());
             Assert.That(((IntegerLiteralExpression)logicalOp.RightOperand).Value, Is.EqualTo("0"));
             Assert.That(logicalOp.LeftOperand, Is.InstanceOf<BinaryOpExpression>());
@@ -321,8 +366,29 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
         }
 
         [Test]
+        public void InvalidExpressionStatement()
+        {
+            DeclareMainClassUntilMainMethod("MainClass");
+            programTokens.Enqueue(new IntegerLiteralToken("7", 0, 0));
+            programTokens.Enqueue(new OperatorToken("%", 0, 0));
+            programTokens.Enqueue(new IdentifierToken("foo", 0, 0));
+            programTokens.Enqueue(new OperatorToken("==", 0, 0));
+            programTokens.Enqueue(new IntegerLiteralToken("0", 0, 0));
+            ClosingCurlyBrace(); ClosingCurlyBrace();
+            EndFile();
+
+            var errorReporter = new ErrorLogger();
+            var parser = new Parser(new StubScanner(programTokens), errorReporter);
+            Assert.Throws<SyntaxAnalysisFailed>(() => parser.Parse());
+            Assert.That(errorReporter.Count, Is.GreaterThan(0));
+        }
+
+        [Test]
         public void OperatorPrecedences()
         { // 4 + 9 * (7 - 2 % 3) - 2
+            DeclareMainClassUntilMainMethod("MainClass");
+            programTokens.Enqueue(new IdentifierToken("foo", 0, 0));
+            programTokens.Enqueue(new OperatorToken("=", 0, 0));
             programTokens.Enqueue(new IntegerLiteralToken("4", 0, 0));
             programTokens.Enqueue(new OperatorToken("+", 0, 0));
             programTokens.Enqueue(new IntegerLiteralToken("9", 0, 0));
@@ -336,12 +402,17 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             programTokens.Enqueue(new PunctuationToken(")", 0, 0));
             programTokens.Enqueue(new OperatorToken("-", 0, 0));
             programTokens.Enqueue(new IntegerLiteralToken("2", 0, 0));
+            EndStatement();
+            ClosingCurlyBrace(); ClosingCurlyBrace();
+            EndFile();
 
             var errorReporter = new ErrorLogger();
-            var parser = new Parser(new ParserInputReader(new StubScanner(programTokens), errorReporter), errorReporter);
-            var expression = parser.Expression();
-            Assert.That(expression, Is.InstanceOf<BinaryOpExpression>());
-            var minusOp = (BinaryOpExpression)expression;
+            var parser = new Parser(new StubScanner(programTokens), errorReporter);
+            var expression = parser.Parse().MainClass.MainMethod.MethodBody[0];
+            Assert.That(expression, Is.InstanceOf<AssignmentStatement>());
+            var assignment = (AssignmentStatement)expression;
+            Assert.That(assignment.RightHandSide, Is.InstanceOf<BinaryOpExpression>());
+            var minusOp = (BinaryOpExpression)assignment.RightHandSide;
             Assert.That(minusOp.Operator, Is.EqualTo("-"));
             Assert.That(minusOp.RightOperand, Is.InstanceOf<IntegerLiteralExpression>());
             Assert.That(minusOp.LeftOperand, Is.InstanceOf<BinaryOpExpression>());
@@ -533,7 +604,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             programTokens.Enqueue(new PunctuationToken(",", 0, 0));
             programTokens.Enqueue(new IdentifierToken("parameterVariable", 0, 0));
             programTokens.Enqueue(new PunctuationToken(")", 0, 0));
-            EndLine();
+            EndStatement();
             ClosingCurlyBrace(); ClosingCurlyBrace();
             EndFile();
 
@@ -561,7 +632,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             DeclareMainClassUntilMainMethod("MainClass");
             MakeMethodInvocationWithoutParentheses("someClass", "someMethod");
             EmptyMethodInvocationParentheses();
-            EndLine();
+            EndStatement();
             ClosingCurlyBrace(); ClosingCurlyBrace();
             EndFile();
 
@@ -637,7 +708,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             EmptyMethodInvocationParentheses();
             InvokeMethod("length");
             EmptyMethodInvocationParentheses();
-            EndLine();
+            EndStatement();
             ClosingCurlyBrace(); ClosingCurlyBrace();
             EndFile();
 
@@ -713,7 +784,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             programTokens.Enqueue(new PunctuationToken(".", 0, 0));
             programTokens.Enqueue(new IdentifierToken("bar", 0, 0));
             EmptyMethodInvocationParentheses();
-            EndLine();
+            EndStatement();
             programTokens.Enqueue(new KeywordToken("else", 0, 0));
             AssignIntegerToVariable("foo", "42");
             ClosingCurlyBrace(); ClosingCurlyBrace();
@@ -730,7 +801,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
 
         }
 
-        private void EndLine()
+        private void EndStatement()
         {
             programTokens.Enqueue(new PunctuationToken(";", 0, 0));
         }
@@ -801,7 +872,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             programTokens.Enqueue(new PunctuationToken("(", 0, 0));
             programTokens.Enqueue(new IdentifierToken(variableName, 0, 0));
             programTokens.Enqueue(new PunctuationToken(")", 0, 0));
-            EndLine();
+            EndStatement();
         }
 
         private void AssignIntegerToVariable(string variableName, string integerValue)
@@ -809,7 +880,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             programTokens.Enqueue(new IdentifierToken(variableName, 0, 0));
             programTokens.Enqueue(new OperatorToken("=", 0, 0));
             programTokens.Enqueue(new IntegerLiteralToken(integerValue, 0, 0));
-            EndLine();
+            EndStatement();
         }
 
         private void DeclareMainClassUntilMainMethod(string className)
@@ -825,11 +896,18 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             programTokens.Enqueue(new PunctuationToken("{", 0, 0));
         }
 
+        private void DeclareMainClass(string className)
+        {
+            DeclareMainClassUntilMainMethod(className);
+            programTokens.Enqueue(new PunctuationToken("}", 0 ,0));
+            programTokens.Enqueue(new PunctuationToken("}", 0, 0));
+        }
+
         private void DeclareBasicVariable(string name, string type)
         {
             programTokens.Enqueue(new MiniJavaTypeToken(type, 0, 0));
             programTokens.Enqueue(new IdentifierToken(name, 0, 0));
-            EndLine();
+            EndStatement();
         }
 
         private void AssignNewArrayToVariable(string variableName, string arrayType, string arraySize)
@@ -841,7 +919,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             programTokens.Enqueue(new PunctuationToken("[", 0, 0));
             programTokens.Enqueue(new IntegerLiteralToken(arraySize, 0, 0));
             programTokens.Enqueue(new PunctuationToken("]", 0, 0));
-            EndLine();
+            EndStatement();
         }
 
         private void DeclareBasicArrayVariable(string name, string type)
@@ -850,7 +928,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             programTokens.Enqueue(new PunctuationToken("[", 0, 0));
             programTokens.Enqueue(new PunctuationToken("]", 0, 0));
             programTokens.Enqueue(new IdentifierToken(name, 0, 0));
-            EndLine();
+            EndStatement();
         }
     }
 }

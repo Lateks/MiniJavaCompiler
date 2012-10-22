@@ -16,7 +16,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
         {
             var scanner = new MiniJavaScanner(new StringReader(program));
             _errorLog = new ErrorLogger();
-            _parser = new Parser(new ParserInputReader(scanner, _errorLog), _errorLog);
+            _parser = new Parser(scanner, _errorLog);
         }
 
         [Test]
@@ -83,7 +83,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             Assert.Throws<SyntaxAnalysisFailed>(() => _parser.Parse());
             Assert.That(_errorLog.Errors.Count, Is.EqualTo(3));
             Assert.That(_errorLog.Errors[0].Message, Is.StringContaining("Invalid token 'class' of type keyword starting a declaration"));
-            Assert.That(_errorLog.Errors[1].Message, Is.StringContaining("Reached end of file while parsing a declaration"));
+            Assert.That(_errorLog.Errors[1].Message, Is.StringContaining("Reached end of file while parsing for '}'"));
             Assert.That(_errorLog.Errors[2].Message, Is.StringContaining("Reached end of file")); // scanner is out of input
         }
 
@@ -109,7 +109,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             Assert.That(_errorLog.Errors[3].Message, Is.StringContaining("Unexpected token '?'"));
             Assert.That(_errorLog.Errors[4].Message, Is.StringContaining("Encountered a lexical error while parsing an expression")); // recovery ends after the line "int bar;"
             Assert.That(_errorLog.Errors[5].Message, Is.StringContaining("Invalid token 'class' of type keyword starting a declaration")); // expecting a method declaration but found "class B"
-            Assert.That(_errorLog.Errors[6].Message, Is.StringContaining("Reached end of file while parsing a declaration")); // attempted to recover but recovery ended at end of file
+            Assert.That(_errorLog.Errors[6].Message, Is.StringContaining("Reached end of file while parsing for '}'")); // attempted to recover from declaration matching but recovery ended at end of file
             Assert.That(_errorLog.Errors[7].Message, Is.StringContaining("Reached end of file")); // scanner is out of input
         }
 
@@ -129,7 +129,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             Assert.That(_errorLog.Errors[0].Message, Is.StringContaining("Expected ';' but got built-in type 'int'")); // recovers until the end of the statement "int foo;"
             Assert.That(_errorLog.Errors[1].Message, Is.StringContaining("Expected identifier but got punctuation token ';'")); // invalid method declaration caught, recovers until the next }
             Assert.That(_errorLog.Errors[2].Message, Is.StringContaining("Invalid token 'class' of type keyword starting a declaration"));
-            Assert.That(_errorLog.Errors[3].Message, Is.StringContaining("Reached end of file while parsing a declaration")); // recovery ended by end of file
+            Assert.That(_errorLog.Errors[3].Message, Is.StringContaining("Reached end of file while parsing for '}'")); // recovery ended by end of file
             Assert.That(_errorLog.Errors[4].Message, Is.StringContaining("Reached end of file while parsing")); // scanner is out of input
         }
 
@@ -227,7 +227,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             Assert.That(_errorLog.Errors.Count, Is.EqualTo(4));
             Assert.That(_errorLog.Errors[0].Message, Is.StringContaining("Invalid token ';' of type punctuation token starting a declaration"));
             Assert.That(_errorLog.Errors[1].Message, Is.StringContaining("Invalid token 'class' of type keyword starting a declaration")); // recovered until the end of the class declaration
-            Assert.That(_errorLog.Errors[2].Message, Is.StringContaining("Reached end of file while parsing a declaration"));
+            Assert.That(_errorLog.Errors[2].Message, Is.StringContaining("Reached end of file while parsing for '}'")); // recovery from declaration matching ended up at the end of file
             Assert.That(_errorLog.Errors[3].Message, Is.StringContaining("Reached end of file while parsing"));
         }
 
@@ -242,10 +242,13 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             SetUpParser(program);
             Assert.Throws<SyntaxAnalysisFailed>(() => _parser.Parse());
             Assert.That(_errorLog.Errors.Count, Is.EqualTo(3));
-            Assert.That(_errorLog.Errors[0].Message, Is.StringContaining("Invalid start token ';' of type punctuation token for an expression")); // Expected an expression because a punctuation token other than {
-            // cannot start another kind of statement.
-            Assert.That(_errorLog.Errors[1].Message, Is.StringContaining("Reached end of file while parsing an expression")); // Trying to parse another statement, beginning with an expression,
-            // but recovery has ended up at the end of file.
+            Assert.That(_errorLog.Errors[0].Message,
+                Is.StringContaining("Invalid start token ';' of type punctuation token for an expression")); // Expected an expression because a punctuation token other than
+                                                                                                             // '{' cannot start another kind of statement.
+            Assert.That(_errorLog.Errors[1].Message, Is.StringContaining("Reached end of file while parsing for '}'")); // Recovered from method body parsing and trying to parse
+                                                                                                                        // the rest of this method declaration but recovery has ended
+                                                                                                                        // up at the end of file. (Statement parsing recovers until
+                                                                                                                        // the next ';').
             Assert.That(_errorLog.Errors[2].Message, Is.StringContaining("Reached end of file while parsing"));
 
         }

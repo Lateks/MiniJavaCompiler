@@ -48,7 +48,7 @@ namespace MiniJavaCompiler.Frontend
          */
         private Program ConstructAbstractSyntaxTree()
         {
-            var scanner = new ParserInputReader(new MiniJavaScanner(_program), _errorLog);
+            var scanner = new MiniJavaScanner(_program);
             var parser = new Parser(scanner, _errorLog);
             try
             {

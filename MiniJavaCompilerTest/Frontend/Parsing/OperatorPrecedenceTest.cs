@@ -14,7 +14,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
         {
             var scanner = new MiniJavaScanner(new StringReader(program));
             var errorLog = new ErrorLogger();
-            var parser = new Parser(new ParserInputReader(scanner, errorLog), errorLog, true);
+            var parser = new Parser(scanner, errorLog, true);
             return parser.Parse();
         }
 
