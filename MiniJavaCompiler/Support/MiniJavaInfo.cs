@@ -17,6 +17,7 @@ namespace MiniJavaCompiler.Support
             MultiCharOperatorStartSymbols = new[] { '&', '=', '|' }; // Only one symbol needed because all two-character operators have the same symbol twice.
 
         // Note: all of these operators are left-associative.
+        // A lower index in the array indicates a lower precedence.
         internal static readonly string[][] OperatorsByPrecedenceLevel = new[]
             {
                 new [] { "||" },

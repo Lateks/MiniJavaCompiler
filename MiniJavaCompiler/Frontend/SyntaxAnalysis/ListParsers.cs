@@ -8,6 +8,9 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
 {
     public interface IValueListParser
     {
+        // Parses a list of syntax tree nodes where each individual node can be parsed with the
+        // function given as a parameter. Parsing ends at the end of file or a token that matches
+        // the type and value of follow token given as a parameter.
         List<TNodeType> ParseList<TNodeType, TFollowToken>(Func<TNodeType> parseNode, string followTokenValue)
             where TNodeType : ISyntaxTreeNode
             where TFollowToken : IToken;
@@ -15,11 +18,14 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
 
     public interface IListParser
     {
+        // Parses a list of syntax tree nodes where each individual node can be parsed with the
+        // function given as a parameter. Parsing ends at the end of file.
         List<TNodeType> ParseList<TNodeType>(Func<TNodeType> parseNode)
             where TNodeType : ISyntaxTreeNode;
     }
 
-    internal class ListParser : ParserBase, IListParser, IValueListParser
+    // Parses a list with no separators.
+    public class ListParser : ParserBase, IListParser, IValueListParser
     {
         public ListParser(IParserInputReader input, IErrorReporter errorReporter)
             : base(input, errorReporter) { }
@@ -50,7 +56,9 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
         }
     }
 
-    internal class CommaSeparatedListParser : ParserBase, IValueListParser
+    // Parses comma separated lists such as formal parameter lists and
+    // lists of arguments to method invocations.
+    public class CommaSeparatedListParser : ParserBase, IValueListParser
     {
         public CommaSeparatedListParser(IParserInputReader input, IErrorReporter errorReporter)
             : base(input, errorReporter) { }

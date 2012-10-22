@@ -280,31 +280,10 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             SetUpParser(program);
             Assert.Throws<SyntaxAnalysisFailed>(() => _parser.Parse());
             Assert.That(_errorLog.Errors.Count, Is.EqualTo(4));
-            Assert.That(_errorLog.Errors[0].Message, Is.StringContaining("Invalid start token 'assert' of type keyword for an expression"));
+            Assert.That(_errorLog.Errors[0].Message, Is.StringContaining("Invalid keyword 'assert' starting an expression"));
             Assert.That(_errorLog.Errors[1].Message, Is.StringContaining("Expected ';' but got punctuation token ')'")); // recovery was done until ), so we get this extra error
             Assert.That(_errorLog.Errors[2].Message, Is.StringContaining("Invalid start token '{' of type punctuation token for an expression"));
-            Assert.That(_errorLog.Errors[3].Message, Is.StringContaining("Invalid start token 'if' of type keyword for an expression"));
-        }
-
-        [Test]
-        public void InvalidKeywordStartingAStatement()
-        {
-            string program = "class Foo {\n" +
-                             "\t public static void main() {\n" +
-                             "\t\t boolean foo;\n" +
-                             "\t\t foo = assert(true);\n" +
-                             "\t\t int bar;\n" +
-                             "\t\t bar = { };\n" +
-                             "\t\t return if foo 1 else 0;\n" +
-                             "\t }\n" +
-                             "}";
-            SetUpParser(program);
-            Assert.Throws<SyntaxAnalysisFailed>(() => _parser.Parse());
-            Assert.That(_errorLog.Errors.Count, Is.EqualTo(4));
-            Assert.That(_errorLog.Errors[0].Message, Is.StringContaining("Invalid start token 'assert' of type keyword for an expression"));
-            Assert.That(_errorLog.Errors[1].Message, Is.StringContaining("Expected ';' but got punctuation token ')'")); // recovery was done until ), so we get this extra error
-            Assert.That(_errorLog.Errors[2].Message, Is.StringContaining("Invalid start token '{' of type punctuation token for an expression"));
-            Assert.That(_errorLog.Errors[3].Message, Is.StringContaining("Invalid start token 'if' of type keyword for an expression"));
+            Assert.That(_errorLog.Errors[3].Message, Is.StringContaining("Invalid keyword 'if' starting an expression"));
         }
 
         [Test]
@@ -426,10 +405,10 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             Assert.That(_errorLog.Errors[0].Message, Is.StringContaining("Unexpected token '$'"));
             Assert.That(_errorLog.Errors[1].Message, Is.StringContaining("Expected identifier but got built-in type 'boolean'"));
             Assert.That(_errorLog.Errors[2].Message, Is.StringContaining("Expected identifier but got keyword 'public'"));
-            Assert.That(_errorLog.Errors[3].Message, Is.StringContaining("Invalid start token 'public' of type keyword for an expression"));
+            Assert.That(_errorLog.Errors[3].Message, Is.StringContaining("Invalid keyword 'public' starting an expression"));
             Assert.That(_errorLog.Errors[4].Message, Is.StringContaining("Unexpected token '$'"));
             Assert.That(_errorLog.Errors[5].Message, Is.StringContaining("Encountered a lexical error while parsing an expression"));
-            Assert.That(_errorLog.Errors[6].Message, Is.StringContaining("Invalid start token 'public' of type keyword for an expression"));
+            Assert.That(_errorLog.Errors[6].Message, Is.StringContaining("Invalid keyword 'public' starting an expression"));
         }
 
         [Test]
@@ -446,6 +425,18 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             Assert.That(_errorLog.Errors[1].Message, Is.StringContaining("Expected ';' but got punctuation token ')'")); // incomplete recovery due to large follow set
             Assert.That(_errorLog.Errors[2].Message, Is.StringContaining("Unexpected token '$'"));
             Assert.That(_errorLog.Errors[3].Message, Is.StringContaining("Expected ';' but got punctuation token '['")); // same as above
+        }
+
+        [Test]
+        public void EndOfFileInTheMiddleOfAnExpression()
+        {
+            string program = "class Foo {\n" +
+                             "\t public static void main() { foo = true && !";
+            SetUpParser(program);
+            Assert.Throws<SyntaxAnalysisFailed>(() => _parser.Parse());
+            Assert.That(_errorLog.Errors.Count, Is.EqualTo(2));
+            Assert.That(_errorLog.Errors[0].Message, Is.StringContaining("Reached end of file while parsing an expression"));
+            Assert.That(_errorLog.Errors[1].Message, Is.StringContaining("Reached end of file"));
         }
     }
 }

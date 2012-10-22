@@ -10,7 +10,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
 {
     // A sub-parser that parses expressions and solves operator precedences.
     // The grammar has a separate level for each operator precedence level.
-    internal class ExpressionParser : ParserBase
+    public class ExpressionParser : ParserBase
     {
         private readonly int _maxPrecedenceLevel;
 
@@ -30,15 +30,10 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
             return ParseBinaryOpExpression(0);
         }
 
-        private List<IExpression> ExpressionList()
-        {
-            var parser = new CommaSeparatedListParser(Input, ErrorReporter);
-            return parser.ParseList<IExpression, PunctuationToken>(ParseExpression, ")");
-        }
-
         private IExpression ParseBinaryOpExpression(int precedenceLevel)
         {
             Debug.Assert(precedenceLevel >= 0 && precedenceLevel <= _maxPrecedenceLevel);
+
             var parseOperand = GetParserFunction(precedenceLevel);
             return ParseBinaryOpTail(parseOperand(), parseOperand, MiniJavaInfo.OperatorsByPrecedenceLevel[precedenceLevel]);
         }
@@ -86,18 +81,26 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
                 return leftHandOperand;
         }
 
-        public IExpression Term()
+        private IExpression Term()
         {
             try
             {
                 if (Input.NextTokenIs<KeywordToken>())
+                {
                     return MakeKeywordExpression();
+                }
                 else if (Input.NextTokenIs<IdentifierToken>())
+                {
                     return MakeVariableReferenceExpression();
+                }
                 else if (Input.NextTokenIs<IntegerLiteralToken>())
+                {
                     return MakeIntegerLiteralExpression();
+                }
                 else if (Input.NextTokenIs<PunctuationToken>("("))
+                {
                     return MakeParenthesisedExpression();
+                }
                 else
                 {
                     var token = Input.Consume<IToken>();
@@ -122,15 +125,13 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
             {
                 if (DebugMode) throw;
                 ErrorReporter.ReportError(e.Message, e.Row, e.Col);
-                ParsingFailed = true;
-                RecoverFromTermParsing();
             }
             catch (LexicalError)
             {
                 if (DebugMode) throw;
-                ParsingFailed = true;
-                RecoverFromTermParsing();
             }
+            ParsingFailed = true;
+            RecoverFromTermParsing();
             return null;
         }
 
@@ -172,7 +173,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
                 case "false":
                     return MakeBooleanLiteral(false);
                 default:
-                    throw new SyntaxError(String.Format("Invalid start token '{0}' of type {1} for an expression.",
+                    throw new SyntaxError(String.Format("Invalid keyword '{0}' starting an expression.",
                         token.Lexeme, TokenDescriptions.Describe(token.GetType())), token.Row, token.Col);
             }
         }
@@ -186,21 +187,21 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
 
         private IExpression MakeThisExpression()
         {
-            var thisToken = Input.Consume<KeywordToken>();
+            var thisToken = Input.MatchAndConsume<KeywordToken>("this");
             return OptionalTermTail(new ThisExpression(thisToken.Row,
                 thisToken.Col));
         }
 
         private IExpression MakeInstanceCreationExpression()
         {
-            var newToken = Input.Consume<KeywordToken>();
+            var newToken = Input.MatchAndConsume<KeywordToken>("new");
             var typeInfo = NewType();
             var type = typeInfo.Item1;
             return OptionalTermTail(new InstanceCreationExpression(type.Lexeme,
                 newToken.Row, newToken.Col, typeInfo.Item2));
         }
 
-        public IExpression OptionalTermTail(IExpression lhs)
+        private IExpression OptionalTermTail(IExpression lhs)
         {
             if (Input.NextTokenIs<PunctuationToken>("["))
                 return MakeArrayIndexingExpression(lhs);
@@ -231,10 +232,16 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
                 methodName = Input.MatchAndConsume<IdentifierToken>();
             }
             Input.MatchAndConsume<PunctuationToken>("(");
-            var parameters = ExpressionList();
+            var parameters = MethodInvocationArguments();
             Input.MatchAndConsume<PunctuationToken>(")");
             return OptionalTermTail(new MethodInvocation(methodOwner,
                 methodName.Lexeme, parameters, methodName.Row, methodName.Col));
+        }
+
+        private List<IExpression> MethodInvocationArguments()
+        {
+            var parser = new CommaSeparatedListParser(Input, ErrorReporter);
+            return parser.ParseList<IExpression, PunctuationToken>(ParseExpression, ")");
         }
 
         // The length field in Array class is treated as a method invocation in the syntax tree
@@ -257,7 +264,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
                 startToken.Row, startToken.Col));
         }
 
-        public Tuple<ITypeToken, IExpression> NewType()
+        private Tuple<ITypeToken, IExpression> NewType()
         {
             var type = Input.MatchAndConsume<ITypeToken>();
             if (type is MiniJavaTypeToken || Input.NextTokenIs<PunctuationToken>("["))
