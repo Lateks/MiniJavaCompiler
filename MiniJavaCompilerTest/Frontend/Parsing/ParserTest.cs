@@ -21,7 +21,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             if (_tokens.Count > 0)
                 return _tokens.Dequeue();
             else
-                return new EndOfFile(0, 0);
+                throw new OutOfInput("Ran out of input tokens.");
         }
     }
 
@@ -41,6 +41,26 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new StubScanner(programTokens), errorReporter);
             return parser.Parse();
+        }
+
+        [Test]
+        public void TestPeekForward()
+        {
+            programTokens.Enqueue(new KeywordToken("class", 0, 0));
+            programTokens.Enqueue(new IdentifierToken("ClassName", 0, 0));
+            programTokens.Enqueue(new KeywordToken("extends", 0, 0));
+            programTokens.Enqueue(new IdentifierToken("OtherClass", 0, 0));
+            programTokens.Enqueue(new PunctuationToken("{", 0, 0));
+            programTokens.Enqueue(new PunctuationToken("}", 0, 0));
+            EndFile();
+            var parserInputReader = new ParserInputReader(new StubScanner(programTokens), new ErrorLogger());
+            Assert.That(parserInputReader.PeekForward(1).Lexeme, Is.EqualTo("ClassName"));
+            Assert.That(parserInputReader.PeekForward(2).Lexeme, Is.EqualTo("extends"));
+            Assert.That(parserInputReader.Consume<IToken>().Lexeme, Is.EqualTo("class"));
+            Assert.That(parserInputReader.Consume<IToken>().Lexeme, Is.EqualTo("ClassName"));
+            Assert.That(parserInputReader.Consume<IToken>().Lexeme, Is.EqualTo("extends"));
+            Assert.That(parserInputReader.Consume<IToken>().Lexeme, Is.EqualTo("OtherClass"));
+            Assert.Throws<OutOfInput>(() => parserInputReader.PeekForward(3));
         }
 
         [Test]

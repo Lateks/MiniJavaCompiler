@@ -12,8 +12,9 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
         // Returns the next token without consuming it.
         IToken Peek();
 
-        // Pushes a token back into the input.
-        void PushBack(IToken token);
+        // Attempts to peek some steps forward (steps must be a positive number).
+        // Will throw an exception if there is not enough input.
+        IToken PeekForward(int steps);
 
         /* Checks that the current input token is of the expected type and matches the expected value.
          * If the check succeeds, the token is consumed and returned. Otherwise a syntax error or a
@@ -64,12 +65,12 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
         {
             private readonly ITokenizer _scanner;
             private IToken _inputToken;
-            private readonly Stack<IToken> _inputBuffer; // This stack is used for buffering when we need to peek forward.
+            private readonly Queue<IToken> _inputBuffer; // This stack is used for buffering when we need to peek forward.
 
             public TokenStreamBuffer(ITokenizer scanner)
             {
                 _scanner = scanner;
-                _inputBuffer = new Stack<IToken>();
+                _inputBuffer = new Queue<IToken>();
                 _inputToken = null;
             }
 
@@ -77,10 +78,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
             {
                 get
                 {
-                    if (_inputToken == null)
-                    {
-                        _inputToken = _inputBuffer.Count > 0 ? _inputBuffer.Pop() : _scanner.NextToken();
-                    }
+                    RefreshInputToken();
                     return _inputToken;
                 }
                 private set { _inputToken = value; }
@@ -91,10 +89,44 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
                 CurrentToken = null; // The next token is not fetched here. We do not want an out of input error e.g. when consuming an EndOfFile.
             }
 
-            public void Buffer(IToken token)
+            // Note: this may throw an OutOfInput exception.
+            public IToken PeekForward(int tokens)
             {
-                _inputBuffer.Push(CurrentToken);
-                CurrentToken = token;
+                Debug.Assert(tokens >= 0);
+                RefreshInputToken();
+                if (tokens == 0)
+                {
+                    return CurrentToken;
+                }
+
+                IToken token;
+                if (_inputBuffer.Count < tokens)
+                {
+                    Buffer(tokens - _inputBuffer.Count);
+                    token = _inputBuffer.Last();
+                }
+                else
+                {
+                    token = _inputBuffer.ElementAt(tokens - 1);
+                }
+                return token;
+            }
+
+            private void Buffer(int tokens)
+            {
+                while (tokens > 0)
+                {
+                    _inputBuffer.Enqueue(_scanner.NextToken());
+                    tokens--;
+                }
+            }
+
+            private void RefreshInputToken()
+            {
+                if (_inputToken == null)
+                {
+                    _inputToken = _inputBuffer.Count > 0 ? _inputBuffer.Dequeue() : _scanner.NextToken();
+                }
             }
         }
 
@@ -113,10 +145,13 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
             return _tokenStream.CurrentToken;
         }
 
-        // Pushes an already consumed token back into the input to allow looking ahead.
-        public void PushBack(IToken token)
+        public IToken PeekForward(int steps)
         {
-            _tokenStream.Buffer(token);
+            if (steps < 0)
+            {
+                throw new ArgumentOutOfRangeException("Cannot peek backwards.");
+            }
+            return _tokenStream.PeekForward(steps);
         }
 
         public TExpectedType MatchAndConsume<TExpectedType>(string expectedValue)

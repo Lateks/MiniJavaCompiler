@@ -180,40 +180,43 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
         }
 
         // This is a workaround method that is needed because the language is not LL(1).
-        // Some buffering is done because several tokens must be peeked at to decide
-        // which kind of statement should be parsed.
         private IStatement MakeExpressionStatementOrVariableDeclaration()
         {
-            if (Input.NextTokenIs<IdentifierToken>()) // Try to parse a variable declaration.
+            if (Input.NextTokenIs<IdentifierToken>())
             {
-                var ident = Input.Consume<IdentifierToken>();
-                if (Input.NextTokenIs<PunctuationToken>("["))
+                var peekOne = Input.PeekForward(1);
+                if (peekOne is PunctuationToken && peekOne.Lexeme == "[")
                 {
-                    var leftBracket = Input.Consume<PunctuationToken>();
-                    if (Input.NextTokenIs<PunctuationToken>("]"))
-                    { // The statement is a local array variable declaration.
-                        Input.Consume<PunctuationToken>();
-                        return FinishParsingLocalVariableDeclaration(ident, true);
+                    var peekTwo = Input.PeekForward(2);
+                    if (peekTwo is PunctuationToken && peekTwo.Lexeme == "]") // The statement is a local array variable declaration.
+                    {
+                        return ParseLocalVariableDeclaration(true);
                     }
-                    else
-                    {   // Brackets are used to index into an array, beginning an expression.
-                        // Push back the tokens that were already consumed so the expression parser
-                        // can match them again.
-                        Input.PushBack(leftBracket);
-                        Input.PushBack(ident);
-                    }
+                    // Otherwise this is an array indexing expression.
                 }
-                else if (Input.NextTokenIs<IdentifierToken>()) // non-array variable declaration
-                    return FinishParsingLocalVariableDeclaration(ident, false);
-                else
-                {   // The consumed identifier token is a reference to a variable
-                    // and begins an expression.
-                    Input.PushBack(ident);
+                else if (peekOne is IdentifierToken) // A non-array variable declaration.
+                {
+                    return ParseLocalVariableDeclaration(false);
                 }
+                // Otherwise the first identifier is a variable reference and begins an expression.
             }
 
             var expression = Expression();
             return CompleteStatement(expression);
+        }
+
+        private IStatement ParseLocalVariableDeclaration(bool isArray)
+        {
+            var typeName = Input.MatchAndConsume<IdentifierToken>();
+            if (isArray)
+            {
+                Input.MatchAndConsume<PunctuationToken>("[");
+                Input.MatchAndConsume<PunctuationToken>("]");
+            }
+            var variableName = Input.MatchAndConsume<IdentifierToken>();
+            Input.MatchAndConsume<PunctuationToken>(";");
+            return new VariableDeclaration(variableName.Lexeme, typeName.Lexeme, isArray,
+                typeName.Row, typeName.Col);
         }
 
         private IStatement CompleteStatement(IExpression expression)
@@ -334,14 +337,6 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
             Input.MatchAndConsume<PunctuationToken>(")");
             Input.MatchAndConsume<PunctuationToken>(";"); // not in the original CFG, probably a mistake?
             return new AssertStatement(expr, assertToken.Row, assertToken.Col);
-        }
-
-        private IStatement FinishParsingLocalVariableDeclaration(IdentifierToken variableTypeName, bool isArray)
-        {
-            var variableName = Input.MatchAndConsume<IdentifierToken>();
-            Input.MatchAndConsume<PunctuationToken>(";");
-            return new VariableDeclaration(variableName.Lexeme, variableTypeName.Lexeme, isArray,
-                variableTypeName.Row, variableTypeName.Col);
         }
 
         private IStatement OptionalElseBranch()
