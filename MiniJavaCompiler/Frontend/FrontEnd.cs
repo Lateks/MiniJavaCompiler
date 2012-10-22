@@ -10,7 +10,9 @@ using MiniJavaCompiler.Support.SymbolTable;
 
 namespace MiniJavaCompiler.Frontend
 {
-    internal class FrontEnd
+    // Runs the whole front end pipeline. If program analysis fails, the
+    // caller can ask for a list of errors.
+    public class FrontEnd
     {
         private readonly IErrorReporter _errorLog;
         private readonly TextReader _program;
@@ -23,13 +25,13 @@ namespace MiniJavaCompiler.Frontend
 
         // In case of analysis failure, this can be used to get a hold of the
         // list of error messages.
-        internal List<ErrorMessage> GetErrors()
+        public List<ErrorMessage> GetErrors()
         {
             return _errorLog.Errors;
         }
 
         // Returns a boolean value indicating program analysis success (true) or failure (false).
-        internal bool TryProgramAnalysis(out Program abstractSyntaxTree, out SymbolTable symbolTable)
+        public bool TryProgramAnalysis(out Program abstractSyntaxTree, out SymbolTable symbolTable)
         {
             abstractSyntaxTree = ConstructAbstractSyntaxTree();
             if (abstractSyntaxTree == null)

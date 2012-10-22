@@ -47,7 +47,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("foo"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("foo"));
             }
 
             [Test]
@@ -64,8 +64,8 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(2, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("built-in type int"));
-                Assert.That(errors.Errors[1].Message, Is.StringContaining("Cannot resolve symbol bar"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("built-in type int"));
+                Assert.That(errors.Errors[1].ToString(), Is.StringContaining("Cannot resolve symbol bar"));
             }
 
             [Test]
@@ -82,8 +82,8 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(2, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("array"));
-                Assert.That(errors.Errors[1].Message, Is.StringContaining("Cannot resolve symbol bar"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("array"));
+                Assert.That(errors.Errors[1].ToString(), Is.StringContaining("Cannot resolve symbol bar"));
             }
 
             [Test]
@@ -189,7 +189,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("bar"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("bar"));
             }
 
             [Test]
@@ -235,7 +235,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("foo"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("foo"));
             }
 
             [Test]
@@ -250,7 +250,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot resolve").And.StringContaining("foo"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot resolve").And.StringContaining("foo"));
 
             }
 
@@ -268,7 +268,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot resolve symbol foo"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot resolve symbol foo"));
             }
 
             [Test]
@@ -285,7 +285,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot resolve symbol foo"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot resolve symbol foo"));
             }
 
             [Test]
@@ -303,7 +303,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot resolve symbol foo"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot resolve symbol foo"));
             }
 
             [Test]
@@ -325,7 +325,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("main").And.StringContaining("static"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("main").And.StringContaining("static"));
             }
 
             [Test]
@@ -359,8 +359,8 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(2, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot resolve symbol A"));
-                Assert.That(errors.Errors[1].Message, Is.StringContaining("Cannot resolve symbol foo"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot resolve symbol A"));
+                Assert.That(errors.Errors[1].ToString(), Is.StringContaining("Cannot resolve symbol foo"));
             }
 
             [Test]
@@ -373,8 +373,8 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(2, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot resolve symbol A"));
-                Assert.That(errors.Errors[1].Message, Is.StringContaining("Cannot resolve symbol length")); // method cannot be resolved because type could not either
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot resolve symbol A"));
+                Assert.That(errors.Errors[1].ToString(), Is.StringContaining("Cannot resolve symbol length")); // method cannot be resolved because type could not either
             }
         }
 
@@ -394,7 +394,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot apply operator").And.StringContaining("int"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot apply operator").And.StringContaining("int"));
             }
 
 
@@ -426,7 +426,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot index into"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot index into"));
             }
 
             [Test]
@@ -443,7 +443,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Invalid array index"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Invalid array index"));
             }
 
             [Test]
@@ -456,7 +456,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Array size must be numeric"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Array size must be numeric"));
             }
 
             [Test]
@@ -491,7 +491,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot apply operator").And.StringContaining("A"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot apply operator").And.StringContaining("A"));
             }
 
             [Theory]
@@ -508,7 +508,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot apply operator").And.StringContaining("boolean"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot apply operator").And.StringContaining("boolean"));
             }
 
             [Theory]
@@ -525,7 +525,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot apply operator").And.StringContaining("A").And.StringContaining("boolean"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot apply operator").And.StringContaining("A").And.StringContaining("boolean"));
             }
 
             [Theory]
@@ -565,7 +565,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot apply operator").And.StringContaining("A"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot apply operator").And.StringContaining("A"));
             }
 
             [Theory]
@@ -581,7 +581,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot apply operator").And.StringContaining("int"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot apply operator").And.StringContaining("int"));
             }
 
             [Theory]
@@ -598,7 +598,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot apply operator").And.StringContaining("int").And.StringContaining("A"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot apply operator").And.StringContaining("int").And.StringContaining("A"));
             }
 
             [Theory]
@@ -637,7 +637,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot apply operator").And.StringContaining("A"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot apply operator").And.StringContaining("A"));
             }
 
             [Theory]
@@ -653,7 +653,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot apply operator").And.StringContaining("boolean"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot apply operator").And.StringContaining("boolean"));
             }
 
             [Theory]
@@ -670,7 +670,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot apply operator").And.StringContaining("boolean").And.StringContaining("A"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot apply operator").And.StringContaining("boolean").And.StringContaining("A"));
             }
 
             [Theory]
@@ -737,7 +737,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot assign").And.
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot assign").And.
                     StringContaining("A").And.StringContaining("B"));
             }
 
@@ -759,7 +759,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot assign").And.
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot assign").And.
                     StringContaining("int").And.StringContaining("boolean"));
             }
 
@@ -777,7 +777,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot assign").And.
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot assign").And.
                     StringContaining("A").And.StringContaining("boolean"));
             }
 
@@ -795,7 +795,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot assign").And.
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot assign").And.
                     StringContaining("A").And.StringContaining("A[]"));
             }
 
@@ -813,7 +813,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot assign").And.
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot assign").And.
                     StringContaining("A").And.StringContaining("A[]"));
             }
 
@@ -832,7 +832,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot assign").And.
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot assign").And.
                     StringContaining("A").And.StringContaining("B"));
             }
 
@@ -849,7 +849,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("is not assignable"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("is not assignable"));
             }
 
             [Test]
@@ -865,7 +865,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot assign expression of type void"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot assign expression of type void"));
             }
         }
 
@@ -923,7 +923,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot assign").
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot assign").
                     And.StringContaining("type A").And.StringContaining("type B"));
             }
 
@@ -966,7 +966,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot resolve").And.StringContaining("foo"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot resolve").And.StringContaining("foo"));
             }
 
             [Test]
@@ -981,7 +981,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot assign").
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot assign").
                     And.StringContaining("B[]").And.StringContaining("A[]"));
             }
 
@@ -999,7 +999,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Wrong type of argument").
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Wrong type of argument").
                     And.StringContaining("B[]").And.StringContaining("A[]"));
             }
         }
@@ -1017,7 +1017,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Method of type void cannot have return statements"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Method of type void cannot have return statements"));
             }
 
             [Test]
@@ -1033,7 +1033,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Missing return statement"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Missing return statement"));
             }
 
             [Test]
@@ -1087,7 +1087,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Missing return statement"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Missing return statement"));
             }
 
             [Test]
@@ -1110,7 +1110,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Missing return statement"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Missing return statement"));
             }
 
             [Test]
@@ -1131,7 +1131,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Missing return statement"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Missing return statement"));
             }
 
             [Test]
@@ -1194,7 +1194,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot convert").
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot convert").
                     And.StringContaining("type boolean to int"));
             }
 
@@ -1227,7 +1227,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot convert").
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot convert").
                     And.StringContaining("type A to B"));
             }
 
@@ -1245,7 +1245,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot convert").
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot convert").
                     And.StringContaining("type B[] to A[]"));
             }
 
@@ -1262,13 +1262,13 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot convert").
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot convert").
                     And.StringContaining("type A to A[]"));
             }
         }
 
         [TestFixture]
-        public class OverloadingIsNotAllowed
+        public class OverridingAndOverloading
         {
             [Test]
             public void CannotOverloadASuperClassMethod()
@@ -1286,7 +1286,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Overloading is not allowed"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Overloading is not allowed"));
             }
 
             [Test]
@@ -1305,7 +1305,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Overloading is not allowed"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Overloading is not allowed"));
             }
 
             [Test]
@@ -1324,7 +1324,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("different return type"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("different return type"));
             }
 
             [Test]
@@ -1359,6 +1359,25 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.DoesNotThrow(checker.CheckTypesAndReferences);
+            }
+
+            [Test]
+            public void ReturnTypeContravarianceIsNotAllowedInOverridingMethods()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() { }\n" +
+                                 "}\n" +
+                                 "class A {\n" +
+                                 "\t public B foo() { return new B(); }\n" +
+                                 "}\n" +
+                                 "class B extends A {\n" +
+                                 "\t public A foo() { return new A(); }\n" +
+                                 "}\n";
+                IErrorReporter errors;
+                var checker = SetUpTypeAndReferenceChecker(program, out errors);
+                Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
+                Assert.AreEqual(1, errors.Count);
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("different return type"));
             }
         }
 
@@ -1398,7 +1417,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot convert expression of type int to boolean"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot convert expression of type int to boolean"));
             }
 
             [Test]
@@ -1414,7 +1433,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot convert expression of type A to boolean"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot convert expression of type A to boolean"));
             }
 
             [Test]
@@ -1449,7 +1468,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot convert expression of type int to boolean"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot convert expression of type int to boolean"));
             }
 
             [Test]
@@ -1497,7 +1516,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot print expression of type int[]"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot print expression of type int[]"));
             }
 
             [Test]
@@ -1513,7 +1532,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot print expression of type A"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot print expression of type A"));
             }
 
             [Test]
@@ -1528,7 +1547,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot convert expression of type int to boolean"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot convert expression of type int to boolean"));
             }
 
             [Test]
@@ -1564,7 +1583,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Wrong type of argument to method foo"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Wrong type of argument to method foo"));
             }
 
             [Test]
@@ -1583,7 +1602,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Wrong type of argument to method foo"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Wrong type of argument to method foo"));
             }
 
             [Test]
@@ -1602,7 +1621,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Wrong number of arguments"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Wrong number of arguments"));
             }
 
             [Test]
@@ -1621,7 +1640,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Wrong number of arguments"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Wrong number of arguments"));
             }
         }
 
@@ -1657,7 +1676,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("2147483648").
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("2147483648").
                     And.StringContaining("Cannot fit").And.StringContaining("32-bit integer"));
             }
         }
@@ -1700,26 +1719,26 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.That(errors.Count, Is.EqualTo(20));
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("Cannot apply operator + on arguments of type int and boolean"));
-                Assert.That(errors.Errors[1].Message, Is.StringContaining("Cannot resolve symbol C"));
-                Assert.That(errors.Errors[2].Message, Is.StringContaining("Cannot assign expression of type A to variable of type int"));
-                Assert.That(errors.Errors[3].Message, Is.StringContaining("Cannot fit integer literal 99999999999999999 into a 32-bit integer variable"));
-                Assert.That(errors.Errors[4].Message, Is.StringContaining("Cannot resolve symbol C"));
-                Assert.That(errors.Errors[5].Message, Is.StringContaining("Wrong number of arguments to method alwaysTrue (1 for 0)"));
-                Assert.That(errors.Errors[6].Message, Is.StringContaining("Cannot apply operator && on arguments of type int and boolean"));
-                Assert.That(errors.Errors[7].Message, Is.StringContaining("Cannot apply operator || on arguments of type boolean and int"));
-                Assert.That(errors.Errors[8].Message, Is.StringContaining("Cannot resolve symbol zzz"));
-                Assert.That(errors.Errors[9].Message, Is.StringContaining("Invalid operand of type int for operator ||"));
-                Assert.That(errors.Errors[10].Message, Is.StringContaining("Cannot resolve symbol zzz"));
-                Assert.That(errors.Errors[11].Message, Is.StringContaining("Invalid operand of type int for operator &&"));
-                Assert.That(errors.Errors[12].Message, Is.StringContaining("Cannot resolve symbol C"));
-                Assert.That(errors.Errors[13].Message, Is.StringContaining("Cannot resolve symbol zzz")); // No error about operands for || because neither one could be resolved.
-                Assert.That(errors.Errors[14].Message, Is.StringContaining("Cannot resolve symbol zzz")); // No error about array indexing because array expr could not be resolved.
-                Assert.That(errors.Errors[15].Message, Is.StringContaining("Cannot resolve symbol zzz")); // No error about array index type because variable could not be resolved.
-                Assert.That(errors.Errors[16].Message, Is.StringContaining("Cannot resolve symbol zzz")); // No error about invalid argument to assert statement because variable could not be resolved.
-                Assert.That(errors.Errors[17].Message, Is.StringContaining("Missing return statement in method alwaysTrue"));
-                Assert.That(errors.Errors[18].Message, Is.StringContaining("Method of type void cannot have return statements"));
-                Assert.That(errors.Errors[19].Message, Is.StringContaining("Method alwaysTrue in class B overloads a method in class A"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot apply operator + on arguments of type int and boolean"));
+                Assert.That(errors.Errors[1].ToString(), Is.StringContaining("Cannot resolve symbol C"));
+                Assert.That(errors.Errors[2].ToString(), Is.StringContaining("Cannot assign expression of type A to variable of type int"));
+                Assert.That(errors.Errors[3].ToString(), Is.StringContaining("Cannot fit integer literal 99999999999999999 into a 32-bit integer variable"));
+                Assert.That(errors.Errors[4].ToString(), Is.StringContaining("Cannot resolve symbol C"));
+                Assert.That(errors.Errors[5].ToString(), Is.StringContaining("Wrong number of arguments to method alwaysTrue (1 for 0)"));
+                Assert.That(errors.Errors[6].ToString(), Is.StringContaining("Cannot apply operator && on arguments of type int and boolean"));
+                Assert.That(errors.Errors[7].ToString(), Is.StringContaining("Cannot apply operator || on arguments of type boolean and int"));
+                Assert.That(errors.Errors[8].ToString(), Is.StringContaining("Cannot resolve symbol zzz"));
+                Assert.That(errors.Errors[9].ToString(), Is.StringContaining("Invalid operand of type int for operator ||"));
+                Assert.That(errors.Errors[10].ToString(), Is.StringContaining("Cannot resolve symbol zzz"));
+                Assert.That(errors.Errors[11].ToString(), Is.StringContaining("Invalid operand of type int for operator &&"));
+                Assert.That(errors.Errors[12].ToString(), Is.StringContaining("Cannot resolve symbol C"));
+                Assert.That(errors.Errors[13].ToString(), Is.StringContaining("Cannot resolve symbol zzz")); // No error about operands for || because neither one could be resolved.
+                Assert.That(errors.Errors[14].ToString(), Is.StringContaining("Cannot resolve symbol zzz")); // No error about array indexing because array expr could not be resolved.
+                Assert.That(errors.Errors[15].ToString(), Is.StringContaining("Cannot resolve symbol zzz")); // No error about array index type because variable could not be resolved.
+                Assert.That(errors.Errors[16].ToString(), Is.StringContaining("Cannot resolve symbol zzz")); // No error about invalid argument to assert statement because variable could not be resolved.
+                Assert.That(errors.Errors[17].ToString(), Is.StringContaining("Missing return statement in method alwaysTrue"));
+                Assert.That(errors.Errors[18].ToString(), Is.StringContaining("Method of type void cannot have return statements"));
+                Assert.That(errors.Errors[19].ToString(), Is.StringContaining("Method alwaysTrue in class B overloads a method in class A"));
             }
 
         }

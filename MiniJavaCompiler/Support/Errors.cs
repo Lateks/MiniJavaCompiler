@@ -49,16 +49,17 @@ namespace MiniJavaCompiler.Support
             get;
             private set;
         }
-        public string Message
-        {
-            get { return String.Format("{0} (near row {1}, column {2})", Content, Row, Col); }
-        }
 
         public ErrorMessage(string message, int row, int col)
         {
             Content = message;
             Row = row;
             Col = col;
+        }
+
+        public override string ToString()
+        {
+            return String.Format("Row {0}, column {1}: {2}", Row, Col, Content);
         }
     }
 }

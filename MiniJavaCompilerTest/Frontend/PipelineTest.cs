@@ -127,7 +127,7 @@ namespace MiniJavaCompilerTest.Frontend
             Assert.NotNull(syntaxTree); // syntax analysis was ok
             Assert.IsNull(symbolTable);
             Assert.That(frontend.GetErrors(), Is.Not.Empty);
-            Assert.That(frontend.GetErrors().Last().Message, Is.StringContaining("Conflicting definitions for Factorial"));
+            Assert.That(frontend.GetErrors().Last().ToString(), Is.StringContaining("Conflicting definitions for Factorial"));
             reader.Close();
         }
 
@@ -159,7 +159,7 @@ namespace MiniJavaCompilerTest.Frontend
             Assert.NotNull(syntaxTree); // syntax analysis was ok
             Assert.IsNull(symbolTable);
             Assert.That(frontend.GetErrors(), Is.Not.Empty);
-            Assert.That(frontend.GetErrors().Last().Message, Is.StringContaining("Symbol 'ComputeFac' is already defined"));
+            Assert.That(frontend.GetErrors().Last().ToString(), Is.StringContaining("Symbol 'ComputeFac' is already defined"));
             reader.Close();
         }
 

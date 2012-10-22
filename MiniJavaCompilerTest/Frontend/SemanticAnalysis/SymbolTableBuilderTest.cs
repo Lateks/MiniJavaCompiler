@@ -140,8 +140,8 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                              "} \n\n";
             Assert.False(BuildSymbolTableFor(program));
             Assert.AreEqual(5, _errors.Errors.Count);
-            Assert.AreEqual(4, _errors.Errors.Count(err => err.Message.Contains("Symbol 'foo' is already defined")));
-            Assert.AreEqual(1, _errors.Errors.Count(err => err.Message.Contains("Symbol 'bar' is already defined")));
+            Assert.AreEqual(4, _errors.Errors.Count(err => err.ToString().Contains("Symbol 'foo' is already defined")));
+            Assert.AreEqual(1, _errors.Errors.Count(err => err.ToString().Contains("Symbol 'bar' is already defined")));
         }
 
         [Test]
