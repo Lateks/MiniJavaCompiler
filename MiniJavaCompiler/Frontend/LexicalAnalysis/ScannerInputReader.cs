@@ -4,6 +4,7 @@ using System.IO;
 
 namespace MiniJavaCompiler.Frontend.LexicalAnalysis
 {
+    // This exception is thrown if a multiline comment is ended by end of file.
     internal class EndlessCommentError : Exception
     {
         public int Row { get; private set; }
@@ -40,20 +41,21 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
             Row = 1; Col = 0; // The first character in a file will be marked as being on row 1, column 1.
         }
 
-        // Peeks at input.
+        // Returns the next character in input without consuming it.
         internal char Peek()
         {
+            if (!InputLeft())
+            {
+                throw new OutOfScannerInput();
+            }
+
             if (_buffer != null)
             {
                 return (char)_buffer;
             }
             else
             {
-                if (!InputLeft())
-                {
-                    throw new OutOfScannerInput();
-                }
-                return (char) _input.Peek();
+                return (char)_input.Peek();
             }
         }
 
@@ -142,24 +144,26 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
 
         private void SkipMultilineComment()
         {
-            Read(); Read(); // discard the starting characters of the comment
+            Read(); Read(); // discard the starting characters of the comment (/*)
             do
             {
-                if (!ReadUntil('*'))
-                    throw new EndlessCommentError("Reached end of input while scanning for a comment.",
-                                                  _commentStartRow, _commentStartCol);
-            } while (!Peek().Equals('/'));
+                ReadUntil('*');
+            } while (InputLeft() && !Peek().Equals('/'));
+
+            if (!InputLeft())
+                throw new EndlessCommentError("Reached end of input while scanning for a comment.",
+                                               _commentStartRow, _commentStartCol);
             Read(); // discard the comment ending '/' symbol
         }
 
-        private bool ReadUntil(char symbol)
+        // Reads until the specified character or end of file, whichever comes first.
+        // The symbol itself is also consumed.
+        private void ReadUntil(char symbol)
         {
             while (InputLeft() && !Peek().Equals(symbol))
                 Read();
-            if (!InputLeft()) // Reached end of input but did not see the symbol.
-                return false;
-            Read(); // Discard symbol.
-            return true;
+            if (InputLeft())
+                Read(); // Discard symbol.
         }
     }
 }

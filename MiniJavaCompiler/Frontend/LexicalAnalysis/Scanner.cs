@@ -85,7 +85,7 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
             {
                 return MakeSingleCharBinaryOperatorToken();
             }
-            else if (MiniJavaInfo.MultiCharOperatorSymbols.Contains(inputSymbol))
+            else if (MiniJavaInfo.MultiCharOperatorStartSymbols.Contains(inputSymbol))
             {
                 return MakeMultiCharOperatorOrAssignmentToken();
             }
@@ -97,7 +97,7 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
             {
                 return MakeIntegerLiteralToken();
             }
-            else if (Char.IsLetter(inputSymbol))
+            else if (Char.IsLetter(inputSymbol)) // Identifiers always start with a letter.
             {
                 return MakeIdentifierOrKeywordToken();
             }
@@ -117,7 +117,7 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
         private IToken MakeMultiCharOperatorOrAssignmentToken()
         {
             string symbol = _input.Read();
-            if (_input.InputLeft() && _input.Peek().ToString() == symbol)
+            if (_input.InputLeft() && _input.Peek().ToString() == symbol) // All two-character operators in Mini-Java consist of the same character twice.
             {
                 symbol += _input.Read();
                 return new OperatorToken(symbol, _startRow, _startCol);
@@ -131,8 +131,7 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
 
         private IToken MakePunctuationToken()
         {
-            string token = _input.Read();
-            return new PunctuationToken(token, _startRow, _startCol);
+            return new PunctuationToken(_input.Read(), _startRow, _startCol);
         }
 
         private IntegerLiteralToken MakeIntegerLiteralToken()

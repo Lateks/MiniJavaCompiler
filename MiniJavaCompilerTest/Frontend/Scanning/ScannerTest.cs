@@ -274,6 +274,11 @@ namespace MiniJavaCompilerTest.Frontend.Scanning
             scanner = new MiniJavaScanner(reader);
             Assert.That(scanner.NextToken(), Is.InstanceOf<ErrorToken>());
             reader.Close();
+
+            reader = new StringReader("/* ... *");
+            scanner = new MiniJavaScanner(reader);
+            Assert.That(scanner.NextToken(), Is.InstanceOf<ErrorToken>());
+            reader.Close();
         }
 
         [Test]
