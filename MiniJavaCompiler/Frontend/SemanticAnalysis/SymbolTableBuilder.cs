@@ -19,6 +19,16 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             get { return _scopeStack.Peek(); }
         }
 
+        private void EnterScope(IScope scope)
+        {
+            _scopeStack.Push(scope);
+        }
+
+        private void ExitScope()
+        {
+            _scopeStack.Pop();
+        }
+
         public SymbolTableBuilder(Program node, IEnumerable<string> userDefinedTypes, IErrorReporter errorReporter)
         {
             _errorReporter = errorReporter;
@@ -29,17 +39,32 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 
             SetupGlobalScope(userDefinedTypes);
             _scopeStack = new Stack<IScope>();
-            EnterScope(_symbolTable.GlobalScope);
         }
 
         public SymbolTable BuildSymbolTable()
         {
+            EnterScope(_symbolTable.GlobalScope);
             _syntaxTree.Accept(this);
+
             if (_errorsFound)
             {
                 throw new SemanticAnalysisFailed();
             }
             return _symbolTable;
+        }
+
+        private void SetupGlobalScope(IEnumerable<string> userDefinedTypes)
+        {
+            foreach (var type in MiniJavaInfo.BuiltIns)
+            {
+                var sym = new BuiltInTypeSymbol(type, _symbolTable.GlobalScope);
+                _symbolTable.GlobalScope.Define(sym);
+            }
+            foreach (var type in userDefinedTypes)
+            {
+                var sym = new UserDefinedTypeSymbol(type, _symbolTable.GlobalScope);
+                _symbolTable.GlobalScope.Define(sym);
+            }
         }
 
         public void Visit(Program node)
@@ -121,13 +146,15 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             var nodeSimpleType = (SimpleTypeSymbol)_symbolTable.GlobalScope.ResolveType(node.Type);
             if (nodeSimpleType == null)
             {
+                // Note: this error is also reported when a void type is encountered
+                // for something other than a method declaration.
                 _errorReporter.ReportError("Unknown type '" + node.Type + "'.", node.Row, node.Col);
                 _errorsFound = true;
                 return null;
             }
-            IType actualType = node.IsArray ?
-                MiniJavaArrayType.OfType(nodeSimpleType) :
-                (IType)nodeSimpleType;
+            IType actualType = node.IsArray
+                ? MiniJavaArrayType.OfType(nodeSimpleType)
+                : (IType)nodeSimpleType;
 
             return actualType;
         }
@@ -233,30 +260,6 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         private void HandleExpressionOrStatementNode(ISyntaxTreeNode node)
         {
             _symbolTable.Scopes.Add(node, CurrentScope);
-        }
-
-        private void SetupGlobalScope(IEnumerable<string> userDefinedTypes)
-        {
-            foreach (var type in MiniJavaInfo.BuiltIns)
-            {
-                var sym = new BuiltInTypeSymbol(type, _symbolTable.GlobalScope);
-                _symbolTable.GlobalScope.Define(sym);
-            }
-            foreach (var type in userDefinedTypes)
-            {
-                var sym = new UserDefinedTypeSymbol(type, _symbolTable.GlobalScope);
-                _symbolTable.GlobalScope.Define(sym);
-            }
-        }
-
-        private void EnterScope(IScope scope)
-        {
-            _scopeStack.Push(scope);
-        }
-
-        private void ExitScope()
-        {
-            _scopeStack.Pop();
         }
     }
 }

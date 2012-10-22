@@ -107,12 +107,16 @@ namespace MiniJavaCompiler.Support.SymbolTable
         {
             if (other == ErrorType.GetInstance())
             {
+                return true;
+            }
+            if (other is BuiltInTypeSymbol)
+            {
                 return false;
             }
             return IsDerivedFrom(other as UserDefinedTypeSymbol);
         }
 
-        protected bool IsDerivedFrom(UserDefinedTypeSymbol other)
+        private bool IsDerivedFrom(UserDefinedTypeSymbol other)
         {
             if (other == null)
             {

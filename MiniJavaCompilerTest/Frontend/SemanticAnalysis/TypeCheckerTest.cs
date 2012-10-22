@@ -1309,7 +1309,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
             }
 
             [Test]
-            public void CannotOverrideASuperClassMethodWithADifferentTypeSignature()
+            public void CannotOverrideASuperClassMethodWithADifferentReturnType()
             {
                 string program = "class Foo{\n" +
                                  "\t public static void main() { }\n" +
@@ -1324,11 +1324,11 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<SemanticAnalysisFailed>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].Message, Is.StringContaining("different type signature"));
+                Assert.That(errors.Errors[0].Message, Is.StringContaining("different return type"));
             }
 
             [Test]
-            public void CanOverrideASuperClassMethodWithTheSameTypeSignature()
+            public void CanOverrideASuperClassMethodWithTheSameReturnType()
             {
                 string program = "class Foo{\n" +
                                  "\t public static void main() { }\n" +
@@ -1338,6 +1338,23 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                                  "}\n" +
                                  "class B extends A {\n" +
                                  "\t public int foo() { return 5; }\n" +
+                                 "}\n";
+                IErrorReporter errors;
+                var checker = SetUpTypeAndReferenceChecker(program, out errors);
+                Assert.DoesNotThrow(checker.CheckTypesAndReferences);
+            }
+
+            [Test]
+            public void ReturnTypeCovarianceIsAllowedInOverridingMethods()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() { }\n" +
+                                 "}\n" +
+                                 "class A {\n" +
+                                 "\t public A foo() { return new A(); }\n" +
+                                 "}\n" +
+                                 "class B extends A {\n" +
+                                 "\t public B foo() { return new B(); }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -1702,7 +1719,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 Assert.That(errors.Errors[16].Message, Is.StringContaining("Cannot resolve symbol zzz")); // No error about invalid argument to assert statement because variable could not be resolved.
                 Assert.That(errors.Errors[17].Message, Is.StringContaining("Missing return statement in method alwaysTrue"));
                 Assert.That(errors.Errors[18].Message, Is.StringContaining("Method of type void cannot have return statements"));
-                Assert.That(errors.Errors[19].Message, Is.StringContaining("Method alwaysTrue in class B overloads method alwaysTrue in class A"));
+                Assert.That(errors.Errors[19].Message, Is.StringContaining("Method alwaysTrue in class B overloads a method in class A"));
             }
 
         }

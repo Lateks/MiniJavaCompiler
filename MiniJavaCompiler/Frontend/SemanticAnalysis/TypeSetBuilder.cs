@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using MiniJavaCompiler.Support;
 using MiniJavaCompiler.Support.AbstractSyntaxTree;
+using System;
 
 namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 {
@@ -31,8 +32,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 
         private void ReportConflict(string typeName, int row, int col)
         {
-            _errorReporter.ReportError("Conflicting definitions for " +
-                    typeName + ".", row, col);
+            _errorReporter.ReportError(String.Format("Conflicting definitions for {0}", typeName), row, col);
             _errorsFound = true;
         }
 
