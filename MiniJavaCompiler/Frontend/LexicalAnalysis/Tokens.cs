@@ -14,7 +14,7 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
     /*  A static class for describing token types. These descriptions
      *  can be used in dynamically generated error messages.
      */
-    internal static class TokenDescriptions
+    public static class TokenDescriptions
     {
         private static readonly Dictionary<Type, string> Descriptions =
             new Dictionary<Type, string>()
@@ -31,7 +31,7 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
                     {typeof(ITypeToken), "type name"}
                 };
 
-        internal static string Describe(Type type)
+        public static string Describe(Type type)
         {
             Debug.Assert(typeof (IToken).IsAssignableFrom(type));
             if (Descriptions.ContainsKey(type))

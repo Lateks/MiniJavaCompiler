@@ -56,7 +56,7 @@ namespace MiniJavaCompiler.Frontend
             {
                 return parser.Parse();
             }
-            catch (SyntaxAnalysisFailed)
+            catch (CompilationFailed)
             {
                 return null;
             }
@@ -83,7 +83,7 @@ namespace MiniJavaCompiler.Frontend
                 new TypeChecker(abstractSyntaxTree, symbolTable, _errorLog).CheckTypesAndReferences();
                 return symbolTable;
             }
-            catch (SemanticAnalysisFailed)
+            catch (CompilationFailed)
             {
                 return null;
             }

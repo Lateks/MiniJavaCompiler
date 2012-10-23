@@ -12,8 +12,6 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
         Program Parse();
     }
 
-    public class SyntaxAnalysisFailed : Exception { }
-
     public abstract class ParserBase
     {
         public bool DebugMode { get; protected set; }
@@ -39,7 +37,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
             var program = Program();
             if (ParsingFailed) // This exception is thrown if either lexical or syntactic errors are found in the token stream.
             {
-                throw new SyntaxAnalysisFailed();
+                throw new CompilationFailed();
             }
             return program;
         }
@@ -57,7 +55,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
             {
                 if (DebugMode) throw;
                 ErrorReporter.ReportError(e.Message, 0, 0);
-                throw new SyntaxAnalysisFailed();
+                throw new CompilationFailed();
             }
 
             // Invariant:

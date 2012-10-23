@@ -48,7 +48,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
     public class MethodSymbol : Symbol, IVariableScope
     {
         private readonly Dictionary<string, Symbol> _variableTable;
-        internal bool IsStatic { get; set; }
+        public bool IsStatic { get; private set; }
 
         public MethodSymbol(string name, IType returnType, IMethodScope enclosingScope, bool isStatic = false)
             : base(name, returnType, enclosingScope)
@@ -92,7 +92,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
 
     public class UserDefinedTypeSymbol : SimpleTypeSymbol, IMethodScope, IVariableScope
     {
-        internal UserDefinedTypeSymbol SuperClass { get; set; }
+        public UserDefinedTypeSymbol SuperClass { get; set; }
         private readonly Dictionary<string, Symbol> _methods;
         private readonly Dictionary<string, Symbol> _fields;
 

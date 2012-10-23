@@ -48,7 +48,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 
             if (_errorsFound)
             {
-                throw new SemanticAnalysisFailed();
+                throw new CompilationFailed();
             }
             return _symbolTable;
         }
@@ -62,6 +62,9 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             }
             foreach (var type in userDefinedTypes)
             {
+                // Note: classes are set up without superclass information because
+                // all class symbols need to be created before superclass relations
+                // can be set.
                 var sym = new UserDefinedTypeSymbol(type, _symbolTable.GlobalScope);
                 _symbolTable.GlobalScope.Define(sym);
             }
@@ -73,7 +76,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         }
 
         public void Visit(ClassDeclaration node)
-        {
+        {   // Resolve inheritance relationships.
             var typeSymbol = (UserDefinedTypeSymbol)CurrentScope.ResolveType(node.Name);
             if (node.InheritedClass != null)
             {
@@ -91,7 +94,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         }
 
         public void Visit(MainClassDeclaration node)
-        {
+        {   // Main class cannot inherit.
             var typeSymbol = (UserDefinedTypeSymbol)CurrentScope.ResolveType(node.Name);
             _symbolTable.Scopes.Add(node, typeSymbol);
             _symbolTable.Definitions.Add(typeSymbol, node);

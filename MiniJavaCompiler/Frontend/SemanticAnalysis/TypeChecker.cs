@@ -41,7 +41,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             _programRoot.Accept(this);
             if (_checkFailed)
             {
-                throw new SemanticAnalysisFailed();
+                throw new CompilationFailed();
             }
         }
 

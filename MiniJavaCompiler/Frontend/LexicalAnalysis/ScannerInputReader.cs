@@ -5,7 +5,7 @@ using System.IO;
 namespace MiniJavaCompiler.Frontend.LexicalAnalysis
 {
     // This exception is thrown if a multiline comment is ended by end of file.
-    internal class EndlessCommentError : Exception
+    public class EndlessCommentError : Exception
     {
         public int Row { get; private set; }
         public int Col { get; private set; }
@@ -18,23 +18,23 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
         }
     }
 
-    internal class OutOfScannerInput : Exception { }
+    public class OutOfScannerInput : Exception { }
 
     // Handles reading input from the given TextReader, skipping comments
     // and whitespace, keeping track of row and column numbers in the
     // source code and buffering input when a look-ahead of more than
     // one character is needed (that is, when trying to tell division
     // symbols from comment starter symbols).
-    internal class ScannerInputReader
+    public class ScannerInputReader
     {
         private readonly TextReader _input;
         private char? _buffer;
         private int _commentStartRow; // the starting row of the current comment, for error messages
         private int _commentStartCol; // the starting column of the current comment, for error messages
-        internal int Row { get; private set; }
-        internal int Col { get; private set; }
+        public int Row { get; private set; }
+        public int Col { get; private set; }
 
-        internal ScannerInputReader(TextReader input)
+        public ScannerInputReader(TextReader input)
         {
             _input = input;
             _buffer = null;
@@ -42,7 +42,7 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
         }
 
         // Returns the next character in input without consuming it.
-        internal char Peek()
+        public char Peek()
         {
             if (!InputLeft())
             {
@@ -59,13 +59,13 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
             }
         }
 
-        internal bool InputLeft()
+        public bool InputLeft()
         {
             return _input.Peek() >= 0 || _buffer != null;
         }
 
         // Reads the next character from input as a string.
-        internal string Read()
+        public string Read()
         {
             if (!InputLeft())
             {
@@ -86,7 +86,7 @@ namespace MiniJavaCompiler.Frontend.LexicalAnalysis
             return symbol.ToString();
         }
 
-        internal void SkipWhiteSpaceAndComments()
+        public void SkipWhiteSpaceAndComments()
         {
             bool commentsFound = true;
             while (NextCharIsWhiteSpace() || commentsFound)

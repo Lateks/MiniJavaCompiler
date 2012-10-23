@@ -5,6 +5,10 @@ using System.Text;
 
 namespace MiniJavaCompiler.Support
 {
+    // This error can be used in all stages of compilation
+    // to indicate failure.
+    public class CompilationFailed : Exception { }
+
     public interface IErrorReporter
     {
         void ReportError(string message, int row, int col);

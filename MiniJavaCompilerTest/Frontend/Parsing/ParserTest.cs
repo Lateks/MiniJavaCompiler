@@ -334,7 +334,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
 
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new StubScanner(programTokens), errorReporter);
-            Assert.Throws<SyntaxAnalysisFailed>(() => parser.Parse());
+            Assert.Throws<CompilationFailed>(() => parser.Parse());
             Assert.That(errorReporter.Errors, Is.Not.Empty);
         }
 
@@ -349,7 +349,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
 
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new StubScanner(programTokens), errorReporter);
-            Assert.Throws<SyntaxAnalysisFailed>(() => parser.Parse());
+            Assert.Throws<CompilationFailed>(() => parser.Parse());
             Assert.That(errorReporter.Errors, Is.Not.Empty);
         }
 
@@ -399,7 +399,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
 
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new StubScanner(programTokens), errorReporter);
-            Assert.Throws<SyntaxAnalysisFailed>(() => parser.Parse());
+            Assert.Throws<CompilationFailed>(() => parser.Parse());
             Assert.That(errorReporter.Count, Is.GreaterThan(0));
         }
 
@@ -575,7 +575,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             programTokens.Enqueue(new PunctuationToken("{", 0, 0));
             EndFile();
 
-            Assert.Throws<SyntaxAnalysisFailed>(() => GetProgramTree());
+            Assert.Throws<CompilationFailed>(() => GetProgramTree());
         }
 
         [Test]
