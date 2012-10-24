@@ -196,9 +196,9 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
         {
             var newToken = Input.MatchAndConsume<KeywordToken>("new");
             var typeInfo = NewType();
-            var type = typeInfo.Item1;
+            var type = typeInfo.typeToken;
             return OptionalTermTail(new InstanceCreationExpression(type.Lexeme,
-                newToken.Row, newToken.Col, typeInfo.Item2));
+                newToken.Row, newToken.Col, typeInfo.arraySize));
         }
 
         private IExpression OptionalTermTail(IExpression lhs)
@@ -264,21 +264,31 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
                 startToken.Row, startToken.Col));
         }
 
-        private Tuple<ITypeToken, IExpression> NewType()
+        private TypeData NewType()
         {
             var type = Input.MatchAndConsume<ITypeToken>();
             if (type is MiniJavaTypeToken || Input.NextTokenIs<PunctuationToken>("["))
-            { // must be an array
+            {
                 Input.MatchAndConsume<PunctuationToken>("[");
                 var arraySize = Parse();
                 Input.MatchAndConsume<PunctuationToken>("]");
-                return new Tuple<ITypeToken, IExpression>(type, arraySize);
+                return new TypeData()
+                {
+                    typeToken = type,
+                    isArray = true,
+                    arraySize = arraySize
+                };
             }
             else
             {
                 Input.MatchAndConsume<PunctuationToken>("(");
                 Input.MatchAndConsume<PunctuationToken>(")");
-                return new Tuple<ITypeToken, IExpression>(type, null);
+                return new TypeData()
+                {
+                    typeToken = type,
+                    isArray = false,
+                    arraySize = null
+                };
             }
         }
 

@@ -481,9 +481,14 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             {
                 return true;
             }
-            var paramsEqual = method.Formals.Zip(superClassMethod.Formals,
-                (a, b) => _symbolTable.ResolveType(a.Type, a.IsArray).Equals(_symbolTable.ResolveType(b.Type, b.IsArray)));
-            return paramsEqual.Contains(false);
+            bool formalsEqual = true;
+            for (int i = 0; i < method.Formals.Count && formalsEqual; i++)
+            {
+                var methodFormal = _symbolTable.ResolveType(method.Formals[i].Type, method.Formals[i].IsArray);
+                var superFormal = _symbolTable.ResolveType(superClassMethod.Formals[i].Type, superClassMethod.Formals[i].IsArray);
+                formalsEqual = methodFormal.Equals(superFormal);
+            }
+            return !formalsEqual;
         }
     }
 }

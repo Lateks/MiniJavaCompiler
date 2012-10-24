@@ -25,6 +25,14 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
             ErrorReporter = reporter;
             Input = input;
         }
+
+        // Used to return detailed type data from certain parser methods.
+        protected struct TypeData
+        {
+            public ITypeToken typeToken;
+            public bool isArray;
+            public IExpression arraySize;
+        }
     }
 
     public class Parser : ParserBase, IParser
@@ -418,7 +426,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
         {
             IToken startToken = Input.MatchAndConsume<KeywordToken>("public");
             var typeInfo = Type();
-            var type = typeInfo.Item1;
+            var type = typeInfo.typeToken;
             var methodName = Input.MatchAndConsume<IdentifierToken>();
 
             Input.MatchAndConsume<PunctuationToken>("("); // parameter list
@@ -430,7 +438,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
             Input.MatchAndConsume<PunctuationToken>("}");
 
             return new MethodDeclaration(methodName.Lexeme, type.Lexeme,
-                typeInfo.Item2, parameters, methodBody, startToken.Row,
+                typeInfo.isArray, parameters, methodBody, startToken.Row,
                 startToken.Col);
         }
 
@@ -439,10 +447,10 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
             try
             {
                 var typeInfo = Type();
-                var type = typeInfo.Item1;
+                var type = typeInfo.typeToken;
                 var variableIdent = Input.MatchAndConsume<IdentifierToken>();
                 return new VariableDeclaration(variableIdent.Lexeme, type.Lexeme,
-                    typeInfo.Item2, type.Row, type.Col);
+                    typeInfo.isArray, type.Row, type.Col);
             }
             catch (SyntaxError e)
             {
@@ -458,18 +466,26 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
             return null;
         }
 
-        // Returns a 2-tuple with the matched type token as the first element and
-        // a bool value indicating whether the type is an array as the second element.
-        private Tuple<ITypeToken, bool> Type()
+        private TypeData Type()
         {
             var type = Input.MatchAndConsume<ITypeToken>();
             if (Input.NextTokenIs<PunctuationToken>("["))
             {
                 Input.MatchAndConsume<PunctuationToken>();
                 Input.MatchAndConsume<PunctuationToken>("]");
-                return new Tuple<ITypeToken, bool>(type, true);
+                return new TypeData()
+                {
+                    typeToken = type,
+                    isArray = true,
+                    arraySize = null
+                };
             }
-            return new Tuple<ITypeToken, bool>(type, false);
+            return new TypeData()
+            {
+                typeToken = type,
+                isArray = false,
+                arraySize = null
+            };
         }
 
         // List parsing with sub-parsers.
