@@ -10,6 +10,7 @@
 \usepackage{graphicx}
 \usepackage{setspace}
 \usepackage{pdfpages}
+\usepackage{amsmath}
 
 \begin{document}
 \title{Compiler project: MiniJava}
@@ -36,7 +37,22 @@ This section covers the general architecture of the compiler, testing, error han
 
 \subsection{Building and running the compiler}
 
-\section{The MiniJava language}
+\section{The Mini-Java language}
+
+\subsection{Token patterns}
+
+Defined using regular expressions with Java style character classes. I have distinguished type keywords from other keywords here as well as in the implementation.
+
+\begin{description}
+\item[Identifiers] $\backslash\text{p\{IsAlphabetic\}} [ \backslash\text{p\{IsAlphabetic\}}\backslash\text{p\{IsDigit\}\_ } ]^{*}$ \\ \emph{except simple types and keywords}
+\item[Integer literals] $\backslash\text{p\{IsDigit\}}^{+}$
+\item[Simple type] int | boolean | void
+\item[Keyword] class | public | static | main | extends | assert | if | else | \\ while | System | out | println | return | new | length | this | true | false
+\item[Operator] \&\& | || | < | > | == | + | - | *  | / | \% | = | !
+\item[Punctuation] \{ | \} | [ | ] | ( | ) | $\backslash$. | ; | ,
+\item[Single line comment] $\text{//.}^{*}\backslash \text{n}$ \\ \emph{not a token but needs to be recognised by the scanner}
+\item[Multiline comment] $\text{/* .}^{*}\text{ */}$ \\ \emph{not a token but needs to be recognised by the scanner and can be nested}
+\end{description}
 
 \subsection{Modified grammar for recursive descent parsing (non-LL(1))}
 
@@ -105,7 +121,7 @@ This section covers the general architecture of the compiler, testing, error han
                     |  epsilon
 <mult-operand-list> ::= "/" <mult-operand> <mult-operand-list>
                      |  "*" <mult-operand> <mult-operand-list>
-                     |  "\%" <mult-operand> <mult-operand-list>
+                     |  "%" <mult-operand> <mult-operand-list>
                      |  epsilon
 
 <term>    ::= "new" <new type> <opt term tail>
