@@ -41,20 +41,24 @@ This section covers the general architecture of the compiler, testing, error han
 
 \subsection{Token patterns}
 
-Defined using regular expressions with Java style character classes. I have distinguished type keywords from other keywords here as well as in the implementation.
+Defined using regular expressions with Java style character classes. These token groups correspond to token classes used in the implementation.
 
 \begin{description}
-\item[Identifiers] $\backslash\text{p\{IsAlphabetic\}} [ \backslash\text{p\{IsAlphabetic\}}\backslash\text{p\{IsDigit\}\_ } ]^{*}$ \\ \emph{except simple types and keywords}
+\item[Identifiers] $\backslash\text{p\{IsAlphabetic\}} [ \backslash\text{p\{IsAlphabetic\}}\backslash\text{p\{IsDigit\}\_ } ]^{*}$ \\ \emph{Except simple types and keywords.}
 \item[Integer literals] $\backslash\text{p\{IsDigit\}}^{+}$
 \item[Simple type] int | boolean | void
 \item[Keyword] class | public | static | main | extends | assert | if | else | \\ while | System | out | println | return | new | length | this | true | false
 \item[Operator] \&\& | || | < | > | == | + | - | *  | / | \% | = | !
 \item[Punctuation] \{ | \} | [ | ] | ( | ) | $\backslash$. | ; | ,
-\item[Single line comment] $\text{//.}^{*}\backslash \text{n}$ \\ \emph{not a token but needs to be recognised by the scanner}
-\item[Multiline comment] $\text{/* .}^{*}\text{ */}$ \\ \emph{not a token but needs to be recognised by the scanner and can be nested}
+\item[Single line comment] $\text{//.}^{*}\backslash \text{n}$ \\ \emph{Not a token but needs to be recognised by the scanner.}
+\item[Multiline comment] $\text{/* .}^{*}\text{ */}$ \\ \emph{Not a token but needs to be recognised by the scanner and can be nested.}
 \end{description}
 
 \subsection{Modified grammar for recursive descent parsing (non-LL(1))}
+
+In the grammar below, I have solved operator precedences using the ``classical'' method of making a separate production rule for each level of operator precedence. This is very easy to implement in the case of Mini-Java especially since all the defined binary operators are left-associative and there is only one unary operator. In a more complex case something like the Shunting Yard algorithm would probably work better.\footnote{Note: A program example on the course's grammar page also uses a unary minus operator, but this is not reflected in the grammar that was given, so I have left it out.}
+
+A look-ahead of more than one token is needed e.g. when the parser sees an identifier in the input and is trying to parse a statement. In this case the result could be a local variable declaration for either a user defined type or an array of a user defined type or a statement that starts with an expression that begins with a variable reference.
 
 \begin{verbatim}
 <program>              ::= <main class> <class declaration list>
@@ -146,5 +150,75 @@ Defined using regular expressions with Java style character classes. I have dist
 \end{verbatim}
 
 \subsection{Abstract syntax trees}
+
+\subsubsection{Interfaces}
+\begin{description}
+\item[ISyntaxTreeNode] \emph{is a node that can be visited.}
+\item[IStatement] \emph{is an} ISyntaxTreeNode \emph{and represents a Mini-Java statement}
+\item[IExpression] \emph{is an} ISyntaxTreeNode \emph{and represents a Mini-Java expression}
+\end{description}
+
+\subsubsection{Interface implementers}
+\begin{description}
+\item[Program] \emph{is an} ISyntaxTreeNode \\
+\emph{is a root node.} \\
+\emph{has a} \textbf{MainClassDeclaration} \\
+\emph{has many} \textbf{ClassDeclaration}s
+\\
+\item[SyntaxElement] \emph{is an abstract} ISyntaxTreeNode \\
+\emph{stores row and column information for nodes.}
+\\
+\item[MainClassDeclaration] \emph{is a} SyntaxElement \\
+\emph{has a} \textbf{MethodDeclaration} \emph{which is the main method.} \\
+\emph{defines a scope in the semantic analysis phase.}
+\item[ClassDeclaration] \emph{is a} SyntaxElement \\
+\emph{has many} \textbf{Declaration}s \\
+\emph{defines a scope in the semantic analysis phase.}
+\\
+\item[Declaration] \emph{is an abstract} SyntaxElement \\
+\emph{stores type information.}
+\item[MethodDeclaration] \emph{is a} Declaration \\
+\emph{has many} \textbf{VariableDeclaration}s \emph{which represent formal parameters.} \\
+\emph{has many} \textbf{IStatement}s \emph{which form the method body.} \\
+\emph{defines a scope in the semantic analysis phase.}
+\item[VariableDeclaration] \emph{is a} Declaration \emph{and an} IStatement
+\\
+\item[AssertStatement] \emph{is a} SyntaxElement \emph{and an} IStatement \\
+\emph{has an} \textbf{IExpression} \emph{which is the boolean argument.}
+\item[BlockStatement] \emph{is a} SyntaxElement \emph{and an IStatement} \\
+\emph{has many} \textbf{IStatement}s \emph{which form the body of the block.} \\
+\emph{defines a scope in the semantic analysis phase.}
+\item[IfStatement] \emph{is a} SyntaxElement \emph{and an} IStatement \\
+\emph{has an} \textbf{IExpression} \emph{which represents the condition.} \\
+\emph{has a} \textbf{BlockStatement} \emph{which is the then branch.} \\
+\emph{has optionally a} \textbf{BlockStatement} \emph{which is the else branch.}
+\item[WhileStatement] \emph{is a} SyntaxElement \emph{and an} IStatement \\
+\emph{has an} \textbf{IExpression} \emph{which represents the condition.} \\
+\emph{has a} \textbf{BlockStatement} \emph{which is the loop body}
+\item[PrintStatement] \emph{is a} SyntaxElement \emph{and an} IStatement \\
+\emph{has an} \textbf{IExpression} \emph{which is the integer argument.}
+\item[ReturnStatement] \emph{is a} SyntaxElement \emph{and an} IStatement \\
+\emph{has an} \textbf{IExpression} \emph{which is the expression to return.}
+\item[MethodInvocation] \emph{is a} SyntaxElement \emph{and an} IStatement \emph{and an} IExpression \\
+\emph{has an} \textbf{IExpression} \emph{which is the method owner} \\
+\emph{has many} \textbf{IExpression}s \emph{which are the call parameters.}
+\\
+\item[ArrayIndexingExpression] \emph{is a} SyntaxElement \emph{and an} IExpression \\
+\emph{has an} \textbf{IExpression} \emph{which is the array reference.} \\
+\emph{has an} \textbf{IExpression} \emph{which is the index.}
+\item[InstanceCreationExpression] \emph{is a} SyntaxElement \emph{and an} IExpression \\
+\emph{has optionally an} \textbf{IExpression} \emph{which is the array size if this is an array creation.} \\
+\emph{represents the 'new' expression.}
+\item[ThisExpression] \emph{is a} SyntaxElement \emph{and an} IExpression \\
+\emph{represents the reference to 'this' class.}
+\item[VariableReferenceExpression] \emph{is a} SyntaxElement \emph{and an} IExpression
+\item[UnaryOperatorExpression] \emph{is a} SyntaxElement \emph{and an} IExpression \\
+\emph{has an} \textbf{IExpression} \emph{which is the operand.}
+\item[BinaryOperatorExpression] \emph{is a} SyntaxElement \emph{and an} IExpression \\
+\emph{has an} \textbf{IExpression} \emph{that is the left operand.} \\
+\emph{has an} \textbf{IExpression} \emph{that is the right operand.}
+\item[BooleanLiteralExpression] \emph{is a} SyntaxElement \emph{and an} IExpression
+\item[IntegerLiteralExpression] \emph{is a} SyntaxElement \emph{and an} IExpression
+\end{description}
 
 \end{document}
