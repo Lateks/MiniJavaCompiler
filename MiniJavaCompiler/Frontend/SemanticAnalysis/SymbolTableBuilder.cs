@@ -81,7 +81,15 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             if (node.InheritedClass != null)
             {
                 var inheritedType = (UserDefinedTypeSymbol)CurrentScope.ResolveType(node.InheritedClass);
-                typeSymbol.SuperClass = inheritedType;
+                if (inheritedType == null)
+                {
+                    _errorReporter.ReportError("Unknown type '" + node.InheritedClass + "'.", node.Row, node.Col);
+                    _errorsFound = true;
+                }
+                else
+                {
+                    typeSymbol.SuperClass = inheritedType;
+                }
             }
             _symbolTable.Scopes.Add(node, typeSymbol);
             _symbolTable.Definitions.Add(typeSymbol, node);

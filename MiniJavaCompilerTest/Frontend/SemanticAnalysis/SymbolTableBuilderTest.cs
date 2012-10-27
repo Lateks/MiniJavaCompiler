@@ -21,7 +21,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
             var reader = new StringReader(program);
             var scanner = new MiniJavaScanner(reader);
             _errors = new ErrorLogger();
-            var parser = new Parser(scanner, _errors);
+            var parser = new Parser(scanner, _errors, true);
             Program syntaxTree = parser.Parse();
             reader.Close();
             Assert.That(_errors.Errors, Is.Empty);
@@ -97,6 +97,49 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
             var barClass = (UserDefinedTypeSymbol)_symbolTable.GlobalScope.ResolveType("Bar");
             Assert.That(barClass.SuperClass, Is.EqualTo(fooClass));
             Assert.That(barClass.ResolveMethod("foo"), Is.Not.Null);
+        }
+
+        [Test]
+        public void DetectsAnUnknownTypeInSuperClassDeclaration()
+        {
+            string program = "class Foo {\n" +
+                 "\t public static void main () {\n" +
+                 "\t\t System.out.println(42);\n" +
+                 "\t} \n" +
+                 "} \n\n" +
+                 "class Bar extends Baz { } \n\n";
+            Assert.False(BuildSymbolTableFor(program));
+            Assert.That(_errors.Count, Is.EqualTo(1));
+            Assert.That(_errors.Errors.First().Content, Is.StringContaining("Unknown type 'Baz'"));
+        }
+
+        [Test]
+        public void DetectsAnUnknownTypeInVariableDeclaration()
+        {
+            string program = "class Foo {\n" +
+                 "\t public static void main () {\n" +
+                 "\t\t System.out.println(42);\n" +
+                 "\t} \n" +
+                 "} \n\n" +
+                 "class Bar { Baz foo; } \n\n";
+            Assert.False(BuildSymbolTableFor(program));
+            Assert.That(_errors.Count, Is.EqualTo(1));
+            Assert.That(_errors.Errors.First().Content, Is.StringContaining("Unknown type 'Baz'"));
+        }
+
+        [Test]
+        public void DetectsAnUnknownTypeInMethodDeclaration()
+        {
+            string program = "class Foo {\n" +
+                 "\t public static void main () {\n" +
+                 "\t\t System.out.println(42);\n" +
+                 "\t} \n" +
+                 "} \n\n" +
+                 "class Bar { public Baz foo(Buzz foo) { } } \n\n";
+            Assert.False(BuildSymbolTableFor(program));
+            Assert.That(_errors.Count, Is.EqualTo(2));
+            Assert.That(_errors.Errors[0].Content, Is.StringContaining("Unknown type 'Baz'"));
+            Assert.That(_errors.Errors[1].Content, Is.StringContaining("Unknown type 'Buzz'"));
         }
 
         [Test]
