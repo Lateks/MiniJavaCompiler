@@ -29,47 +29,47 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
                           "}\n" +
                           "class A { public int foo() { return 7; } }\n";
             var tree = ParseProgram(program);
-            var arithmeticExpression = (BinaryOpExpression) ((AssignmentStatement) tree.MainClass.MainMethod.MethodBody[1]).RightHandSide;
+            var arithmeticExpression = (BinaryOperatorExpression) ((AssignmentStatement) tree.MainClass.MainMethod.MethodBody[1]).RightHandSide;
 
             // ... 10 + new ...
             Assert.That(arithmeticExpression.Operator, Is.EqualTo("+"));
-            Assert.That(arithmeticExpression.LeftOperand, Is.InstanceOf<BinaryOpExpression>());
-            Assert.That(arithmeticExpression.RightOperand, Is.InstanceOf<BinaryOpExpression>());
+            Assert.That(arithmeticExpression.LeftOperand, Is.InstanceOf<BinaryOperatorExpression>());
+            Assert.That(arithmeticExpression.RightOperand, Is.InstanceOf<BinaryOperatorExpression>());
 
             // new ... foo() * 2
-            var rightmostOp = (BinaryOpExpression) arithmeticExpression.RightOperand;
+            var rightmostOp = (BinaryOperatorExpression) arithmeticExpression.RightOperand;
             Assert.That(rightmostOp.Operator, Is.EqualTo("*"));
             Assert.That(rightmostOp.LeftOperand, Is.InstanceOf<MethodInvocation>());
             Assert.That((rightmostOp.LeftOperand as MethodInvocation).MethodOwner,
                         Is.InstanceOf<InstanceCreationExpression>());
-            Assert.That(rightmostOp.RightOperand, Is.InstanceOf<BinaryOpExpression>());
+            Assert.That(rightmostOp.RightOperand, Is.InstanceOf<BinaryOperatorExpression>());
 
             // 2 + 4
-            var sum = (BinaryOpExpression) rightmostOp.RightOperand;
+            var sum = (BinaryOperatorExpression) rightmostOp.RightOperand;
             Assert.That(sum.Operator, Is.EqualTo("+"));
             Assert.That(sum.LeftOperand, Is.InstanceOf<IntegerLiteralExpression>());
             Assert.That(sum.RightOperand, Is.InstanceOf<IntegerLiteralExpression>());
 
             // (...) * 10
-            var leftmostOp = (BinaryOpExpression) arithmeticExpression.LeftOperand;
+            var leftmostOp = (BinaryOperatorExpression) arithmeticExpression.LeftOperand;
             Assert.That(leftmostOp.Operator, Is.EqualTo("*"));
-            Assert.That(leftmostOp.LeftOperand, Is.InstanceOf<BinaryOpExpression>());
+            Assert.That(leftmostOp.LeftOperand, Is.InstanceOf<BinaryOperatorExpression>());
             Assert.That(leftmostOp.RightOperand, Is.InstanceOf<IntegerLiteralExpression>());
 
             // (4 + ...)
-            var parenthesisedExpression = (BinaryOpExpression) leftmostOp.LeftOperand;
+            var parenthesisedExpression = (BinaryOperatorExpression) leftmostOp.LeftOperand;
             Assert.That(parenthesisedExpression.Operator, Is.EqualTo("+"));
             Assert.That(parenthesisedExpression.LeftOperand, Is.InstanceOf<IntegerLiteralExpression>());
-            Assert.That(parenthesisedExpression.RightOperand, Is.InstanceOf<BinaryOpExpression>());
+            Assert.That(parenthesisedExpression.RightOperand, Is.InstanceOf<BinaryOperatorExpression>());
 
             // ... / 2
-            var multLevelArithmeticExpression = (BinaryOpExpression) parenthesisedExpression.RightOperand;
+            var multLevelArithmeticExpression = (BinaryOperatorExpression) parenthesisedExpression.RightOperand;
             Assert.That(multLevelArithmeticExpression.Operator, Is.EqualTo("/"));
-            Assert.That(multLevelArithmeticExpression.LeftOperand, Is.InstanceOf<BinaryOpExpression>());
+            Assert.That(multLevelArithmeticExpression.LeftOperand, Is.InstanceOf<BinaryOperatorExpression>());
             Assert.That(multLevelArithmeticExpression.RightOperand, Is.InstanceOf<IntegerLiteralExpression>());
 
             // 5 % 2
-            var lastExpr = (BinaryOpExpression) multLevelArithmeticExpression.LeftOperand;
+            var lastExpr = (BinaryOperatorExpression) multLevelArithmeticExpression.LeftOperand;
             Assert.That(lastExpr.Operator, Is.EqualTo("%"));
             Assert.That(lastExpr.LeftOperand, Is.InstanceOf<IntegerLiteralExpression>());
             Assert.That(lastExpr.RightOperand, Is.InstanceOf<IntegerLiteralExpression>());
@@ -89,51 +89,51 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
                           "}\n" +
                           "class A { public int foo() { return 10; } }\n";
             var tree = ParseProgram(program);
-            var booleanExpression = (BinaryOpExpression)((AssignmentStatement)tree.MainClass.MainMethod.MethodBody[4]).RightHandSide;
+            var booleanExpression = (BinaryOperatorExpression)((AssignmentStatement)tree.MainClass.MainMethod.MethodBody[4]).RightHandSide;
             
             // ... 10 || 10 ...
             Assert.That(booleanExpression.Operator, Is.EqualTo("||"));
-            Assert.That(booleanExpression.LeftOperand, Is.InstanceOf<BinaryOpExpression>());
-            Assert.That(booleanExpression.RightOperand, Is.InstanceOf<BinaryOpExpression>());
+            Assert.That(booleanExpression.LeftOperand, Is.InstanceOf<BinaryOperatorExpression>());
+            Assert.That(booleanExpression.RightOperand, Is.InstanceOf<BinaryOperatorExpression>());
 
             // ...foo() && foo
-            var rightmostOperand = (BinaryOpExpression) booleanExpression.RightOperand;
+            var rightmostOperand = (BinaryOperatorExpression) booleanExpression.RightOperand;
             Assert.That(rightmostOperand.Operator, Is.EqualTo("&&"));
             Assert.That(rightmostOperand.RightOperand, Is.InstanceOf<VariableReferenceExpression>());
-            Assert.That(rightmostOperand.LeftOperand, Is.InstanceOf<BinaryOpExpression>());
+            Assert.That(rightmostOperand.LeftOperand, Is.InstanceOf<BinaryOperatorExpression>());
 
             // 10 < bar.foo()
-            var smallerThanOp = (BinaryOpExpression) rightmostOperand.LeftOperand;
+            var smallerThanOp = (BinaryOperatorExpression) rightmostOperand.LeftOperand;
             Assert.That(smallerThanOp.Operator, Is.EqualTo("<"));
             Assert.That(smallerThanOp.LeftOperand, Is.InstanceOf<IntegerLiteralExpression>());
             Assert.That(smallerThanOp.RightOperand, Is.InstanceOf<MethodInvocation>());
 
             // (...) && bar == 10
-            var andOp = (BinaryOpExpression) booleanExpression.LeftOperand;
+            var andOp = (BinaryOperatorExpression) booleanExpression.LeftOperand;
             Assert.That(andOp.Operator, Is.EqualTo("&&"));
-            Assert.That(andOp.LeftOperand, Is.InstanceOf<BinaryOpExpression>());
-            Assert.That(andOp.RightOperand, Is.InstanceOf<BinaryOpExpression>());
+            Assert.That(andOp.LeftOperand, Is.InstanceOf<BinaryOperatorExpression>());
+            Assert.That(andOp.RightOperand, Is.InstanceOf<BinaryOperatorExpression>());
 
             // bar == 10
-            var eqOp = (BinaryOpExpression) andOp.RightOperand;
+            var eqOp = (BinaryOperatorExpression) andOp.RightOperand;
             Assert.That(eqOp.Operator, Is.EqualTo("=="));
             Assert.That(eqOp.LeftOperand, Is.InstanceOf<VariableReferenceExpression>());
             Assert.That(eqOp.RightOperand, Is.InstanceOf<IntegerLiteralExpression>());
 
             // ... new A() || bar.foo() ...
-            var orOp = (BinaryOpExpression) andOp.LeftOperand;
+            var orOp = (BinaryOperatorExpression) andOp.LeftOperand;
             Assert.That(orOp.Operator, Is.EqualTo("||"));
-            Assert.That(orOp.LeftOperand, Is.InstanceOf<BinaryOpExpression>());
-            Assert.That(orOp.RightOperand, Is.InstanceOf<BinaryOpExpression>());
+            Assert.That(orOp.LeftOperand, Is.InstanceOf<BinaryOperatorExpression>());
+            Assert.That(orOp.RightOperand, Is.InstanceOf<BinaryOperatorExpression>());
 
             // bar == new A()
-            var instanceComparison = (BinaryOpExpression) orOp.LeftOperand;
+            var instanceComparison = (BinaryOperatorExpression) orOp.LeftOperand;
             Assert.That(instanceComparison.Operator, Is.EqualTo("=="));
             Assert.That(instanceComparison.LeftOperand, Is.InstanceOf<VariableReferenceExpression>());
             Assert.That(instanceComparison.RightOperand, Is.InstanceOf<InstanceCreationExpression>());
 
             // bar.foo() > 5
-            var comparisonOp = (BinaryOpExpression) orOp.RightOperand;
+            var comparisonOp = (BinaryOperatorExpression) orOp.RightOperand;
             Assert.That(comparisonOp.Operator, Is.EqualTo(">"));
             Assert.That(comparisonOp.LeftOperand, Is.InstanceOf<MethodInvocation>());
             Assert.That(comparisonOp.RightOperand, Is.InstanceOf<IntegerLiteralExpression>());

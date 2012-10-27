@@ -235,7 +235,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             HandleExpressionOrStatementNode(node);
         }
 
-        public void Visit(BinaryOpExpression node)
+        public void Visit(BinaryOperatorExpression node)
         {
             HandleExpressionOrStatementNode(node);
         }

@@ -159,34 +159,34 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
 
     public class PrintStatement : SyntaxElement, IStatement
     {
-        public IExpression Expression { get; private set; }
+        public IExpression Argument { get; private set; }
 
         public PrintStatement(IExpression expression, int row, int col)
             : base(row, col)
         {
-            Expression = expression;
+            Argument = expression;
         }
 
         public override void Accept(INodeVisitor visitor)
         {
-            Expression.Accept(visitor);
+            Argument.Accept(visitor);
             visitor.Visit(this);
         }
     }
 
     public class ReturnStatement : SyntaxElement, IStatement
     {
-        public IExpression Expression { get; private set; }
+        public IExpression ReturnValue { get; private set; }
 
         public ReturnStatement(IExpression expression, int row, int col)
             : base(row, col)
         {
-            Expression = expression;
+            ReturnValue = expression;
         }
 
         public override void Accept(INodeVisitor visitor)
         {
-            Expression.Accept(visitor);
+            ReturnValue.Accept(visitor);
             visitor.Visit(this);
         }
     }
@@ -214,17 +214,17 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
 
     public class AssertStatement : SyntaxElement, IStatement
     {
-        public IExpression Expression { get; private set; }
+        public IExpression Condition { get; private set; }
 
         public AssertStatement(IExpression expression, int row, int col)
             : base(row, col)
         {
-            Expression = expression;
+            Condition = expression;
         }
 
         public override void Accept(INodeVisitor visitor)
         {
-            Expression.Accept(visitor);
+            Condition.Accept(visitor);
             visitor.Visit(this);
         }
     }
@@ -251,7 +251,7 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
 
     public class IfStatement : SyntaxElement, IStatement
     {
-        public IExpression BooleanExpression { get; private set; }
+        public IExpression Condition { get; private set; }
         public BlockStatement ThenBranch { get; private set; }
         public BlockStatement ElseBranch { get; private set; }
 
@@ -259,7 +259,7 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
             IStatement elseBranch, int row, int col)
             : base(row, col)
         {
-            BooleanExpression = booleanExp;
+            Condition = booleanExp;
             ThenBranch = WrapInBlock(thenBranch);
             ElseBranch = WrapInBlock(elseBranch);
         }
@@ -281,7 +281,7 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
 
         public override void Accept(INodeVisitor visitor)
         {
-            BooleanExpression.Accept(visitor);
+            Condition.Accept(visitor);
             ThenBranch.Accept(visitor);
             if (ElseBranch != null)
             {
@@ -293,14 +293,14 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
 
     public class WhileStatement : SyntaxElement, IStatement
     {
-        public IExpression BooleanExpression { get; private set; }
+        public IExpression LoopCondition { get; private set; }
         public BlockStatement LoopBody { get; private set; }
 
         public WhileStatement(IExpression booleanExp, IStatement loopBody,
             int row, int col)
             : base(row, col)
         {
-            BooleanExpression = booleanExp;
+            LoopCondition = booleanExp;
             if (loopBody == null)
             {
                 LoopBody = null;
@@ -315,7 +315,7 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
 
         public override void Accept(INodeVisitor visitor)
         {
-            BooleanExpression.Accept(visitor);
+            LoopCondition.Accept(visitor);
             LoopBody.Accept(visitor);
             visitor.Visit(this);
         }
@@ -383,19 +383,19 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
 
     public class UnaryOperatorExpression : SyntaxElement, IExpression
     {
-        public IExpression ArgumentExpression { get; private set; }
+        public IExpression Operand { get; private set; }
         public string Operator { get; private set; }
 
-        public UnaryOperatorExpression(string opSymbol, IExpression argExpression, int row, int col)
+        public UnaryOperatorExpression(string opSymbol, IExpression operand, int row, int col)
             : base(row, col)
         {
             Operator = opSymbol;
-            ArgumentExpression = argExpression;
+            Operand = operand;
         }
 
         public override void Accept(INodeVisitor visitor)
         {
-            ArgumentExpression.Accept(visitor);
+            Operand.Accept(visitor);
             visitor.Visit(this);
         }
 
@@ -405,13 +405,13 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
         }
     }
 
-    public class BinaryOpExpression : SyntaxElement, IExpression
+    public class BinaryOperatorExpression : SyntaxElement, IExpression
     {
         public string Operator { get; private set; }
         public IExpression LeftOperand { get; private set; }
         public IExpression RightOperand { get; private set; }
 
-        public BinaryOpExpression(string opsymbol, IExpression lhs, IExpression rhs,
+        public BinaryOperatorExpression(string opsymbol, IExpression lhs, IExpression rhs,
             int row, int col)
             : base(row, col)
         {

@@ -17,7 +17,7 @@
         void Visit(MethodInvocation node);
         void Visit(InstanceCreationExpression node);
         void Visit(UnaryOperatorExpression node);
-        void Visit(BinaryOpExpression node);
+        void Visit(BinaryOperatorExpression node);
         void Visit(BooleanLiteralExpression node);
         void Visit(ThisExpression node);
         void Visit(ArrayIndexingExpression node);

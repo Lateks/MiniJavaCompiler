@@ -74,7 +74,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
             {
                 var opToken = Input.Consume<OperatorToken>();
                 var rightHandOperand = parseRightHandSideOperand();
-                var operatorExp = new BinaryOpExpression(opToken.Lexeme, leftHandOperand, rightHandOperand, opToken.Row, opToken.Col);
+                var operatorExp = new BinaryOperatorExpression(opToken.Lexeme, leftHandOperand, rightHandOperand, opToken.Row, opToken.Col);
                 return ParseBinaryOpTail(operatorExp, parseRightHandSideOperand, operators);
             }
             else

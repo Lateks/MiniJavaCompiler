@@ -303,7 +303,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             Assert.That(_errorLog.Errors[0].ToString(), Is.StringContaining("Unexpected token '~'"));
             Assert.That(_errorLog.Errors[1].ToString(), Is.StringContaining("Encountered a lexical error while parsing an expression")); // term parsing fails
             Assert.That(_errorLog.Errors[2].ToString(), Is.StringContaining("Unexpected token '$'")); // Was expecting an operator but found this. => Returns the left hand side of the expression (the numeric literal).
-            // The error is reported when trying to match end of statement (;).
+                                                                                                      // The error is reported when trying to match end of statement (;).
             Assert.That(_errorLog.Errors[3].ToString(), Is.StringContaining("Unexpected token '~'")); // The recovery routine then runs until the next statement end symbol and reports other lexical errors.
             Assert.That(_errorLog.Errors[4].ToString(), Is.StringContaining("Unexpected token '@'"));
         }

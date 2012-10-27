@@ -91,7 +91,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 
         public void Visit(UnaryOperatorExpression node) { }
 
-        public void Visit(BinaryOpExpression node) { }
+        public void Visit(BinaryOperatorExpression node) { }
 
         public void Visit(BooleanLiteralExpression node) { }
 

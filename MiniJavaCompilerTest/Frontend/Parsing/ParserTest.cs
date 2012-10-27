@@ -183,7 +183,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             var parser = new Parser(new StubScanner(programTokens), errorReporter);
             var statement = parser.Parse().MainClass.MainMethod.MethodBody[0];
             Assert.That(statement, Is.InstanceOf<AssertStatement>());
-            Assert.That(((AssertStatement)statement).Expression, Is.InstanceOf<BooleanLiteralExpression>());
+            Assert.That(((AssertStatement)statement).Condition, Is.InstanceOf<BooleanLiteralExpression>());
         }
 
         [Test]
@@ -206,7 +206,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             var parser = new Parser(new StubScanner(programTokens), errorReporter);
             var statement = parser.Parse().MainClass.MainMethod.MethodBody[0];
             Assert.That(statement, Is.InstanceOf<PrintStatement>());
-            Assert.That(((PrintStatement)statement).Expression, Is.InstanceOf<IntegerLiteralExpression>());
+            Assert.That(((PrintStatement)statement).Argument, Is.InstanceOf<IntegerLiteralExpression>());
         }
 
         [Test]
@@ -230,7 +230,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             var statement = parser.Parse().MainClass.MainMethod.MethodBody[0];
             Assert.That(statement, Is.InstanceOf<WhileStatement>());
             var whileStatement = (WhileStatement)statement;
-            Assert.That(whileStatement.BooleanExpression, Is.InstanceOf<BooleanLiteralExpression>());
+            Assert.That(whileStatement.LoopCondition, Is.InstanceOf<BooleanLiteralExpression>());
             Assert.That(whileStatement.LoopBody, Is.InstanceOf<BlockStatement>());
             Assert.That(whileStatement.LoopBody.Statements[0], Is.InstanceOf<AssertStatement>());
         }
@@ -249,7 +249,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             var parser = new Parser(new StubScanner(programTokens), errorReporter);
             var statement = parser.Parse().MainClass.MainMethod.MethodBody[0];
             Assert.That(statement, Is.InstanceOf<ReturnStatement>());
-            Assert.That(((ReturnStatement)statement).Expression, Is.InstanceOf<VariableReferenceExpression>());
+            Assert.That(((ReturnStatement)statement).ReturnValue, Is.InstanceOf<VariableReferenceExpression>());
         }
 
         [Test]
@@ -373,12 +373,12 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             var expression = parser.Parse().MainClass.MainMethod.MethodBody[0];
             Assert.That(expression, Is.InstanceOf<AssignmentStatement>());
             var assignment = (AssignmentStatement)expression;
-            Assert.That(assignment.RightHandSide, Is.InstanceOf<BinaryOpExpression>());
-            var logicalOp = (BinaryOpExpression)assignment.RightHandSide;
+            Assert.That(assignment.RightHandSide, Is.InstanceOf<BinaryOperatorExpression>());
+            var logicalOp = (BinaryOperatorExpression)assignment.RightHandSide;
             Assert.That(logicalOp.RightOperand, Is.InstanceOf<IntegerLiteralExpression>());
             Assert.That(((IntegerLiteralExpression)logicalOp.RightOperand).Value, Is.EqualTo("0"));
-            Assert.That(logicalOp.LeftOperand, Is.InstanceOf<BinaryOpExpression>());
-            var arithmetic = (BinaryOpExpression)logicalOp.LeftOperand;
+            Assert.That(logicalOp.LeftOperand, Is.InstanceOf<BinaryOperatorExpression>());
+            var arithmetic = (BinaryOperatorExpression)logicalOp.LeftOperand;
             Assert.That(arithmetic.LeftOperand, Is.InstanceOf<IntegerLiteralExpression>());
             Assert.That(((IntegerLiteralExpression)arithmetic.LeftOperand).Value, Is.EqualTo("7"));
             Assert.That(arithmetic.RightOperand, Is.InstanceOf<VariableReferenceExpression>());
@@ -431,24 +431,24 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             var expression = parser.Parse().MainClass.MainMethod.MethodBody[0];
             Assert.That(expression, Is.InstanceOf<AssignmentStatement>());
             var assignment = (AssignmentStatement)expression;
-            Assert.That(assignment.RightHandSide, Is.InstanceOf<BinaryOpExpression>());
-            var minusOp = (BinaryOpExpression)assignment.RightHandSide;
+            Assert.That(assignment.RightHandSide, Is.InstanceOf<BinaryOperatorExpression>());
+            var minusOp = (BinaryOperatorExpression)assignment.RightHandSide;
             Assert.That(minusOp.Operator, Is.EqualTo("-"));
             Assert.That(minusOp.RightOperand, Is.InstanceOf<IntegerLiteralExpression>());
-            Assert.That(minusOp.LeftOperand, Is.InstanceOf<BinaryOpExpression>());
-            var plusOp = (BinaryOpExpression)minusOp.LeftOperand;
+            Assert.That(minusOp.LeftOperand, Is.InstanceOf<BinaryOperatorExpression>());
+            var plusOp = (BinaryOperatorExpression)minusOp.LeftOperand;
             Assert.That(plusOp.Operator, Is.EqualTo("+"));
             Assert.That(plusOp.LeftOperand, Is.InstanceOf<IntegerLiteralExpression>());
-            Assert.That(plusOp.RightOperand, Is.InstanceOf<BinaryOpExpression>());
-            var timesOp = (BinaryOpExpression)plusOp.RightOperand;
+            Assert.That(plusOp.RightOperand, Is.InstanceOf<BinaryOperatorExpression>());
+            var timesOp = (BinaryOperatorExpression)plusOp.RightOperand;
             Assert.That(timesOp.Operator, Is.EqualTo("*"));
             Assert.That(timesOp.LeftOperand, Is.InstanceOf<IntegerLiteralExpression>());
-            Assert.That(timesOp.RightOperand, Is.InstanceOf<BinaryOpExpression>());
-            var parenthesisedMinusOp = (BinaryOpExpression)timesOp.RightOperand;
+            Assert.That(timesOp.RightOperand, Is.InstanceOf<BinaryOperatorExpression>());
+            var parenthesisedMinusOp = (BinaryOperatorExpression)timesOp.RightOperand;
             Assert.That(parenthesisedMinusOp.Operator, Is.EqualTo("-"));
             Assert.That(parenthesisedMinusOp.LeftOperand, Is.InstanceOf<IntegerLiteralExpression>());
-            Assert.That(parenthesisedMinusOp.RightOperand, Is.InstanceOf<BinaryOpExpression>());
-            var moduloOp = (BinaryOpExpression)parenthesisedMinusOp.RightOperand;
+            Assert.That(parenthesisedMinusOp.RightOperand, Is.InstanceOf<BinaryOperatorExpression>());
+            var moduloOp = (BinaryOperatorExpression)parenthesisedMinusOp.RightOperand;
             Assert.That(moduloOp.Operator, Is.EqualTo("%"));
             Assert.That(moduloOp.LeftOperand, Is.InstanceOf<IntegerLiteralExpression>());
             Assert.That(moduloOp.RightOperand, Is.InstanceOf<IntegerLiteralExpression>());
@@ -511,7 +511,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             Assert.That(assignment.RightHandSide, Is.InstanceOf<IntegerLiteralExpression>());
             Assert.That(((IntegerLiteralExpression)assignment.RightHandSide).Value, Is.EqualTo("42"));
             Assert.That(mainMethod.MethodBody[2], Is.InstanceOf<PrintStatement>());
-            Assert.That(((PrintStatement)mainMethod.MethodBody[2]).Expression, Is.InstanceOf<VariableReferenceExpression>());
+            Assert.That(((PrintStatement)mainMethod.MethodBody[2]).Argument, Is.InstanceOf<VariableReferenceExpression>());
         }
 
         [Test]
@@ -775,8 +775,8 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             var ifStatement = (IfStatement)mainMethod[0];
             Assert.That(ifStatement.ThenBranch, Is.InstanceOf<BlockStatement>());
             Assert.IsNull(ifStatement.ElseBranch);
-            Assert.That(ifStatement.BooleanExpression, Is.InstanceOf<BinaryOpExpression>());
-            var boolExpression = (BinaryOpExpression)ifStatement.BooleanExpression;
+            Assert.That(ifStatement.Condition, Is.InstanceOf<BinaryOperatorExpression>());
+            var boolExpression = (BinaryOperatorExpression)ifStatement.Condition;
             Assert.That(boolExpression.LeftOperand, Is.InstanceOf<BooleanLiteralExpression>());
             Assert.IsTrue(((BooleanLiteralExpression)boolExpression.LeftOperand).Value);
             Assert.That(boolExpression.RightOperand, Is.InstanceOf<BooleanLiteralExpression>());

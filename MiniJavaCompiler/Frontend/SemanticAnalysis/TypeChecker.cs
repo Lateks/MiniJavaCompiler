@@ -200,7 +200,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             _operandTypes.Push(_symbolTable.ResolveType(op.ResultType));
         }
 
-        public void Visit(BinaryOpExpression node)
+        public void Visit(BinaryOperatorExpression node)
         {
             var leftOperandType = _operandTypes.Pop();
             var rightOperandType = _operandTypes.Pop();
