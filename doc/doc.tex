@@ -324,9 +324,66 @@ This peculiarity could easily be fixed by not letting the parsing methods report
 
 If no errors are found, parsing ends with the EndOfFile token being consumed and the Program node is returned. If any errors (lexical or syntactic) have been found, a CompilationFailed exception is thrown to be handled by the caller.
 
+If syntax analysis fails, the front-end module will not continue compilation into the semantic analysis phase.
+
 \subsection{Semantic analysis}
 
-% error handling in this phase
+\subsubsection{Module description}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.8\textwidth]{semantic_analysis.pdf}
+\end{figure}
+
+The semantic analysis module is implemented by three classes that are run in succession, each producing input for the next phase. Each internal phase passes once through the abstract syntax tree. The phases are:
+
+\begin{enumerate}
+\item Building the set of types (implemented by TypeSetBuilder).
+\item Building the symbol table (implemented by SymbolTableBuilder).
+\item Checking types and the validity of references (implemented by TypeChecker).
+\end{enumerate}
+
+\subsubsection{Building the set of types}
+
+TypeSetBuilder collects all the user defined types (class names) in the program and reports name clashes using an IErrorReporter, again given as a parameter to the constructor. The TypeSetBuilder checks clashes even with built-in types, though this should never happen since having a keyword appear in the place of an identifier would have resulted in a syntax error. If any name clashes are found, a CompilationFailed exception is thrown and semantic analysis should not be continued. This module requires no recovery strategies.
+
+\subsubsection{Building the symbol table}
+
+The SymbolTableBuilder requires an IErrorReporter and the list of types built by the TypeSetBuilder. These types as well as all built-in types (int and boolean) are defined in the global scope as the first step. The resulting output is a SymbolTable object which contains the following information:
+
+\begin{itemize}
+\item the global scope
+\item a mapping from ISyntaxTreeNodes to IScopes
+\item a mapping from Symbols to ISyntaxTreeNodes (for classes, methods and variable declarations)
+\item type resolver method (all types in Mini-Java can be resolved from the global scope)
+\item a method to resolve the surrounding class scope for any ISyntaxTreeNode (if it exists)
+\end{itemize}
+
+The symbols defined in the symbol table are represented by the following classes which all extend the abstract class Symbol or the derived SimpleTypeSymbol (more on types in the type checking section):
+
+\begin{description}
+\item[VariableSymbol] can be defined in an IVariableScope,
+\item[BuiltInTypeSymbol] is a concrete SimpleTypeSymbol (Note: void is not defined as a type in the symbol table),
+\item[MethodSymbol] is an IVariableScope and can be defined in an IMethodScope,
+\item[UserDefinedTypeSymbol] is a concrete SimpleTypeSymbol as well as an IMethodScope and an IVariableScope. It can be defined in an ITypeScope (in Mini-Java this means, in practice, the global scope).
+\end{description}
+
+In addition to MethodSymbols and UserDefinedTypeSymbols, there are other IScopes that are not Symbols, namely GlobalScope (an ITypeScope) and LocalScope (an IVariableScope), used for block statements, bodies of conditional statements etc.
+
+Several types of errors can be detected in this phase:
+\begin{enumerate}
+\item An attempt to define a symbol when the same type of symbol with the same name is already defined in that scope.
+\item A variable or method with an unknown type is declared.
+\item A class is declared to be derived from an unknown type. % TODO
+\end{enumerate}
+
+Same types of symbols from surrounding scopes can be hidden by symbols with the same name, and the same scope can contain e.g. a variable and a method with the same name, so these cases will not result in an error. If an attempt to define a method fails due to a name clash, a LocalScope is instantiated to stand in place of the IMethodScope object that would normally be created, so checks can continue.
+
+Again, if any errors are encountered, a CompilationFailed exception is thrown. Otherwise the phase results in a fully built SymbolTable.
+
+\subsubsection{Checking types and the validity of references}
+
+% describe the type system here
 
 \subsection{Testing}
 
