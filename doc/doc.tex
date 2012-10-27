@@ -252,6 +252,10 @@ The front-end module is divided into three sub-modules, one for each major phase
 
 \subsubsection{Simplified view of the front-end module}
 
+The FrontEnd class implements the whole front-end compilation pipeline with the help of the aforementioned sub-modules that implement the different phases of compilation. These submodules are descibed starting in the next section.
+
+The idea is to have a separate back-end module that will also have a single class that is parameterised with the output of the front-end phases to bring together the whole back-end pipeline. The whole compiler can then be put together by running these two modules on the program code in succession.
+
 \includegraphics[width=1.0\textwidth]{frontend.pdf}
 
 \subsubsection{Simplified view of the support module}
@@ -260,11 +264,65 @@ The front-end module is divided into three sub-modules, one for each major phase
 
 \subsection{Lexical analysis}
 
-% error handling in this phase
+\subsubsection{Module description}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.7\textwidth]{lexical_analysis.pdf}
+\end{figure}
+
+The MiniJavaScanner can read input from either a string or a file: it is parameterised with a TextReader (either a StringReader or a StreamReader) for the program code. It offers a very simple interface: it can be asked for the next token in the input stream. At the end of input, a call to NextToken returns an EndOfFile token. If NextToken is still called after that, an OutOfInput exception will be thrown.
+
+The MiniJavaScanner passes through the code once when instantiated and builds the queue of tokens. This is done so no one can close the TextReader before the whole token stream is ready. The scanner leaves the TextReader open because it is given as a parameter, so it could in theory still be used by the caller.
+
+Internally, the MiniJavaScanner uses a ScannerInputReader to keep track of the current row and column in the input (for error messages), and skip comments and whitespace. This abstracts away all input handling, so the scanner itself stays cleaner and could easily be replaced by another class that would implement the ITokenizer interface.
+
+\subsubsection{Error handling}
+
+The scanner can identify two distinct types of errors:
+\begin{enumerate}
+\item a multiline comment ended by end of input and
+\item an unrecognised token such as characters '\$', '\#' or '@'.
+\end{enumerate}
+
+These errors are represented by ErrorToken instances in the token queue. Unlike all other phases of the compiler, the scanner does not throw an exception if it encounters errors like these. The handling of ErrorTokens is left to the caller or the next phase in the pipeline. In practice these errors are handled in the syntax analysis phase.
 
 \subsection{Syntax analysis}
 
-% error handling in this phase
+\subsubsection{Module description}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=1.0\textwidth]{syntax_analysis.pdf}
+\end{figure}
+
+This module is used by instantiating a Parser that takes an ITokenizer an an IErrorReporter as inputs. The error reporter is used to report errors and because it is given as a parameter, a single instance can be shared by several classes and across compilation phases. The default implementation ErrorReporter logs the errors in a list of ErrorMessages which can then be handled by the higher level module that has access to the reporter instance. A custom implementation could e.g. print error messages into standard output in real time when they are reported.
+
+The Parser offers a Parse() method that either returns a Program node (the root of the abstract syntax tree) or throws a CompilationFailed exception. In the latter case the list of errors can be accessed through the error reporter. This is the whole interface needed by the caller.
+
+Internally the parser is split into several parts. The main parser creates a new ExpressionParser instance every time it starts parsing an expression. The ExpressionParser takes care of handling e.g. operator precedences using information provided by the MiniJavaInfo support class. This takes some unnecessary complexity out of the main parser class. In theory, the parser could be further split up into e.g. statement and class parsers.
+
+Additionally, there are two list parsers: a generic ListParser that parses nodes with the function parameter until it encounters the end of file or a specified follow set token and a CommaSeparatedListParser that does the same but expects the list to use commas as separators. These are used to parse e.g. parameter and argument lists (comma separated) and lists of classes, statements and declarations.
+
+The parser uses a ParserInputReader (or IParserInputReader) that abstracts away input buffering, peeking (even several steps ahead) and matching tokens to a certain token type and possibly content. The parser can e.g. ask the input reader to check that the next token is a PunctuationToken that has the lexeme '\{', and if so, consume it, cast it to the right type and return it. The Consume method of the ParserInputReader is used every time a token is consumed. If the token consumed is an ErrorToken, the ParserInputReader uses the IErrorReporter to report the error and also informs the actual parser by throwing an appropriate exception. This way all lexical errors get reported.
+
+\subsubsection{Error handling}
+
+The syntax analysis phase can encounter two types of errors:
+\begin{enumerate}
+\item lexical errors in the form of ErrorTokens from the ITokenizer token queue
+\item syntax errors: a token other than what was expected is encountered.
+\end{enumerate}
+
+Both types of errors are reported using the IErrorReporter. When an error is encountered, the parser attempts recovery based on reading tokens until one in the follow set is encountered or the end of file is reached. This does not always work terribly well. E.g. if a semicolon is missing from a statement, the recovery routine tries to parse until the next semicolon, because parsing failed while a statement was being parsed. If that statement was the last one in that class, the recovery can end up in the next class.
+
+Expression recovery is especially problematic since the follow set for expressions is large. Some of these problems could possibly be avoided by careful parameterisation of the recovery routines depending on the exact place where a parse error happened but this would make the parser quite a bit more complex and I am not sure whether the exception based error handling used in the current implementation is entirely compatible with these kinds of strategies.
+
+For many common kinds of syntax errors this basic strategy works fine but some pathological cases can cause a stream of uninformative errors following the one actual error\footnote{Examples with explanations can be found in the recovery test code.}. A peculiarity is that often recovery causes an end of input error to be reported twice albeit with two different messages. This is because some methods need to check the type of the input token before choosing the parsing path to take. In this case they can see that the token in the input is an EndOfFile token before any matching is attempted. After this the parser goes into recovery, as is normal when an error is found, and receives an OutOfInput error from the ITokenizer, which causes another reporting of the end of input error.
+
+This peculiarity could easily be fixed by not letting the parsing methods report the error themselves but I have kept this ``feature'' because it produces a bit of useful extra information in some cases.
+
+If no errors are found, parsing ends with the EndOfFile token being consumed and the Program node is returned. If any errors (lexical or syntactic) have been found, a CompilationFailed exception is thrown to be handled by the caller.
 
 \subsection{Semantic analysis}
 
