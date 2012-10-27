@@ -1,3 +1,5 @@
+% rubber: module pdftex
+
 \documentclass[a4paper,11pt]{article}
 \usepackage[top = 1.5 in, bottom = 1 in, left = 1 in, right = 1 in]{geometry}
 \usepackage[utf8]{inputenc}
@@ -137,6 +139,33 @@ A look-ahead of more than one token is needed e.g. when the parser sees an ident
 
 \subsection{Abstract syntax trees}
 
+In this section I describe on an abstract level the interfaces and classes implementing the abstract syntax tree representation and their relationships in the syntax tree.
+
+\subsubsection{An example tree}
+
+The following figure is a partial example of an abstract syntax tree for the sample program with the unary minus eliminated.
+
+\begin{verbatim}
+class Factorial {
+  public static void main () {
+    System.out.println (new Fac ().ComputeFac (10));
+  }
+}
+class Fac {
+  public int ComputeFac (int num) {
+    assert (num > 0 || num == 0);
+    int num_aux;
+    if (num == 0)
+      num_aux = 1;
+    else 
+      num_aux = num * this.ComputeFac (num-1);
+    return num_aux;
+  }
+}
+\end{verbatim}
+
+\includegraphics[width=1.0\textwidth]{ast.pdf}
+
 \subsubsection{Interfaces}
 \begin{description}
 \item[ISyntaxTreeNode] \emph{is a node that can be visited.}
@@ -213,10 +242,22 @@ This section covers the general architecture of the compiler, testing, error han
 
 \subsection{Architecture}
 
-\subsection{Error handling}
+\subsection{Lexical analysis}
+
+% error handling in this phase
+
+\subsection{Syntax analysis}
+
+% error handling in this phase
+
+\subsection{Semantic analysis}
+
+% error handling in this phase
 
 \subsection{Testing}
 
 \subsection{Building and running the compiler}
+
+\subsection{Possible bugs}
 
 \end{document}
