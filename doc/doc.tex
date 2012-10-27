@@ -25,18 +25,6 @@
 \newpage
 \setcounter{page}{1}
 
-\section{Compiler implementation}
-
-This section covers the general architecture of the compiler, testing, error handling as well as building and running instuctions.
-
-\subsection{Architecture}
-
-\subsection{Error handling}
-
-\subsection{Testing}
-
-\subsection{Building and running the compiler}
-
 \section{The Mini-Java language}
 
 \subsection{Token patterns}
@@ -50,8 +38,6 @@ Defined using regular expressions with Java style character classes. These token
 \item[Keyword] class | public | static | main | extends | assert | if | else | \\ while | System | out | println | return | new | length | this | true | false
 \item[Operator] \&\& | || | < | > | == | + | - | *  | / | \% | = | !
 \item[Punctuation] \{ | \} | [ | ] | ( | ) | $\backslash$. | ; | ,
-\item[Single line comment] $\text{//.}^{*}\backslash \text{n}$ \\ \emph{Not a token but needs to be recognised by the scanner.}
-\item[Multiline comment] $\text{/* .}^{*}\text{ */}$ \\ \emph{Not a token but needs to be recognised by the scanner and can be nested.}
 \end{description}
 
 \subsection{Modified grammar for recursive descent parsing (non-LL(1))}
@@ -220,5 +206,17 @@ A look-ahead of more than one token is needed e.g. when the parser sees an ident
 \item[BooleanLiteralExpression] \emph{is a} SyntaxElement \emph{and an} IExpression
 \item[IntegerLiteralExpression] \emph{is a} SyntaxElement \emph{and an} IExpression
 \end{description}
+
+\section{Compiler implementation}
+
+This section covers the general architecture of the compiler, testing, error handling as well as the building and running instuctions.
+
+\subsection{Architecture}
+
+\subsection{Error handling}
+
+\subsection{Testing}
+
+\subsection{Building and running the compiler}
 
 \end{document}
