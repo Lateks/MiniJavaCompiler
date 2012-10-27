@@ -242,6 +242,20 @@ This section covers the general architecture of the compiler, testing, error han
 
 \subsection{Architecture}
 
+The front-end module is divided into three sub-modules, one for each major phase of compilation: lexical analysis, syntax analysis and semantic analysis. In addition, I have collected some things possibly needed by both the front-end and the back-end into the Support module. These include:
+\begin{itemize}
+\item The abstract syntax tree representation and the related INodeVisitor interface.
+\item The symbol table.
+\item Static information on the language such as listings of keywords, punctuation characters, operators and operator semantics, precedences etc. This can be expanded to include possible semantic information needed by the back-end later.
+\item Error handling: an error reporter interface and a basic implementation for it.
+\end{itemize}
+
+\subsubsection{Support}
+
+The figure below presents a simplified view of the items contained in the support module (interfaces and selected classes).
+
+\includegraphics[width=1.0\textwidth]{support.pdf}
+
 \subsection{Lexical analysis}
 
 % error handling in this phase
