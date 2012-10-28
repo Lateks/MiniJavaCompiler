@@ -41,7 +41,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             _programRoot.Accept(this);
             if (_checkFailed)
             {
-                throw new CompilationFailed();
+                throw new CompilationError();
             }
         }
 
@@ -205,7 +205,15 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             var leftOperandType = _operandTypes.Pop();
             var rightOperandType = _operandTypes.Pop();
             var op = MiniJavaInfo.GetOperator(node.Operator);
-            if (op.OperandType != MiniJavaInfo.AnyType) // Types are not checked if operator can be applied to any type of object (like ==).
+            if (op.OperandType == MiniJavaInfo.AnyType) // Operands can be of any type but they must be compatible.
+            {
+                if (!(leftOperandType.IsAssignableTo(rightOperandType) || rightOperandType.IsAssignableTo(leftOperandType)))
+                {
+                    ReportError(String.Format("Cannot apply operator {0} on arguments of type {1} and {2}.",
+                        node.Operator, leftOperandType.Name, rightOperandType.Name), node);
+                }
+            }
+            else
             {
                 var expectedOpType = _symbolTable.ResolveType(op.OperandType);
                 if (!leftOperandType.IsAssignableTo(expectedOpType) || !rightOperandType.IsAssignableTo(expectedOpType))

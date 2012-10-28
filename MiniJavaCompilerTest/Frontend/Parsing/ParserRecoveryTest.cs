@@ -28,7 +28,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
                              "class Bar { pblic int foo() { }}\n" + // Typo in keyword: missed due to recovery.
                              "class Baz { public int bar(+ foo) { } }\n"; // There should be an identifier or a type token in place of +. This error is caught.
             SetUpParser(program);
-            Assert.Throws<CompilationFailed>(() => _parser.Parse());
+            Assert.Throws<CompilationError>(() => _parser.Parse());
             Assert.That(_errorLog.Errors.Count, Is.EqualTo(2));
             Assert.That(_errorLog.Errors[0].ToString(), Is.StringContaining("Expected '}' but got keyword 'class'"));
             Assert.That(_errorLog.Errors[1].ToString(), Is.StringContaining("Expected type name but got operator '+'"));
@@ -40,7 +40,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             string program = "class Foo_Bar$ { }\n" + // there is a lexical error on this row
                              "class Bar { public Foo_Bar bar(, int foo) { } }"; // should detect the error here
             SetUpParser(program);
-            Assert.Throws<CompilationFailed>(() => _parser.Parse());
+            Assert.Throws<CompilationError>(() => _parser.Parse());
             Assert.That(_errorLog.Errors.Count, Is.EqualTo(2));
             Assert.That(_errorLog.Errors[0].ToString(), Is.StringContaining("Unexpected token '$'"));
             Assert.That(_errorLog.Errors[1].ToString(), Is.StringContaining("Expected type name but got punctuation token ','"));
@@ -52,7 +52,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             string program = "class Foo { /* public static void main() { } }\n" +
                              "class Bar { public Foo bar(int foo) { return new Foo(); } }";
             SetUpParser(program);
-            Assert.Throws<CompilationFailed>(() => _parser.Parse());
+            Assert.Throws<CompilationError>(() => _parser.Parse());
             Assert.That(_errorLog.Errors.Count, Is.EqualTo(1));
             Assert.That(_errorLog.Errors[0].ToString(), Is.StringContaining("Reached end of input while scanning for a comment"));
         }
@@ -62,7 +62,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
         {
             string program = "class Foo { public static void main() { System.out.println(42); }";
             SetUpParser(program);
-            Assert.Throws<CompilationFailed>(() => _parser.Parse());
+            Assert.Throws<CompilationError>(() => _parser.Parse());
             Assert.That(_errorLog.Errors.Count, Is.EqualTo(2));
             Assert.That(_errorLog.Errors[0].ToString(), Is.StringContaining("Reached end of file while parsing for '}'")); // encountered end of file instead of the expected token
             Assert.That(_errorLog.Errors[1].ToString(), Is.StringContaining("Reached end of file while parsing")); // scanner is out of input
@@ -80,7 +80,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
                              "}" + // closes class A
                              "class B { }\n";
             SetUpParser(program);
-            Assert.Throws<CompilationFailed>(() => _parser.Parse());
+            Assert.Throws<CompilationError>(() => _parser.Parse());
             Assert.That(_errorLog.Errors.Count, Is.EqualTo(3));
             Assert.That(_errorLog.Errors[0].ToString(), Is.StringContaining("Invalid token 'class' of type keyword starting a declaration"));
             Assert.That(_errorLog.Errors[1].ToString(), Is.StringContaining("Reached end of file while parsing for '}'"));
@@ -101,7 +101,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
                              "}" +
                              "class B { }\n";
             SetUpParser(program);
-            Assert.Throws<CompilationFailed>(() => _parser.Parse());
+            Assert.Throws<CompilationError>(() => _parser.Parse());
             Assert.That(_errorLog.Errors.Count, Is.EqualTo(8));
             Assert.That(_errorLog.Errors[0].ToString(), Is.StringContaining("Unexpected token '#'"));
             Assert.That(_errorLog.Errors[1].ToString(), Is.StringContaining("Unexpected token '$'"));
@@ -124,7 +124,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
                              "}" +
                              "class B { }\n";
             SetUpParser(program);
-            Assert.Throws<CompilationFailed>(() => _parser.Parse());
+            Assert.Throws<CompilationError>(() => _parser.Parse());
             Assert.That(_errorLog.Errors.Count, Is.EqualTo(5));
             Assert.That(_errorLog.Errors[0].ToString(), Is.StringContaining("Expected ';' but got built-in type 'int'")); // recovers until the end of the statement "int foo;"
             Assert.That(_errorLog.Errors[1].ToString(), Is.StringContaining("Expected identifier but got punctuation token ';'")); // invalid method declaration caught, recovers until the next }
@@ -146,7 +146,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
                              "}" +
                              "class B { }\n";
             SetUpParser(program);
-            Assert.Throws<CompilationFailed>(() => _parser.Parse());
+            Assert.Throws<CompilationError>(() => _parser.Parse());
             Assert.That(_errorLog.Errors.Count, Is.EqualTo(4));
             Assert.That(_errorLog.Errors[0].ToString(), Is.StringContaining("Expected ';' but got identifier 'bar'")); // recovers until the end of the statement "bar = @;"
             Assert.That(_errorLog.Errors[1].ToString(), Is.StringContaining("Unexpected token '@'"));
@@ -170,7 +170,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
                              "}" +
                              "class B { }\n";
             SetUpParser(program);
-            Assert.Throws<CompilationFailed>(() => _parser.Parse());
+            Assert.Throws<CompilationError>(() => _parser.Parse());
             Assert.That(_errorLog.Errors.Count, Is.EqualTo(2));
             Assert.That(_errorLog.Errors[0].ToString(), Is.StringContaining("Expected ';' but got keyword 'assert'")); // recovers until the end of the second assertion
             Assert.That(_errorLog.Errors[1].ToString(), Is.StringContaining("Expected ';' but got keyword 'return'")); // recovers until the end of the return statement
@@ -189,7 +189,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
                              "}" +
                              "class B { }\n";
             SetUpParser(program);
-            Assert.Throws<CompilationFailed>(() => _parser.Parse());
+            Assert.Throws<CompilationError>(() => _parser.Parse());
             Assert.That(_errorLog.Errors.Count, Is.EqualTo(5));
             Assert.That(_errorLog.Errors[0].ToString(), Is.StringContaining("Unexpected token '@'"));
             Assert.That(_errorLog.Errors[1].ToString(), Is.StringContaining("Encountered a lexical error while parsing an expression"));
@@ -208,7 +208,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
                              "}" +
                              "class ^ { }\n";
             SetUpParser(program);
-            Assert.Throws<CompilationFailed>(() => _parser.Parse());
+            Assert.Throws<CompilationError>(() => _parser.Parse());
             Assert.That(_errorLog.Errors.Count, Is.EqualTo(2));
             Assert.That(_errorLog.Errors[0].ToString(), Is.StringContaining("Unexpected token '$'"));
             Assert.That(_errorLog.Errors[1].ToString(), Is.StringContaining("Unexpected token '^'"));
@@ -223,7 +223,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
                              "}" +
                              "class B { }\n";
             SetUpParser(program);
-            Assert.Throws<CompilationFailed>(() => _parser.Parse());
+            Assert.Throws<CompilationError>(() => _parser.Parse());
             Assert.That(_errorLog.Errors.Count, Is.EqualTo(4));
             Assert.That(_errorLog.Errors[0].ToString(), Is.StringContaining("Invalid token ';' of type punctuation token starting a declaration"));
             Assert.That(_errorLog.Errors[1].ToString(), Is.StringContaining("Invalid token 'class' of type keyword starting a declaration")); // recovered until the end of the class declaration
@@ -240,7 +240,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
                              "}" +
                              "class B { }\n";
             SetUpParser(program);
-            Assert.Throws<CompilationFailed>(() => _parser.Parse());
+            Assert.Throws<CompilationError>(() => _parser.Parse());
             Assert.That(_errorLog.Errors.Count, Is.EqualTo(3));
             Assert.That(_errorLog.Errors[0].ToString(),
                 Is.StringContaining("Invalid start token ';' of type punctuation token for an expression")); // Expected an expression because a punctuation token other than
@@ -278,7 +278,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
                              "\t }\n" +
                              "}";
             SetUpParser(program);
-            Assert.Throws<CompilationFailed>(() => _parser.Parse());
+            Assert.Throws<CompilationError>(() => _parser.Parse());
             Assert.That(_errorLog.Errors.Count, Is.EqualTo(4));
             Assert.That(_errorLog.Errors[0].ToString(), Is.StringContaining("Invalid keyword 'assert' starting an expression"));
             Assert.That(_errorLog.Errors[1].ToString(), Is.StringContaining("Expected ';' but got punctuation token ')'")); // recovery was done until ), so we get this extra error
@@ -298,7 +298,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
                              "\t }\n" +
                              "}";
             SetUpParser(program);
-            Assert.Throws<CompilationFailed>(() => _parser.Parse());
+            Assert.Throws<CompilationError>(() => _parser.Parse());
             Assert.That(_errorLog.Errors.Count, Is.EqualTo(5));
             Assert.That(_errorLog.Errors[0].ToString(), Is.StringContaining("Unexpected token '~'"));
             Assert.That(_errorLog.Errors[1].ToString(), Is.StringContaining("Encountered a lexical error while parsing an expression")); // term parsing fails
@@ -319,7 +319,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
                              "\t }\n" +
                              "}";
             SetUpParser(program);
-            Assert.Throws<CompilationFailed>(() => _parser.Parse());
+            Assert.Throws<CompilationError>(() => _parser.Parse());
             Assert.That(_errorLog.Errors.Count, Is.EqualTo(2));
             Assert.That(_errorLog.Errors[0].ToString(), Is.StringContaining("Expression of type integer literal cannot form a statement"));
             Assert.That(_errorLog.Errors[1].ToString(), Is.StringContaining("Expected ';' but got operator '='"));
@@ -336,7 +336,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
                              "\t }\n" +
                              "}";
             SetUpParser(program);
-            Assert.Throws<CompilationFailed>(() => _parser.Parse());
+            Assert.Throws<CompilationError>(() => _parser.Parse());
             Assert.That(_errorLog.Errors.Count, Is.EqualTo(2));
             Assert.That(_errorLog.Errors[0].ToString(), Is.StringContaining("Expected ';' but got operator '!'"));
             Assert.That(_errorLog.Errors[1].ToString(), Is.StringContaining("Expected ';' but got operator '='"));
@@ -351,7 +351,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
                              "class public { }\n" +
                              "class B extends int { }\n";
             SetUpParser(program);
-            Assert.Throws<CompilationFailed>(() => _parser.Parse());
+            Assert.Throws<CompilationError>(() => _parser.Parse());
             Assert.That(_errorLog.Errors.Count, Is.EqualTo(2));
             Assert.That(_errorLog.Errors[0].ToString(), Is.StringContaining("Expected identifier but got keyword 'public'"));
             Assert.That(_errorLog.Errors[1].ToString(), Is.StringContaining("Expected identifier but got built-in type 'int'"));
@@ -365,7 +365,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
                              "}" +
                              "class B { ¤ foo; $ int foo() { } }\n";
             SetUpParser(program);
-            Assert.Throws<CompilationFailed>(() => _parser.Parse());
+            Assert.Throws<CompilationError>(() => _parser.Parse());
             Assert.That(_errorLog.Errors.Count, Is.EqualTo(4));
             Assert.That(_errorLog.Errors[0].ToString(), Is.StringContaining("Unexpected token '¤'"));
             Assert.That(_errorLog.Errors[1].ToString(), Is.StringContaining("Lexical error while parsing a declaration"));
@@ -382,7 +382,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
                              "class B & { }\n" +
                              "class $ { }\n";
             SetUpParser(program);
-            Assert.Throws<CompilationFailed>(() => _parser.Parse());
+            Assert.Throws<CompilationError>(() => _parser.Parse());
             Assert.That(_errorLog.Errors.Count, Is.EqualTo(2));
             Assert.That(_errorLog.Errors[0].ToString(), Is.StringContaining("Unexpected token '&'"));
             Assert.That(_errorLog.Errors[1].ToString(), Is.StringContaining("Unexpected token '$'"));
@@ -400,7 +400,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
                              "\t public int bar() { boolean public; public = false; return this.foo($, public); }\n" +
                              "}\n";
             SetUpParser(program);
-            Assert.Throws<CompilationFailed>(() => _parser.Parse());
+            Assert.Throws<CompilationError>(() => _parser.Parse());
             Assert.That(_errorLog.Errors.Count, Is.EqualTo(7));
             Assert.That(_errorLog.Errors[0].ToString(), Is.StringContaining("Unexpected token '$'"));
             Assert.That(_errorLog.Errors[1].ToString(), Is.StringContaining("Expected identifier but got built-in type 'boolean'"));
@@ -419,7 +419,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
                              "}" +
                              "class B { }\n";
             SetUpParser(program);
-            Assert.Throws<CompilationFailed>(() => _parser.Parse());
+            Assert.Throws<CompilationError>(() => _parser.Parse());
             Assert.That(_errorLog.Errors.Count, Is.EqualTo(4));
             Assert.That(_errorLog.Errors[0].ToString(), Is.StringContaining("Expected '[' but got punctuation token '('"));
             Assert.That(_errorLog.Errors[1].ToString(), Is.StringContaining("Expected ';' but got punctuation token ')'")); // incomplete recovery due to large follow set
@@ -433,7 +433,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             string program = "class Foo {\n" +
                              "\t public static void main() { foo = true && !";
             SetUpParser(program);
-            Assert.Throws<CompilationFailed>(() => _parser.Parse());
+            Assert.Throws<CompilationError>(() => _parser.Parse());
             Assert.That(_errorLog.Errors.Count, Is.EqualTo(2));
             Assert.That(_errorLog.Errors[0].ToString(), Is.StringContaining("Reached end of file while parsing an expression"));
             Assert.That(_errorLog.Errors[1].ToString(), Is.StringContaining("Reached end of file"));

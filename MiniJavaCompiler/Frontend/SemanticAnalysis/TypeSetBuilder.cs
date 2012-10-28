@@ -25,7 +25,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             _syntaxTree.Accept(this);
             if (_errorsFound)
             {
-                throw new CompilationFailed();
+                throw new CompilationError();
             }
             return _types;
         }

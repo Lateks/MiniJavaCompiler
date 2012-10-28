@@ -7,7 +7,7 @@ namespace MiniJavaCompiler.Support
 {
     // This error can be used in all stages of compilation
     // to indicate failure.
-    public class CompilationFailed : Exception { }
+    public class CompilationError : Exception { }
 
     public interface IErrorReporter
     {

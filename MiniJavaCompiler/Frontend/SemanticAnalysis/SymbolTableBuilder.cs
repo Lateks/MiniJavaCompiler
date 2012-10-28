@@ -48,7 +48,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 
             if (_errorsFound)
             {
-                throw new CompilationFailed();
+                throw new CompilationError();
             }
             return _symbolTable;
         }

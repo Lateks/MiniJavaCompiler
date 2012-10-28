@@ -45,7 +45,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
             var program = Program();
             if (ParsingFailed) // This exception is thrown if either lexical or syntactic errors are found in the token stream.
             {
-                throw new CompilationFailed();
+                throw new CompilationError();
             }
             return program;
         }
@@ -63,7 +63,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
             {
                 if (DebugMode) throw;
                 ErrorReporter.ReportError(e.Message, 0, 0);
-                throw new CompilationFailed();
+                throw new CompilationError();
             }
 
             // Invariant:
