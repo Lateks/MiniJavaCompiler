@@ -200,7 +200,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                              "} \n" +
                              "class Fac { \n" +
                              "\t public int ComputeFac (int num) {\n" +
-                             "\t\t assert (num > 0 - 1);\n" +
+                             "\t\t assert (num > 0 || num == 0);\n" +
                              "\t\t int num_aux;\n" +
                              "\t\t if (num == 0)\n" +
                              "\t\t\t num_aux = 1;\n" +
