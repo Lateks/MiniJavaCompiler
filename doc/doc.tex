@@ -298,7 +298,7 @@ These errors are represented by ErrorToken instances in the token queue. Unlike 
 
 This module is used by instantiating a Parser that takes an ITokenizer an an IErrorReporter as inputs. The error reporter is used to report errors and because it is given as a parameter, a single instance can be shared by several classes and across compilation phases. The default implementation ErrorReporter logs the errors in a list of ErrorMessages which can then be handled by the higher level module that has access to the reporter instance. A custom implementation could e.g. print error messages into standard output in real time when they are reported.
 
-The Parser offers a Parse() method that either returns a Program node (the root of the abstract syntax tree) or throws a CompilationFailed exception. In the latter case the list of errors can be accessed through the error reporter. This is the whole interface needed by the caller.
+The Parser offers a Parse() method that either returns a Program node (the root of the abstract syntax tree) or throws a CompilationError. In the latter case the list of errors can be accessed through the error reporter. This is the whole interface needed by the caller.
 
 Internally the parser is split into several parts. The main parser creates a new ExpressionParser instance every time it starts parsing an expression. The ExpressionParser takes care of handling e.g. operator precedences using information provided by the MiniJavaInfo support class. This takes some unnecessary complexity out of the main parser class. In theory, the parser could be further split up into e.g. statement and class parsers.
 
@@ -322,7 +322,7 @@ For many common kinds of syntax errors this basic strategy works fine but some p
 
 This peculiarity could easily be fixed by not letting the parsing methods report the error themselves but I have kept this ``feature'' because it produces a bit of useful extra information in some cases.
 
-If no errors are found, parsing ends with the EndOfFile token being consumed and the Program node is returned. If any errors (lexical or syntactic) have been found, a CompilationFailed exception is thrown to be handled by the caller.
+If no errors are found, parsing ends with the EndOfFile token being consumed and the Program node is returned. If any errors (lexical or syntactic) have been found, a CompilationError is thrown to be handled by the caller.
 
 If syntax analysis fails, the front-end module will not continue compilation into the semantic analysis phase.
 
@@ -345,7 +345,7 @@ The semantic analysis module is implemented by three classes that are run in suc
 
 \subsubsection{Building the set of types}
 
-TypeSetBuilder collects all the user defined types (class names) in the program and reports name clashes using an IErrorReporter, again given as a parameter to the constructor. The TypeSetBuilder checks clashes even with built-in types, though this should never happen since having a keyword appear in the place of an identifier would have resulted in a syntax error. If any name clashes are found, a CompilationFailed exception is thrown and semantic analysis should not be continued. This module requires no recovery strategies.
+TypeSetBuilder collects all the user defined types (class names) in the program and reports name clashes using an IErrorReporter, again given as a parameter to the constructor. The TypeSetBuilder checks clashes even with built-in types, though this should never happen since having a keyword appear in the place of an identifier would have resulted in a syntax error. If any name clashes are found, a CompilationError is thrown and semantic analysis should not be continued. This module requires no recovery strategies.
 
 \subsubsection{Building the symbol table}
 
@@ -379,11 +379,11 @@ Several types of errors can be detected in this phase:
 
 Same types of symbols from surrounding scopes can be hidden by symbols with the same name, and the same scope can contain e.g. a variable and a method with the same name, so these cases will not result in an error. If an attempt to define a method fails due to a name clash, a LocalScope is instantiated to stand in place of the IMethodScope object that would normally be created, so checks can continue. This is the only recovery strategy required in this phase.
 
-Again, if any errors are encountered, a CompilationFailed exception is thrown and further compilation should not be done. Otherwise the phase results in a fully built SymbolTable.
+Again, if any errors are encountered, a CompilationError is thrown and further compilation should not be done. Otherwise the phase results in a fully built SymbolTable.
 
 \subsubsection{Checking types and the validity of references}
 
-This phase is implemented by the TypeChecker class. It produces no output in addition to possible errors, again reported using an IErrorReporter instance. A CompilationFailed exception is thrown at the end of the check if any errors are found.
+This phase is implemented by the TypeChecker class. It produces no output in addition to possible errors, again reported using an IErrorReporter instance. A CompilationError is thrown at the end of the check if any errors are found.
 
 This phase can detect the following types of errors:
 \begin{enumerate}
@@ -396,7 +396,7 @@ This phase can detect the following types of errors:
 \item Arithmetic operators and comparison operators require two int arguments.
 \item Logical binary operators require two boolean arguments and the unary not operator '!' a single boolean argument.
 \item Array sizes and indexing expressions must be int values.
-\item The equal to operator ('==') accepts any type but both sides must be compatible with each other. Int, boolean and array types require that the other operand is of the same type. For user defined types subtypes are also allowed. % TODO
+\item The equal to operator ('==') accepts any type but both sides must be compatible with each other. Int, boolean and array types require that the other operand is of the same type. For user defined types subtypes are also allowed.
 \end{itemize}
 \item An attempt is made to index into a variable that is not an array.
 \item The left-hand side of an assignment statement is not an L-value. In Mini-Java this means that the left-hand side must be either a reference to a variable (VariableReferenceExpression) or a pointer to an array index (ArrayIndexingExpression).
@@ -423,13 +423,31 @@ The rules for assignment type checking are as follows:
 
 The same rules apply when checking method invocation argument types: just substitute formal parameter type for L-value.
 
-% describe the type system here
-% note: static methods cannot be called because you cannot refer to the name of a class outside a type declaration or an instantiation
+Internally, a type is anything that implements the IType interface. The IType interface requires that the implementer implements a method IsAssignableTo(IType other). BuiltInTypeSymbol and UserDefinedTypeSymbol (both SimpleTypeSymbols) both implement this interface. In addition, there are non-Symbol types: MiniJavaArrayType that is parameterised with a SimpleTypeSymbol (multidimensional arrays are not allowed) and the singleton type VoidType that represents the void return type for methods.
+
+Recovery from errors is needed when the type of an expression cannot be resolved. Type checks are done using an operand type stack, so a placeholder for unresolved types --- the singleton class ErrorType --- is needed. When a method, variable or the type of an instance creation expression cannot be resolved or a non-array variable is indexed, the ErrorType singleton is pushed into the operand stack.
+
+Every IType is required to implement its IsAssignableTo method in such a way, that everything appears to be assignable to an ErrorType -- even the void return type. Similarly, ErrorType is assignable to every other type as well as itself. This way unnecessary type errors related to unresolved types are avoided without having to explicitly check for the ErrorType at every turn. E.g. a program with the line \verb,A foo = new B();, where \verb,B, cannot be resolved results in an error saying that symbol B could not be resolved but not an error saying that an ErrorType cannot be assigned to a variable of type A.
 
 \subsection{Testing}
 
+All modules have been tested using the NUnit test library with a code coverage of nearly 100\%. Only trivial parts have been left untested. I have attempted to test the recovery paths in the parsing and semantic analysis phases as well as I could, but thorough testing of recovery routines is very difficult due to the high cyclomatic complexity of recursive parsers and visitors.
+
+The easiest way to run these tests on the department systems with Visual Studio 2010 is to use the NUnit GUI runner, included in the installation package. The NUnit GUI runner cannot, for some reason, be run from a networked drive, so it must be placed in e.g. the user's local home directory.
+
+% TODO: add instructions to actually run the NUnit GUI runner.
+
+An even easier way, if possible, is to install Visual Studio 2012 and use the nuget package manager to install the NUnit framework, because unlike older versions, VS2012 is able to run NUnit tests without any additional test runner plugins. In that case tests can be run straight from the test menu.
+
 \subsection{Building and running the compiler}
+
+% TODO
 
 \subsection{Possible bugs}
 
+As mentioned in the testing section, the most difficult part of the compiler to test are probably the recovery routines, especially in the parser but to some extent also in the TypeChecker. This is therefore the most likely source of bugs.
+
+If bugs remain in the system (as some almost certainly do), the best case scenario is that they will only lead to bad error messages in some cases. The worst case scenario for the parser is being stuck in an infinite loop when attempting to recover. During development I have found a few such bugs and managed to fix them but I would not be surprised if some untested recovery path still led to such a problem, since the parser is very difficult to reason about.
+
+At the moment, however, I do not know of any existing bugs in the compiler.
 \end{document}
