@@ -13,10 +13,16 @@
 \usepackage{setspace}
 \usepackage{pdfpages}
 \usepackage{amsmath}
-
+\usepackage[usenames,dvipsnames]{xcolor}
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  urlcolor=Blue,
+  linkcolor=Blue
+}
 \begin{document}
 \title{Compiler project: MiniJava}
-\author{Laura Leppänen \\ Compilers, Spring 2012}
+\author{Laura Leppänen \\ Compilers, Autumn 2012}
 \date{\today}
 \maketitle
 \thispagestyle{empty}
@@ -183,7 +189,7 @@ class Fac {
 \emph{has many} \textbf{ClassDeclaration}s
 \\
 \item[SyntaxElement] \emph{is an abstract} ISyntaxTreeNode \\
-\emph{stores row and column information for nodes.}
+\emph{stores source code row and column information for nodes.}
 \\
 \item[MainClassDeclaration] \emph{is a} SyntaxElement \\
 \emph{has a} \textbf{MethodDeclaration} \emph{which is the main method.} \\
@@ -304,9 +310,9 @@ The Parser offers a Parse() method that either returns a Program node (the root 
 
 Internally the parser is split into several parts. The main parser creates a new ExpressionParser instance every time it starts parsing an expression. The ExpressionParser takes care of handling e.g. operator precedences using information provided by the MiniJavaInfo support class. This takes some unnecessary complexity out of the main parser class. In theory, the parser could be further split up into e.g. statement and class parsers.
 
-Additionally, there are two list parsers: a generic ListParser that parses nodes with the function parameter until it encounters the end of file or a specified follow set token and a CommaSeparatedListParser that does the same but expects the list to use commas as separators. These are used to parse e.g. parameter and argument lists (comma separated) and lists of classes, statements and declarations.
+Additionally, there are two list parsers: a generic ListParser that parses nodes a function given as a parameter until it encounters the end of file or a specified follow set token and a CommaSeparatedListParser that does the same but expects the list to use commas as separators. These are used to parse e.g. parameter and argument lists (comma separated) and lists of classes, statements and declarations.
 
-The parser uses a ParserInputReader (or IParserInputReader) that abstracts away input buffering, peeking (even several steps ahead) and matching tokens to a certain token type and possibly content. The parser can e.g. ask the input reader to check that the next token is a PunctuationToken that has the lexeme '\{', and if so, consume it, cast it to the right type and return it. The Consume method of the ParserInputReader is used every time a token is consumed. If the token consumed is an ErrorToken, the ParserInputReader uses the IErrorReporter to report the error and also informs the actual parser by throwing an appropriate exception. This way all lexical errors get reported.
+The parser uses a ParserInputReader (or IParserInputReader) that abstracts away input buffering, peeking (even several steps ahead) and matching tokens to a certain token type and possibly content. The parser can e.g. ask the input reader to check that the next token is a PunctuationToken that has the lexeme '\{', and if so, consume it, cast it to the right type and return it. The Consume method of the ParserInputReader is used every time a token is consumed. If the token consumed is an ErrorToken, the ParserInputReader uses the IErrorReporter to report the lexical error. This way all lexical errors get reported, even if those tokens are passed by in a recovery routine.
 
 \subsubsection{Error handling}
 
@@ -318,7 +324,7 @@ The syntax analysis phase can encounter two types of errors:
 
 Both types of errors are reported using the IErrorReporter. When an error is encountered, the parser attempts recovery based on reading tokens until one in the follow set is encountered or the end of file is reached. This does not always work terribly well. E.g. if a semicolon is missing from a statement, the recovery routine tries to parse until the next semicolon, because parsing failed while a statement was being parsed. If that statement was the last one in that class, the recovery can end up in the next class.
 
-Expression recovery is especially problematic since the follow set for expressions is large. Some of these problems could possibly be avoided by careful parameterisation of the recovery routines depending on the exact place where a parse error happened but this would make the parser quite a bit more complex and I am not sure whether the exception based error handling used in the current implementation is entirely compatible with these kinds of strategies.
+Expression recovery is especially problematic since the follow set for expressions is large. Some of these problems could possibly be avoided by careful parameterisation of the recovery routines depending on the exact place where a parse error happened but this would make the parser quite a bit more complex and I am not sure whether the exception based error handling technique used in the current implementation is easily compatible with these kinds of strategies.
 
 For many common kinds of syntax errors this basic strategy works fine but some pathological cases can cause a stream of uninformative errors following the one actual error\footnote{Examples with explanations can be found in the recovery test code.}. A peculiarity is that often recovery causes an end of input error to be reported twice albeit with two different messages. This is because some methods need to check the type of the input token before choosing the parsing path to take. In this case they can see that the token in the input is an EndOfFile token before any matching is attempted. After this the parser goes into recovery, as is normal when an error is found, and receives an OutOfInput error from the ITokenizer, which causes another reporting of the end of input error.
 
@@ -391,7 +397,7 @@ This phase can detect the following types of errors:
 \begin{enumerate}
 \item A method overloads a method in its superclass. Mini-Java allows only overriding, not overloading.
 \item If a method overrides a superclass method, the declared return types of the methods are checked. Return type covariance is allowed but anything else results in an error.
-\item The arguments to built-in functions or operators (or something similar) are of the wrong type. Examples of these type checks:
+\item The arguments to built-in functions or operators (or something similar) are of the wrong type. Examples of these type checks are:
 \begin{itemize}
 \item A print statement requires a single int argument.
 \item The argument to an assert statement and the conditional expressions in if and while statements need to be boolean values.
@@ -412,6 +418,7 @@ This phase can detect the following types of errors:
 \item A void method has return statements. Empty return statements are not defined in the Mini-Java specification, so this is not allowed.
 \item At least some paths in a non-void method do not return a value.
 \item Return statements return values of a type different from the one declared in the method signature. Again, covariance is allowed, so subtypes of the declared type can be returned.
+\item An instance creation expression refers to a type that cannot be resolved. Note: an attempt to instantiate a built-in type using a ``new'' expression is detected already in the parsing phase.
 \item A static method cannot be called on an instance of the defining class. The only static method in Mini-Java is the main method. In my implementation, the main method cannot be called at all because references to the name of the class are not allowed outside type declarations and instance creations. I did not see the reason to implement such a feature since there is no use for calling the main method from inside the program, though the specification is unclear on whether this should be allowed.
 \end{enumerate}
 
@@ -419,13 +426,13 @@ The rules for assignment type checking are as follows:
 \begin{itemize}
 \item An argument of type void cannot be assigned to any L-value.
 \item If the L-value is a built-in type, the assigned value must be of the same type. E.g. an index of an int array has type int, so that is the only type of value that can be assigned to it.
-\item If the L-value is an array, the assigned value must also be an array and have the same element type. Unlike in Java, covariance of reference types is not allowed here according to the specification given on the course web site.
+\item If the L-value is an array, the assigned value must also be an array and have the same element type. Unlike in Java, covariance of reference types is not allowed here according to the specification given on the course web site (or appendix B).
 \item If the L-value is a user defined (reference) type, the assigned value must be the of the same type or a type derived from it.
 \end{itemize}
 
 The same rules apply when checking method invocation argument types: just substitute formal parameter type for L-value.
 
-Internally, a type is anything that implements the IType interface. The IType interface requires that the implementer implements a method IsAssignableTo(IType other). BuiltInTypeSymbol and UserDefinedTypeSymbol (both SimpleTypeSymbols) both implement this interface. In addition, there are non-Symbol types: MiniJavaArrayType that is parameterised with a SimpleTypeSymbol (multidimensional arrays are not allowed) and the singleton type VoidType that represents the void return type for methods.
+Internally, a type is anything that implements the IType interface. The IType interface requires that the implementer implements a method IsAssignableTo(IType other). BuiltInTypeSymbol and UserDefinedTypeSymbol (SimpleTypeSymbols) both implement this interface. In addition, there are non-Symbol types: MiniJavaArrayType that is parameterised with a SimpleTypeSymbol (multidimensional arrays are not allowed) and the singleton type VoidType that represents the void return type for methods.
 
 Recovery from errors is needed when the type of an expression cannot be resolved. Type checks are done using an operand type stack, so a placeholder for unresolved types --- the singleton class ErrorType --- is needed. When a method, variable or the type of an instance creation expression cannot be resolved or a non-array variable is indexed, the ErrorType singleton is pushed into the operand stack.
 
@@ -433,21 +440,23 @@ Every IType is required to implement its IsAssignableTo method in such a way, th
 
 \subsection{Testing}
 
-All modules have been tested using the NUnit test library with a code coverage of nearly 100\%. Only trivial parts have been left untested. Some parts of the program have been unit-tested but most parts should be involved in integration tests.
+All modules have been tested using the NUnit test library with a code coverage of nearly 100\%. Only trivial parts have been left untested. Some parts of the program have been unit-tested but most parts should be involved in integration tests as well.
 
-I have attempted to test the recovery paths in the parsing and semantic analysis phases as well as I could, but thorough testing of recovery routines is very difficult due to the high cyclomatic complexity of recursive parsers and visitors.
+I have attempted to test the recovery paths in the parsing and semantic analysis phases as well as I have been able to, but thorough testing of recovery routines is very difficult due to the high cyclomatic complexity of recursive parsers and visitors.
 
-The easiest way to run these tests on the department systems with Visual Studio 2010 is to use the NUnit GUI runner, included in the installation package. The NUnit GUI runner cannot, for some reason, be run from a networked drive, so it must be placed in e.g. the user's local home directory.
+The easiest way to run these tests on the department systems with Visual Studio 2010 is to use the NUnit GUI runner, included in the project package as a zip file. The NUnit GUI runner cannot, for some reason, be run from a networked drive, so it must be extracted to e.g. the user's home directory (C:\textbackslash Users\textbackslash username).
 
-% TODO: add instructions to actually run the NUnit GUI runner.
+After extracting NUnit, compile the MiniJavaCompiler solution in e.g. Visual Studio, find \verb,nunit-x86.exe, in the \verb,bin, directory of the extracted archive and run it. Select ``Open project'' from the File menu, navigate to the \verb,\bin\Release, directory under the MiniJavaCompilerTest project directory and select \verb,MiniJavaCompilerTest.dll,. Now the tests can be run by pressing the Run button.
 
-An even easier way, if possible, is to install Visual Studio 2012 and use the nuget package manager to install the NUnit framework, because unlike older versions, VS2012 is able to run NUnit tests without any additional test runner plugins. In that case tests can be run straight from the test menu.
+If using Visual Studio 2012, you can also install the \href{http://nunit.org/index.php?p=vsTestAdapter&r=2.6.1}{NUnit test adapter} which enables NUnit tests to be run straight from the test menu.
 
 \subsection{Building and running the compiler}
 
-The easiest way to build the compiler is probably by opening it in Visual Studio and building it in Release mode to disable assertions and to get optimised code. After this the resulting \verb,MiniJavaCompiler.exe, can be run by giving it the path to the source file as a parameter: \verb,./MiniJavaCompiler.exe path/to/source/file,.
+The easiest way to build the compiler is probably opening it in Visual Studio and building it in Release mode to disable assertions and to get optimised code. After this the resulting \verb,MiniJavaCompiler.exe, under \verb,bin\Release, can be run by giving it the path to the source file as a parameter: \verb,./MiniJavaCompiler.exe path/to/source/file,.
 
 The main program runs the compiler as far as possible, prints error messages or ``Program OK.'' and exits.
+
+Note: the program code and the \LaTeX{} and svg sources for this documentation are also available on \href{https://github.com/Lateks/MiniJavaCompiler}{my GitHub account page} where the repository can be cloned.
 
 \subsection{Possible bugs}
 
@@ -457,7 +466,7 @@ If bugs remain in the system (as some almost certainly do), the best case scenar
 
 At the moment, however, I do not know of any existing bugs in the compiler.
 
-The Compiler class that handles file IO and prints out error messages was a last minute addition to make quick tests during e.g. the code review/demo possible, so it may have bugs. The error message handler especially is not very well-tested or robust --- it does not e.g. handle very long lines of code in any special way -- but it should be sufficient for basic hands-on testing if needed.
+The Compiler class that handles file IO and prints out error messages was a last minute addition to make quick tests during e.g. the code review/demo possible, so it may have bugs. The error message handler especially is not very well-tested or robust --- it does not handle very long lines of code in any special way -- but it should be sufficient for basic hands-on testing if needed.
 
 \appendix
 \section{Project definition}
