@@ -137,6 +137,8 @@ A look-ahead of more than one token is needed e.g. when the parser sees an ident
 
 \end{verbatim}
 
+\newpage
+
 \subsection{Abstract syntax trees}
 
 In this section I describe on an abstract level the interfaces and classes implementing the abstract syntax tree representation and their relationships in the syntax tree.
@@ -441,7 +443,9 @@ An even easier way, if possible, is to install Visual Studio 2012 and use the nu
 
 \subsection{Building and running the compiler}
 
-% TODO
+The easiest way to build the compiler is probably by opening it in Visual Studio and building it in Release mode to disable assertions and to get optimised code. After this the resulting \verb,MiniJavaCompiler.exe, can be run by giving it the path to the source file as a parameter: \verb,./MiniJavaCompiler.exe path/to/source/file,.
+
+The main program runs the compiler as far as possible, prints error messages or ``Program OK.'' and exits.
 
 \subsection{Possible bugs}
 
@@ -450,4 +454,6 @@ As mentioned in the testing section, the most difficult part of the compiler to 
 If bugs remain in the system (as some almost certainly do), the best case scenario is that they will only lead to bad error messages in some cases. The worst case scenario for the parser is being stuck in an infinite loop when attempting to recover. During development I have found a few such bugs and managed to fix them but I would not be surprised if some untested recovery path still led to such a problem, since the parser is very difficult to reason about.
 
 At the moment, however, I do not know of any existing bugs in the compiler.
+
+The Compiler class that handles file IO and prints out error messages was a last minute addition to make quick tests during e.g. the code review/demo possible, so it may have bugs. The error message handler especially is not very well-tested or robust --- it does not e.g. handle very long lines of code in any special way -- but it should be sufficient for basic hands-on testing if needed.
 \end{document}
