@@ -1770,16 +1770,16 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 Assert.That(errors.Errors[1].ToString(), Is.StringContaining("Cannot resolve symbol C"));
                 Assert.That(errors.Errors[2].ToString(), Is.StringContaining("Cannot assign expression of type A to variable of type int"));
                 Assert.That(errors.Errors[3].ToString(), Is.StringContaining("Cannot fit integer literal 99999999999999999 into a 32-bit integer variable"));
-                Assert.That(errors.Errors[4].ToString(), Is.StringContaining("Cannot resolve symbol C"));
-                Assert.That(errors.Errors[5].ToString(), Is.StringContaining("Wrong number of arguments to method alwaysTrue (1 for 0)"));
-                Assert.That(errors.Errors[6].ToString(), Is.StringContaining("Cannot apply operator && on arguments of type int and boolean"));
+                Assert.That(errors.Errors[4].ToString(), Is.StringContaining("Wrong number of arguments to method alwaysTrue (1 for 0)"));
+                Assert.That(errors.Errors[5].ToString(), Is.StringContaining("Cannot apply operator && on arguments of type int and boolean"));
+                Assert.That(errors.Errors[6].ToString(), Is.StringContaining("Cannot resolve symbol C"));
                 Assert.That(errors.Errors[7].ToString(), Is.StringContaining("Cannot apply operator || on arguments of type boolean and int"));
                 Assert.That(errors.Errors[8].ToString(), Is.StringContaining("Cannot resolve symbol zzz"));
                 Assert.That(errors.Errors[9].ToString(), Is.StringContaining("Invalid operand of type int for operator ||"));
                 Assert.That(errors.Errors[10].ToString(), Is.StringContaining("Cannot resolve symbol zzz"));
                 Assert.That(errors.Errors[11].ToString(), Is.StringContaining("Invalid operand of type int for operator &&"));
-                Assert.That(errors.Errors[12].ToString(), Is.StringContaining("Cannot resolve symbol C"));
-                Assert.That(errors.Errors[13].ToString(), Is.StringContaining("Cannot resolve symbol zzz")); // No error about operands for || because neither one could be resolved.
+                Assert.That(errors.Errors[12].ToString(), Is.StringContaining("Cannot resolve symbol zzz"));
+                Assert.That(errors.Errors[13].ToString(), Is.StringContaining("Cannot resolve symbol C")); // No error about operands for || because neither one could be resolved.
                 Assert.That(errors.Errors[14].ToString(), Is.StringContaining("Cannot resolve symbol zzz")); // No error about array indexing because array expr could not be resolved.
                 Assert.That(errors.Errors[15].ToString(), Is.StringContaining("Cannot resolve symbol zzz")); // No error about array index type because variable could not be resolved.
                 Assert.That(errors.Errors[16].ToString(), Is.StringContaining("Cannot resolve symbol zzz")); // No error about invalid argument to assert statement because variable could not be resolved.

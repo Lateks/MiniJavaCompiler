@@ -202,8 +202,8 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 
         public void Visit(BinaryOperatorExpression node)
         {
-            var leftOperandType = _operandTypes.Pop();
             var rightOperandType = _operandTypes.Pop();
+            var leftOperandType = _operandTypes.Pop();
             var op = MiniJavaInfo.GetOperator(node.Operator);
             if (op.OperandType == MiniJavaInfo.AnyType) // Operands can be of any type but they must be compatible.
             {

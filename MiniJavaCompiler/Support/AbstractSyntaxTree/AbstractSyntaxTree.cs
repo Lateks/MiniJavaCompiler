@@ -422,8 +422,8 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
 
         public override void Accept(INodeVisitor visitor)
         {
-            RightOperand.Accept(visitor);
             LeftOperand.Accept(visitor);
+            RightOperand.Accept(visitor);
             visitor.Visit(this);
         }
 

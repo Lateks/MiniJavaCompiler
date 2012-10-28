@@ -52,7 +52,7 @@ namespace MiniJavaCompiler
             Program abstractSyntaxTree;
             if (frontend.TryProgramAnalysis(out abstractSyntaxTree, out symbolTable))
             {
-                Console.WriteLine("Program OK. ");
+                Console.WriteLine("Program OK.");
             }
             else
             {
