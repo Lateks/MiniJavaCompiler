@@ -62,7 +62,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
             catch (OutOfInput e)
             {
                 if (DebugMode) throw;
-                ErrorReporter.ReportError(e.Message, 0, 0);
+                ErrorReporter.ReportError(e.Message, -1, -1);
                 throw new CompilationError();
             }
 
@@ -174,7 +174,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
             catch (SyntaxError e)
             {
                 if (DebugMode) throw;
-                ErrorReporter.ReportError(e.Message, e.Col, e.Row);
+                ErrorReporter.ReportError(e.Message, e.Row, e.Col);
             }
             catch (LexicalError)
             {

@@ -63,7 +63,7 @@ namespace MiniJavaCompiler.Support
 
         public override string ToString()
         {
-            return String.Format("Row {0}, column {1}: {2}", Row, Col, Content);
+            return String.Format("Line {0}, column {1}: {2}", Row, Col, Content);
         }
     }
 }
