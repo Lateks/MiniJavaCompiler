@@ -136,33 +136,32 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             // because there would be no sensible use for such a method call - and there are no other
             // static methods - so implementing it would have been pointless.
             var methodOwnerType = _operandTypes.Pop();
+            if (methodOwnerType is MiniJavaArrayType && MiniJavaArrayType.IsPredefinedArrayMethod(node.MethodName))
+            {
+                _operandTypes.Push(_symbolTable.ResolveType(MiniJavaInfo.IntType));
+                return;
+            }
+
             MethodSymbol method = null;
             if (node.MethodOwner is ThisExpression) // Method called is defined by the enclosing class or its superclasses.
             {
                 method = (MethodSymbol)_symbolTable.Scopes[node].ResolveMethod(node.MethodName);
             }
-            else if (methodOwnerType != ErrorType.GetInstance()) // Type error tokens are not checked.
+            else if (methodOwnerType is MiniJavaArrayType) // Method is called on an array (can only be a built in array method).
             {
-                if (methodOwnerType is MiniJavaArrayType) // Method is called on an array (can only be a built in array method).
-                {
-                    if (MiniJavaArrayType.IsPredefinedArrayMethod(node.MethodName))
-                    {
-                        _operandTypes.Push(_symbolTable.ResolveType(MiniJavaInfo.IntType)); // In this case there is nothing further to check, since length is
-                        return;                                                             // actually a field and therefore the invocation cannot have parameters.
-                    }
-                    ReportError(String.Format("Cannot call method {0} for an array.",
-                        node.MethodName), node);
-                }
-                else if (methodOwnerType is BuiltInTypeSymbol || methodOwnerType == VoidType.GetInstance())
-                {
-                    ReportError(String.Format("Cannot call a method on type {0}.", methodOwnerType.Name), node);
-                }
-                else
-                {
-                    var enclosingClass = (UserDefinedTypeSymbol) methodOwnerType;
-                    method = (MethodSymbol)enclosingClass.ResolveMethod(node.MethodName);
-                }
+                ReportError(String.Format("Cannot call method {0} for an array.",
+                    node.MethodName), node);
             }
+            else if (methodOwnerType is BuiltInTypeSymbol || methodOwnerType == VoidType.GetInstance())
+            {
+                ReportError(String.Format("Cannot call a method on type {0}.", methodOwnerType.Name), node);
+            }
+            else if (methodOwnerType is UserDefinedTypeSymbol)
+            {
+                var enclosingClass = (UserDefinedTypeSymbol) methodOwnerType;
+                method = (MethodSymbol)enclosingClass.ResolveMethod(node.MethodName);
+            } // Note: ErrorType is not even checked.
+
             ValidateMethodCall(method, node); // Pops out possible parameters for the method invocation even if the method could not be resolved.
             _operandTypes.Push(method == null ? ErrorType.GetInstance() : method.Type); // Expected return type, can be void.
         }
