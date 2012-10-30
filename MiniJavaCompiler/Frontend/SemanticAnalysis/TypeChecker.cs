@@ -205,38 +205,11 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             var op = MiniJavaInfo.GetOperator(node.Operator);
             if (op.OperandType == MiniJavaInfo.AnyType) // Operands can be of any type but they must be compatible.
             {
-                if (!(leftOperandType.IsAssignableTo(rightOperandType) || rightOperandType.IsAssignableTo(leftOperandType)))
-                {
-                    ReportError(String.Format("Cannot apply operator {0} on arguments of type {1} and {2}.",
-                        node.Operator, leftOperandType.Name, rightOperandType.Name), node);
-                }
+                CheckOperandCompatibility(node, leftOperandType, rightOperandType);
             }
             else
             {
-                var expectedOpType = _symbolTable.ResolveType(op.OperandType);
-                if (!leftOperandType.IsAssignableTo(expectedOpType) || !rightOperandType.IsAssignableTo(expectedOpType))
-                {   // Both arguments (lhs and rhs) must match operator's expected operand type.
-                    // Note: both arguments cannot be ErrorTypes because in that case they would
-                    // both have passed the assignability test.
-                    Debug.Assert(!(leftOperandType is ErrorType && rightOperandType is ErrorType));
-                    string errormsg;
-                    if (leftOperandType is ErrorType)
-                    {
-                        errormsg = String.Format("Invalid operand of type {0} for operator {1}.", rightOperandType.Name,
-                                                 node.Operator);
-                    }
-                    else if (rightOperandType is ErrorType)
-                    {
-                        errormsg = String.Format("Invalid operand of type {0} for operator {1}.", leftOperandType.Name,
-                                                 node.Operator);
-                    }
-                    else
-                    {
-                        errormsg = String.Format("Cannot apply operator {0} on arguments of type {1} and {2}.",
-                                                 node.Operator, leftOperandType.Name, rightOperandType.Name);
-                    }
-                    ReportError(errormsg, node);
-                }
+                CheckBinaryOperatorOperands(node, leftOperandType, rightOperandType);
             }
             _operandTypes.Push(_symbolTable.ResolveType(op.ResultType));
         }
@@ -320,18 +293,8 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
                     ReportError(String.Format("Missing return statement in method {0}.",
                         method.Name), node);
                 }
-
                 // Return types can be checked even if some branches were missing a return statement.
-                while (_returnTypes.Count > 0)
-                {
-                    var returnType = _returnTypes.Pop();
-                    if (!returnType.IsAssignableTo(method.Type))
-                    {   // The type of object returned by the return statement must match the method's
-                        // declared return type.
-                        ReportError(String.Format("Cannot convert expression of type {0} to {1}.",
-                            returnType.Name, method.Type.Name), node);
-                    }
-                }
+                CheckReturnTypes(node, method);
             }
         }
 
@@ -477,8 +440,9 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         // Allows covariance.
         private bool SuperClassMethodHasADifferentReturnType(MethodDeclaration method, MethodDeclaration superClassMethod)
         {
-            return !_symbolTable.ResolveType(method.Type, method.IsArray).IsAssignableTo(
-                _symbolTable.ResolveType(superClassMethod.Type, superClassMethod.IsArray));
+            var returnType = _symbolTable.ResolveType(method.Type, method.IsArray);
+            var superClassMethodReturnType = _symbolTable.ResolveType(superClassMethod.Type, superClassMethod.IsArray);
+            return !returnType.IsAssignableTo(superClassMethodReturnType);
         }
 
         private bool OverloadsSuperClassMethod(MethodDeclaration method, MethodDeclaration superClassMethod)
@@ -495,6 +459,55 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
                 formalsEqual = methodFormal.Equals(superFormal);
             }
             return !formalsEqual;
+        }
+
+        private void CheckBinaryOperatorOperands(BinaryOperatorExpression node, IType left, IType right)
+        {
+            var op = MiniJavaInfo.GetOperator(node.Operator);
+            var expected = _symbolTable.ResolveType(op.OperandType);
+            if (left.IsAssignableTo(expected) && right.IsAssignableTo(expected))
+            {
+                return;
+            }
+            Debug.Assert(!(left is ErrorType && right is ErrorType));
+
+            string errormsg;
+            if (left is ErrorType)
+            {
+                errormsg = String.Format("Invalid operand of type {0} for operator {1}.", right.Name, node.Operator);
+            }
+            else if (right is ErrorType)
+            {
+                errormsg = String.Format("Invalid operand of type {0} for operator {1}.", left.Name, node.Operator);
+            }
+            else
+            {
+                errormsg = String.Format("Cannot apply operator {0} on arguments of type {1} and {2}.",
+                                            node.Operator, left.Name, right.Name);
+            }
+            ReportError(errormsg, node);
+        }
+
+        private void CheckOperandCompatibility(BinaryOperatorExpression node, IType left, IType right)
+        {
+            if (left.IsAssignableTo(right) || right.IsAssignableTo(left))
+                return;
+            ReportError(String.Format("Cannot apply operator {0} on arguments of type {1} and {2}.",
+                node.Operator, left.Name, right.Name), node);
+        }
+
+        private void CheckReturnTypes(MethodDeclaration node, MethodSymbol method)
+        {
+            while (_returnTypes.Count > 0)
+            {
+                var returnType = _returnTypes.Pop();
+                if (!returnType.IsAssignableTo(method.Type))
+                {   // The type of object returned by the return statement must match the method's
+                    // declared return type.
+                    ReportError(String.Format("Cannot convert expression of type {0} to {1}.",
+                        returnType.Name, method.Type.Name), node);
+                }
+            }
         }
     }
 }
