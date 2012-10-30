@@ -326,16 +326,14 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             while (allConditionalsReturnAValue && conditionalStatements.Count > 0)
             {
                 conditional = conditionalStatements.Pop();
-
-                allConditionalsReturnAValue &= BlockAlwaysReturnsAValue(conditional.ThenBranch.Statements);
                 if (conditional.ElseBranch == null)
                 {
                     allConditionalsReturnAValue = false;
+                    continue;
                 }
-                else
-                {
-                    allConditionalsReturnAValue &= BlockAlwaysReturnsAValue(conditional.ElseBranch.Statements);
-                }
+
+                allConditionalsReturnAValue &= BlockAlwaysReturnsAValue(conditional.ThenBranch.Statements);
+                allConditionalsReturnAValue &= BlockAlwaysReturnsAValue(conditional.ElseBranch.Statements);
             }
             return allConditionalsReturnAValue;
         }
