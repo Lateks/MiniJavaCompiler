@@ -139,7 +139,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             if (methodOwnerType is MiniJavaArrayType && MiniJavaArrayType.IsPredefinedArrayMethod(node.MethodName))
             {
                 _operandTypes.Push(_symbolTable.ResolveType(MiniJavaInfo.IntType));
-                return;
+                return; // No arguments, so method call does not require further validation.
             }
 
             MethodSymbol method = null;
@@ -147,7 +147,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             {
                 method = (MethodSymbol)_symbolTable.Scopes[node].ResolveMethod(node.MethodName);
             }
-            else if (methodOwnerType is MiniJavaArrayType) // Method is called on an array (can only be a built in array method).
+            else if (methodOwnerType is MiniJavaArrayType)
             {
                 ReportError(String.Format("Cannot call method {0} for an array.",
                     node.MethodName), node);
