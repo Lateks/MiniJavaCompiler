@@ -153,10 +153,9 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
                     ReportError(String.Format("Cannot call method {0} for an array.",
                         node.MethodName), node);
                 }
-                else if (methodOwnerType is BuiltInTypeSymbol)
+                else if (methodOwnerType is BuiltInTypeSymbol || methodOwnerType == VoidType.GetInstance())
                 {
-                    ReportError(String.Format("Cannot call method {0} on built-in type {1}.",
-                        node.MethodName, methodOwnerType.Name), node);
+                    ReportError(String.Format("Cannot call a method on type {0}.", methodOwnerType.Name), node);
                 }
                 else
                 {

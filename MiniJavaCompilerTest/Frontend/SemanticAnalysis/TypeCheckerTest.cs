@@ -64,7 +64,26 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.CheckTypesAndReferences);
                 Assert.AreEqual(2, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("built-in type int"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot call a method on type int"));
+                Assert.That(errors.Errors[1].ToString(), Is.StringContaining("Cannot resolve symbol bar"));
+            }
+
+            [Test]
+            public void CannotCallMethodForAVoidType()
+            {
+                string program = "class Foo {\n" +
+                                 "\tpublic static void main() {\n" +
+                                 "\t\tSystem.out.println(new A().foo().bar());\n" +
+                                 "\t}\n" +
+                                 "}\n" +
+                                 "class A {\n" +
+                                 "\t public void foo() { }\n" +
+                                 "}\n";
+                IErrorReporter errors;
+                var checker = SetUpTypeAndReferenceChecker(program, out errors);
+                Assert.Throws<CompilationError>(checker.CheckTypesAndReferences);
+                Assert.AreEqual(2, errors.Count);
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot call a method on type void"));
                 Assert.That(errors.Errors[1].ToString(), Is.StringContaining("Cannot resolve symbol bar"));
             }
 
