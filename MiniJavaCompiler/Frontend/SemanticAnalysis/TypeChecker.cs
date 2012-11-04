@@ -18,8 +18,10 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
     {
         private readonly SymbolTable _symbolTable;
         private readonly Stack<IType> _operandTypes;
-        private readonly Stack<IType> _returnTypes; // When return statements are encountered, the types of the expressions they return
-                                                    // will be stored here and checked when exiting the method declaration.
+        private readonly Stack<IType> _returnTypes; /* When return statements are encountered, the types of
+                                                     * the expressions they return will be stored here and
+                                                     * checked when exiting the method declaration.
+                                                     */
         private readonly Program _programRoot;
         private readonly IErrorReporter _errors;
         private bool _checkFailed;
@@ -69,7 +71,10 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
                 ReportError(String.Format("Method {0} in class {1} overloads a method in class {2}. Overloading is not allowed.",
                     node.Name, classScope.Name, classScope.SuperClass.Name), node);
             }
-            if (SuperClassMethodHasADifferentReturnType(node, superClassMethodDeclaration)) // Allows return type covariance. (Note: arrays are still non-covariant.)
+
+            // Subclass methods can have covariant return types with respect to overridden
+            // superclass methods. (Note: arrays are still non-covariant.)
+            if (SuperClassMethodHasADifferentReturnType(node, superClassMethodDeclaration))
             {
                 ReportError(String.Format(
                     "Method {0} in class {1} has a different return type from overridden method in class {2}.",
@@ -105,11 +110,12 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             // and left hand side needs to be an lvalue.
             var lhsType = _operandTypes.Pop();
             var rhsType = _operandTypes.Pop();
-            if (node.LeftHandSide is VariableReferenceExpression || node.LeftHandSide is ArrayIndexingExpression) // The only lvalues in Mini-Java.
+            if (node.LeftHandSide is VariableReferenceExpression || node.LeftHandSide is ArrayIndexingExpression)
             {
                 if (!(rhsType.IsAssignableTo(lhsType)))
                 {
-                    Debug.Assert(!(lhsType is ErrorType || rhsType is ErrorType)); // ErrorType should be assignable both ways.
+                    // ErrorType should be assignable both ways.
+                    Debug.Assert(!(lhsType is ErrorType || rhsType is ErrorType));
                     ReportError(String.Format("Cannot assign expression of type {0} to variable of type {1}.",
                         rhsType.Name, lhsType.Name), node);
                 }
@@ -132,9 +138,10 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         }
 
         public void Visit(MethodInvocation node)
-        {   // Note: in this implementation the main method cannot be called from inside the program
-            // because there would be no sensible use for such a method call - and there are no other
-            // static methods - so implementing it would have been pointless.
+        {   // Note: in this implementation the main method cannot be called
+            // from inside the program because there would be no sensible use
+            // for such a method call - and there are no other static methods
+            // - so implementing it would have been pointless.
             var methodOwnerType = _operandTypes.Pop();
             if (methodOwnerType is MiniJavaArrayType && MiniJavaArrayType.IsPredefinedArrayMethod(node.MethodName))
             {
@@ -143,8 +150,8 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             }
 
             MethodSymbol method = null;
-            if (node.MethodOwner is ThisExpression) // Method called is defined by the enclosing class or its superclasses.
-            {
+            if (node.MethodOwner is ThisExpression)
+            {   // Method called is defined by the enclosing class or its superclasses.
                 method = (MethodSymbol)_symbolTable.Scopes[node].ResolveMethod(node.MethodName);
             }
             else if (methodOwnerType is MiniJavaArrayType)
@@ -162,8 +169,11 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
                 method = (MethodSymbol)enclosingClass.ResolveMethod(node.MethodName);
             } // Note: ErrorType is not even checked.
 
-            ValidateMethodCall(method, node); // Pops out possible parameters for the method invocation even if the method could not be resolved.
-            _operandTypes.Push(method == null ? ErrorType.GetInstance() : method.Type); // Expected return type, can be void.
+            ValidateMethodCall(method, node); // Pops out possible parameters for the method invocation
+                                              // even if the method could not be resolved.
+
+            // Push expected return type, can be void.
+            _operandTypes.Push(method == null ? ErrorType.GetInstance() : method.Type);
         }
 
         public void Visit(InstanceCreationExpression node)
@@ -203,8 +213,8 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             var rightOperandType = _operandTypes.Pop();
             var leftOperandType = _operandTypes.Pop();
             var op = MiniJavaInfo.GetOperator(node.Operator);
-            if (op.OperandType == MiniJavaInfo.AnyType) // Operands can be of any type but they must be compatible.
-            {
+            if (op.OperandType == MiniJavaInfo.AnyType)
+            {   // Operands can be of any type but they must be compatible.
                 CheckOperandCompatibility(node, leftOperandType, rightOperandType);
             }
             else
@@ -228,13 +238,13 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         public void Visit(ArrayIndexingExpression node)
         {
             var arrayType = _operandTypes.Pop();
-            if (!(arrayType is ErrorType) && !(arrayType is MiniJavaArrayType)) // Only arrays can be indexed. Resolving errors are ignored.
-            {
+            if (!(arrayType is ErrorType) && !(arrayType is MiniJavaArrayType))
+            {   // Only arrays can be indexed. Resolving errors are ignored.
                 ReportError(String.Format("Cannot index into expression of type {0}.", arrayType.Name), node);
             }
             var indexType = _operandTypes.Pop();
             if (!indexType.IsAssignableTo(_symbolTable.ResolveType(MiniJavaInfo.IntType)))
-            { // Array must be indexed with an expression that evaluates into an int value.
+            {   // Array must be indexed with an expression that evaluates into an int value.
                 ReportError("Invalid array index.", node);
             }
             _operandTypes.Push(arrayType is MiniJavaArrayType ?
@@ -272,8 +282,8 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             var method = (MethodSymbol)_symbolTable.Scopes[node].ResolveMethod(node.Name);
             int numReturnStatements = _returnTypes.Count;
             if (method.Type == VoidType.GetInstance())
-            {  // Void methods cannot have return statements
-               // (because Mini-Java does not allow empty return statements).
+            {   // Void methods cannot have return statements
+                // (because Mini-Java does not allow empty return statements).
                 if (numReturnStatements > 0)
                 {
                     ReportError(String.Format("Method of type {0} cannot have return statements.",
@@ -293,7 +303,8 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
                     ReportError(String.Format("Missing return statement in method {0}.",
                         method.Name), node);
                 }
-                // Return types can be checked even if some branches were missing a return statement.
+                // Return types can be checked even if some branches were missing
+                // a return statement.
                 CheckReturnTypes(node, method);
             }
         }
@@ -307,14 +318,16 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 
         private bool BlockAlwaysReturnsAValue(List<IStatement> statementsInBlock)
         {
-            var flattenedStatementsInBlock = FlattenStatementList(statementsInBlock); // Flatten block statements.
+            // Start by flattening block statements.
+            var flattenedStatementsInBlock = FlattenStatementList(statementsInBlock);
             var returnIdx = flattenedStatementsInBlock.FindIndex((statement) => statement is ReturnStatement);
             if (returnIdx >= 0)
             {
                 return true;
             }
 
-            // There were no return statements on this level, so all conditional branches must return a value.
+            // There were no return statements on this level, so all
+            // conditional branches must return a value.
             var conditionalStatements = new Stack<IfStatement>(flattenedStatementsInBlock.OfType<IfStatement>());
             if (!conditionalStatements.Any())
             {
@@ -338,12 +351,12 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             return allConditionalsReturnAValue;
         }
 
-        // Flattens a list of statements recursively by replacing block statements with
-        // lists of statements.
+        // Flattens a list of statements recursively by replacing
+        // block statements with lists of statements.
         private List<IStatement> FlattenStatementList(List<IStatement> statementList)
         {
-            if (!statementList.Any(elem => elem is BlockStatement)) // If there are no block statements, there is nothing to flatten.
-            {
+            if (!statementList.Any(elem => elem is BlockStatement))
+            {   // If there are no block statements, there is nothing to flatten.
                 return statementList;
             }
             // Convert each block statement into a list of statements and wrap individual
@@ -369,18 +382,21 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         {
             if (method == null) // method does not exist
             {
-                ReportErrorAndDiscardCallParams(String.Format("Cannot resolve symbol {0}.", node.MethodName), node);
+                ReportErrorAndDiscardCallParams(String.Format(
+                    "Cannot resolve symbol {0}.", node.MethodName), node);
                 return;
             }
             if (method.IsStatic)
             {
-                ReportErrorAndDiscardCallParams(String.Format("Cannot call static method {0} on an instance.", node.MethodName), node);
+                ReportErrorAndDiscardCallParams(String.Format(
+                    "Cannot call static method {0} on an instance.", node.MethodName), node);
                 return;
             }
             var methodDecl = (MethodDeclaration)_symbolTable.Definitions[method];
             if (node.CallParameters.Count != methodDecl.Formals.Count)
             {
-                ReportErrorAndDiscardCallParams(String.Format("Wrong number of arguments to method {0} ({1} for {2}).",
+                ReportErrorAndDiscardCallParams(String.Format(
+                    "Wrong number of arguments to method {0} ({1} for {2}).",
                     node.MethodName, node.CallParameters.Count, methodDecl.Formals.Count), node);
                 return;
             }
@@ -409,7 +425,8 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
                 var formalParamType = _symbolTable.ResolveType(formalParameter.Type, formalParameter.IsArray);
                 if (!callParamType.IsAssignableTo(formalParamType))
                 {
-                    ReportError(String.Format("Wrong type of argument to method {0}. Expected {1} but got {2}.",
+                    ReportError(String.Format(
+                        "Wrong type of argument to method {0}. Expected {1} but got {2}.",
                         node.MethodName, formalParamType.Name, callParamType.Name), node);
                 }
             }
@@ -428,7 +445,8 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         private bool VariableDeclaredBeforeReference(VariableSymbol varSymbol, VariableReferenceExpression reference)
         {
             if (varSymbol.EnclosingScope is UserDefinedTypeSymbol)
-            { // Variables defined on the class level are visible in all scopes internal to the class.
+            {   // Variables defined on the class level are visible
+                // in all scopes internal to the class.
                 return true;
             }
             var declaration = (VariableDeclaration)_symbolTable.Definitions[varSymbol];
