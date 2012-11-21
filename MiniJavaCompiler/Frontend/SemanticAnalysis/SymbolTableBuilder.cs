@@ -77,10 +77,10 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 
         public void Visit(ClassDeclaration node)
         {   // Resolve inheritance relationships.
-            var typeSymbol = (UserDefinedTypeSymbol)CurrentScope.ResolveType(node.Name);
+            var typeSymbol = (UserDefinedTypeSymbol) CurrentScope.ResolveType(node.Name);
             if (node.InheritedClass != null)
             {
-                var inheritedType = (UserDefinedTypeSymbol)CurrentScope.ResolveType(node.InheritedClass);
+                var inheritedType = (UserDefinedTypeSymbol) CurrentScope.ResolveType(node.InheritedClass);
                 if (inheritedType == null)
                 {
                     _errorReporter.ReportError("Unknown type '" + node.InheritedClass + "'.", node.Row, node.Col);
@@ -91,9 +91,9 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
                     typeSymbol.SuperClass = inheritedType;
                 }
             }
-            _symbolTable.Scopes.Add(node, typeSymbol);
+            _symbolTable.Scopes.Add(node, typeSymbol.Scope);
             _symbolTable.Definitions.Add(typeSymbol, node);
-            EnterScope(typeSymbol);
+            EnterScope(typeSymbol.Scope);
         }
 
         public void Exit(ClassDeclaration node)
@@ -103,10 +103,10 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 
         public void Visit(MainClassDeclaration node)
         {   // Main class cannot inherit.
-            var typeSymbol = (UserDefinedTypeSymbol)CurrentScope.ResolveType(node.Name);
-            _symbolTable.Scopes.Add(node, typeSymbol);
+            var typeSymbol = CurrentScope.ResolveType(node.Name);
+            _symbolTable.Scopes.Add(node, typeSymbol.Scope);
             _symbolTable.Definitions.Add(typeSymbol, node);
-            EnterScope(typeSymbol);
+            EnterScope(typeSymbol.Scope);
         }
 
         public void Exit(MainClassDeclaration node)
@@ -147,14 +147,14 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             }
 
             _symbolTable.Definitions.Add(methodSymbol, node);
-            _symbolTable.Scopes.Add(node, methodSymbol);
+            _symbolTable.Scopes.Add(node, methodSymbol.Scope);
 
-            EnterScope(methodSymbol);
+            EnterScope(methodSymbol.Scope);
         }
 
         private IType CheckDeclaredType(Declaration node)
         {
-            var nodeSimpleType = (SimpleTypeSymbol)_symbolTable.GlobalScope.ResolveType(node.Type);
+            var nodeSimpleType = _symbolTable.GlobalScope.ResolveType(node.Type);
             if (nodeSimpleType == null)
             {
                 // Note: this error is also reported when a void type is encountered

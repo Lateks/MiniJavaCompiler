@@ -27,6 +27,8 @@ namespace MiniJavaCompiler.Support.SymbolTable
             return array ? MiniJavaArrayType.OfType(simpleType) : (IType) simpleType;
         }
 
+        // TODO: fix this so this method is no longer needed
+        // (or the symbol property in the scope, probably)
         public UserDefinedTypeSymbol ResolveSurroundingClass(ISyntaxTreeNode node)
         {
             if (!Scopes.ContainsKey(node))
@@ -34,11 +36,11 @@ namespace MiniJavaCompiler.Support.SymbolTable
                 throw new ArgumentException("Scope map not built or invalid node given.");
             }
             var scope = Scopes[node];
-            while (!(scope is UserDefinedTypeSymbol) && scope != null)
+            while (!(scope is ClassScope) && scope != null)
             {
                 scope = scope.EnclosingScope;
             }
-            return (UserDefinedTypeSymbol) scope;
+            return scope == null ? null : ((ClassScope)scope).Symbol;
         }
     }
 }

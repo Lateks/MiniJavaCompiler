@@ -58,8 +58,8 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         public void Visit(MethodDeclaration node)
         {  // Check that the method does not overload a method in a superclass.
            // Only overriding is allowed.
-            var classScope = _symbolTable.ResolveSurroundingClass(node);
-            var superClassMethod = classScope.SuperClass == null ? null : classScope.SuperClass.ResolveMethod(node.Name);
+            var classSymbol = _symbolTable.ResolveSurroundingClass(node);
+            var superClassMethod = classSymbol.SuperClass == null ? null : classSymbol.SuperClass.Scope.ResolveMethod(node.Name);
             if (superClassMethod == null) // Did not override or overload another method.
             {
                 return;
@@ -69,7 +69,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             if (OverloadsSuperClassMethod(node, superClassMethodDeclaration))
             {
                 ReportError(String.Format("Method {0} in class {1} overloads a method in class {2}. Overloading is not allowed.",
-                    node.Name, classScope.Name, classScope.SuperClass.Name), node);
+                    node.Name, classSymbol.Name, classSymbol.SuperClass.Name), node);
             }
 
             // Subclass methods can have covariant return types with respect to overridden
@@ -78,7 +78,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             {
                 ReportError(String.Format(
                     "Method {0} in class {1} has a different return type from overridden method in class {2}.",
-                    node.Name, classScope.Name, classScope.SuperClass.Name), node);
+                    node.Name, classSymbol.Name, classSymbol.SuperClass.Name), node);
             }
         }
 
@@ -152,7 +152,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             MethodSymbol method = null;
             if (node.MethodOwner is ThisExpression)
             {   // Method called is defined by the enclosing class or its superclasses.
-                method = (MethodSymbol)_symbolTable.Scopes[node].ResolveMethod(node.MethodName);
+                method = _symbolTable.Scopes[node].ResolveMethod(node.MethodName);
             }
             else if (methodOwnerType is MiniJavaArrayType)
             {
@@ -166,7 +166,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             else if (methodOwnerType is UserDefinedTypeSymbol)
             {
                 var enclosingClass = (UserDefinedTypeSymbol) methodOwnerType;
-                method = (MethodSymbol)enclosingClass.ResolveMethod(node.MethodName);
+                method = enclosingClass.Scope.ResolveMethod(node.MethodName);
             } // Note: ErrorType is not even checked.
 
             ValidateMethodCall(method, node); // Pops out possible parameters for the method invocation
@@ -254,7 +254,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         public void Visit(VariableReferenceExpression node)
         {
             var scope = _symbolTable.Scopes[node];
-            var symbol = (VariableSymbol) scope.ResolveVariable(node.Name);
+            var symbol = scope.ResolveVariable(node.Name);
             if (symbol == null || !VariableDeclaredBeforeReference(symbol, node))
             {
                 ReportError(String.Format("Cannot resolve symbol {0}.", node.Name), node);
@@ -279,7 +279,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 
         public void Exit(MethodDeclaration node)
         {
-            var method = (MethodSymbol)_symbolTable.Scopes[node].ResolveMethod(node.Name);
+            var method = _symbolTable.Scopes[node].ResolveMethod(node.Name);
             int numReturnStatements = _returnTypes.Count;
             if (method.Type == VoidType.GetInstance())
             {   // Void methods cannot have return statements
@@ -444,7 +444,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 
         private bool VariableDeclaredBeforeReference(VariableSymbol varSymbol, VariableReferenceExpression reference)
         {
-            if (varSymbol.EnclosingScope is UserDefinedTypeSymbol)
+            if (varSymbol.Scope is UserDefinedTypeSymbol)
             {   // Variables defined on the class level are visible
                 // in all scopes internal to the class.
                 return true;

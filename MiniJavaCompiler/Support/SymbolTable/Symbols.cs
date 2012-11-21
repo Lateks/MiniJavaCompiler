@@ -8,13 +8,13 @@ namespace MiniJavaCompiler.Support.SymbolTable
     {
         public string Name { get; private set; }
         public IType Type { get; private set; }
-        public IScope EnclosingScope { get; private set; }
+        public IScope Scope { get; private set; }
 
-        protected Symbol(string name, IType type, IScope enclosingScope)
+        protected Symbol(string name, IType type, IScope scope)
         {
             Name = name;
             Type = type;
-            EnclosingScope = enclosingScope;
+            Scope = scope;
         }
     }
 
@@ -45,63 +45,39 @@ namespace MiniJavaCompiler.Support.SymbolTable
         }
     }
 
-    public class MethodSymbol : Symbol, IVariableScope
+    public class MethodSymbol : Symbol
     {
-        private readonly Dictionary<string, Symbol> _variableTable;
         public bool IsStatic { get; private set; }
 
         public MethodSymbol(string name, IType returnType, IMethodScope enclosingScope, bool isStatic = false)
-            : base(name, returnType, enclosingScope)
+            : base(name, returnType, new MethodBodyScope(enclosingScope))
         {
             IsStatic = isStatic;
-            _variableTable = new Dictionary<string, Symbol>();
-        }
-
-        public bool Define(VariableSymbol sym)
-        {
-            if (_variableTable.ContainsKey(sym.Name))
-            {
-                return false;
-            }
-            _variableTable.Add(sym.Name, sym);
-            return true;
-        }
-
-        public Symbol ResolveMethod(string name)
-        {
-            return EnclosingScope.ResolveMethod(name);
-        }
-
-        public Symbol ResolveVariable(string name)
-        {
-            if (_variableTable.ContainsKey(name))
-            {
-                return _variableTable[name];
-            }
-            else
-            {
-                return EnclosingScope.ResolveVariable(name);
-            }
-        }
-
-        public Symbol ResolveType(string name)
-        {
-            return EnclosingScope.ResolveType(name);
         }
     }
 
-    public class UserDefinedTypeSymbol : SimpleTypeSymbol, IMethodScope, IVariableScope
+    public class UserDefinedTypeSymbol : SimpleTypeSymbol
     {
-        public UserDefinedTypeSymbol SuperClass { get; set; }
-        private readonly Dictionary<string, Symbol> _methods;
-        private readonly Dictionary<string, Symbol> _fields;
+        private UserDefinedTypeSymbol _superClass;
 
-        public UserDefinedTypeSymbol(string name, IScope enclosingScope)
-            : base(name, null, enclosingScope)
+        public UserDefinedTypeSymbol SuperClass
         {
-            _methods = new Dictionary<string, Symbol>();
-            _fields = new Dictionary<string, Symbol>();
+            get { return _superClass; }
+            set
+            {
+                _superClass = value;
+                if (_superClass != null)
+                {
+                    ((ClassScope)Scope).SuperClassScope = (ClassScope)_superClass.Scope;
+                }
+            }
+        }
+
+        public UserDefinedTypeSymbol(string name, ITypeScope enclosingScope)
+            : base(name, null, new ClassScope(enclosingScope))
+        {
             SuperClass = null;
+            ((ClassScope)Scope).Symbol = this;
         }
 
         public override bool IsAssignableTo(IType other)
@@ -128,62 +104,6 @@ namespace MiniJavaCompiler.Support.SymbolTable
                 return true;
             }
             return SuperClass != null && SuperClass.IsDerivedFrom(other);
-        }
-
-        public bool Define(VariableSymbol sym)
-        {
-            return DefineSymbolIn(sym, _fields);
-        }
-
-        public bool Define(MethodSymbol sym)
-        {
-            return DefineSymbolIn(sym, _methods);
-        }
-
-        public Symbol ResolveMethod(string name)
-        {
-            return ResolveMethodInSuperClasses(name);
-        }
-
-        public Symbol ResolveVariable(string name)
-        {
-            if (_fields.ContainsKey(name))
-            {
-                return _fields[name];
-            }
-            else
-            {   // Because fields are private, they are not resolved from superclasses.
-                // In Mini-Java the enclosing scope of a class is the global scope which
-                // cannot contain variable declarations, so resolving stops here.
-                return null;
-            }
-        }
-
-        public Symbol ResolveType(string name)
-        {
-            return EnclosingScope.ResolveType(name);
-        }
-
-        private Symbol ResolveMethodInSuperClasses(string name)
-        {
-            if (_methods.ContainsKey(name))
-            {
-                return _methods[name];
-            }
-            else
-            {
-                return SuperClass == null ? null : SuperClass.ResolveMethodInSuperClasses(name);
-            }
-        }
-
-        private bool DefineSymbolIn(Symbol sym, IDictionary<string, Symbol> lookupTable)
-        {
-            if (lookupTable.ContainsKey(sym.Name))
-            {
-                return false;
-            }
-            lookupTable.Add(sym.Name, sym);
-            return true;
         }
     }
 }

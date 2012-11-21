@@ -6,14 +6,14 @@ namespace MiniJavaCompiler.Support.SymbolTable
 {
     public interface IScope
     {
-        Symbol ResolveMethod(string name);
-        Symbol ResolveVariable(string name);
-        Symbol ResolveType(string name);
+        MethodSymbol ResolveMethod(string name);
+        VariableSymbol ResolveVariable(string name);
+        SimpleTypeSymbol ResolveType(string name);
         IScope EnclosingScope { get; }
     }
 
     /* Note: All Define methods in different scope interfaces return a boolean
-     * value indicating whether or not the attempt to define the symbol succeeded.
+     * value indicating whether the attempt to define the symbol succeeded.
      * The same kind of symbol with the same name cannot be defined twice in the
      * same scope.
      */
@@ -34,9 +34,9 @@ namespace MiniJavaCompiler.Support.SymbolTable
 
     public abstract class ScopeBase : IScope
     {
-        private readonly Dictionary<string, Symbol> _typeTable;
-        private readonly Dictionary<string, Symbol> _methodTable;
-        private readonly Dictionary<string, Symbol> _variableTable;
+        protected readonly Dictionary<string, SimpleTypeSymbol> _typeTable;
+        protected readonly Dictionary<string, MethodSymbol> _methodTable;
+        protected readonly Dictionary<string, VariableSymbol> _variableTable;
 
         public IScope EnclosingScope
         {
@@ -48,36 +48,30 @@ namespace MiniJavaCompiler.Support.SymbolTable
 
         protected ScopeBase(IScope enclosingScope)
         {
-            _typeTable = new Dictionary<string, Symbol>();
-            _methodTable = new Dictionary<string, Symbol>();
-            _variableTable = new Dictionary<string, Symbol>();
+            _typeTable = new Dictionary<string, SimpleTypeSymbol>();
+            _methodTable = new Dictionary<string, MethodSymbol>();
+            _variableTable = new Dictionary<string, VariableSymbol>();
             EnclosingScope = enclosingScope;
         }
 
-        protected Dictionary<string, Symbol> LookupTableFor(Symbol sym)
+        protected bool Define(VariableSymbol sym)
         {
-            if (sym is MethodSymbol)
-            {
-                return _methodTable;
-            }
-            else if (sym is VariableSymbol)
-            {
-                return _variableTable;
-            }
-            else if (sym is UserDefinedTypeSymbol || sym is BuiltInTypeSymbol)
-            {
-                return _typeTable;
-            }
-            else
-            {
-                throw new ArgumentException(String.Format("Cannot define symbol of type {0}.",
-                    sym.GetType().Name));
-            }
+            return DefineSymbolIn<VariableSymbol>(sym, _variableTable);
         }
 
-        protected bool Define(Symbol sym)
+        protected bool Define(MethodSymbol sym)
         {
-            var lookupTable = LookupTableFor(sym);
+            return DefineSymbolIn<MethodSymbol>(sym, _methodTable);
+        }
+
+        protected bool Define(SimpleTypeSymbol sym)
+        {
+            return DefineSymbolIn<SimpleTypeSymbol>(sym, _typeTable);
+        }
+
+        private bool DefineSymbolIn<T>(T sym, Dictionary<string, T> lookupTable)
+            where T : Symbol
+        {
             if (lookupTable.ContainsKey(sym.Name))
             {
                 return false;
@@ -86,7 +80,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
             return true;
         }
 
-        public Symbol ResolveMethod(string name)
+        public virtual MethodSymbol ResolveMethod(string name)
         {
             if (_methodTable.ContainsKey(name))
             {
@@ -95,7 +89,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
             return EnclosingScope == null ? null : EnclosingScope.ResolveMethod(name);
         }
 
-        public Symbol ResolveVariable(string name)
+        public virtual VariableSymbol ResolveVariable(string name)
         {
             if (_variableTable.ContainsKey(name))
             {
@@ -104,7 +98,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
             return EnclosingScope == null ? null : EnclosingScope.ResolveVariable(name);
         }
 
-        public Symbol ResolveType(string name)
+        public virtual SimpleTypeSymbol ResolveType(string name)
         {
             if (_typeTable.ContainsKey(name))
             {
@@ -116,7 +110,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
 
     public class GlobalScope : ScopeBase, ITypeScope
     {
-        public bool Define(SimpleTypeSymbol sym)
+        public new bool Define(SimpleTypeSymbol sym)
         {
             return base.Define(sym);
         }
@@ -126,10 +120,54 @@ namespace MiniJavaCompiler.Support.SymbolTable
     {
         public LocalScope(IScope enclosingScope) : base(enclosingScope) { }
 
-        public bool Define(VariableSymbol sym)
+        public new bool Define(VariableSymbol sym)
         {
             return base.Define(sym);
         }
     }
 
+    public class MethodBodyScope : ScopeBase, IVariableScope
+    {
+        public MethodBodyScope(IMethodScope enclosingScope) : base(enclosingScope) { }
+
+        public new bool Define(VariableSymbol sym)
+        {
+            return base.Define(sym);
+        }
+    }
+
+    public class ClassScope : ScopeBase, IVariableScope, IMethodScope
+    {
+        public ClassScope SuperClassScope { get; set; }
+        public UserDefinedTypeSymbol Symbol { get; set; }
+
+        public ClassScope(ITypeScope enclosingScope) : base(enclosingScope) { }
+
+        public new bool Define(VariableSymbol sym)
+        {
+            return base.Define(sym);
+        }
+
+        public new bool Define(MethodSymbol sym)
+        {
+            return base.Define(sym);
+        }
+
+        public override MethodSymbol ResolveMethod(string name)
+        {
+            return ResolveMethodWithinSuperClasses(name);
+        }
+
+        private MethodSymbol ResolveMethodWithinSuperClasses(string name)
+        {
+            if (_methodTable.ContainsKey(name))
+            {
+                return _methodTable[name];
+            }
+            else
+            {
+                return SuperClassScope == null ? null : SuperClassScope.ResolveMethodWithinSuperClasses(name);
+            }
+        }
+    }
 }

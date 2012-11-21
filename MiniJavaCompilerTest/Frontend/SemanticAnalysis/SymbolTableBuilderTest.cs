@@ -56,7 +56,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                              "} \n\n";
             Assert.True(BuildSymbolTableFor(program));
             var fooClass = (UserDefinedTypeSymbol)_symbolTable.GlobalScope.ResolveType("Foo");
-            var fooMethod = fooClass.ResolveMethod("foo");
+            var fooMethod = fooClass.Scope.ResolveMethod("foo");
             Assert.That(fooMethod.Type, Is.InstanceOf<VoidType>());
         }
 
@@ -96,7 +96,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
             var fooClass = (UserDefinedTypeSymbol)_symbolTable.GlobalScope.ResolveType("Foo");
             var barClass = (UserDefinedTypeSymbol)_symbolTable.GlobalScope.ResolveType("Bar");
             Assert.That(barClass.SuperClass, Is.EqualTo(fooClass));
-            Assert.That(barClass.ResolveMethod("foo"), Is.Not.Null);
+            Assert.That(barClass.Scope.ResolveMethod("foo"), Is.Not.Null);
         }
 
         [Test]
@@ -214,26 +214,26 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
             var firstClass = _symbolTable.GlobalScope.ResolveType("Factorial");
             Assert.That(firstClass, Is.InstanceOf<UserDefinedTypeSymbol>());
 
-            Assert.That(((UserDefinedTypeSymbol)firstClass).ResolveMethod("main"), Is.Not.Null);
+            Assert.That(firstClass.Scope.ResolveMethod("main"), Is.Not.Null);
 
             var secondClass = _symbolTable.GlobalScope.ResolveType("Fac");
             Assert.That(secondClass, Is.Not.Null);
 
             var FacClassScope = (UserDefinedTypeSymbol) secondClass;
-            var facMethod = (MethodSymbol)FacClassScope.ResolveMethod("ComputeFac");
+            var facMethod = FacClassScope.Scope.ResolveMethod("ComputeFac");
             Assert.That(facMethod, Is.Not.Null);
             Assert.That(facMethod.Type, Is.InstanceOf<BuiltInTypeSymbol>());
             Assert.That(facMethod.Type.Name, Is.EqualTo("int"));
 
-            var numVariable = (VariableSymbol)facMethod.ResolveVariable("num");
+            var numVariable = facMethod.Scope.ResolveVariable("num");
             Assert.That(numVariable, Is.Not.Null);
             var numVariableNode = _symbolTable.Definitions[numVariable];
-            Assert.That(_symbolTable.Scopes[numVariableNode], Is.EqualTo(facMethod));
+            Assert.That(_symbolTable.Scopes[numVariableNode], Is.EqualTo(facMethod.Scope));
             Assert.That(numVariable.Type, Is.InstanceOf<BuiltInTypeSymbol>());
             Assert.That(numVariable.Type.Name, Is.EqualTo("int"));
             Assert.AreEqual(numVariable.Type, facMethod.Type);
 
-            var numAuxVariable = (VariableSymbol) facMethod.ResolveVariable("num_aux");
+            var numAuxVariable = facMethod.Scope.ResolveVariable("num_aux");
             Assert.That(numAuxVariable, Is.Not.Null);
             Assert.That(numAuxVariable.Type, Is.InstanceOf<BuiltInTypeSymbol>());
             Assert.That(numVariable.Type.Name, Is.EqualTo("int"));
