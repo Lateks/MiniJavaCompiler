@@ -100,6 +100,52 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
         }
 
         [Test]
+        public void ClassCannotInheritFromSelf()
+        {
+            string program = "class Factorial {\n" +
+                             "\t public static void main () {\n" +
+                             "\t\t System.out.println(42);\n" +
+                             "\t} \n" +
+                             "} \n\n" +
+                             "class Foo extends Foo {\n" +
+                             "\t public int foo() {\n" +
+                             "\t\t System.out.println(42); \n" +
+                             "\t\t return 42; \n" +
+                             "\t} \n" +
+                             "}\n";
+            Assert.False(BuildSymbolTableFor(program));
+            Assert.That(_errors.Count, Is.EqualTo(1));
+            Assert.That(_errors.Errors[0].Content, Is.StringContaining("depends on itself"));
+        }
+
+        [Test]
+        public void DetectsCyclicInheritance()
+        {
+            string program = "class Factorial {\n" +
+                             "\t public static void main () {\n" +
+                             "\t\t System.out.println(42);\n" +
+                             "\t} \n" +
+                             "} \n\n" +
+                             "class Foo extends Baz {\n" +
+                             "\t public int foo() {\n" +
+                             "\t\t System.out.println(42); \n" +
+                             "\t\t return 42; \n" +
+                             "\t} \n" +
+                             "}\n" +
+                             "class Bar extends Foo {\n" +
+                             "\t int foo; \n" +
+                             "} \n" +
+                             "class Baz extends Bar {\n" +
+                             "\t int foo; \n" +
+                             "} \n";
+            Assert.False(BuildSymbolTableFor(program));
+            Assert.That(_errors.Count, Is.EqualTo(3));
+            Assert.That(_errors.Errors[0].Content, Is.StringContaining("Class Foo depends on itself"));
+            Assert.That(_errors.Errors[1].Content, Is.StringContaining("Class Bar depends on itself"));
+            Assert.That(_errors.Errors[2].Content, Is.StringContaining("Class Baz depends on itself"));
+        }
+
+        [Test]
         public void DetectsAnUnknownTypeInSuperClassDeclaration()
         {
             string program = "class Foo {\n" +

@@ -3,6 +3,7 @@ using System.Diagnostics;
 using MiniJavaCompiler.Support.AbstractSyntaxTree;
 using MiniJavaCompiler.Support.SymbolTable;
 using MiniJavaCompiler.Support;
+using System;
 
 namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 {
@@ -11,6 +12,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         private readonly SymbolTable _symbolTable;
         private readonly Program _syntaxTree;
         private readonly IErrorReporter _errorReporter;
+        private readonly IEnumerable<string> _userDefinedTypes;
         private bool _errorsFound;
 
         private readonly Stack<IScope> _scopeStack;
@@ -34,10 +36,11 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             _errorReporter = errorReporter;
             _errorsFound = false;
             _syntaxTree = node;
+            _userDefinedTypes = userDefinedTypes;
 
             _symbolTable = new SymbolTable();
 
-            SetupGlobalScope(userDefinedTypes);
+            SetupGlobalScope();
             _scopeStack = new Stack<IScope>();
         }
 
@@ -45,6 +48,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         {
             EnterScope(_symbolTable.GlobalScope);
             _syntaxTree.Accept(this);
+            CheckForCyclicInheritance();
 
             if (_errorsFound)
             {
@@ -53,14 +57,14 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             return _symbolTable;
         }
 
-        private void SetupGlobalScope(IEnumerable<string> userDefinedTypes)
+        private void SetupGlobalScope()
         {
             foreach (var type in MiniJavaInfo.BuiltInTypes())
             {
                 var sym = new BuiltInTypeSymbol(type, _symbolTable.GlobalScope);
                 _symbolTable.GlobalScope.Define(sym);
             }
-            foreach (var type in userDefinedTypes)
+            foreach (var type in _userDefinedTypes)
             {
                 // Note: classes are set up without superclass information because
                 // all class symbols need to be created before superclass relations
@@ -68,6 +72,29 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
                 var sym = new UserDefinedTypeSymbol(type, _symbolTable.GlobalScope);
                 _symbolTable.GlobalScope.Define(sym);
             }
+        }
+
+        private void CheckForCyclicInheritance()
+        {
+            foreach (var typeName in _userDefinedTypes) {
+                UserDefinedTypeSymbol type = (UserDefinedTypeSymbol) _symbolTable.ResolveType(typeName);
+                if (classDependsOnSelf(type))
+                {
+                    // TODO: should get actual row and column numbers here.
+                    ReportError(String.Format("Class {0} depends on itself.", type.Name), 0, 0);
+                }
+            }
+        }
+
+        // http://docs.oracle.com/javase/specs/jls/se7/html/jls-8.html#jls-8.1.4
+        private bool classDependsOnSelf(UserDefinedTypeSymbol classSymbol)
+        {
+            UserDefinedTypeSymbol currentClass = classSymbol;
+            while (currentClass.SuperClass != null && currentClass.SuperClass != classSymbol)
+            {
+                currentClass = currentClass.SuperClass;
+            }
+            return currentClass.SuperClass != null;
         }
 
         public void Visit(Program node)
@@ -83,8 +110,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
                 var inheritedType = (UserDefinedTypeSymbol) CurrentScope.ResolveType(node.InheritedClass);
                 if (inheritedType == null)
                 {
-                    _errorReporter.ReportError("Unknown type '" + node.InheritedClass + "'.", node.Row, node.Col);
-                    _errorsFound = true;
+                    ReportError(String.Format("Unknown type '{0}'.", node.InheritedClass), node.Row, node.Col);
                 }
                 else
                 {
@@ -159,8 +185,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             {
                 // Note: this error is also reported when a void type is encountered
                 // for something other than a method declaration.
-                _errorReporter.ReportError("Unknown type '" + node.Type + "'.", node.Row, node.Col);
-                _errorsFound = true;
+                ReportError(String.Format("Unknown type '{0}'.", node.Type), node.Row, node.Col);
                 return null;
             }
             IType actualType = node.IsArray
@@ -172,7 +197,13 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 
         private void ReportSymbolDefinitionError(Declaration node)
         {
-            _errorReporter.ReportError("Symbol '" + node.Name + "' is already defined.", node.Row, node.Col);
+            string errorMessage = String.Format("Symbol '{0}' is already defined.", node.Name);
+            ReportError(errorMessage, node.Row, node.Col);
+        }
+
+        private void ReportError(string message, int row, int col)
+        {
+            _errorReporter.ReportError(message, row, col);
             _errorsFound = true;
         }
 
