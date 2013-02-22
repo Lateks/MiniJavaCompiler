@@ -1,5 +1,8 @@
 using MiniJavaCompiler.Support.SymbolTable;
 using NUnit.Framework;
+using MiniJavaCompiler.Support.SymbolTable.Symbols;
+using MiniJavaCompiler.Support.SymbolTable.Types;
+using MiniJavaCompiler.Support.SymbolTable.Scopes;
 
 namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
 {
@@ -163,7 +166,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
     class GenericScopeTest
     {
         private GlobalScope _globalScope;
-        private LocalScope _blockScope;
+        private ErrorScope _blockScope;
         private LocalScope _internalBlockScope;
         private IType _someType;
 
@@ -171,7 +174,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
         public void SetUp()
         {
             _globalScope = new GlobalScope();
-            _blockScope = new LocalScope(_globalScope);
+            _blockScope = new ErrorScope(_globalScope);
             _internalBlockScope = new LocalScope(_blockScope);
             _someType = new BuiltInTypeSymbol("int", _globalScope);
         }

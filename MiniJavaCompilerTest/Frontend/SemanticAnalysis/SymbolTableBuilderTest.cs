@@ -6,6 +6,8 @@ using MiniJavaCompiler.Frontend.SyntaxAnalysis;
 using MiniJavaCompiler.Support;
 using MiniJavaCompiler.Support.AbstractSyntaxTree;
 using MiniJavaCompiler.Support.SymbolTable;
+using MiniJavaCompiler.Support.SymbolTable.Symbols;
+using MiniJavaCompiler.Support.SymbolTable.Types;
 using NUnit.Framework;
 
 namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis

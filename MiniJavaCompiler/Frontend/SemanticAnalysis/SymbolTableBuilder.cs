@@ -3,6 +3,9 @@ using System.Diagnostics;
 using MiniJavaCompiler.Support.AbstractSyntaxTree;
 using MiniJavaCompiler.Support.SymbolTable;
 using MiniJavaCompiler.Support;
+using MiniJavaCompiler.Support.SymbolTable.Scopes;
+using MiniJavaCompiler.Support.SymbolTable.Types;
+using MiniJavaCompiler.Support.SymbolTable.Symbols;
 using System;
 
 namespace MiniJavaCompiler.Frontend.SemanticAnalysis
@@ -167,8 +170,8 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             if (!methodScope.Define(methodSymbol))
             {
                 ReportSymbolDefinitionError(node);
-                var recoveryScope = new LocalScope(CurrentScope); // Make a local scope to stand in for the method scope for purposes of recovery.
-                EnterScope(recoveryScope);                        // (Both are IVariableScopes. Note: normally a class does not hold local (block) scopes.)
+                var recoveryScope = new ErrorScope(CurrentScope); // Make an error scope to stand in for the method scope for purposes of recovery.
+                EnterScope(recoveryScope);                        // (Both are IVariableScopes.)
                 return;
             }
 
@@ -214,7 +217,8 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 
         public void Visit(BlockStatement node)
         {
-            var blockScope = new LocalScope(CurrentScope);
+            Debug.Assert(CurrentScope is IVariableScope);
+            var blockScope = new LocalScope((IVariableScope) CurrentScope);
             _symbolTable.Scopes.Add(node, blockScope);
             EnterScope(blockScope);
         }

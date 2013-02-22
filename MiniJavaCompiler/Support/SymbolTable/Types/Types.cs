@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
+using MiniJavaCompiler.Support.SymbolTable.Symbols;
 
-namespace MiniJavaCompiler.Support.SymbolTable
+namespace MiniJavaCompiler.Support.SymbolTable.Types
 {
     public interface IType
     {

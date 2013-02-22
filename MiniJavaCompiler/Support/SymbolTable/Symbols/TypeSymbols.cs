@@ -1,29 +1,13 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using MiniJavaCompiler.Support.SymbolTable.Types;
+using MiniJavaCompiler.Support.SymbolTable.Scopes;
 
-namespace MiniJavaCompiler.Support.SymbolTable
+namespace MiniJavaCompiler.Support.SymbolTable.Symbols
 {
-    // This class provides the base information for all symbol classes.
-    public abstract class Symbol
-    {
-        public string Name { get; private set; }
-        public IType Type { get; private set; }
-        public IScope Scope { get; private set; }
-
-        protected Symbol(string name, IType type, IScope scope)
-        {
-            Name = name;
-            Type = type;
-            Scope = scope;
-        }
-    }
-
-    public class VariableSymbol : Symbol
-    {
-        public VariableSymbol(string name, IType type, IScope enclosingScope)
-            : base(name, type, enclosingScope) { }
-    }
-
+    // Represents "simple" types (not collections, ie. arrays).
     public abstract class SimpleTypeSymbol : Symbol, IType
     {
         protected SimpleTypeSymbol(string name, IType type, IScope enclosingScope) : base(name, type, enclosingScope) { }
@@ -45,17 +29,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
         }
     }
 
-    public class MethodSymbol : Symbol
-    {
-        public bool IsStatic { get; private set; }
-
-        public MethodSymbol(string name, IType returnType, IMethodScope enclosingScope, bool isStatic = false)
-            : base(name, returnType, new MethodBodyScope(enclosingScope))
-        {
-            IsStatic = isStatic;
-        }
-    }
-
+    // Used for user defined types (classes).
     public class UserDefinedTypeSymbol : SimpleTypeSymbol
     {
         private UserDefinedTypeSymbol _superClass;

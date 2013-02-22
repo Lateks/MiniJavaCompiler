@@ -5,6 +5,8 @@ using System.Linq;
 using MiniJavaCompiler.Support;
 using MiniJavaCompiler.Support.AbstractSyntaxTree;
 using MiniJavaCompiler.Support.SymbolTable;
+using MiniJavaCompiler.Support.SymbolTable.Types;
+using MiniJavaCompiler.Support.SymbolTable.Symbols;
 
 namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 {
