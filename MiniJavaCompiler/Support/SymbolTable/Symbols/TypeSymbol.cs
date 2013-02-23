@@ -29,14 +29,9 @@ namespace MiniJavaCompiler.Support.SymbolTable.Symbols
                 if (_superClass != null)
                 {
                     ((ClassScope)Scope).SuperClassScope = (ClassScope)_superClass.Scope;
-                    switch (Kind)
+                    if (Kind == TypeSymbolKind.Scalar)
                     {
-                        case TypeSymbolKind.Array:
-                            ((ArrayType)Type).SuperType = (ArrayType)_superClass.Type;
-                            break;
-                        case TypeSymbolKind.Scalar:
-                            ((ScalarType)Type).SuperType = (ScalarType)_superClass.Type;
-                            break;
+                        ((ScalarType)Type).SuperType = (ScalarType)_superClass.Type;
                     }
                 }
             }

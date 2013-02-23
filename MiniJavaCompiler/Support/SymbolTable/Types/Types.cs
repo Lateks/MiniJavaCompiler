@@ -73,7 +73,6 @@ namespace MiniJavaCompiler.Support.SymbolTable.Types
     public class ArrayType : IType
     {
         public ScalarType ElementType { get; private set; }
-        public ArrayType SuperType { get; set; }
         public string Name { get; private set; }
 
         public ArrayType(ScalarType elementType)
