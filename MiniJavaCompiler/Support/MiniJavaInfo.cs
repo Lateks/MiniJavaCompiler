@@ -54,7 +54,7 @@ namespace MiniJavaCompiler.Support
                     { "&&", new BuiltInOperator { OperandType = BoolType, ResultType = BoolType } },
                     { "||", new BuiltInOperator { OperandType = BoolType, ResultType = BoolType } },
                     { "==", new BuiltInOperator { OperandType = AnyType, ResultType = BoolType } } // '==' is defined for any type, including user defined types
-                                                                                                   // (in which case it tests reference equality).
+                                                                                                   // and arrays (in which case it tests reference equality).
                 };
 
         public static bool IsBuiltInType(string typeName)

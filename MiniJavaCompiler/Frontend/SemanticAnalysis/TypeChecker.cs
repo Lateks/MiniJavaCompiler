@@ -177,7 +177,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             ValidateMethodCall(method, node); // This pops out possible parameters for the method invocation
                                               // even if the method could not be resolved.
 
-            // Push expected return type, can be void.
+            // Push expected return type, may be void.
             _operandTypes.Push(method == null ? ErrorType.GetInstance() : method.Type);
         }
 
@@ -348,7 +348,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             // Start by flattening block statements.
             var flattenedStatementsInBlock = FlattenStatementList(statementsInBlock);
             var returnIdx = flattenedStatementsInBlock.FindIndex((statement) => statement is ReturnStatement);
-            if (returnIdx >= 0)
+            if (returnIdx >= 0) // Return statement found.
             {
                 return true;
             }
@@ -391,12 +391,16 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             {   // If there are no block statements, there is nothing to flatten.
                 return statementList;
             }
-            // Convert each block statement into a list of statements and wrap individual
-            // statements into lists to be able to concatenate them.
-            var wrappedStatements = statementList.Select(elem => elem is BlockStatement
-                ? FlattenStatementList((elem as BlockStatement).Statements)
-                : new List<IStatement>() { elem });
-            return wrappedStatements.SelectMany(elem => elem).ToList(); // Concatenate lists.
+            return statementList.SelectMany(elem => FlattenStatement(elem)).ToList();
+        }
+
+        private List<IStatement> FlattenStatement(IStatement statement)
+        {
+            if (statement is BlockStatement)
+            {
+                return FlattenStatementList((statement as BlockStatement).Statements);
+            }
+            return new List<IStatement>() { statement };
         }
 
         private void RequireSingleBooleanArgument(SyntaxElement node)
