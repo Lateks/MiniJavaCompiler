@@ -36,7 +36,6 @@ namespace MiniJavaCompiler.Support.SymbolTable.Types
     {
         public string Name { get; private set; }
         public ScalarType SuperType { get; set; }
-        public TypeSymbol Symbol { get; set; }
 
         public ScalarType(string name)
         {
