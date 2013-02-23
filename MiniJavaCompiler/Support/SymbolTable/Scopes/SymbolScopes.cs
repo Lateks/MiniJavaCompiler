@@ -19,7 +19,7 @@ namespace MiniJavaCompiler.Support.SymbolTable.Scopes
     public class ClassScope : ScopeBase, IVariableScope, IMethodScope
     {
         public ClassScope SuperClassScope { get; set; }
-        public UserDefinedTypeSymbol Symbol { get; set; }
+        public TypeSymbol Symbol { get; set; }
 
         public ClassScope(ITypeScope enclosingScope) : base(enclosingScope) { }
 

@@ -22,17 +22,17 @@ namespace MiniJavaCompiler.Support.SymbolTable
 
         public IType ResolveType(string typeName, bool array = false)
         {   // In Mini-Java types are always defined in the global scope.
-            var simpleType = (SimpleTypeSymbol) GlobalScope.ResolveType(typeName);
-            if (simpleType == null)
+            var scalarType = GlobalScope.ResolveType(typeName);
+            if (scalarType == null)
             {
                 return null;
             }
-            return array ? MiniJavaArrayType.OfType(simpleType) : (IType) simpleType;
+            return array ? MiniJavaArrayType.OfType(scalarType) : (IType) scalarType;
         }
 
         // TODO: fix this so this method is no longer needed
         // (or the symbol property in the scope, probably)
-        public UserDefinedTypeSymbol ResolveSurroundingClass(ISyntaxTreeNode node)
+        public TypeSymbol ResolveSurroundingClass(ISyntaxTreeNode node)
         {
             if (!Scopes.ContainsKey(node))
             {

@@ -8,9 +8,9 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
 {
     internal static class SymbolCreationHelper
     {
-        internal static UserDefinedTypeSymbol CreateAndDefineClass(string name, ITypeScope scope)
+        internal static TypeSymbol CreateAndDefineClass(string name, ITypeScope scope)
         {
-            var sym = new UserDefinedTypeSymbol(name, scope);
+            var sym = new TypeSymbol(name, scope, TypeSymbolKind.Scalar);
             scope.Define(sym);
             return sym;
         }
@@ -35,9 +35,9 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
     class ClassScopeTest
     {
         private GlobalScope _globalScope;
-        private UserDefinedTypeSymbol _testClass;
-        private UserDefinedTypeSymbol _superClass;
-        private UserDefinedTypeSymbol _superSuperClass;
+        private TypeSymbol _testClass;
+        private TypeSymbol _superClass;
+        private TypeSymbol _superSuperClass;
         private IType _someType;
 
         [SetUp]
@@ -49,7 +49,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
             _superClass.SuperClass = _superSuperClass;
             _testClass = SymbolCreationHelper.CreateAndDefineClass("Baz", _globalScope);
             _testClass.SuperClass = _superClass;
-            _someType = new BuiltInTypeSymbol("int", _globalScope);
+            _someType = new TypeSymbol("int", _globalScope, TypeSymbolKind.Scalar);
         }
 
         [Test]
@@ -124,9 +124,10 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
         {
             _globalScope = new GlobalScope();
             _testClassScope = SymbolCreationHelper.CreateAndDefineClass("Foo", _globalScope).Scope;
+            _someType = new TypeSymbol("int", _globalScope, TypeSymbolKind.Scalar);
             _testMethodScope = SymbolCreationHelper.CreateAndDefineMethod(
-                "foo", new BuiltInTypeSymbol("int", _globalScope), (IMethodScope)_testClassScope).Scope;
-            _someType = new BuiltInTypeSymbol("int", _globalScope);
+                "foo", _someType, (IMethodScope)_testClassScope)
+                .Scope;
         }
 
         [Test]
@@ -176,7 +177,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
             _globalScope = new GlobalScope();
             _blockScope = new ErrorScope(_globalScope);
             _internalBlockScope = new LocalScope(_blockScope);
-            _someType = new BuiltInTypeSymbol("int", _globalScope);
+            _someType = new TypeSymbol("int", _globalScope, TypeSymbolKind.Scalar);
         }
 
         [Test]
@@ -197,8 +198,8 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
         [Test]
         public void CannotRedefineNames()
         {
-            _globalScope.Define(new UserDefinedTypeSymbol("foo", _globalScope));
-            Assert.False(_globalScope.Define(new UserDefinedTypeSymbol("foo", _globalScope)));
+            _globalScope.Define(new TypeSymbol("foo", _globalScope, TypeSymbolKind.Scalar));
+            Assert.False(_globalScope.Define(new TypeSymbol("foo", _globalScope, TypeSymbolKind.Scalar)));
         }
     }
 }

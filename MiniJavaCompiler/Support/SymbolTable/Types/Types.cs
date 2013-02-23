@@ -34,18 +34,18 @@ namespace MiniJavaCompiler.Support.SymbolTable.Types
 
     public class MiniJavaArrayType : IType
     {
-        public SimpleTypeSymbol ElementType { get; private set; }
+        public TypeSymbol ElementType { get; private set; }
         public string Name { get; protected set; }
-        private static readonly Dictionary<SimpleTypeSymbol, MiniJavaArrayType> ArrayTypes =
-            new Dictionary<SimpleTypeSymbol, MiniJavaArrayType>();
+        private static readonly Dictionary<TypeSymbol, MiniJavaArrayType> ArrayTypes =
+            new Dictionary<TypeSymbol, MiniJavaArrayType>();
 
-        private MiniJavaArrayType(SimpleTypeSymbol elementType)
+        private MiniJavaArrayType(TypeSymbol elementType)
         {
             Name = String.Format("{0}[]", elementType.Name);
             ElementType = elementType;
         }
 
-        public static MiniJavaArrayType OfType(SimpleTypeSymbol elementType)
+        public static MiniJavaArrayType OfType(TypeSymbol elementType)
         {
             if (ArrayTypes.ContainsKey(elementType))
             {

@@ -7,34 +7,18 @@ using MiniJavaCompiler.Support.SymbolTable.Scopes;
 
 namespace MiniJavaCompiler.Support.SymbolTable.Symbols
 {
-    // Represents "simple" types (not collections, ie. arrays).
-    public abstract class SimpleTypeSymbol : Symbol, IType
+    public enum TypeSymbolKind
     {
-        protected SimpleTypeSymbol(string name, IType type, IScope enclosingScope) : base(name, type, enclosingScope) { }
-        public abstract bool IsAssignableTo(IType other);
+        Scalar,
+        Array
     }
 
-    public class BuiltInTypeSymbol : SimpleTypeSymbol
+    public class TypeSymbol : Symbol, IType
     {
-        public BuiltInTypeSymbol(string name, IScope enclosingScope)
-            : base(name, null, enclosingScope) { }
+        public TypeSymbolKind Kind { get; private set; }
+        private TypeSymbol _superClass;
 
-        public override bool IsAssignableTo(IType other)
-        {
-            if (other == ErrorType.GetInstance())
-            {
-                return true;
-            }
-            return Equals(other);
-        }
-    }
-
-    // Used for user defined types (classes).
-    public class UserDefinedTypeSymbol : SimpleTypeSymbol
-    {
-        private UserDefinedTypeSymbol _superClass;
-
-        public UserDefinedTypeSymbol SuperClass
+        public TypeSymbol SuperClass
         {
             get { return _superClass; }
             set
@@ -47,27 +31,24 @@ namespace MiniJavaCompiler.Support.SymbolTable.Symbols
             }
         }
 
-        public UserDefinedTypeSymbol(string name, ITypeScope enclosingScope)
+        public TypeSymbol(string name, ITypeScope enclosingScope, TypeSymbolKind kind)
             : base(name, null, new ClassScope(enclosingScope))
         {
             SuperClass = null;
+            Kind = kind;
             ((ClassScope)Scope).Symbol = this;
         }
 
-        public override bool IsAssignableTo(IType other)
+        public bool IsAssignableTo(IType other)
         {
-            if (other == ErrorType.GetInstance())
+            if (other == ErrorType.GetInstance() || this == other)
             {
                 return true;
             }
-            if (other is BuiltInTypeSymbol)
-            {
-                return false;
-            }
-            return IsDerivedFrom(other as UserDefinedTypeSymbol);
+            return IsDerivedFrom(other as TypeSymbol);
         }
 
-        private bool IsDerivedFrom(UserDefinedTypeSymbol other)
+        private bool IsDerivedFrom(TypeSymbol other)
         {
             if (other == null)
             {

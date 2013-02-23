@@ -9,7 +9,7 @@ namespace MiniJavaCompiler.Support.SymbolTable.Scopes
     {
         MethodSymbol ResolveMethod(string name);
         VariableSymbol ResolveVariable(string name);
-        SimpleTypeSymbol ResolveType(string name);
+        TypeSymbol ResolveType(string name);
         IScope EnclosingScope { get; }
     }
 
@@ -30,6 +30,6 @@ namespace MiniJavaCompiler.Support.SymbolTable.Scopes
 
     public interface ITypeScope : IScope
     {
-        bool Define(SimpleTypeSymbol sym);
+        bool Define(TypeSymbol sym);
     }
 }

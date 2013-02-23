@@ -64,7 +64,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         {
             foreach (var type in MiniJavaInfo.BuiltInTypes())
             {
-                var sym = new BuiltInTypeSymbol(type, _symbolTable.GlobalScope);
+                var sym = new TypeSymbol(type, _symbolTable.GlobalScope, TypeSymbolKind.Scalar);
                 _symbolTable.GlobalScope.Define(sym);
             }
             foreach (var type in _userDefinedTypes)
@@ -72,7 +72,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
                 // Note: classes are set up without superclass information because
                 // all class symbols need to be created before superclass relations
                 // can be set.
-                var sym = new UserDefinedTypeSymbol(type, _symbolTable.GlobalScope);
+                var sym = new TypeSymbol(type, _symbolTable.GlobalScope, TypeSymbolKind.Scalar);
                 _symbolTable.GlobalScope.Define(sym);
             }
         }
@@ -80,7 +80,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         private void CheckForCyclicInheritance()
         {
             foreach (var typeName in _userDefinedTypes) {
-                UserDefinedTypeSymbol type = (UserDefinedTypeSymbol) _symbolTable.ResolveType(typeName);
+                TypeSymbol type = (TypeSymbol) _symbolTable.ResolveType(typeName);
                 if (classDependsOnSelf(type))
                 {
                     // TODO: should get actual row and column numbers here.
@@ -90,9 +90,9 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         }
 
         // http://docs.oracle.com/javase/specs/jls/se7/html/jls-8.html#jls-8.1.4
-        private bool classDependsOnSelf(UserDefinedTypeSymbol classSymbol)
+        private bool classDependsOnSelf(TypeSymbol classSymbol)
         {
-            UserDefinedTypeSymbol currentClass = classSymbol;
+            TypeSymbol currentClass = classSymbol;
             while (currentClass.SuperClass != null && currentClass.SuperClass != classSymbol)
             {
                 currentClass = currentClass.SuperClass;
@@ -107,10 +107,10 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 
         public void Visit(ClassDeclaration node)
         {   // Resolve inheritance relationships.
-            var typeSymbol = (UserDefinedTypeSymbol) CurrentScope.ResolveType(node.Name);
+            var typeSymbol = (TypeSymbol) CurrentScope.ResolveType(node.Name);
             if (node.InheritedClass != null)
             {
-                var inheritedType = (UserDefinedTypeSymbol) CurrentScope.ResolveType(node.InheritedClass);
+                var inheritedType = (TypeSymbol) CurrentScope.ResolveType(node.InheritedClass);
                 if (inheritedType == null)
                 {
                     ReportError(String.Format("Unknown type '{0}'.", node.InheritedClass), node.Row, node.Col);

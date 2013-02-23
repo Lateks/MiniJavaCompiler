@@ -88,7 +88,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         {   // Argument must be an integer.
             var type = _operandTypes.Pop();
             if (type is ErrorType) return; // Type errors are never checked in recovery.
-            if (!(type is BuiltInTypeSymbol && type.Name == MiniJavaInfo.IntType))
+            if (type.Name != MiniJavaInfo.IntType)
             {
                 ReportError(String.Format("Cannot print expression of type {0}.", type.Name), node);
             }
@@ -145,10 +145,18 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             // for such a method call - and there are no other static methods
             // - so implementing it would have been pointless.
             var methodOwnerType = _operandTypes.Pop();
-            if (methodOwnerType is MiniJavaArrayType && MiniJavaArrayType.IsPredefinedArrayMethod(node.MethodName))
+            if (methodOwnerType is MiniJavaArrayType)
             {
-                _operandTypes.Push(_symbolTable.ResolveType(MiniJavaInfo.IntType));
-                return; // No arguments, so method call does not require further validation.
+                if (MiniJavaArrayType.IsPredefinedArrayMethod(node.MethodName))
+                {
+                    _operandTypes.Push(_symbolTable.ResolveType(MiniJavaInfo.IntType));
+                    return; // No arguments, so method call does not require further validation.
+                }
+                else
+                {
+                    ReportError(String.Format("Cannot call method {0} for an array.",
+                        node.MethodName), node);
+                }
             }
 
             MethodSymbol method = null;
@@ -156,22 +164,17 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             {   // Method called is defined by the enclosing class or its superclasses.
                 method = _symbolTable.Scopes[node].ResolveMethod(node.MethodName);
             }
-            else if (methodOwnerType is MiniJavaArrayType)
-            {
-                ReportError(String.Format("Cannot call method {0} for an array.",
-                    node.MethodName), node);
-            }
-            else if (methodOwnerType is BuiltInTypeSymbol || methodOwnerType == VoidType.GetInstance())
+            else if (methodOwnerType == VoidType.GetInstance())
             {
                 ReportError(String.Format("Cannot call a method on type {0}.", methodOwnerType.Name), node);
             }
-            else if (methodOwnerType is UserDefinedTypeSymbol)
-            {
-                var enclosingClass = (UserDefinedTypeSymbol) methodOwnerType;
+            else if (methodOwnerType is TypeSymbol)
+            { // TODO: wat?
+                var enclosingClass = (TypeSymbol) methodOwnerType;
                 method = enclosingClass.Scope.ResolveMethod(node.MethodName);
             } // Note: ErrorType is not even checked.
 
-            ValidateMethodCall(method, node); // Pops out possible parameters for the method invocation
+            ValidateMethodCall(method, node); // This pops out possible parameters for the method invocation
                                               // even if the method could not be resolved.
 
             // Push expected return type, can be void.
@@ -373,7 +376,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         {
             var argType = _operandTypes.Pop();
             if (argType == ErrorType.GetInstance()) return;
-            if (!(argType is BuiltInTypeSymbol && argType.Name == MiniJavaInfo.BoolType))
+            if (argType.Name != MiniJavaInfo.BoolType)
             {
                 ReportError(String.Format("Cannot convert expression of type {0} to boolean.",
                     argType.Name), node);
@@ -446,7 +449,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 
         private bool VariableDeclaredBeforeReference(VariableSymbol varSymbol, VariableReferenceExpression reference)
         {
-            if (varSymbol.Scope is UserDefinedTypeSymbol)
+            if (varSymbol.Scope is TypeSymbol)
             {   // Variables defined on the class level are visible
                 // in all scopes internal to the class.
                 return true;

@@ -8,7 +8,7 @@ namespace MiniJavaCompiler.Support.SymbolTable.Scopes
     // This class defines the base functionality for all scopes.
     public abstract class ScopeBase : IScope
     {
-        protected readonly Dictionary<string, SimpleTypeSymbol> _typeTable;
+        protected readonly Dictionary<string, TypeSymbol> _typeTable;
         protected readonly Dictionary<string, MethodSymbol> _methodTable;
         protected readonly Dictionary<string, VariableSymbol> _variableTable;
 
@@ -22,7 +22,7 @@ namespace MiniJavaCompiler.Support.SymbolTable.Scopes
 
         protected ScopeBase(IScope enclosingScope)
         {
-            _typeTable = new Dictionary<string, SimpleTypeSymbol>();
+            _typeTable = new Dictionary<string, TypeSymbol>();
             _methodTable = new Dictionary<string, MethodSymbol>();
             _variableTable = new Dictionary<string, VariableSymbol>();
             EnclosingScope = enclosingScope;
@@ -38,9 +38,9 @@ namespace MiniJavaCompiler.Support.SymbolTable.Scopes
             return DefineSymbolIn<MethodSymbol>(sym, _methodTable);
         }
 
-        protected bool Define(SimpleTypeSymbol sym)
+        protected bool Define(TypeSymbol sym)
         {
-            return DefineSymbolIn<SimpleTypeSymbol>(sym, _typeTable);
+            return DefineSymbolIn<TypeSymbol>(sym, _typeTable);
         }
 
         private bool DefineSymbolIn<T>(T sym, Dictionary<string, T> lookupTable)
@@ -72,7 +72,7 @@ namespace MiniJavaCompiler.Support.SymbolTable.Scopes
             return EnclosingScope == null ? null : EnclosingScope.ResolveVariable(name);
         }
 
-        public virtual SimpleTypeSymbol ResolveType(string name)
+        public virtual TypeSymbol ResolveType(string name)
         {
             if (_typeTable.ContainsKey(name))
             {

@@ -13,8 +13,10 @@ namespace MiniJavaCompiler.Support.SymbolTable.Symbols
             : base(name, type, enclosingScope) { }
     }
 
+    // TODO: should this contain information on the parameter list?
     public class MethodSymbol : Symbol
     {
+        // Note: only the main method is static in MiniJava.
         public bool IsStatic { get; private set; }
 
         public MethodSymbol(string name, IType returnType, IMethodScope enclosingScope, bool isStatic = false)
