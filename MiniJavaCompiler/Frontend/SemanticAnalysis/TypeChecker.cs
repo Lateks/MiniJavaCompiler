@@ -149,7 +149,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             {
                 if (ArrayType.IsPredefinedArrayMethod(node.MethodName))
                 {
-                    _operandTypes.Push(_symbolTable.ResolveType(MiniJavaInfo.IntType));
+                    _operandTypes.Push(_symbolTable.ResolveTypeName(MiniJavaInfo.IntType).Type);
                     return; // No arguments, so method call does not require further validation.
                 }
                 else
@@ -183,34 +183,51 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 
         public void Visit(InstanceCreationExpression node)
         {
-            var createdType = _symbolTable.ResolveType(node.Type, node.IsArrayCreation);
-            if (createdType == null)
+            IType createdType = CheckCreatedType(node);
+            CheckArraySizeType(node);
+            _operandTypes.Push(createdType ?? ErrorType.GetInstance());
+        }
+
+        private IType CheckCreatedType(InstanceCreationExpression node)
+        {
+            var createdTypeSymbol = _symbolTable.ResolveTypeName(node.Type, node.IsArrayCreation);
+            IType createdType;
+            if (createdTypeSymbol == null)
             {
                 _errors.ReportError(String.Format("Cannot resolve symbol {0}.",
                     node.Type), node.Row, node.Col);
+                createdType = null;
             }
+            else
+            {
+                createdType = createdTypeSymbol.Type;
+            }
+            return createdType;
+        }
+
+        private void CheckArraySizeType(InstanceCreationExpression node)
+        {
             if (node.IsArrayCreation)
             {   // Check that the array size expression is valid.
                 var arraySizeType = _operandTypes.Pop();
-                if (!arraySizeType.IsAssignableTo(_symbolTable.ResolveType(MiniJavaInfo.IntType)))
+                if (!arraySizeType.IsAssignableTo(_symbolTable.ResolveTypeName(MiniJavaInfo.IntType).Type))
                 {
                     ReportError("Array size must be numeric.", node);
                 }
             }
-            _operandTypes.Push(createdType ?? ErrorType.GetInstance());
         }
 
         public void Visit(UnaryOperatorExpression node)
         {
             var op = MiniJavaInfo.GetOperator(node.Operator);
-            var expectedArgType = _symbolTable.ResolveType(op.OperandType);
+            var expectedArgType = _symbolTable.ResolveTypeName(op.OperandType).Type;
             var actualArgType = _operandTypes.Pop();
             if (!actualArgType.IsAssignableTo(expectedArgType))
             {
                 ReportError(String.Format("Cannot apply operator {0} on operand of type {1}.",
                     node.Operator, actualArgType.Name), node);
             }
-            _operandTypes.Push(_symbolTable.ResolveType(op.ResultType));
+            _operandTypes.Push(_symbolTable.ResolveTypeName(op.ResultType).Type);
         }
 
         public void Visit(BinaryOperatorExpression node)
@@ -226,12 +243,12 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             {
                 CheckBinaryOperatorOperands(node, leftOperandType, rightOperandType);
             }
-            _operandTypes.Push(_symbolTable.ResolveType(op.ResultType));
+            _operandTypes.Push(_symbolTable.ResolveTypeName(op.ResultType).Type);
         }
 
         public void Visit(BooleanLiteralExpression node)
         {
-            _operandTypes.Push(_symbolTable.ResolveType(MiniJavaInfo.BoolType));
+            _operandTypes.Push(_symbolTable.ResolveTypeName(MiniJavaInfo.BoolType).Type);
         }
 
         public void Visit(ThisExpression node)
@@ -248,7 +265,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
                 ReportError(String.Format("Cannot index into expression of type {0}.", arrayType.Name), node);
             }
             var indexType = _operandTypes.Pop();
-            if (!indexType.IsAssignableTo(_symbolTable.ResolveType(MiniJavaInfo.IntType)))
+            if (!indexType.IsAssignableTo(_symbolTable.ResolveTypeName(MiniJavaInfo.IntType).Type))
             {   // Array must be indexed with an expression that evaluates into an int value.
                 ReportError("Invalid array index.", node);
             }
@@ -280,7 +297,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
                 ReportError(String.Format("Cannot fit integer literal {0} into a 32-bit integer variable.",
                     node.Value), node);
             }
-            _operandTypes.Push(_symbolTable.ResolveType(MiniJavaInfo.IntType));
+            _operandTypes.Push(_symbolTable.ResolveTypeName(MiniJavaInfo.IntType).Type);
         }
 
         public void Exit(ClassDeclaration node) { }
@@ -441,7 +458,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             foreach (var formalParameter in methodDecl.Formals)
             {
                 var callParamType = callParams.Pop();
-                var formalParamType = _symbolTable.ResolveType(formalParameter.Type, formalParameter.IsArray);
+                var formalParamType = _symbolTable.ResolveTypeName(formalParameter.Type, formalParameter.IsArray).Type;
                 if (!callParamType.IsAssignableTo(formalParamType))
                 {
                     ReportError(String.Format(
@@ -475,8 +492,8 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         // Allows covariance.
         private bool SuperClassMethodHasADifferentReturnType(MethodDeclaration method, MethodDeclaration superClassMethod)
         {
-            var returnType = _symbolTable.ResolveType(method.Type, method.IsArray);
-            var superClassMethodReturnType = _symbolTable.ResolveType(superClassMethod.Type, superClassMethod.IsArray);
+            var returnType = _symbolTable.ResolveTypeName(method.Type, method.IsArray).Type;
+            var superClassMethodReturnType = _symbolTable.ResolveTypeName(superClassMethod.Type, superClassMethod.IsArray).Type;
             return !returnType.IsAssignableTo(superClassMethodReturnType);
         }
 
@@ -489,8 +506,8 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             bool formalsEqual = true;
             for (int i = 0; i < method.Formals.Count && formalsEqual; i++)
             {
-                var methodFormal = _symbolTable.ResolveType(method.Formals[i].Type, method.Formals[i].IsArray);
-                var superFormal = _symbolTable.ResolveType(superClassMethod.Formals[i].Type, superClassMethod.Formals[i].IsArray);
+                var methodFormal = _symbolTable.ResolveTypeName(method.Formals[i].Type, method.Formals[i].IsArray);
+                var superFormal = _symbolTable.ResolveTypeName(superClassMethod.Formals[i].Type, superClassMethod.Formals[i].IsArray);
                 formalsEqual = methodFormal.Equals(superFormal);
             }
             return !formalsEqual;
@@ -499,7 +516,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         private void CheckBinaryOperatorOperands(BinaryOperatorExpression node, IType left, IType right)
         {
             var op = MiniJavaInfo.GetOperator(node.Operator);
-            var expected = _symbolTable.ResolveType(op.OperandType);
+            var expected = _symbolTable.ResolveTypeName(op.OperandType).Type;
             if (left.IsAssignableTo(expected) && right.IsAssignableTo(expected))
             {
                 return;

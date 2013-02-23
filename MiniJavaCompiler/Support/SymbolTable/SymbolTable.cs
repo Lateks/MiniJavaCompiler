@@ -20,7 +20,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
             Definitions = new Dictionary<Symbol, ISyntaxTreeNode>();
         }
 
-        public IType ResolveType(string typeName, bool makeArray = false)
+        public TypeSymbol ResolveTypeName(string typeName, bool makeArray = false)
         {   // In Mini-Java types are always defined in the global scope.
             if (makeArray)
             {
@@ -31,7 +31,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
             {
                 return null;
             }
-            return typeSymbol.Type;
+            return typeSymbol;
         }
 
         // TODO: fix this so this method is no longer needed

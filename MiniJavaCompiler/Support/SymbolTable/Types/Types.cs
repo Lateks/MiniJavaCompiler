@@ -87,9 +87,10 @@ namespace MiniJavaCompiler.Support.SymbolTable.Types
             {
                 return true;
             }
-            return (other is ArrayType && (other as ArrayType).ElementType == this.ElementType);
+            return this.Equals(other);
         }
 
+        // TODO: use scopes for this (like with other methods).
         public static bool IsPredefinedArrayMethod(string name)
         {
             return name == "length";

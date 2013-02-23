@@ -16,9 +16,8 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         private readonly Program _syntaxTree;
         private readonly IErrorReporter _errorReporter;
         private readonly IEnumerable<string> _typeNames;
-        private bool _errorsFound;
-
         private readonly Stack<IScope> _scopeStack;
+
         private IScope CurrentScope
         {
             get { return _scopeStack.Peek(); }
@@ -37,7 +36,6 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         public SymbolTableBuilder(Program node, IEnumerable<string> typeNames, IErrorReporter errorReporter)
         {
             _errorReporter = errorReporter;
-            _errorsFound = false;
             _syntaxTree = node;
             _typeNames = typeNames;
 
@@ -91,11 +89,11 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         {
             bool cyclicInheritanceFound = false;
             foreach (var typeName in _typeNames) {
-                var type = (ScalarType) _symbolTable.ResolveType(typeName);
-                if (classDependsOnSelf(type))
+                var typeSymbol = _symbolTable.ResolveTypeName(typeName);
+                if (classDependsOnSelf((ScalarType)typeSymbol.Type))
                 {
-                    // TODO: should get actual row and column numbers here.
-                    ReportError(String.Format("Class {0} depends on itself.", type.Name), 0, 0);
+                    var node = (SyntaxElement) _symbolTable.Definitions[typeSymbol];
+                    ReportError(String.Format("Class {0} depends on itself.", typeSymbol.Type.Name), node.Row, node.Col);
                     cyclicInheritanceFound = true;
                 }
             }
@@ -195,15 +193,15 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 
         private IType CheckDeclaredType(Declaration node)
         {
-            var nodeScalarType = (ScalarType) _symbolTable.ResolveType(node.Type);
-            if (nodeScalarType == null)
+            var nodeScalarTypeSymbol = _symbolTable.ResolveTypeName(node.Type);
+            if (nodeScalarTypeSymbol == null)
             {
                 // Note: this error is also reported when a void type is encountered
                 // for something other than a method declaration.
                 ReportError(String.Format("Unknown type '{0}'.", node.Type), node.Row, node.Col);
                 return ErrorType.GetInstance();
             }
-            return BuildType(node, nodeScalarType);
+            return BuildType(node, (ScalarType) nodeScalarTypeSymbol.Type);
         }
 
         private IType BuildType(Declaration node, ScalarType nodeScalarType)
@@ -211,10 +209,14 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             IType actualType;
             if (node.IsArray)
             {
-                actualType = _symbolTable.ResolveType(node.Type, node.IsArray);
-                if (actualType == null)
+                var arraySymbol = _symbolTable.ResolveTypeName(node.Type, node.IsArray);
+                if (arraySymbol == null)
                 {
                     actualType = DefineArrayType(nodeScalarType);
+                }
+                else
+                {
+                    actualType = arraySymbol.Type;
                 }
             }
             else
@@ -233,14 +235,14 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 
         public void Visit(InstanceCreationExpression node)
         {
-            var scalarType = (ScalarType) _symbolTable.ResolveType(node.Type);
-            if (scalarType == null)
+            var scalarTypeSymbol = _symbolTable.ResolveTypeName(node.Type);
+            if (scalarTypeSymbol == null)
             {
                 ReportError(String.Format("Unknown type '{0}'.", node.Type), node.Row, node.Col);
             }
-            else if (node.IsArrayCreation && _symbolTable.ResolveType(node.Type, node.IsArrayCreation) == null)
+            else if (node.IsArrayCreation && _symbolTable.ResolveTypeName(node.Type, node.IsArrayCreation) == null)
             {
-                DefineArrayType(scalarType);
+                DefineArrayType((ScalarType) scalarTypeSymbol.Type);
             }
             HandleExpressionOrStatementNode(node);
         }
@@ -254,7 +256,6 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         private void ReportError(string message, int row, int col)
         {
             _errorReporter.ReportError(message, row, col);
-            _errorsFound = true;
         }
 
         public void Exit(MethodDeclaration node)
