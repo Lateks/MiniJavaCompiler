@@ -270,20 +270,20 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
             var FacClassScope = (TypeSymbol) secondClass;
             var facMethod = FacClassScope.Scope.ResolveMethod("ComputeFac");
             Assert.That(facMethod, Is.Not.Null);
-            Assert.That(facMethod.Type, Is.InstanceOf<TypeSymbol>());
+            Assert.That(facMethod.Type, Is.InstanceOf<ScalarType>());
             Assert.That(facMethod.Type.Name, Is.EqualTo("int"));
 
             var numVariable = facMethod.Scope.ResolveVariable("num");
             Assert.That(numVariable, Is.Not.Null);
             var numVariableNode = _symbolTable.Definitions[numVariable];
             Assert.That(_symbolTable.Scopes[numVariableNode], Is.EqualTo(facMethod.Scope));
-            Assert.That(numVariable.Type, Is.InstanceOf<TypeSymbol>());
+            Assert.That(numVariable.Type, Is.InstanceOf<ScalarType>());
             Assert.That(numVariable.Type.Name, Is.EqualTo("int"));
             Assert.AreEqual(numVariable.Type, facMethod.Type);
 
             var numAuxVariable = facMethod.Scope.ResolveVariable("num_aux");
             Assert.That(numAuxVariable, Is.Not.Null);
-            Assert.That(numAuxVariable.Type, Is.InstanceOf<TypeSymbol>());
+            Assert.That(numAuxVariable.Type, Is.InstanceOf<ScalarType>());
             Assert.That(numVariable.Type.Name, Is.EqualTo("int"));
         }
     }

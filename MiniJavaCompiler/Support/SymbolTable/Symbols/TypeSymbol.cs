@@ -13,7 +13,7 @@ namespace MiniJavaCompiler.Support.SymbolTable.Symbols
         Array
     }
 
-    public class TypeSymbol : Symbol, IType
+    public class TypeSymbol : Symbol
     {
         public TypeSymbolKind Kind { get; private set; }
         private TypeSymbol _superClass;
@@ -27,38 +27,18 @@ namespace MiniJavaCompiler.Support.SymbolTable.Symbols
                 if (_superClass != null)
                 {
                     ((ClassScope)Scope).SuperClassScope = (ClassScope)_superClass.Scope;
+                    ((ScalarType)Type).SuperType = (ScalarType) _superClass.Type;
                 }
             }
         }
 
         public TypeSymbol(string name, ITypeScope enclosingScope, TypeSymbolKind kind)
-            : base(name, null, new ClassScope(enclosingScope))
+            : base(name, new ScalarType(name), new ClassScope(enclosingScope))
         {
+            ((ScalarType)Type).Symbol = this;
             SuperClass = null;
             Kind = kind;
             ((ClassScope)Scope).Symbol = this;
-        }
-
-        public bool IsAssignableTo(IType other)
-        {
-            if (other == ErrorType.GetInstance() || this == other)
-            {
-                return true;
-            }
-            return IsDerivedFrom(other as TypeSymbol);
-        }
-
-        private bool IsDerivedFrom(TypeSymbol other)
-        {
-            if (other == null)
-            {
-                return false;
-            }
-            if (Equals(other))
-            {
-                return true;
-            }
-            return SuperClass != null && SuperClass.IsDerivedFrom(other);
         }
     }
 }

@@ -80,7 +80,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         private void CheckForCyclicInheritance()
         {
             foreach (var typeName in _userDefinedTypes) {
-                TypeSymbol type = (TypeSymbol) _symbolTable.ResolveType(typeName);
+                var type = (ScalarType) _symbolTable.ResolveType(typeName);
                 if (classDependsOnSelf(type))
                 {
                     // TODO: should get actual row and column numbers here.
@@ -90,14 +90,14 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         }
 
         // http://docs.oracle.com/javase/specs/jls/se7/html/jls-8.html#jls-8.1.4
-        private bool classDependsOnSelf(TypeSymbol classSymbol)
+        private bool classDependsOnSelf(ScalarType classSymbol)
         {
-            TypeSymbol currentClass = classSymbol;
-            while (currentClass.SuperClass != null && currentClass.SuperClass != classSymbol)
+            ScalarType currentClass = classSymbol;
+            while (currentClass.SuperType != null && currentClass.SuperType != classSymbol)
             {
-                currentClass = currentClass.SuperClass;
+                currentClass = currentClass.SuperType;
             }
-            return currentClass.SuperClass != null;
+            return currentClass.SuperType != null;
         }
 
         public void Visit(Program node)
@@ -183,8 +183,8 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 
         private IType CheckDeclaredType(Declaration node)
         {
-            var nodeSimpleType = _symbolTable.GlobalScope.ResolveType(node.Type);
-            if (nodeSimpleType == null)
+            var nodeScalarTypeSymbol = _symbolTable.GlobalScope.ResolveType(node.Type);
+            if (nodeScalarTypeSymbol == null)
             {
                 // Note: this error is also reported when a void type is encountered
                 // for something other than a method declaration.
@@ -192,8 +192,8 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
                 return null;
             }
             IType actualType = node.IsArray
-                ? MiniJavaArrayType.OfType(nodeSimpleType)
-                : (IType)nodeSimpleType;
+                ? new ArrayType((ScalarType) nodeScalarTypeSymbol.Type)
+                : nodeScalarTypeSymbol.Type;
 
             return actualType;
         }

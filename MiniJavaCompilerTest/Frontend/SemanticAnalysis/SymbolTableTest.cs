@@ -49,7 +49,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
             _superClass.SuperClass = _superSuperClass;
             _testClass = SymbolCreationHelper.CreateAndDefineClass("Baz", _globalScope);
             _testClass.SuperClass = _superClass;
-            _someType = new TypeSymbol("int", _globalScope, TypeSymbolKind.Scalar);
+            _someType = new TypeSymbol("int", _globalScope, TypeSymbolKind.Scalar).Type;
         }
 
         [Test]
@@ -124,7 +124,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
         {
             _globalScope = new GlobalScope();
             _testClassScope = SymbolCreationHelper.CreateAndDefineClass("Foo", _globalScope).Scope;
-            _someType = new TypeSymbol("int", _globalScope, TypeSymbolKind.Scalar);
+            _someType = new TypeSymbol("int", _globalScope, TypeSymbolKind.Scalar).Type;
             _testMethodScope = SymbolCreationHelper.CreateAndDefineMethod(
                 "foo", _someType, (IMethodScope)_testClassScope)
                 .Scope;
@@ -177,7 +177,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
             _globalScope = new GlobalScope();
             _blockScope = new ErrorScope(_globalScope);
             _internalBlockScope = new LocalScope(_blockScope);
-            _someType = new TypeSymbol("int", _globalScope, TypeSymbolKind.Scalar);
+            _someType = new TypeSymbol("int", _globalScope, TypeSymbolKind.Scalar).Type;
         }
 
         [Test]

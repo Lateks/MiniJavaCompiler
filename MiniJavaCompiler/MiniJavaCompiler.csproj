@@ -57,7 +57,7 @@
     <Compile Include="Support\SymbolTable\Scopes\SymbolScopes.cs" />
     <Compile Include="Support\SymbolTable\Symbols\SimpleSymbols.cs" />
     <Compile Include="Support\SymbolTable\Symbols\Symbol.cs" />
-    <Compile Include="Support\SymbolTable\Symbols\TypeSymbols.cs" />
+    <Compile Include="Support\SymbolTable\Symbols\TypeSymbol.cs" />
     <Compile Include="Support\SymbolTable\SymbolTable.cs" />
     <Compile Include="Support\SymbolTable\Types\Types.cs" />
     <Compile Include="Frontend\SyntaxAnalysis\ListParsers.cs" />

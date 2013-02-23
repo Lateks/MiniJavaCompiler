@@ -17,7 +17,7 @@ namespace MiniJavaCompiler.Support.SymbolTable.Types
     public class ErrorType : IType
     {
         private static readonly ErrorType Instance = new ErrorType();
-        public string Name { get { return "error"; } }
+        public string Name { get { return "RESOLVE_ERROR"; } }
 
         private ErrorType() { }
 
@@ -32,28 +32,15 @@ namespace MiniJavaCompiler.Support.SymbolTable.Types
         }
     }
 
-    public class MiniJavaArrayType : IType
+    public class ScalarType : IType
     {
-        public TypeSymbol ElementType { get; private set; }
-        public string Name { get; protected set; }
-        private static readonly Dictionary<TypeSymbol, MiniJavaArrayType> ArrayTypes =
-            new Dictionary<TypeSymbol, MiniJavaArrayType>();
+        public string Name { get; private set; }
+        public ScalarType SuperType { get; set; }
+        public TypeSymbol Symbol { get; set; }
 
-        private MiniJavaArrayType(TypeSymbol elementType)
+        public ScalarType(string name)
         {
-            Name = String.Format("{0}[]", elementType.Name);
-            ElementType = elementType;
-        }
-
-        public static MiniJavaArrayType OfType(TypeSymbol elementType)
-        {
-            if (ArrayTypes.ContainsKey(elementType))
-            {
-                return ArrayTypes[elementType];
-            }
-            var arrayType = new MiniJavaArrayType(elementType);
-            ArrayTypes[elementType] = arrayType;
-            return arrayType;
+            Name = name;
         }
 
         public bool IsAssignableTo(IType other)
@@ -62,7 +49,45 @@ namespace MiniJavaCompiler.Support.SymbolTable.Types
             {
                 return true;
             }
-            return Equals(other);
+            if (other is ArrayType || other is VoidType)
+            {
+                return false;
+            }
+            return IsDerivedFrom(other as ScalarType);
+        }
+
+        private bool IsDerivedFrom(ScalarType other)
+        {
+            if (other == null)
+            {
+                return false;
+            }
+            if (Equals(other))
+            {
+                return true;
+            }
+            return SuperType != null && SuperType.IsDerivedFrom(other);
+        }
+    }
+
+    public class ArrayType : IType
+    {
+        public ScalarType ElementType { get; private set; }
+        public string Name { get; private set; }
+
+        public ArrayType(ScalarType elementType)
+        {
+            Name = String.Format("{0}[]", elementType.Name);
+            ElementType = elementType;
+        }
+
+        public bool IsAssignableTo(IType other)
+        {
+            if (other == ErrorType.GetInstance())
+            {
+                return true;
+            }
+            return (other is ArrayType && (other as ArrayType).ElementType == this.ElementType);
         }
 
         public static bool IsPredefinedArrayMethod(string name)

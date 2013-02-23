@@ -145,9 +145,9 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             // for such a method call - and there are no other static methods
             // - so implementing it would have been pointless.
             var methodOwnerType = _operandTypes.Pop();
-            if (methodOwnerType is MiniJavaArrayType)
+            if (methodOwnerType is ArrayType)
             {
-                if (MiniJavaArrayType.IsPredefinedArrayMethod(node.MethodName))
+                if (ArrayType.IsPredefinedArrayMethod(node.MethodName))
                 {
                     _operandTypes.Push(_symbolTable.ResolveType(MiniJavaInfo.IntType));
                     return; // No arguments, so method call does not require further validation.
@@ -168,10 +168,10 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             {
                 ReportError(String.Format("Cannot call a method on type {0}.", methodOwnerType.Name), node);
             }
-            else if (methodOwnerType is TypeSymbol)
+            else if (methodOwnerType is ScalarType)
             { // TODO: wat?
-                var enclosingClass = (TypeSymbol) methodOwnerType;
-                method = enclosingClass.Scope.ResolveMethod(node.MethodName);
+                var enclosingType = (ScalarType) methodOwnerType;
+                method = enclosingType.Symbol.Scope.ResolveMethod(node.MethodName);
             } // Note: ErrorType is not even checked.
 
             ValidateMethodCall(method, node); // This pops out possible parameters for the method invocation
@@ -236,14 +236,14 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 
         public void Visit(ThisExpression node)
         {
-            var thisType = _symbolTable.ResolveSurroundingClass(node);
+            var thisType = _symbolTable.ResolveSurroundingClass(node).Type;
             _operandTypes.Push(thisType);
         }
 
         public void Visit(ArrayIndexingExpression node)
         {
             var arrayType = _operandTypes.Pop();
-            if (!(arrayType is ErrorType) && !(arrayType is MiniJavaArrayType))
+            if (!(arrayType is ErrorType) && !(arrayType is ArrayType))
             {   // Only arrays can be indexed. Resolving errors are ignored.
                 ReportError(String.Format("Cannot index into expression of type {0}.", arrayType.Name), node);
             }
@@ -252,8 +252,8 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             {   // Array must be indexed with an expression that evaluates into an int value.
                 ReportError("Invalid array index.", node);
             }
-            _operandTypes.Push(arrayType is MiniJavaArrayType ?
-                (IType) (arrayType as MiniJavaArrayType).ElementType : ErrorType.GetInstance());
+            _operandTypes.Push(arrayType is ArrayType ?
+                (IType) (arrayType as ArrayType).ElementType : ErrorType.GetInstance());
         }
 
         public void Visit(VariableReferenceExpression node)
