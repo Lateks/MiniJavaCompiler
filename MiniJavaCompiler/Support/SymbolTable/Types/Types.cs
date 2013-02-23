@@ -36,6 +36,7 @@ namespace MiniJavaCompiler.Support.SymbolTable.Types
     {
         public string Name { get; private set; }
         public ScalarType SuperType { get; set; }
+        public TypeSymbol Symbol { get; set; }
 
         public ScalarType(string name)
         {
@@ -72,6 +73,7 @@ namespace MiniJavaCompiler.Support.SymbolTable.Types
     public class ArrayType : IType
     {
         public ScalarType ElementType { get; private set; }
+        public ArrayType SuperType { get; set; }
         public string Name { get; private set; }
 
         public ArrayType(ScalarType elementType)
@@ -87,12 +89,6 @@ namespace MiniJavaCompiler.Support.SymbolTable.Types
                 return true;
             }
             return this.Equals(other);
-        }
-
-        // TODO: use scopes for this (like with other methods).
-        public static bool IsPredefinedArrayMethod(string name)
-        {
-            return name == "length";
         }
     }
 

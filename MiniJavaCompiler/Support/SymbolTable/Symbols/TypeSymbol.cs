@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using MiniJavaCompiler.Support.SymbolTable.Types;
 using MiniJavaCompiler.Support.SymbolTable.Scopes;
+using System.Diagnostics;
 
 namespace MiniJavaCompiler.Support.SymbolTable.Symbols
 {
@@ -24,10 +25,19 @@ namespace MiniJavaCompiler.Support.SymbolTable.Symbols
             set
             {
                 _superClass = value;
+                Debug.Assert(Kind == _superClass.Kind);
                 if (_superClass != null)
                 {
                     ((ClassScope)Scope).SuperClassScope = (ClassScope)_superClass.Scope;
-                    ((ScalarType)Type).SuperType = (ScalarType) _superClass.Type;
+                    switch (Kind)
+                    {
+                        case TypeSymbolKind.Array:
+                            ((ArrayType)Type).SuperType = (ArrayType)_superClass.Type;
+                            break;
+                        case TypeSymbolKind.Scalar:
+                            ((ScalarType)Type).SuperType = (ScalarType)_superClass.Type;
+                            break;
+                    }
                 }
             }
         }

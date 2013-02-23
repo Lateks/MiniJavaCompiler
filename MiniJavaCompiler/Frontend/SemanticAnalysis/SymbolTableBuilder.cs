@@ -83,6 +83,25 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
                 var sym = TypeSymbol.MakeScalarTypeSymbol(type, _symbolTable.GlobalScope);
                 _symbolTable.GlobalScope.Define(sym);
             }
+            SetUpArrayBase();
+        }
+
+        private void SetUpArrayBase()
+        {
+            var anyTypeSym = TypeSymbol.MakeScalarTypeSymbol(MiniJavaInfo.AnyType, _symbolTable.GlobalScope);
+            _symbolTable.GlobalScope.Define(anyTypeSym);
+            var arrayBaseSym = TypeSymbol.MakeArrayTypeSymbol((ScalarType)anyTypeSym.Type, _symbolTable.GlobalScope);
+            arrayBaseSym.SuperClass = _symbolTable.ResolveTypeName(MiniJavaInfo.AnyType, true);
+            _symbolTable.GlobalScope.Define(arrayBaseSym);
+
+            var intType = _symbolTable.GlobalScope.ResolveType(MiniJavaInfo.IntType).Type;
+            var arrayBaseScope = (IMethodScope)arrayBaseSym.Scope;
+
+            foreach (string methodName in MiniJavaInfo.ArrayMethodNames())
+            {
+                var methodSym = new MethodSymbol(methodName, intType, arrayBaseScope, false);
+                arrayBaseScope.Define(methodSym);
+            }
         }
 
         private bool CheckForCyclicInheritance()
@@ -229,6 +248,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         private IType DefineArrayType(ScalarType nodeScalarType)
         {
             var sym = TypeSymbol.MakeArrayTypeSymbol(nodeScalarType, _symbolTable.GlobalScope);
+            sym.SuperClass = _symbolTable.ResolveTypeName(MiniJavaInfo.AnyType, true);
             _symbolTable.GlobalScope.Define(sym);
             return sym.Type;
         }

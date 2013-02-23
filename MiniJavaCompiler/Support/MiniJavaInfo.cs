@@ -34,7 +34,8 @@ namespace MiniJavaCompiler.Support
             Keywords = new[] { "this", "true", "false", "new", "length", "System", "out",
                                "println", "if", "else", "while", "return", "assert",
                                "public", "static", "main", "class", "extends" },
-            Types = new[] { IntType, BoolType, VoidType }; // Built-in types are also reserved words.
+            Types = new[] { IntType, BoolType, VoidType }, // Built-in types are also reserved words.
+            ArrayMethods = new[] { "length" };
 
         private static readonly string[] BuiltIns = new [] { "int", "boolean" }; // Built-in types that can be used as variable and method return types.
         private static readonly string[] UnaryOperators = new [] { "!" };
@@ -70,6 +71,11 @@ namespace MiniJavaCompiler.Support
         public static string[] UnaryOperatorSymbols()
         {
             return CopyArray(UnaryOperators);
+        }
+
+        public static string[] ArrayMethodNames()
+        {
+            return CopyArray(ArrayMethods);
         }
 
         public static bool IsUnaryOperator(string operatorSymbol)

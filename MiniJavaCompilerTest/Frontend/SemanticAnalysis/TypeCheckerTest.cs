@@ -99,9 +99,8 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.CheckTypesAndReferences);
-                Assert.AreEqual(2, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("array"));
-                Assert.That(errors.Errors[1].ToString(), Is.StringContaining("Cannot resolve symbol bar"));
+                Assert.AreEqual(1, errors.Count);
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot resolve symbol bar"));
             }
 
             [Test]

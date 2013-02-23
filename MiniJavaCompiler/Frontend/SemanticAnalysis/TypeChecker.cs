@@ -145,21 +145,18 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             // for such a method call - and there are no other static methods
             // - so implementing it would have been pointless.
             var methodOwnerType = _operandTypes.Pop();
-            if (methodOwnerType is ArrayType)
-            {
-                if (ArrayType.IsPredefinedArrayMethod(node.MethodName))
-                {
-                    _operandTypes.Push(_symbolTable.ResolveTypeName(MiniJavaInfo.IntType).Type);
-                    return; // No arguments, so method call does not require further validation.
-                }
-                else
-                {
-                    ReportError(String.Format("Cannot call method {0} for an array.",
-                        node.MethodName), node);
-                }
-            }
+            MethodSymbol method = ResolveMethod(node, methodOwnerType);
 
+            ValidateMethodCall(method, node, methodOwnerType); // This pops out possible parameters for the method invocation
+                                                               // even if the method could not be resolved.
+            // Push expected return type, may be void.
+            _operandTypes.Push(method == null ? ErrorType.GetInstance() : method.Type);
+        }
+
+        private MethodSymbol ResolveMethod(MethodInvocation node, IType methodOwnerType)
+        {
             MethodSymbol method = null;
+
             if (node.MethodOwner is ThisExpression)
             {   // Method called is defined by the enclosing class or its superclasses.
                 method = _symbolTable.Scopes[node].ResolveMethod(node.MethodName);
@@ -168,17 +165,12 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             {
                 ReportError(String.Format("Cannot call a method on type {0}.", methodOwnerType.Name), node);
             }
-            else if (methodOwnerType is ScalarType)
+            else if (methodOwnerType is ScalarType || methodOwnerType is ArrayType)
             {
                 var typeSymbol = _symbolTable.ResolveTypeName(methodOwnerType.Name);
                 method = typeSymbol.Scope.ResolveMethod(node.MethodName);
-            } // Note: ErrorType is not even checked.
-
-            ValidateMethodCall(method, node); // This pops out possible parameters for the method invocation
-                                              // even if the method could not be resolved.
-
-            // Push expected return type, may be void.
-            _operandTypes.Push(method == null ? ErrorType.GetInstance() : method.Type);
+            }
+            return method;
         }
 
         public void Visit(InstanceCreationExpression node)
@@ -414,13 +406,17 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             }
         }
 
-        private void ValidateMethodCall(MethodSymbol method, MethodInvocation node)
+        private void ValidateMethodCall(MethodSymbol method, MethodInvocation node, IType methodOwnerType)
         {
             if (method == null) // method does not exist
             {
                 ReportErrorAndDiscardCallParams(String.Format(
                     "Cannot resolve symbol {0}.", node.MethodName), node);
                 return;
+            }
+            if (methodOwnerType is ArrayType)
+            {
+                return; // no checks done
             }
             if (method.Type is ErrorType)
             {
