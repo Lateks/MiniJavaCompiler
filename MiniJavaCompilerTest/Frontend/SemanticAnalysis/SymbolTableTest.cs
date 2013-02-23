@@ -10,7 +10,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
     {
         internal static TypeSymbol CreateAndDefineClass(string name, ITypeScope scope)
         {
-            var sym = new TypeSymbol(name, scope, TypeSymbolKind.Scalar);
+            var sym = TypeSymbol.MakeScalarTypeSymbol(name, scope);
             scope.Define(sym);
             return sym;
         }
@@ -49,7 +49,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
             _superClass.SuperClass = _superSuperClass;
             _testClass = SymbolCreationHelper.CreateAndDefineClass("Baz", _globalScope);
             _testClass.SuperClass = _superClass;
-            _someType = new TypeSymbol("int", _globalScope, TypeSymbolKind.Scalar).Type;
+            _someType = TypeSymbol.MakeScalarTypeSymbol("int", _globalScope).Type;
         }
 
         [Test]
@@ -124,7 +124,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
         {
             _globalScope = new GlobalScope();
             _testClassScope = SymbolCreationHelper.CreateAndDefineClass("Foo", _globalScope).Scope;
-            _someType = new TypeSymbol("int", _globalScope, TypeSymbolKind.Scalar).Type;
+            _someType = TypeSymbol.MakeScalarTypeSymbol("int", _globalScope).Type;
             _testMethodScope = SymbolCreationHelper.CreateAndDefineMethod(
                 "foo", _someType, (IMethodScope)_testClassScope)
                 .Scope;
@@ -177,7 +177,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
             _globalScope = new GlobalScope();
             _blockScope = new ErrorScope(_globalScope);
             _internalBlockScope = new LocalScope(_blockScope);
-            _someType = new TypeSymbol("int", _globalScope, TypeSymbolKind.Scalar).Type;
+            _someType = TypeSymbol.MakeScalarTypeSymbol("int", _globalScope).Type;
         }
 
         [Test]
@@ -198,8 +198,8 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
         [Test]
         public void CannotRedefineNames()
         {
-            _globalScope.Define(new TypeSymbol("foo", _globalScope, TypeSymbolKind.Scalar));
-            Assert.False(_globalScope.Define(new TypeSymbol("foo", _globalScope, TypeSymbolKind.Scalar)));
+            _globalScope.Define(TypeSymbol.MakeScalarTypeSymbol("foo", _globalScope));
+            Assert.False(_globalScope.Define(TypeSymbol.MakeScalarTypeSymbol("foo", _globalScope)));
         }
     }
 }

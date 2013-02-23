@@ -264,6 +264,11 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             {
                 ReportError(String.Format("Cannot resolve symbol {0}.", node.Name), node);
             }
+            else if (symbol != null && symbol.Type is ErrorType)
+            {
+                _checkFailed = true;
+            }
+            
             _operandTypes.Push(symbol == null ? ErrorType.GetInstance() : symbol.Type);
         }
 
@@ -339,6 +344,11 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
                 return false; // No conditional branches, so the block never returns a value.
             }
 
+            return AllConditionalsReturnAValue(conditionalStatements);
+        }
+
+        private bool AllConditionalsReturnAValue(Stack<IfStatement> conditionalStatements)
+        {
             bool allConditionalsReturnAValue = true;
             IfStatement conditional;
             while (allConditionalsReturnAValue && conditionalStatements.Count > 0)
@@ -390,6 +400,10 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
                 ReportErrorAndDiscardCallParams(String.Format(
                     "Cannot resolve symbol {0}.", node.MethodName), node);
                 return;
+            }
+            if (method.Type is ErrorType)
+            {
+                _checkFailed = true;
             }
             if (method.IsStatic)
             {

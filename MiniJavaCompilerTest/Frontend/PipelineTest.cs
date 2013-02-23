@@ -132,7 +132,7 @@ namespace MiniJavaCompilerTest.Frontend
         }
 
         [Test]
-        public void StopsAfterBuildingTheSymbolTableIfErrorsFound()
+        public void CanContinueToTypeCheckIfNonFatalErrorsFound()
         {
             string program = "class Factorial {\n" +
                              "\t public static void main () {\n" +
@@ -159,7 +159,31 @@ namespace MiniJavaCompilerTest.Frontend
             Assert.NotNull(syntaxTree); // syntax analysis was ok
             Assert.IsNull(symbolTable);
             Assert.That(frontend.GetErrors(), Is.Not.Empty);
-            Assert.That(frontend.GetErrors().Last().ToString(), Is.StringContaining("Symbol 'ComputeFac' is already defined"));
+            Assert.That(frontend.GetErrors().Last().ToString(), Is.StringContaining("Missing return statement in method ComputeFac"));
+            reader.Close();
+        }
+
+        [Test]
+        public void StopsBeforeTypeCheckIfCyclicDependenciesFound()
+        {
+            string program = "class Factorial {\n" +
+                             "\t public static void main () {\n" +
+                             "\t\t System.out.println (new Fac ().ComputeFac (10));\n" +
+                             "} \n\n" +
+                             "} \n" +
+                             "class A extends B { }\n" +
+                             "class B extends A {\n" +
+                             "\t public int foo() { }\n" + // missing return statement is not detected
+                             "}\n";
+            var reader = new StringReader(program);
+            var frontend = new FrontEnd(reader);
+            SymbolTable symbolTable;
+            Program syntaxTree;
+            Assert.False(frontend.TryProgramAnalysis(out syntaxTree, out symbolTable));
+            Assert.NotNull(syntaxTree); // syntax analysis was ok
+            Assert.IsNull(symbolTable);
+            Assert.That(frontend.GetErrors(), Is.Not.Empty);
+            Assert.That(frontend.GetErrors().Last().ToString(), Is.StringContaining("Class B depends on itself"));
             reader.Close();
         }
 

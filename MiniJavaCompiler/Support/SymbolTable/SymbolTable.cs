@@ -20,15 +20,18 @@ namespace MiniJavaCompiler.Support.SymbolTable
             Definitions = new Dictionary<Symbol, ISyntaxTreeNode>();
         }
 
-        public IType ResolveType(string typeName, bool array = false)
+        public IType ResolveType(string typeName, bool makeArray = false)
         {   // In Mini-Java types are always defined in the global scope.
-            var scalarTypeSymbol = GlobalScope.ResolveType(typeName);
-            if (scalarTypeSymbol == null)
+            if (makeArray)
+            {
+                typeName += "[]";
+            }
+            var typeSymbol = GlobalScope.ResolveType(typeName);
+            if (typeSymbol == null)
             {
                 return null;
             }
-            var type = scalarTypeSymbol.Type;
-            return array ? new ArrayType((ScalarType) type) : type;
+            return typeSymbol.Type;
         }
 
         // TODO: fix this so this method is no longer needed

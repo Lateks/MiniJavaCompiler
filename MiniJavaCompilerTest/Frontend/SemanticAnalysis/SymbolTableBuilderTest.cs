@@ -35,7 +35,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
             try
             {
                 _symbolTable = symbolTableBuilder.BuildSymbolTable();
-                return true;
+                return _errors.Count == 0;
             }
             catch (CompilationError)
             {

@@ -15,7 +15,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         private readonly SymbolTable _symbolTable;
         private readonly Program _syntaxTree;
         private readonly IErrorReporter _errorReporter;
-        private readonly IEnumerable<string> _userDefinedTypes;
+        private readonly IEnumerable<string> _typeNames;
         private bool _errorsFound;
 
         private readonly Stack<IScope> _scopeStack;
@@ -34,12 +34,12 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             _scopeStack.Pop();
         }
 
-        public SymbolTableBuilder(Program node, IEnumerable<string> userDefinedTypes, IErrorReporter errorReporter)
+        public SymbolTableBuilder(Program node, IEnumerable<string> typeNames, IErrorReporter errorReporter)
         {
             _errorReporter = errorReporter;
             _errorsFound = false;
             _syntaxTree = node;
-            _userDefinedTypes = userDefinedTypes;
+            _typeNames = typeNames;
 
             _symbolTable = new SymbolTable();
 
@@ -51,9 +51,9 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         {
             EnterScope(_symbolTable.GlobalScope);
             _syntaxTree.Accept(this);
-            CheckForCyclicInheritance();
+            bool fatalError = CheckForCyclicInheritance();
 
-            if (_errorsFound)
+            if (fatalError)
             {
                 throw new CompilationError();
             }
@@ -62,31 +62,44 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 
         private void SetupGlobalScope()
         {
-            foreach (var type in MiniJavaInfo.BuiltInTypes())
-            {
-                var sym = new TypeSymbol(type, _symbolTable.GlobalScope, TypeSymbolKind.Scalar);
-                _symbolTable.GlobalScope.Define(sym);
-            }
-            foreach (var type in _userDefinedTypes)
+            SetUpBuiltInTypes();
+            SetUpUserDefinedTypes();
+        }
+
+        private void SetUpUserDefinedTypes()
+        {
+            foreach (var typeName in _typeNames)
             {
                 // Note: classes are set up without superclass information because
                 // all class symbols need to be created before superclass relations
                 // can be set.
-                var sym = new TypeSymbol(type, _symbolTable.GlobalScope, TypeSymbolKind.Scalar);
+                var sym = TypeSymbol.MakeScalarTypeSymbol(typeName, _symbolTable.GlobalScope);
                 _symbolTable.GlobalScope.Define(sym);
             }
         }
 
-        private void CheckForCyclicInheritance()
+        private void SetUpBuiltInTypes()
         {
-            foreach (var typeName in _userDefinedTypes) {
+            foreach (var type in MiniJavaInfo.BuiltInTypes())
+            {
+                var sym = TypeSymbol.MakeScalarTypeSymbol(type, _symbolTable.GlobalScope);
+                _symbolTable.GlobalScope.Define(sym);
+            }
+        }
+
+        private bool CheckForCyclicInheritance()
+        {
+            bool cyclicInheritanceFound = false;
+            foreach (var typeName in _typeNames) {
                 var type = (ScalarType) _symbolTable.ResolveType(typeName);
                 if (classDependsOnSelf(type))
                 {
                     // TODO: should get actual row and column numbers here.
                     ReportError(String.Format("Class {0} depends on itself.", type.Name), 0, 0);
+                    cyclicInheritanceFound = true;
                 }
             }
+            return cyclicInheritanceFound;
         }
 
         // http://docs.oracle.com/javase/specs/jls/se7/html/jls-8.html#jls-8.1.4
@@ -167,35 +180,69 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             var methodReturnType = node.Type == "void" ? VoidType.GetInstance() : CheckDeclaredType(node);
             var methodScope = (IMethodScope) CurrentScope;
             var methodSymbol = new MethodSymbol(node.Name, methodReturnType, methodScope, node.IsStatic);
+            IScope scope = methodSymbol.Scope;
             if (!methodScope.Define(methodSymbol))
             {
                 ReportSymbolDefinitionError(node);
-                var recoveryScope = new ErrorScope(CurrentScope); // Make an error scope to stand in for the method scope for purposes of recovery.
-                EnterScope(recoveryScope);                        // (Both are IVariableScopes.)
-                return;
-            }
+                scope = new ErrorScope(CurrentScope); // Make an error scope to stand in for the method scope for purposes of recovery.
+            }                                         // (Both are IVariableScopes.)
 
             _symbolTable.Definitions.Add(methodSymbol, node);
-            _symbolTable.Scopes.Add(node, methodSymbol.Scope);
+            _symbolTable.Scopes.Add(node, scope);
 
-            EnterScope(methodSymbol.Scope);
+            EnterScope(scope);
         }
 
         private IType CheckDeclaredType(Declaration node)
         {
-            var nodeScalarTypeSymbol = _symbolTable.GlobalScope.ResolveType(node.Type);
-            if (nodeScalarTypeSymbol == null)
+            var nodeScalarType = (ScalarType) _symbolTable.ResolveType(node.Type);
+            if (nodeScalarType == null)
             {
                 // Note: this error is also reported when a void type is encountered
                 // for something other than a method declaration.
                 ReportError(String.Format("Unknown type '{0}'.", node.Type), node.Row, node.Col);
-                return null;
+                return ErrorType.GetInstance();
             }
-            IType actualType = node.IsArray
-                ? new ArrayType((ScalarType) nodeScalarTypeSymbol.Type)
-                : nodeScalarTypeSymbol.Type;
+            return BuildType(node, nodeScalarType);
+        }
 
+        private IType BuildType(Declaration node, ScalarType nodeScalarType)
+        {
+            IType actualType;
+            if (node.IsArray)
+            {
+                actualType = _symbolTable.ResolveType(node.Type, node.IsArray);
+                if (actualType == null)
+                {
+                    actualType = DefineArrayType(nodeScalarType);
+                }
+            }
+            else
+            {
+                actualType = nodeScalarType;
+            }
             return actualType;
+        }
+
+        private IType DefineArrayType(ScalarType nodeScalarType)
+        {
+            var sym = TypeSymbol.MakeArrayTypeSymbol(nodeScalarType, _symbolTable.GlobalScope);
+            _symbolTable.GlobalScope.Define(sym);
+            return sym.Type;
+        }
+
+        public void Visit(InstanceCreationExpression node)
+        {
+            var scalarType = (ScalarType) _symbolTable.ResolveType(node.Type);
+            if (scalarType == null)
+            {
+                ReportError(String.Format("Unknown type '{0}'.", node.Type), node.Row, node.Col);
+            }
+            else if (node.IsArrayCreation && _symbolTable.ResolveType(node.Type, node.IsArrayCreation) == null)
+            {
+                DefineArrayType(scalarType);
+            }
+            HandleExpressionOrStatementNode(node);
         }
 
         private void ReportSymbolDefinitionError(Declaration node)
@@ -264,11 +311,6 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         }
 
         public void Visit(WhileStatement node)
-        {
-            HandleExpressionOrStatementNode(node);
-        }
-
-        public void Visit(InstanceCreationExpression node)
         {
             HandleExpressionOrStatementNode(node);
         }

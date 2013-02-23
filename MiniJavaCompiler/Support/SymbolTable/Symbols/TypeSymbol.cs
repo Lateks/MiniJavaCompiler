@@ -32,13 +32,27 @@ namespace MiniJavaCompiler.Support.SymbolTable.Symbols
             }
         }
 
-        public TypeSymbol(string name, ITypeScope enclosingScope, TypeSymbolKind kind)
-            : base(name, new ScalarType(name), new ClassScope(enclosingScope))
+        private TypeSymbol(string name, ITypeScope enclosingScope, IType type, TypeSymbolKind kind)
+            : base(name, type, new ClassScope(enclosingScope))
         {
-            ((ScalarType)Type).Symbol = this;
             SuperClass = null;
             Kind = kind;
             ((ClassScope)Scope).Symbol = this;
+        }
+
+        public static TypeSymbol MakeArrayTypeSymbol(ScalarType elementType, ITypeScope enclosingScope)
+        {
+            var arrayTypeName = String.Format("{0}[]", elementType.Name);
+            var type = new ArrayType(elementType);
+            return new TypeSymbol(arrayTypeName, enclosingScope, type, TypeSymbolKind.Array);
+        }
+
+        public static TypeSymbol MakeScalarTypeSymbol(string typeName, ITypeScope enclosingScope)
+        {
+            var type = new ScalarType(typeName);
+            var symbol = new TypeSymbol(typeName, enclosingScope, type, TypeSymbolKind.Scalar);
+            ((ScalarType)symbol.Type).Symbol = symbol;
+            return symbol;
         }
     }
 }
