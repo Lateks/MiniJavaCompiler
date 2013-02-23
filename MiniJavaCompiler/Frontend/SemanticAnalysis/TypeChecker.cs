@@ -169,9 +169,9 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
                 ReportError(String.Format("Cannot call a method on type {0}.", methodOwnerType.Name), node);
             }
             else if (methodOwnerType is ScalarType)
-            { // TODO: wat?
-                var enclosingType = (ScalarType) methodOwnerType;
-                method = enclosingType.Symbol.Scope.ResolveMethod(node.MethodName);
+            {
+                var typeSymbol = _symbolTable.ResolveTypeName(methodOwnerType.Name);
+                method = typeSymbol.Scope.ResolveMethod(node.MethodName);
             } // Note: ErrorType is not even checked.
 
             ValidateMethodCall(method, node); // This pops out possible parameters for the method invocation

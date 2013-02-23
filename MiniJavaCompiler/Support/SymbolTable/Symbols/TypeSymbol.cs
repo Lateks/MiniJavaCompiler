@@ -51,7 +51,6 @@ namespace MiniJavaCompiler.Support.SymbolTable.Symbols
         {
             var type = new ScalarType(typeName);
             var symbol = new TypeSymbol(typeName, enclosingScope, type, TypeSymbolKind.Scalar);
-            ((ScalarType)symbol.Type).Symbol = symbol;
             return symbol;
         }
     }
