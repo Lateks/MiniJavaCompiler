@@ -34,9 +34,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
             return typeSymbol;
         }
 
-        // TODO: fix this so this method is no longer needed
-        // (or the symbol property in the scope, probably)
-        public TypeSymbol ResolveSurroundingClass(ISyntaxTreeNode node)
+        public TypeSymbol ResolveClass(ISyntaxTreeNode node)
         {
             if (!Scopes.ContainsKey(node))
             {

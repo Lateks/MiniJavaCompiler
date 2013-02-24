@@ -76,8 +76,13 @@ namespace MiniJavaCompiler.Support.SymbolTable.Types
 
         public ArrayType(ScalarType elementType)
         {
-            Name = String.Format("{0}[]", elementType.Name);
+            Name = MakeArrayTypeName(elementType);
             ElementType = elementType;
+        }
+
+        public static string MakeArrayTypeName(ScalarType elementType)
+        {
+            return String.Format("{0}[]", elementType.Name);
         }
 
         public bool IsAssignableTo(IType other)

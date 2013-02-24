@@ -91,7 +91,6 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             var anyTypeSym = TypeSymbol.MakeScalarTypeSymbol(MiniJavaInfo.AnyType, _symbolTable.GlobalScope);
             _symbolTable.GlobalScope.Define(anyTypeSym);
             var arrayBaseSym = TypeSymbol.MakeArrayTypeSymbol((ScalarType)anyTypeSym.Type, _symbolTable.GlobalScope);
-            arrayBaseSym.SuperClass = _symbolTable.ResolveTypeName(MiniJavaInfo.AnyType, true);
             _symbolTable.GlobalScope.Define(arrayBaseSym);
 
             var intType = _symbolTable.GlobalScope.ResolveType(MiniJavaInfo.IntType).Type;

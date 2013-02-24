@@ -60,7 +60,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         public void Visit(MethodDeclaration node)
         {  // Check that the method does not overload a method in a superclass.
            // Only overriding is allowed.
-            var classSymbol = _symbolTable.ResolveSurroundingClass(node);
+            var classSymbol = _symbolTable.ResolveClass(node);
             var superClassMethod = classSymbol.SuperClass == null ? null : classSymbol.SuperClass.Scope.ResolveMethod(node.Name);
             if (superClassMethod == null) // Did not override or overload another method.
             {
@@ -245,7 +245,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 
         public void Visit(ThisExpression node)
         {
-            var thisType = _symbolTable.ResolveSurroundingClass(node).Type;
+            var thisType = _symbolTable.ResolveClass(node).Type;
             _operandTypes.Push(thisType);
         }
 

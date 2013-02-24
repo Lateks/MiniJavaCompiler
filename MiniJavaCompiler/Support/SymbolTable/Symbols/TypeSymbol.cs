@@ -19,44 +19,50 @@ namespace MiniJavaCompiler.Support.SymbolTable.Symbols
         public TypeSymbolKind Kind { get; private set; }
         private TypeSymbol _superClass;
 
+        public static TypeSymbol MakeArrayTypeSymbol(ScalarType elementType, ITypeScope enclosingScope)
+        {
+            var type = new ArrayType(elementType);
+            return new TypeSymbol(type.Name, enclosingScope, type, TypeSymbolKind.Array);
+        }
+
+        public static TypeSymbol MakeScalarTypeSymbol(string typeName, ITypeScope enclosingScope)
+        {
+            var type = new ScalarType(typeName);
+            return new TypeSymbol(typeName, enclosingScope, type, TypeSymbolKind.Scalar);
+        }
+
+        private TypeSymbol(string name, ITypeScope enclosingScope, IType type, TypeSymbolKind kind)
+            : base(name, type, new ClassScope(enclosingScope))
+        {
+            _superClass = null;
+            Kind = kind;
+            ((ClassScope)Scope).Symbol = this;
+        }
+
         public TypeSymbol SuperClass
         {
             get { return _superClass; }
             set
             {
                 _superClass = value;
-                Debug.Assert(Kind == _superClass.Kind);
-                if (_superClass != null)
-                {
-                    ((ClassScope)Scope).SuperClassScope = (ClassScope)_superClass.Scope;
-                    if (Kind == TypeSymbolKind.Scalar)
-                    {
-                        ((ScalarType)Type).SuperType = (ScalarType)_superClass.Type;
-                    }
-                }
+                Debug.Assert(_superClass == null || Kind == _superClass.Kind);
+                SetSuperClassScope();
+                SetSuperType();
             }
         }
 
-        private TypeSymbol(string name, ITypeScope enclosingScope, IType type, TypeSymbolKind kind)
-            : base(name, type, new ClassScope(enclosingScope))
+        private void SetSuperClassScope()
         {
-            SuperClass = null;
-            Kind = kind;
-            ((ClassScope)Scope).Symbol = this;
+            ((ClassScope)Scope).SuperClassScope = _superClass == null ? null : (ClassScope)_superClass.Scope;
+
         }
 
-        public static TypeSymbol MakeArrayTypeSymbol(ScalarType elementType, ITypeScope enclosingScope)
+        private void SetSuperType()
         {
-            var arrayTypeName = String.Format("{0}[]", elementType.Name);
-            var type = new ArrayType(elementType);
-            return new TypeSymbol(arrayTypeName, enclosingScope, type, TypeSymbolKind.Array);
-        }
-
-        public static TypeSymbol MakeScalarTypeSymbol(string typeName, ITypeScope enclosingScope)
-        {
-            var type = new ScalarType(typeName);
-            var symbol = new TypeSymbol(typeName, enclosingScope, type, TypeSymbolKind.Scalar);
-            return symbol;
+            if (Kind == TypeSymbolKind.Scalar)
+            {
+                ((ScalarType)Type).SuperType = _superClass == null ? null : (ScalarType)_superClass.Type;
+            }
         }
     }
 }
