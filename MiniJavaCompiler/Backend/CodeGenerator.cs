@@ -18,6 +18,7 @@ namespace MiniJavaCompiler.Backend
         private readonly SymbolTable _symbolTable;
         private readonly AssemblyBuilder _asmBuilder;
         private readonly ModuleBuilder _moduleBuilder;
+        private readonly Dictionary<Type, ConstructorInfo> _constructors;
         private TypeBuilder _currentType;
         private MethodBuilder _currentMethod;
         private int _currentParameterNumber;
@@ -27,6 +28,7 @@ namespace MiniJavaCompiler.Backend
             _symbolTable = symbolTable;
             _astRoot = abstractSyntaxTree;
             _currentParameterNumber = 0;
+            _constructors = new Dictionary<Type, ConstructorInfo>();
 
             // Set up a single module assembly.
             AssemblyName name = new AssemblyName(moduleName);
@@ -44,6 +46,8 @@ namespace MiniJavaCompiler.Backend
                 TypeSymbol sym = _symbolTable.ResolveTypeName(typeName);
                 TypeBuilder typeBuilder = _moduleBuilder.DefineType(typeName, TypeAttributes.Public | TypeAttributes.Class);
                 sym.Builder = typeBuilder;
+                _constructors[typeBuilder] =
+                    typeBuilder.DefineDefaultConstructor(MethodAttributes.Public | MethodAttributes.Static);
             }
         }
 
@@ -204,8 +208,9 @@ namespace MiniJavaCompiler.Backend
 
         public void Visit(InstanceCreationExpression node)
         {
+            // TODO: handle array creation cases
             Type type = BuildType(node.Type, node.IsArrayCreation);
-            _currentMethod.GetILGenerator().Emit(OpCodes.Newobj, type.GetConstructor(Type.EmptyTypes));
+            _currentMethod.GetILGenerator().Emit(OpCodes.Newobj, _constructors[type]);
         }
 
         public void Visit(UnaryOperatorExpression node)
