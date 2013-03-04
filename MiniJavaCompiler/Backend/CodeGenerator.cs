@@ -23,6 +23,21 @@ namespace MiniJavaCompiler.Backend
         private MethodBuilder _currentMethod;
         private int _currentParameterNumber;
 
+        private static Dictionary<string, OpCode> operators = new Dictionary<string, OpCode>()
+        {
+            { "+", OpCodes.Add },
+            { "-", OpCodes.Sub },
+            { "/", OpCodes.Div },
+            { "*", OpCodes.Mul },
+            { "<", OpCodes.Clt },
+            { ">", OpCodes.Cgt },
+            { "&&", OpCodes.And },
+            { "||", OpCodes.Or },
+            { "==", OpCodes.Ceq },
+            { "%", OpCodes.Rem },
+            { "!", OpCodes.Not }
+        };
+
         public CodeGenerator(SymbolTable symbolTable, Program abstractSyntaxTree, string moduleName)
         {
             _symbolTable = symbolTable;
@@ -148,8 +163,7 @@ namespace MiniJavaCompiler.Backend
 
             if (isArray)
             {
-                // TODO: need array types
-                // Use .NET Arrays to implement.
+                retType = retType.MakeArrayType();
             }
             return retType;
         }
@@ -215,17 +229,17 @@ namespace MiniJavaCompiler.Backend
 
         public void Visit(UnaryOperatorExpression node)
         {
-            throw new NotImplementedException();
+            _currentMethod.GetILGenerator().Emit(operators[node.Operator]);
         }
 
         public void Visit(BinaryOperatorExpression node)
         {
-            throw new NotImplementedException();
+            _currentMethod.GetILGenerator().Emit(operators[node.Operator]);
         }
 
         public void Visit(BooleanLiteralExpression node)
         {
-            throw new NotImplementedException();
+            _currentMethod.GetILGenerator().Emit(node.Value ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
         }
 
         public void Visit(ThisExpression node)
@@ -245,7 +259,7 @@ namespace MiniJavaCompiler.Backend
 
         public void Visit(IntegerLiteralExpression node)
         {
-            throw new NotImplementedException();
+            _currentMethod.GetILGenerator().Emit(OpCodes.Ldc_I4, node.IntValue);
         }
 
         public void Exit(ClassDeclaration node)

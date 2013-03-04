@@ -531,6 +531,7 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
     public class IntegerLiteralExpression : SyntaxElement, IExpression
     {
         public string Value { get; private set; }
+        public int IntValue { get; set; }
 
         public IntegerLiteralExpression(string value, int row, int col)
             : base(row, col)

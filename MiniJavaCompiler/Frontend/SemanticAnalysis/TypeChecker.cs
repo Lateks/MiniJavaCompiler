@@ -289,6 +289,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
                 ReportError(String.Format("Cannot fit integer literal {0} into a 32-bit integer variable.",
                     node.Value), node);
             }
+            node.IntValue = value;
             _operandTypes.Push(_symbolTable.ResolveTypeName(MiniJavaInfo.IntType).Type);
         }
 
