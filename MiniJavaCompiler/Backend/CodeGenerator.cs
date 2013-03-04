@@ -7,6 +7,8 @@ using MiniJavaCompiler.Support.AbstractSyntaxTree;
 using System.Reflection;
 using System.Reflection.Emit;
 using MiniJavaCompiler.Support.SymbolTable.Symbols;
+using MiniJavaCompiler.Support.SymbolTable.Types;
+using MiniJavaCompiler.Support;
 
 namespace MiniJavaCompiler.Backend
 {
@@ -17,11 +19,14 @@ namespace MiniJavaCompiler.Backend
         private readonly AssemblyBuilder _asmBuilder;
         private readonly ModuleBuilder _moduleBuilder;
         private TypeBuilder _currentType;
+        private MethodBuilder _currentMethod;
+        private int _currentParameterNumber;
 
         public CodeGenerator(SymbolTable symbolTable, Program abstractSyntaxTree, string moduleName)
         {
             _symbolTable = symbolTable;
             _astRoot = abstractSyntaxTree;
+            _currentParameterNumber = 0;
 
             // Set up a single module assembly.
             AssemblyName name = new AssemblyName(moduleName);
@@ -72,7 +77,19 @@ namespace MiniJavaCompiler.Backend
 
         public void Visit(VariableDeclaration node)
         {
-            throw new NotImplementedException();
+            switch (node.VariableKind)
+            {
+                case VariableDeclaration.Kind.Formal:
+                    _currentMethod.DefineParameter(_currentParameterNumber, ParameterAttributes.In, node.Name); // TODO: is this builder still needed afterwards?
+                    _currentParameterNumber++;
+                    break;
+                case VariableDeclaration.Kind.Local:
+                    _currentMethod.GetILGenerator().DeclareLocal(BuildType(node.Type, node.IsArray));
+                    break;
+                case VariableDeclaration.Kind.Class:
+                    _currentType.DefineField(node.Name, BuildType(node.Type, node.IsArray), FieldAttributes.Public);
+                    break;
+            }
         }
 
         public void Visit(MethodDeclaration node)
@@ -82,8 +99,52 @@ namespace MiniJavaCompiler.Backend
             {
                 _asmBuilder.SetEntryPoint(methodBuilder);
             }
-            // TODO: set parameter types
-            // TODO: set return type
+
+            methodBuilder.SetReturnType(GetReturnType(node));
+            methodBuilder.SetParameters(GetParameterTypes(node));
+
+            _currentMethod = methodBuilder;
+            _currentParameterNumber = 0;
+        }
+
+        private Type[] GetParameterTypes(MethodDeclaration node)
+        {
+            Type[] types = new Type[node.Formals.Count];
+            for (int i = 0; i < node.Formals.Count; i++)
+            {
+                VariableDeclaration decl = node.Formals[i];
+                types[i] = BuildType(decl.Type, decl.IsArray);
+            }
+            return types;
+        }
+
+        private Type GetReturnType(MethodDeclaration node)
+        {
+            MethodSymbol sym = _symbolTable.ResolveClass(node).Scope.ResolveMethod(node.Name);
+            return BuildType(node.Type, node.IsArray);
+        }
+
+        private Type BuildType(string typeName, bool isArray)
+        {
+            Type retType;
+            if (typeName == MiniJavaInfo.IntType)
+            {
+                retType = typeof(Int32);
+            }
+            else if (typeName == MiniJavaInfo.BoolType)
+            {
+                retType = typeof(Boolean);
+            }
+            else
+            {
+                retType = _symbolTable.ResolveTypeName(typeName).Builder;
+            }
+
+            if (isArray)
+            {
+                // TODO: need array types
+            }
+            return retType;
         }
 
         private static MethodAttributes GetMethodAttributes(MethodDeclaration node)
@@ -178,22 +239,19 @@ namespace MiniJavaCompiler.Backend
 
         public void Exit(ClassDeclaration node)
         {
-            throw new NotImplementedException();
+            _currentType = null;
         }
 
         public void Exit(MainClassDeclaration node)
         {
-            throw new NotImplementedException();
+            _currentType = null;
         }
 
         public void Exit(MethodDeclaration node)
         {
-            throw new NotImplementedException();
+            _currentMethod = null;
         }
 
-        public void Exit(BlockStatement node)
-        {
-            throw new NotImplementedException();
-        }
+        public void Exit(BlockStatement node) { }
     }
 }
