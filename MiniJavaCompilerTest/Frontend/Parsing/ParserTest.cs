@@ -713,6 +713,59 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
         }
 
         [Test]
+        public void RecognisesVariableDeclarationTypesCorrectly()
+        {   /* class MainClass {
+             *     public static void main() { }
+             * }
+             * class B {
+             *     int foo;
+             *     myOwnType bar;
+             *     public void someMethod(int foo, myOwnType bar)
+             *     {
+             *       int foo2;
+             *       myOwnType bar2;
+             *     }
+             * }
+             * <EndOfFile>
+             */
+            DeclareMainClassUntilMainMethod("MainClass");
+            ClosingCurlyBrace(); ClosingCurlyBrace();
+
+            BeginClassDeclaration("anotherClass");
+
+            DefineBasicVariable("foo", "int");
+            DefineOwnTypeVariable("bar", "myOwnType");
+            BeginMethodDeclaration("someMethod", "void");
+            DefineBasicParameter("foo", "int");
+            programTokens.Enqueue(new PunctuationToken(",", 0, 0));
+            DefineOwnTypeParameter("bar", "myOwnType");
+            programTokens.Enqueue(new PunctuationToken(")", 0, 0));
+            programTokens.Enqueue(new PunctuationToken("{", 0, 0));
+            DefineBasicVariable("foo2", "int");
+            DefineOwnTypeVariable("bar2", "myOwnType");
+            ClosingCurlyBrace(); ClosingCurlyBrace();
+            EndFile();
+
+            var programTree = GetProgramTree();
+
+            Assert.That(programTree.Classes.Count, Is.EqualTo(1));
+            var testClass = (ClassDeclaration)programTree.Classes[0];
+            Assert.NotNull(testClass.Declarations);
+            Assert.That(testClass.Declarations.Count, Is.EqualTo(3));
+            Assert.That(((VariableDeclaration)testClass.Declarations[0]).VariableKind, Is.EqualTo(VariableDeclaration.Kind.Class));
+            Assert.That(((VariableDeclaration)testClass.Declarations[1]).VariableKind, Is.EqualTo(VariableDeclaration.Kind.Class));
+            var methodDeclaration = (MethodDeclaration)testClass.Declarations[2];
+            Assert.That(methodDeclaration.Formals.Count, Is.EqualTo(2));
+
+            Assert.That(methodDeclaration.Formals[0].VariableKind, Is.EqualTo(VariableDeclaration.Kind.Formal));
+            Assert.That(methodDeclaration.Formals[1].VariableKind, Is.EqualTo(VariableDeclaration.Kind.Formal));
+
+            Assert.That(methodDeclaration.MethodBody.Count, Is.EqualTo(2));
+            Assert.That(((VariableDeclaration)methodDeclaration.MethodBody[0]).VariableKind, Is.EqualTo(VariableDeclaration.Kind.Local));
+            Assert.That(((VariableDeclaration)methodDeclaration.MethodBody[1]).VariableKind, Is.EqualTo(VariableDeclaration.Kind.Local));
+        }
+
+        [Test]
         public void ChainedMethodInvocation()
         {   /* class MainClass {
              *     public static void main() {
@@ -855,6 +908,18 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
         {
             programTokens.Enqueue(new MiniJavaTypeToken(type, 0, 0));
             programTokens.Enqueue(new IdentifierToken(name, 0, 0));
+        }
+
+        private void DefineOwnTypeVariable(string name, string type)
+        {
+            DefineOwnTypeParameter(name, type);
+            programTokens.Enqueue(new PunctuationToken(";", 0, 0));
+        }
+
+        private void DefineBasicVariable(string name, string type)
+        {
+            DefineBasicParameter(name, type);
+            programTokens.Enqueue(new PunctuationToken(";", 0, 0));
         }
 
         private void BeginMethodDeclaration(string methodName, string type)

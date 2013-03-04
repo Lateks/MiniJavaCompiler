@@ -148,8 +148,19 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
 
     public class VariableDeclaration : Declaration, IStatement
     {
-        public VariableDeclaration(string name, string type, bool isArray, int row, int col)
-            : base(name, type, isArray, row, col) { }
+        public enum Kind
+        {
+            Formal,
+            Local,
+            Class
+        }
+        public Kind VariableKind { get; private set; }
+
+        public VariableDeclaration(string name, string type, bool isArray, Kind kind, int row, int col)
+            : base(name, type, isArray, row, col)
+        {
+            VariableKind = kind;
+        }
 
         public override void Accept(INodeVisitor visitor)
         {
