@@ -15,7 +15,6 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         private readonly SymbolTable _symbolTable;
         private readonly Program _syntaxTree;
         private readonly IErrorReporter _errorReporter;
-        private readonly IEnumerable<string> _typeNames;
         private readonly Stack<IScope> _scopeStack;
 
         private IScope CurrentScope
@@ -37,9 +36,9 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         {
             _errorReporter = errorReporter;
             _syntaxTree = node;
-            _typeNames = typeNames;
 
             _symbolTable = new SymbolTable();
+            _symbolTable.ScalarTypeNames = typeNames;
 
             SetupGlobalScope();
             _scopeStack = new Stack<IScope>();
@@ -66,7 +65,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 
         private void SetUpUserDefinedTypes()
         {
-            foreach (var typeName in _typeNames)
+            foreach (var typeName in _symbolTable.ScalarTypeNames)
             {
                 // Note: classes are set up without superclass information because
                 // all class symbols need to be created before superclass relations
@@ -106,7 +105,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         private bool CheckForCyclicInheritance()
         {
             bool cyclicInheritanceFound = false;
-            foreach (var typeName in _typeNames) {
+            foreach (var typeName in _symbolTable.ScalarTypeNames) {
                 var typeSymbol = _symbolTable.ResolveTypeName(typeName);
                 if (classDependsOnSelf((ScalarType)typeSymbol.Type))
                 {
@@ -193,7 +192,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         {
             Debug.Assert(CurrentScope is IMethodScope);
 
-            var methodReturnType = node.Type == "void" ? VoidType.GetInstance() : CheckDeclaredType(node);
+            var methodReturnType = node.Type == MiniJavaInfo.VoidType ? VoidType.GetInstance() : CheckDeclaredType(node);
             var methodScope = (IMethodScope) CurrentScope;
             var methodSymbol = new MethodSymbol(node.Name, methodReturnType, methodScope, node.IsStatic);
             IScope scope = methodSymbol.Scope;

@@ -9,6 +9,7 @@ namespace MiniJavaCompiler.Support.SymbolTable
 {
     public class SymbolTable
     {
+        public IEnumerable<string> ScalarTypeNames { get; set; }
         public readonly GlobalScope GlobalScope;
         public readonly Dictionary<ISyntaxTreeNode, IScope> Scopes; // Maps AST nodes to their enclosing scopes (or the scopes they define in the case of methods and classes).
         public readonly Dictionary<Symbol, ISyntaxTreeNode> Definitions; // Maps method, variable and user defined type symbols to their definitions in the AST.

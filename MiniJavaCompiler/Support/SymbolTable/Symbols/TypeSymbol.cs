@@ -17,6 +17,7 @@ namespace MiniJavaCompiler.Support.SymbolTable.Symbols
     public class TypeSymbol : Symbol
     {
         public TypeSymbolKind Kind { get; private set; }
+        public System.Reflection.Emit.TypeBuilder Builder { get; set; }
         private TypeSymbol _superClass;
 
         public static TypeSymbol MakeArrayTypeSymbol(ScalarType elementType, ITypeScope enclosingScope)
