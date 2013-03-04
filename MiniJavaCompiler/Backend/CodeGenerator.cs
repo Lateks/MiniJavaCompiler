@@ -95,7 +95,7 @@ namespace MiniJavaCompiler.Backend
         public void Visit(MethodDeclaration node)
         {   
             MethodBuilder methodBuilder = _currentType.DefineMethod(node.Name, GetMethodAttributes(node));
-            if (node.Name == "main")
+            if (node.Name == MiniJavaInfo.MainMethodIdent)
             {
                 _asmBuilder.SetEntryPoint(methodBuilder);
             }

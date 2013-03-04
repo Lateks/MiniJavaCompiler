@@ -13,6 +13,8 @@ namespace MiniJavaCompiler.Support
         public const string AnyType = "$any";
         public const string VoidType = "void";
 
+        public const string MainMethodIdent = "main";
+
         private static readonly char[]
             Punctuation = new[] { ';', '(', ')', '[', ']', '.', '{', '}', ',' },
             SingleCharOperatorSymbols = new[] { '/', '+', '-', '*', '<', '>', '%', '!' },

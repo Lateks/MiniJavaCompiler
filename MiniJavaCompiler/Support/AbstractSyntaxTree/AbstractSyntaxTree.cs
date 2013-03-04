@@ -87,7 +87,7 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
             : base(row, col)
         {
             Name = name;
-            MainMethod = new MethodDeclaration("main", "void", false,
+            MainMethod = new MethodDeclaration(MiniJavaInfo.MainMethodIdent, MiniJavaInfo.VoidType, false,
                 new List<VariableDeclaration>(), mainMethod, mainMethodRow, mainMethodCol, true);
         }
 

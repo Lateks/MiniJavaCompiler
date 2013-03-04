@@ -88,7 +88,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
                 IToken methodStartToken = Input.MatchAndConsume<KeywordToken>("public");
                 Input.MatchAndConsume<KeywordToken>("static");
                 Input.MatchAndConsume<MiniJavaTypeToken>("void");
-                Input.MatchAndConsume<KeywordToken>("main");
+                Input.MatchAndConsume<KeywordToken>(MiniJavaInfo.MainMethodIdent);
                 Input.MatchAndConsume<PunctuationToken>("(");
                 Input.MatchAndConsume<PunctuationToken>(")");
 
