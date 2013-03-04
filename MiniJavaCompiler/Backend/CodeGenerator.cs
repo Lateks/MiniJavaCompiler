@@ -47,14 +47,16 @@ namespace MiniJavaCompiler.Backend
             }
         }
 
-        private void SetUpSuperClasses()
-        {
-            throw new NotImplementedException();
-        }
-
         public void GenerateCode()
         {
             _astRoot.Accept(this);
+            FinalizeTypes();
+            // TODO: save assembly
+        }
+
+        private void FinalizeTypes()
+        {
+            // TODO: create all types
         }
 
         public void Visit(Program node) { }
@@ -143,6 +145,7 @@ namespace MiniJavaCompiler.Backend
             if (isArray)
             {
                 // TODO: need array types
+                // Use .NET Arrays to implement.
             }
             return retType;
         }
@@ -159,22 +162,24 @@ namespace MiniJavaCompiler.Backend
 
         public void Visit(PrintStatement node)
         {
-            throw new NotImplementedException();
+            MethodInfo printMethod = typeof(System.Console).GetMethod("WriteLine", new Type[] { typeof(string) });
+            _currentMethod.GetILGenerator().Emit(OpCodes.Call, printMethod);
         }
 
         public void Visit(ReturnStatement node)
         {
-            throw new NotImplementedException();
+            _currentMethod.GetILGenerator().Emit(OpCodes.Ret);
         }
 
         public void Visit(BlockStatement node)
         {
-            throw new NotImplementedException();
+            _currentMethod.GetILGenerator().BeginScope();
         }
 
         public void Visit(AssertStatement node)
         {
-            throw new NotImplementedException();
+            MethodInfo assertMethod = typeof(System.Diagnostics.Debug).GetMethod("Assert", new Type[] { typeof(bool) });
+            _currentMethod.GetILGenerator().Emit(OpCodes.Call, assertMethod);
         }
 
         public void Visit(AssignmentStatement node)
@@ -199,7 +204,8 @@ namespace MiniJavaCompiler.Backend
 
         public void Visit(InstanceCreationExpression node)
         {
-            throw new NotImplementedException();
+            Type type = BuildType(node.Type, node.IsArrayCreation);
+            _currentMethod.GetILGenerator().Emit(OpCodes.Newobj, type.GetConstructor(Type.EmptyTypes));
         }
 
         public void Visit(UnaryOperatorExpression node)
@@ -252,6 +258,9 @@ namespace MiniJavaCompiler.Backend
             _currentMethod = null;
         }
 
-        public void Exit(BlockStatement node) { }
+        public void Exit(BlockStatement node)
+        {
+            _currentMethod.GetILGenerator().EndScope();
+        }
     }
 }
