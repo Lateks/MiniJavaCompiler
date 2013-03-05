@@ -7,6 +7,37 @@ namespace MiniJavaCompiler.Support
     // Collects static information on the syntax and semantics of Mini-Java.
     public static class MiniJavaInfo
     {
+        public enum Operator
+        {
+            Add,
+            Sub,
+            Mul,
+            Div,
+            Eq,
+            Gt,
+            Lt,
+            Mod,
+            Not,
+            And,
+            Or
+        }
+
+        private static readonly Dictionary<string, Operator> OperatorSymbolToEnum
+            = new Dictionary<string, Operator>()
+            {
+                { "+", Operator.Add },
+                { "-", Operator.Sub },
+                { "*", Operator.Mul },
+                { "/", Operator.Div },
+                { "%", Operator.Mod },
+                { "==", Operator.Eq },
+                { "||", Operator.Or },
+                { "&&", Operator.And },
+                { "<", Operator.Lt },
+                { ">", Operator.Gt },
+                { "!", Operator.Not }
+            };
+
         // Constants for type names.
         public const string IntType = "int";
         public const string BoolType = "boolean";
@@ -43,21 +74,21 @@ namespace MiniJavaCompiler.Support
         private static readonly string[] UnaryOperators = new [] { "!" };
 
         // Defines the operand and result types of operators for purposes of semantic analysis.
-        private static readonly Dictionary<string, BuiltInOperator> Operators =
-            new Dictionary<string, BuiltInOperator>()
+        private static readonly Dictionary<Operator, BuiltInOperator> Operators =
+            new Dictionary<Operator, BuiltInOperator>()
                 {
-                    { "+", new BuiltInOperator { OperandType = IntType, ResultType = IntType } },
-                    { "-", new BuiltInOperator { OperandType = IntType, ResultType = IntType } },
-                    { "*", new BuiltInOperator { OperandType = IntType, ResultType = IntType } },
-                    { "/", new BuiltInOperator { OperandType = IntType, ResultType = IntType } },
-                    { "<", new BuiltInOperator { OperandType = IntType, ResultType = BoolType } },
-                    { ">", new BuiltInOperator { OperandType = IntType, ResultType = BoolType } },
-                    { "%", new BuiltInOperator { OperandType = IntType, ResultType = IntType } },
-                    { "!", new BuiltInOperator { OperandType = BoolType, ResultType = BoolType } },
-                    { "&&", new BuiltInOperator { OperandType = BoolType, ResultType = BoolType } },
-                    { "||", new BuiltInOperator { OperandType = BoolType, ResultType = BoolType } },
-                    { "==", new BuiltInOperator { OperandType = AnyType, ResultType = BoolType } } // '==' is defined for any type, including user defined types
-                                                                                                   // and arrays (in which case it tests reference equality).
+                    { Operator.Add, new BuiltInOperator { OperandType = IntType, ResultType = IntType } },
+                    { Operator.Sub, new BuiltInOperator { OperandType = IntType, ResultType = IntType } },
+                    { Operator.Mul, new BuiltInOperator { OperandType = IntType, ResultType = IntType } },
+                    { Operator.Div, new BuiltInOperator { OperandType = IntType, ResultType = IntType } },
+                    { Operator.Lt, new BuiltInOperator { OperandType = IntType, ResultType = BoolType } },
+                    { Operator.Gt, new BuiltInOperator { OperandType = IntType, ResultType = BoolType } },
+                    { Operator.Mod, new BuiltInOperator { OperandType = IntType, ResultType = IntType } },
+                    { Operator.Not, new BuiltInOperator { OperandType = BoolType, ResultType = BoolType } },
+                    { Operator.And, new BuiltInOperator { OperandType = BoolType, ResultType = BoolType } },
+                    { Operator.Or, new BuiltInOperator { OperandType = BoolType, ResultType = BoolType } },
+                    { Operator.Eq, new BuiltInOperator { OperandType = AnyType, ResultType = BoolType } } // '==' is defined for any type, including user defined types
+                                                                                                          // and arrays (in which case it tests reference equality).
                 };
 
         public static bool IsBuiltInType(string typeName)
@@ -124,13 +155,23 @@ namespace MiniJavaCompiler.Support
             return OperatorsByPrecedenceLevel.Count() - 1;
         }
 
-        public static BuiltInOperator GetOperator(string operatorSymbol)
+        public static Operator ConvertOperator(string op)
         {
-            if (!Operators.ContainsKey(operatorSymbol))
+            if (!OperatorSymbolToEnum.ContainsKey(op))
             {
                 throw new ArgumentException("Invalid operator symbol.");
             }
-            return Operators[operatorSymbol];
+            return OperatorSymbolToEnum[op];
+        }
+
+        public static string OperatorRepr(Operator op)
+        {   // Inefficient, but this is only used in generating certain error messages...
+            return OperatorSymbolToEnum.First((kvpair) => kvpair.Value == op).Key;
+        }
+
+        public static BuiltInOperator GetOperator(Operator op)
+        {
+            return Operators[op];
         }
 
         // A helper method to return copies of arrays to prevent editing.

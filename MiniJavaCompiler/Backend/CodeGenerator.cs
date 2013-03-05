@@ -23,19 +23,20 @@ namespace MiniJavaCompiler.Backend
         private MethodBuilder _currentMethod;
         private int _currentParameterNumber;
 
-        private static Dictionary<string, OpCode> operators = new Dictionary<string, OpCode>()
+        private static Dictionary<MiniJavaInfo.Operator, OpCode> operators =
+            new Dictionary<MiniJavaInfo.Operator, OpCode>()
         {
-            { "+", OpCodes.Add },
-            { "-", OpCodes.Sub },
-            { "/", OpCodes.Div },
-            { "*", OpCodes.Mul },
-            { "<", OpCodes.Clt },
-            { ">", OpCodes.Cgt },
-            { "&&", OpCodes.And },
-            { "||", OpCodes.Or },
-            { "==", OpCodes.Ceq },
-            { "%", OpCodes.Rem },
-            { "!", OpCodes.Not }
+            { MiniJavaInfo.Operator.Add, OpCodes.Add },
+            { MiniJavaInfo.Operator.Sub, OpCodes.Sub },
+            { MiniJavaInfo.Operator.Div, OpCodes.Div },
+            { MiniJavaInfo.Operator.Mul, OpCodes.Mul },
+            { MiniJavaInfo.Operator.Lt, OpCodes.Clt },
+            { MiniJavaInfo.Operator.Gt, OpCodes.Cgt },
+            { MiniJavaInfo.Operator.And, OpCodes.And },
+            { MiniJavaInfo.Operator.Or, OpCodes.Or },
+            { MiniJavaInfo.Operator.Eq, OpCodes.Ceq },
+            { MiniJavaInfo.Operator.Mod, OpCodes.Rem },
+            { MiniJavaInfo.Operator.Not, OpCodes.Not }
         };
 
         public CodeGenerator(SymbolTable symbolTable, Program abstractSyntaxTree, string moduleName)

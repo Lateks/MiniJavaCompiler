@@ -57,7 +57,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
             {
                 var token = Input.Consume<OperatorToken>();
                 var term = Term();
-                return new UnaryOperatorExpression(token.Lexeme, term, token.Row, token.Col);
+                return new UnaryOperatorExpression(MiniJavaInfo.ConvertOperator(token.Lexeme), term, token.Row, token.Col);
             }
             else
                 return Term();
@@ -74,7 +74,8 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
             {
                 var opToken = Input.Consume<OperatorToken>();
                 var rightHandOperand = parseRightHandSideOperand();
-                var operatorExp = new BinaryOperatorExpression(opToken.Lexeme, leftHandOperand, rightHandOperand, opToken.Row, opToken.Col);
+                var operatorExp = new BinaryOperatorExpression(MiniJavaInfo.ConvertOperator(opToken.Lexeme),
+                    leftHandOperand, rightHandOperand, opToken.Row, opToken.Col);
                 return ParseBinaryOpTail(operatorExp, parseRightHandSideOperand, operators);
             }
             else

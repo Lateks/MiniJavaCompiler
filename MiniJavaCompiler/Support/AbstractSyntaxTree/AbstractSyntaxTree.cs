@@ -395,12 +395,12 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
     public class UnaryOperatorExpression : SyntaxElement, IExpression
     {
         public IExpression Operand { get; private set; }
-        public string Operator { get; private set; }
+        public MiniJavaInfo.Operator Operator { get; private set; }
 
-        public UnaryOperatorExpression(string opSymbol, IExpression operand, int row, int col)
+        public UnaryOperatorExpression(MiniJavaInfo.Operator op, IExpression operand, int row, int col)
             : base(row, col)
         {
-            Operator = opSymbol;
+            Operator = op;
             Operand = operand;
         }
 
@@ -418,15 +418,15 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
 
     public class BinaryOperatorExpression : SyntaxElement, IExpression
     {
-        public string Operator { get; private set; }
+        public MiniJavaInfo.Operator Operator { get; private set; }
         public IExpression LeftOperand { get; private set; }
         public IExpression RightOperand { get; private set; }
 
-        public BinaryOperatorExpression(string opsymbol, IExpression lhs, IExpression rhs,
+        public BinaryOperatorExpression(MiniJavaInfo.Operator op, IExpression lhs, IExpression rhs,
             int row, int col)
             : base(row, col)
         {
-            Operator = opsymbol;
+            Operator = op;
             LeftOperand = lhs;
             RightOperand = rhs;
         }

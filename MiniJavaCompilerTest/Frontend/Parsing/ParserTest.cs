@@ -433,23 +433,28 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             var assignment = (AssignmentStatement)expression;
             Assert.That(assignment.RightHandSide, Is.InstanceOf<BinaryOperatorExpression>());
             var minusOp = (BinaryOperatorExpression)assignment.RightHandSide;
-            Assert.That(minusOp.Operator, Is.EqualTo("-"));
+
+            Assert.That(minusOp.Operator, Is.EqualTo(MiniJavaInfo.Operator.Sub));
             Assert.That(minusOp.RightOperand, Is.InstanceOf<IntegerLiteralExpression>());
             Assert.That(minusOp.LeftOperand, Is.InstanceOf<BinaryOperatorExpression>());
+
             var plusOp = (BinaryOperatorExpression)minusOp.LeftOperand;
-            Assert.That(plusOp.Operator, Is.EqualTo("+"));
+            Assert.That(plusOp.Operator, Is.EqualTo(MiniJavaInfo.Operator.Add));
             Assert.That(plusOp.LeftOperand, Is.InstanceOf<IntegerLiteralExpression>());
             Assert.That(plusOp.RightOperand, Is.InstanceOf<BinaryOperatorExpression>());
+
             var timesOp = (BinaryOperatorExpression)plusOp.RightOperand;
-            Assert.That(timesOp.Operator, Is.EqualTo("*"));
+            Assert.That(timesOp.Operator, Is.EqualTo(MiniJavaInfo.Operator.Mul));
             Assert.That(timesOp.LeftOperand, Is.InstanceOf<IntegerLiteralExpression>());
             Assert.That(timesOp.RightOperand, Is.InstanceOf<BinaryOperatorExpression>());
+
             var parenthesisedMinusOp = (BinaryOperatorExpression)timesOp.RightOperand;
-            Assert.That(parenthesisedMinusOp.Operator, Is.EqualTo("-"));
+            Assert.That(parenthesisedMinusOp.Operator, Is.EqualTo(MiniJavaInfo.Operator.Sub));
             Assert.That(parenthesisedMinusOp.LeftOperand, Is.InstanceOf<IntegerLiteralExpression>());
             Assert.That(parenthesisedMinusOp.RightOperand, Is.InstanceOf<BinaryOperatorExpression>());
+
             var moduloOp = (BinaryOperatorExpression)parenthesisedMinusOp.RightOperand;
-            Assert.That(moduloOp.Operator, Is.EqualTo("%"));
+            Assert.That(moduloOp.Operator, Is.EqualTo(MiniJavaInfo.Operator.Mod));
             Assert.That(moduloOp.LeftOperand, Is.InstanceOf<IntegerLiteralExpression>());
             Assert.That(moduloOp.RightOperand, Is.InstanceOf<IntegerLiteralExpression>());
         }

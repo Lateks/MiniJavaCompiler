@@ -525,18 +525,19 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             Debug.Assert(!(left is ErrorType && right is ErrorType));
 
             string errormsg;
+            string opRepr = MiniJavaInfo.OperatorRepr(node.Operator);
             if (left is ErrorType)
             {
-                errormsg = String.Format("Invalid operand of type {0} for operator {1}.", right.Name, node.Operator);
+                errormsg = String.Format("Invalid operand of type {0} for operator {1}.", right.Name, opRepr);
             }
             else if (right is ErrorType)
             {
-                errormsg = String.Format("Invalid operand of type {0} for operator {1}.", left.Name, node.Operator);
+                errormsg = String.Format("Invalid operand of type {0} for operator {1}.", left.Name, opRepr);
             }
             else
             {
                 errormsg = String.Format("Cannot apply operator {0} on arguments of type {1} and {2}.",
-                                            node.Operator, left.Name, right.Name);
+                    opRepr, left.Name, right.Name);
             }
             ReportError(errormsg, node);
         }
