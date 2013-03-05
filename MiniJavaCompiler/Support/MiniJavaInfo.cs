@@ -53,6 +53,8 @@ namespace MiniJavaCompiler.Support
 
         // Note: all of these operators are left-associative.
         // A lower index in the array indicates a lower precedence.
+        // These are stored as strings because they are used for peeking at input.
+        // (Can be converted into Operators through the ConvertOperator method if needed.)
         private static readonly string[][] OperatorsByPrecedenceLevel = new[]
             {
                 new [] { "||" },
@@ -150,6 +152,7 @@ namespace MiniJavaCompiler.Support
             return CopyArray(OperatorsByPrecedenceLevel[level]);
         }
 
+        // Precedence levels start from 0 (which is the lowest precedence).
         public static int MaxPrecedenceLevel()
         {
             return OperatorsByPrecedenceLevel.Count() - 1;
@@ -174,7 +177,7 @@ namespace MiniJavaCompiler.Support
             return Operators[op];
         }
 
-        // A helper method to return copies of arrays to prevent editing.
+        // A helper method to return copies of arrays to prevent editing their contents.
         private static string[] CopyArray(string[] array)
         {
             string[] returnArray = new string[array.Count()];
