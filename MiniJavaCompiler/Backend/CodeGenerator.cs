@@ -12,6 +12,9 @@ using MiniJavaCompiler.Support;
 
 namespace MiniJavaCompiler.Backend
 {
+    // TODO: divide into (at least) 2 separate passes:
+    // 1. define type and method builders
+    // 2. generate code for methods and finalize types
     public class CodeGenerator : INodeVisitor
     {
         private readonly Program _astRoot;
@@ -73,11 +76,6 @@ namespace MiniJavaCompiler.Backend
 
         public void Visit(Program node) { }
 
-        public void Visit(MainClassDeclaration node)
-        {
-            _currentType = _symbolTable.ResolveTypeName(node.Name).Builder;
-        }
-
         public void Visit(ClassDeclaration node)
         {
             TypeBuilder thisType = _symbolTable.ResolveTypeName(node.Name).Builder;
@@ -94,7 +92,7 @@ namespace MiniJavaCompiler.Backend
             switch (node.VariableKind)
             {
                 case VariableDeclaration.Kind.Formal:
-                    _currentMethod.DefineParameter(getParameterIndex(node), ParameterAttributes.In, node.Name); // TODO: is this builder still needed afterwards?
+                    _currentMethod.DefineParameter(GetParameterIndex(node), ParameterAttributes.In, node.Name); // TODO: is this builder still needed afterwards?
                     break;
                 case VariableDeclaration.Kind.Local:
                     _currentMethod.GetILGenerator().DeclareLocal(BuildType(node.Type, node.IsArray));
@@ -107,7 +105,7 @@ namespace MiniJavaCompiler.Backend
 
         // If the method is not static, parameter 0 is a reference to the object
         // and this needs to be taken into account.
-        private int getParameterIndex(VariableDeclaration node)
+        private int GetParameterIndex(VariableDeclaration node)
         {
             return _currentMethod.IsStatic ? node.LocalIndex : node.LocalIndex + 1;
         }
@@ -203,8 +201,32 @@ namespace MiniJavaCompiler.Backend
         }
 
         public void Visit(AssignmentStatement node)
-        {
-            throw new NotImplementedException();
+        { // The left hand side of an assignment must be either
+          // a variable reference or an array indexing expression.
+            var il = _currentMethod.GetILGenerator();
+            if (node.LeftHandSide is VariableReferenceExpression)
+            {
+                var reference = (VariableReferenceExpression)node.LeftHandSide;
+                var variable = _symbolTable.Scopes[reference].ResolveVariable(reference.Name);
+                var decl = (VariableDeclaration)_symbolTable.Definitions[variable];
+                switch (decl.VariableKind)
+                {
+                    case VariableDeclaration.Kind.Class:
+                        il.Emit(OpCodes.Stfld, decl.Name);
+                        break;
+                    case VariableDeclaration.Kind.Local:
+                        il.Emit(OpCodes.Stloc, decl.LocalIndex);
+                        break;
+                    case VariableDeclaration.Kind.Formal:
+                        il.Emit(OpCodes.Starg, GetParameterIndex(decl));
+                        break;
+                }
+            }
+            else
+            {
+                // TODO: handle array case
+                throw new NotImplementedException();
+            }
         }
 
         public void Visit(IfStatement node)
@@ -219,7 +241,17 @@ namespace MiniJavaCompiler.Backend
 
         public void Visit(MethodInvocation node)
         {
-            throw new NotImplementedException();
+            MethodInfo method;
+            if (node.MethodOwner.Type is ArrayType)
+            {
+                method = BuildType(node.MethodOwner.Type.Name, true).GetMethod("Length", new Type[] { });
+            }
+            else
+            {   // TODO: should there be a separate pass to define all method builders?
+                method = _symbolTable.ResolveTypeName(node.MethodOwner.Type.Name).
+                    Scope.ResolveMethod(node.MethodName).Builder;
+            }
+            _currentMethod.GetILGenerator().Emit(OpCodes.Call, method);
         }
 
         public void Visit(InstanceCreationExpression node)
@@ -266,7 +298,7 @@ namespace MiniJavaCompiler.Backend
                     il.Emit(OpCodes.Ldfld, node.Name);
                     break;
                 case VariableDeclaration.Kind.Formal:
-                    il.Emit(OpCodes.Ldarg, getParameterIndex(definition));
+                    il.Emit(OpCodes.Ldarg, GetParameterIndex(definition));
                     break;
                 case VariableDeclaration.Kind.Local:
                     il.Emit(OpCodes.Ldloc, definition.LocalIndex);
@@ -280,12 +312,6 @@ namespace MiniJavaCompiler.Backend
         }
 
         public void Exit(ClassDeclaration node)
-        {
-            _currentType.CreateType();
-            _currentType = null;
-        }
-
-        public void Exit(MainClassDeclaration node)
         {
             _currentType.CreateType();
             _currentType = null;
