@@ -21,7 +21,6 @@ namespace MiniJavaCompiler.Backend
         private readonly Dictionary<Type, ConstructorInfo> _constructors;
         private TypeBuilder _currentType;
         private MethodBuilder _currentMethod;
-        private int _currentParameterNumber;
 
         private static Dictionary<MiniJavaInfo.Operator, OpCode> operators =
             new Dictionary<MiniJavaInfo.Operator, OpCode>()
@@ -43,7 +42,6 @@ namespace MiniJavaCompiler.Backend
         {
             _symbolTable = symbolTable;
             _astRoot = abstractSyntaxTree;
-            _currentParameterNumber = 0;
             _constructors = new Dictionary<Type, ConstructorInfo>();
 
             // Set up a single module assembly.
@@ -54,13 +52,13 @@ namespace MiniJavaCompiler.Backend
             SetUpScalarTypes();
         }
 
-        // Defines TypeBuilders for all user defined types and stores them.
+        // Defines TypeBuilders for all user defined types and stores them and their constructors.
         private void SetUpScalarTypes()
         {
             foreach (string typeName in _symbolTable.ScalarTypeNames)
             {
                 TypeSymbol sym = _symbolTable.ResolveTypeName(typeName);
-                TypeBuilder typeBuilder = _moduleBuilder.DefineType(typeName, TypeAttributes.Public | TypeAttributes.Class);
+                TypeBuilder typeBuilder = _moduleBuilder.DefineType(typeName, TypeAttributes.Public | TypeAttributes.Class); // TODO: are these IsByRef by default?
                 sym.Builder = typeBuilder;
                 _constructors[typeBuilder] =
                     typeBuilder.DefineDefaultConstructor(MethodAttributes.Public | MethodAttributes.Static);
@@ -70,13 +68,7 @@ namespace MiniJavaCompiler.Backend
         public void GenerateCode()
         {
             _astRoot.Accept(this);
-            FinalizeTypes();
-            // TODO: save assembly
-        }
-
-        private void FinalizeTypes()
-        {
-            // TODO: create all types
+            _asmBuilder.Save("out.exe"); // TODO: naming
         }
 
         public void Visit(Program node) { }
@@ -102,8 +94,7 @@ namespace MiniJavaCompiler.Backend
             switch (node.VariableKind)
             {
                 case VariableDeclaration.Kind.Formal:
-                    _currentMethod.DefineParameter(_currentParameterNumber, ParameterAttributes.In, node.Name); // TODO: is this builder still needed afterwards?
-                    _currentParameterNumber++;
+                    _currentMethod.DefineParameter(getParameterIndex(node), ParameterAttributes.In, node.Name); // TODO: is this builder still needed afterwards?
                     break;
                 case VariableDeclaration.Kind.Local:
                     _currentMethod.GetILGenerator().DeclareLocal(BuildType(node.Type, node.IsArray));
@@ -112,6 +103,13 @@ namespace MiniJavaCompiler.Backend
                     _currentType.DefineField(node.Name, BuildType(node.Type, node.IsArray), FieldAttributes.Public);
                     break;
             }
+        }
+
+        // If the method is not static, parameter 0 is a reference to the object
+        // and this needs to be taken into account.
+        private int getParameterIndex(VariableDeclaration node)
+        {
+            return _currentMethod.IsStatic ? node.LocalIndex : node.LocalIndex + 1;
         }
 
         public void Visit(MethodDeclaration node)
@@ -126,7 +124,6 @@ namespace MiniJavaCompiler.Backend
             methodBuilder.SetParameters(GetParameterTypes(node));
 
             _currentMethod = methodBuilder;
-            _currentParameterNumber = 0;
         }
 
         private Type[] GetParameterTypes(MethodDeclaration node)
@@ -148,25 +145,29 @@ namespace MiniJavaCompiler.Backend
 
         private Type BuildType(string typeName, bool isArray)
         {
-            Type retType;
+            Type type;
+            if (typeName == MiniJavaInfo.VoidType)
+            {
+                type = typeof(void);
+            }
             if (typeName == MiniJavaInfo.IntType)
             {
-                retType = typeof(Int32);
+                type = typeof(Int32);
             }
             else if (typeName == MiniJavaInfo.BoolType)
             {
-                retType = typeof(Boolean);
+                type = typeof(Boolean);
             }
             else
             {
-                retType = _symbolTable.ResolveTypeName(typeName).Builder;
+                type = _symbolTable.ResolveTypeName(typeName).Builder;
             }
 
             if (isArray)
             {
-                retType = retType.MakeArrayType();
+                type = type.MakeArrayType();
             }
-            return retType;
+            return type;
         }
 
         private static MethodAttributes GetMethodAttributes(MethodDeclaration node)
@@ -245,7 +246,7 @@ namespace MiniJavaCompiler.Backend
 
         public void Visit(ThisExpression node)
         {
-            throw new NotImplementedException();
+            _currentMethod.GetILGenerator().Emit(OpCodes.Ldarg_0);
         }
 
         public void Visit(ArrayIndexingExpression node)
@@ -255,7 +256,22 @@ namespace MiniJavaCompiler.Backend
 
         public void Visit(VariableReferenceExpression node)
         {
-            throw new NotImplementedException();
+            var variable = _symbolTable.Scopes[node].ResolveVariable(node.Name);
+            var definition = (VariableDeclaration) _symbolTable.Definitions[variable];
+            var il = _currentMethod.GetILGenerator();
+            switch (definition.VariableKind)
+            {
+                case VariableDeclaration.Kind.Class:
+                    il.Emit(OpCodes.Ldarg_0);
+                    il.Emit(OpCodes.Ldfld, node.Name);
+                    break;
+                case VariableDeclaration.Kind.Formal:
+                    il.Emit(OpCodes.Ldarg, getParameterIndex(definition));
+                    break;
+                case VariableDeclaration.Kind.Local:
+                    il.Emit(OpCodes.Ldloc, definition.LocalIndex);
+                    break;
+            }
         }
 
         public void Visit(IntegerLiteralExpression node)
@@ -265,11 +281,13 @@ namespace MiniJavaCompiler.Backend
 
         public void Exit(ClassDeclaration node)
         {
+            _currentType.CreateType();
             _currentType = null;
         }
 
         public void Exit(MainClassDeclaration node)
         {
+            _currentType.CreateType();
             _currentType = null;
         }
 
