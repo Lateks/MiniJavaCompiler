@@ -37,6 +37,8 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
 
     public class Parser : ParserBase, IParser
     {
+        private int currentLocalIndex;
+
         public Parser(ITokenizer input, IErrorReporter reporter, bool debugMode = false)
             : base(new ParserInputReader(input, reporter), reporter, debugMode) { }
 
@@ -221,8 +223,11 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
             }
             var variableName = Input.MatchAndConsume<IdentifierToken>();
             Input.MatchAndConsume<PunctuationToken>(";");
+
+            int localIndex = currentLocalIndex;
+            currentLocalIndex++;
             return new ast.VariableDeclaration(variableName.Lexeme, typeName.Lexeme, isArray,
-                ast.VariableDeclaration.Kind.Local, typeName.Row, typeName.Col);
+                ast.VariableDeclaration.Kind.Local, localIndex, typeName.Row, typeName.Col);
         }
 
         private ast.IStatement CompleteStatement(ast.IExpression expression)
@@ -372,6 +377,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
                 if (Input.NextTokenIs<MiniJavaTypeToken>() || Input.NextTokenIs<IdentifierToken>())
                 {
                     followSet = new string[] { ";" };
+                    currentLocalIndex = 0; // class fields are always numbered with 0 (their ordering does not matter)
                     return VariableDeclaration(ast.VariableDeclaration.Kind.Class);
                 }
                 else if (Input.NextTokenIs<KeywordToken>("public"))
@@ -430,10 +436,12 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
             var methodName = Input.MatchAndConsume<IdentifierToken>();
 
             Input.MatchAndConsume<PunctuationToken>("("); // parameter list
+            currentLocalIndex = 0; // number parameters starting from 0
             List<ast.VariableDeclaration> parameters = FormalParameters();
             Input.MatchAndConsume<PunctuationToken>(")");
 
             Input.MatchAndConsume<PunctuationToken>("{"); // method body
+            currentLocalIndex = 0; // number locals starting from 0
             List<ast.IStatement> methodBody = StatementList();
             Input.MatchAndConsume<PunctuationToken>("}");
 
@@ -446,11 +454,13 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
         {
             try
             {
+                int localIndex = currentLocalIndex;
+                currentLocalIndex++;
                 var typeInfo = Type();
                 var type = typeInfo.typeToken;
                 var variableIdent = Input.MatchAndConsume<IdentifierToken>();
                 return new ast.VariableDeclaration(variableIdent.Lexeme, type.Lexeme,
-                    typeInfo.isArray, kind, type.Row, type.Col);
+                    typeInfo.isArray, kind, localIndex, type.Row, type.Col);
             }
             catch (SyntaxError e)
             {

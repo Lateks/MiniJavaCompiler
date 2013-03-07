@@ -155,11 +155,13 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
             Class
         }
         public Kind VariableKind { get; private set; }
+        public int LocalIndex { get; set; }
 
-        public VariableDeclaration(string name, string type, bool isArray, Kind kind, int row, int col)
+        public VariableDeclaration(string name, string type, bool isArray, Kind kind, int localIndex, int row, int col)
             : base(name, type, isArray, row, col)
         {
             VariableKind = kind;
+            LocalIndex = localIndex;
         }
 
         public override void Accept(INodeVisitor visitor)
