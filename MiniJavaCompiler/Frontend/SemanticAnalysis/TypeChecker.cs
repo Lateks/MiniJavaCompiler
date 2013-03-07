@@ -51,8 +51,6 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 
         public void Visit(ClassDeclaration node) { }
 
-        public void Visit(MainClassDeclaration node) { }
-
         public void Visit(VariableDeclaration node) { }
 
         public void Visit(MethodDeclaration node)
@@ -295,8 +293,6 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 
         public void Exit(ClassDeclaration node) { }
 
-        public void Exit(MainClassDeclaration node) { }
-
         public void Exit(MethodDeclaration node)
         {
             var method = _symbolTable.Scopes[node].ResolveMethod(node.Name);
@@ -414,19 +410,17 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
                 ReportError(String.Format("Cannot resolve symbol {0}.", node.MethodName), node);
                 return;
             }
-            if (methodOwnerType is ArrayType)
-            {
-                return; // no checks done
-            }
-            if (method.Type is ErrorType)
-            {
-                _checkFailed = true;
-            }
+
+            if (methodOwnerType is ArrayType) return; // no checks done, there can be no call params
+
+            if (method.Type is ErrorType) _checkFailed = true;
+
             if (method.IsStatic)
             {
                 ReportError(String.Format("Cannot call static method {0} on an instance.", node.MethodName), node);
                 return;
             }
+
             var methodDecl = (MethodDeclaration)_symbolTable.Definitions[method];
             if (node.CallParameters.Count != methodDecl.Formals.Count)
             {

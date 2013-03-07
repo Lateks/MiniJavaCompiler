@@ -54,7 +54,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
 
         private ast.Program Program()
         {
-            ast.MainClassDeclaration main;
+            ast.ClassDeclaration main;
             List<ast.ClassDeclaration> declarations;
             try
             {
@@ -79,7 +79,7 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
             return new ast.Program(main, declarations);
         }
 
-        private ast.MainClassDeclaration MainClass()
+        private ast.ClassDeclaration MainClass()
         {
             try
             {
@@ -99,9 +99,11 @@ namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
                 Input.MatchAndConsume<PunctuationToken>("}");
 
                 Input.MatchAndConsume<PunctuationToken>("}"); // class body ends
-                return new ast.MainClassDeclaration(classIdent.Lexeme,
-                    mainStatements, startToken.Row, startToken.Col,
-                    methodStartToken.Row, methodStartToken.Col);
+
+                var mainMethod = ast.MethodDeclaration.CreateMainMethodDeclaration(
+                    mainStatements, methodStartToken.Row, methodStartToken.Col);
+                return ast.ClassDeclaration.CreateMainClassDeclaration(classIdent.Lexeme,
+                    mainMethod, startToken.Row, startToken.Col);
             }
             catch (SyntaxError e)
             {

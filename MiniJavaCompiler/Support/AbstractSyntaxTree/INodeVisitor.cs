@@ -4,7 +4,6 @@
     {
         void Visit(Program node);
         void Visit(ClassDeclaration node);
-        void Visit(MainClassDeclaration node);
         void Visit(VariableDeclaration node);
         void Visit(MethodDeclaration node);
         void Visit(PrintStatement node);
@@ -26,7 +25,6 @@
 
         // These are for handling e.g. scope exits when needed.
         void Exit(ClassDeclaration node);
-        void Exit(MainClassDeclaration node);
         void Exit(MethodDeclaration node);
         void Exit(BlockStatement node);
     }

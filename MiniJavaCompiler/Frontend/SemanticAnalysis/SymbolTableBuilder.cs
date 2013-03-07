@@ -135,7 +135,7 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 
         public void Visit(ClassDeclaration node)
         {   // Resolve inheritance relationships.
-            var typeSymbol = (TypeSymbol) CurrentScope.ResolveType(node.Name);
+            var typeSymbol = CurrentScope.ResolveType(node.Name);
             if (node.InheritedClass != null)
             {
                 var inheritedType = (TypeSymbol) CurrentScope.ResolveType(node.InheritedClass);
@@ -154,19 +154,6 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         }
 
         public void Exit(ClassDeclaration node)
-        {
-            ExitScope();
-        }
-
-        public void Visit(MainClassDeclaration node)
-        {   // Main class cannot inherit.
-            var typeSymbol = CurrentScope.ResolveType(node.Name);
-            _symbolTable.Scopes.Add(node, typeSymbol.Scope);
-            _symbolTable.Definitions.Add(typeSymbol, node);
-            EnterScope(typeSymbol.Scope);
-        }
-
-        public void Exit(MainClassDeclaration node)
         {
             ExitScope();
         }

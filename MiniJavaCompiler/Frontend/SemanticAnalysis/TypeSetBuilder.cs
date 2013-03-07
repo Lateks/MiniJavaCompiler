@@ -55,18 +55,6 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             }
         }
 
-        public void Visit(MainClassDeclaration node)
-        {
-            if (NameAlreadyDefined(node.Name))
-            {
-                ReportConflict(node.Name, node.Row, node.Col);
-            }
-            else
-            {
-                _types.Add(node.Name);
-            }
-        }
-
         public void Visit(VariableDeclaration node) { }
 
         public void Visit(MethodDeclaration node) { }
@@ -104,8 +92,6 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         public void Visit(IntegerLiteralExpression node) { }
 
         public void Exit(ClassDeclaration node) { }
-
-        public void Exit(MainClassDeclaration node) { }
 
         public void Exit(MethodDeclaration node) { }
 

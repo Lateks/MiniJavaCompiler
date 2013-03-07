@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using IType = MiniJavaCompiler.Support.SymbolTable.Types.IType;
 
 namespace MiniJavaCompiler.Support.AbstractSyntaxTree
@@ -32,12 +33,16 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
 
     public class Program : ISyntaxTreeNode
     {
-        public MainClassDeclaration MainClass { get; private set; }
+        public ClassDeclaration MainClass { get; private set; }
         public List<ClassDeclaration> Classes { get; private set; }
 
-        public Program(MainClassDeclaration mainClass,
+        public Program(ClassDeclaration mainClass,
                        List<ClassDeclaration> classDeclarations)
         {
+            if (mainClass != null && !mainClass.IsMainClass)
+            {
+                throw new ArgumentException("Illegal main class declaration, the program has no entry point.");
+            }
             MainClass = mainClass;
             Classes = classDeclarations;
         }
@@ -55,6 +60,7 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
 
     public class ClassDeclaration : SyntaxElement
     {
+        public bool IsMainClass { get; private set; }
         public string Name { get; private set; }
         public string InheritedClass { get; private set; }
         public List<Declaration> Declarations { get; private set; }
@@ -68,6 +74,19 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
             Declarations = declarations;
         }
 
+        public static ClassDeclaration CreateMainClassDeclaration(string name,
+            MethodDeclaration mainMethod, int row, int col)
+        {
+            if (!mainMethod.IsEntryPoint)
+            {
+                throw new ArgumentException("Illegal main method declaration, the program has no entry point.");
+            }
+            var mainClass = new ClassDeclaration(name, null,
+                new List<Declaration> { mainMethod }, row, col);
+            mainClass.IsMainClass = true;
+            return mainClass;
+        }
+
         public override void Accept(INodeVisitor visitor)
         {
             visitor.Visit(this);
@@ -75,28 +94,6 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
             {
                 decl.Accept(visitor);
             }
-            visitor.Exit(this);
-        }
-    }
-
-    public class MainClassDeclaration : SyntaxElement
-    {
-        public string Name { get; private set; }
-        public MethodDeclaration MainMethod { get; private set; }
-
-        public MainClassDeclaration(string name, List<IStatement> mainMethod,
-            int row, int col, int mainMethodRow, int mainMethodCol)
-            : base(row, col)
-        {
-            Name = name;
-            MainMethod = new MethodDeclaration(MiniJavaInfo.MainMethodIdent, MiniJavaInfo.VoidType, false,
-                new List<VariableDeclaration>(), mainMethod, mainMethodRow, mainMethodCol, true);
-        }
-
-        public override void Accept(INodeVisitor visitor)
-        {
-            visitor.Visit(this);
-            MainMethod.Accept(visitor);
             visitor.Exit(this);
         }
     }
@@ -119,9 +116,11 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
 
     public class MethodDeclaration : Declaration
     {
+        public bool IsEntryPoint { get; private set; }
         public List<VariableDeclaration> Formals { get; private set; }
         public List<IStatement> MethodBody { get; private set; }
         public bool IsStatic { get; private set; }
+        public ClassDeclaration DeclaringType { get; set; }
 
         public MethodDeclaration(string name, string type, bool returnTypeIsArray,
             List<VariableDeclaration> formals, List<IStatement> methodBody,
@@ -131,6 +130,14 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
             Formals = formals;
             MethodBody = methodBody;
             IsStatic = isStatic;
+        }
+
+        public static MethodDeclaration CreateMainMethodDeclaration(List<IStatement> methodBody, int row, int col)
+        {
+            var method = new MethodDeclaration(MiniJavaInfo.MainMethodIdent, MiniJavaInfo.VoidType, false,
+              new List<VariableDeclaration>(), methodBody, row, col, true);
+            method.IsEntryPoint = true;
+            return method;
         }
 
         public override void Accept(INodeVisitor visitor)
@@ -342,6 +349,7 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
         public string MethodName { get; private set; }
         public List<IExpression> CallParameters { get; private set; }
         public IType Type { get; set; }
+        public MethodDeclaration ReferencedMethod { get; set; }
 
         public MethodInvocation(IExpression methodOwner, string methodName,
             List<IExpression> callParameters, int row, int col)

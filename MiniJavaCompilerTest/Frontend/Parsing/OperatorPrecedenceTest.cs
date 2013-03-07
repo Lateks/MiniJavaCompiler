@@ -29,7 +29,8 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
                           "}\n" +
                           "class A { public int foo() { return 7; } }\n";
             var tree = ParseProgram(program);
-            var arithmeticExpression = (BinaryOperatorExpression) ((AssignmentStatement) tree.MainClass.MainMethod.MethodBody[1]).RightHandSide;
+            var arithmeticExpression = (BinaryOperatorExpression) ((AssignmentStatement)
+                ((MethodDeclaration)tree.MainClass.Declarations[0]).MethodBody[1]).RightHandSide;
 
             // ... 10 + new ...
             Assert.That(arithmeticExpression.Operator, Is.EqualTo(MiniJavaInfo.Operator.Add));
@@ -89,7 +90,8 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
                           "}\n" +
                           "class A { public int foo() { return 10; } }\n";
             var tree = ParseProgram(program);
-            var booleanExpression = (BinaryOperatorExpression)((AssignmentStatement)tree.MainClass.MainMethod.MethodBody[4]).RightHandSide;
+            var booleanExpression = (BinaryOperatorExpression)((AssignmentStatement)
+                ((MethodDeclaration) tree.MainClass.Declarations[0]).MethodBody[4]).RightHandSide;
             
             // ... 10 || 10 ...
             Assert.That(booleanExpression.Operator, Is.EqualTo(MiniJavaInfo.Operator.Or));
