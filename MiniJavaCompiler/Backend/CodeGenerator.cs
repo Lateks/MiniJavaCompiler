@@ -225,7 +225,7 @@ namespace MiniJavaCompiler.Backend
         public void Visit(InstanceCreationExpression node)
         {
             // TODO: handle array creation cases
-            Type type = BuildType(node.Type, node.IsArrayCreation);
+            Type type = BuildType(node.CreatedType, node.IsArrayCreation);
             _currentMethod.GetILGenerator().Emit(OpCodes.Newobj, _constructors[type]);
         }
 

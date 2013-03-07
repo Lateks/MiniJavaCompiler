@@ -554,7 +554,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             Assert.That(assignment.RightHandSide, Is.InstanceOf<InstanceCreationExpression>());
 
             var newinstance = (InstanceCreationExpression)assignment.RightHandSide;
-            Assert.That(newinstance.Type, Is.EqualTo("int"));
+            Assert.That(newinstance.CreatedType, Is.EqualTo("int"));
             Assert.That(newinstance.ArraySize, Is.InstanceOf<IntegerLiteralExpression>());
             Assert.That(((IntegerLiteralExpression)newinstance.ArraySize).Value, Is.EqualTo("10"));
         }

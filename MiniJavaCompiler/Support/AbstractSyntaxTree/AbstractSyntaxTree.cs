@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using IType = MiniJavaCompiler.Support.SymbolTable.Types.IType;
 
 namespace MiniJavaCompiler.Support.AbstractSyntaxTree
 {
@@ -12,6 +13,7 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
     public interface IExpression : ISyntaxTreeNode
     {
         string Describe();
+        IType Type { get; set; }
     }
 
     public abstract class SyntaxElement : ISyntaxTreeNode
@@ -339,6 +341,7 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
         public IExpression MethodOwner { get; private set; }
         public string MethodName { get; private set; }
         public List<IExpression> CallParameters { get; private set; }
+        public IType Type { get; set; }
 
         public MethodInvocation(IExpression methodOwner, string methodName,
             List<IExpression> callParameters, int row, int col)
@@ -367,14 +370,15 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
 
     public class InstanceCreationExpression : SyntaxElement, IExpression
     {
-        public string Type { get;  private set; }
+        public string CreatedType { get;  private set; }
         public bool IsArrayCreation { get; private set; }
         public IExpression ArraySize { get; private set; }
+        public IType Type { get; set; }
 
         public InstanceCreationExpression(string type, int row, int col, IExpression arraySize = null)
             : base(row, col)
         {
-            Type = type;
+            CreatedType = type;
             ArraySize = arraySize;
             IsArrayCreation = arraySize != null;
         }
@@ -398,6 +402,7 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
     {
         public IExpression Operand { get; private set; }
         public MiniJavaInfo.Operator Operator { get; private set; }
+        public IType Type { get; set; }
 
         public UnaryOperatorExpression(MiniJavaInfo.Operator op, IExpression operand, int row, int col)
             : base(row, col)
@@ -423,6 +428,7 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
         public MiniJavaInfo.Operator Operator { get; private set; }
         public IExpression LeftOperand { get; private set; }
         public IExpression RightOperand { get; private set; }
+        public IType Type { get; set; }
 
         public BinaryOperatorExpression(MiniJavaInfo.Operator op, IExpression lhs, IExpression rhs,
             int row, int col)
@@ -448,6 +454,7 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
 
     public class BooleanLiteralExpression : SyntaxElement, IExpression
     {
+        public IType Type { get; set; }
         public bool Value { get; private set; }
 
         public BooleanLiteralExpression(bool value, int row, int col)
@@ -469,6 +476,8 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
 
     public class ThisExpression : SyntaxElement, IExpression
     {
+        public IType Type { get; set; }
+
         public ThisExpression(int row, int col)
             : base(row, col) { }
 
@@ -485,21 +494,22 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
 
     public class ArrayIndexingExpression : SyntaxElement, IExpression
     {
-        public IExpression Array { get; private set; }
-        public IExpression Index { get; private set; }
+        public IExpression ArrayExpr { get; private set; }
+        public IExpression IndexExpr { get; private set; }
+        public IType Type { get; set; }
 
         public ArrayIndexingExpression(IExpression arrayReference,
             IExpression arrayIndex, int row, int col)
             : base(row, col)
         {
-            Array = arrayReference;
-            Index = arrayIndex;
+            ArrayExpr = arrayReference;
+            IndexExpr = arrayIndex;
         }
 
         public override void Accept(INodeVisitor visitor)
         {
-            Index.Accept(visitor);
-            Array.Accept(visitor);
+            IndexExpr.Accept(visitor);
+            ArrayExpr.Accept(visitor);
             visitor.Visit(this);
         }
 
@@ -512,6 +522,7 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
     public class VariableReferenceExpression : SyntaxElement, IExpression
     {
         public string Name { get; private set; }
+        public IType Type { get; set; }
 
         public VariableReferenceExpression(string name, int row, int col)
             : base(row, col)
@@ -534,6 +545,7 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
     {
         public string Value { get; private set; }
         public int IntValue { get; set; }
+        public IType Type { get; set; }
 
         public IntegerLiteralExpression(string value, int row, int col)
             : base(row, col)

@@ -253,12 +253,12 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 
         public void Visit(InstanceCreationExpression node)
         {
-            var scalarTypeSymbol = _symbolTable.ResolveTypeName(node.Type);
+            var scalarTypeSymbol = _symbolTable.ResolveTypeName(node.CreatedType);
             if (scalarTypeSymbol == null)
             {
-                ReportError(String.Format("Unknown type '{0}'.", node.Type), node.Row, node.Col);
+                ReportError(String.Format("Unknown type '{0}'.", node.CreatedType), node.Row, node.Col);
             }
-            else if (node.IsArrayCreation && _symbolTable.ResolveTypeName(node.Type, node.IsArrayCreation) == null)
+            else if (node.IsArrayCreation && _symbolTable.ResolveTypeName(node.CreatedType, node.IsArrayCreation) == null)
             {
                 DefineArrayType((ScalarType) scalarTypeSymbol.Type);
             }
