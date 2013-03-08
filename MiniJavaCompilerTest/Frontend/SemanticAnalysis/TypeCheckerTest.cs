@@ -21,8 +21,7 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
             reader.Close();
             Assert.That(errors.Errors, Is.Empty);
 
-            var types = new TypeSetBuilder(syntaxTree, errors).BuildTypeSet();
-            var symbolTableBuilder = new SymbolTableBuilder(syntaxTree, types, errors);
+            var symbolTableBuilder = new SymbolTableBuilder(syntaxTree, errors);
             Assert.That(errors.Errors, Is.Empty);
 
             SymbolTable symbolTable = null;

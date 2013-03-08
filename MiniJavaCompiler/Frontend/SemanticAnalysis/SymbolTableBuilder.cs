@@ -10,7 +10,7 @@ using System;
 
 namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 {
-    public class SymbolTableBuilder : INodeVisitor
+    public partial class SymbolTableBuilder : INodeVisitor
     {
         private readonly SymbolTable _symbolTable;
         private readonly Program _syntaxTree;
@@ -32,29 +32,44 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
             _scopeStack.Pop();
         }
 
-        public SymbolTableBuilder(Program node, IEnumerable<string> typeNames, IErrorReporter errorReporter)
+        public SymbolTableBuilder(Program node, IErrorReporter errorReporter)
         {
             _errorReporter = errorReporter;
             _syntaxTree = node;
 
             _symbolTable = new SymbolTable();
-            _symbolTable.ScalarTypeNames = typeNames;
 
-            SetupGlobalScope();
             _scopeStack = new Stack<IScope>();
         }
 
         public SymbolTable BuildSymbolTable()
         {
-            EnterScope(_symbolTable.GlobalScope);
-            _syntaxTree.Accept(this);
-            bool fatalError = CheckForCyclicInheritance();
+            bool fatalError;
+            if (GetTypes())
+            {
+                SetupGlobalScope();
+                EnterScope(_symbolTable.GlobalScope);
+                _syntaxTree.Accept(this);
+                fatalError = CheckForCyclicInheritance();
+            }
+            else
+            {
+                fatalError = true;
+            }
 
             if (fatalError)
             {
                 throw new CompilationError();
             }
             return _symbolTable;
+        }
+
+        private bool GetTypes()
+        {
+            IEnumerable<string> types;
+            bool success = new TypeSetBuilder(_syntaxTree, _errorReporter).BuildTypeSet(out types);
+            _symbolTable.ScalarTypeNames = types;
+            return success;
         }
 
         private void SetupGlobalScope()

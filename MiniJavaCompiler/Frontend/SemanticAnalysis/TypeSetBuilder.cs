@@ -5,50 +5,49 @@ using System;
 
 namespace MiniJavaCompiler.Frontend.SemanticAnalysis
 {
-    public class TypeSetBuilder
+    public partial class SymbolTableBuilder
     {
-        private readonly Program _root;
-        private readonly List<string> _types;
-        private readonly IErrorReporter _errorReporter;
-
-        public TypeSetBuilder(Program node, IErrorReporter errorReporter)
+        private class TypeSetBuilder
         {
-            _root = node;
-            _errorReporter = errorReporter;
-            _types = new List<string>();
-        }
+            private readonly Program _root;
+            private readonly List<string> _types;
+            private readonly IErrorReporter _errorReporter;
 
-        public IEnumerable<string> BuildTypeSet()
-        {
-            bool typesOk = Handle(_root.MainClass);
-            foreach (var classDecl in _root.Classes)
+            public TypeSetBuilder(Program node, IErrorReporter errorReporter)
             {
-                typesOk &= Handle(classDecl);
+                _root = node;
+                _errorReporter = errorReporter;
+                _types = new List<string>();
             }
 
-            if (!typesOk)
+            public bool BuildTypeSet(out IEnumerable<string> result)
             {
-                throw new CompilationError();
-            }
-            return _types;
-        }
+                bool typesOk = Handle(_root.MainClass);
+                foreach (var classDecl in _root.Classes)
+                {
+                    typesOk &= Handle(classDecl);
+                }
 
-        public bool Handle(ClassDeclaration node)
-        {
-            if (NameAlreadyDefined(node.Name))
+                result = _types;
+                return typesOk;
+            }
+
+            public bool Handle(ClassDeclaration node)
             {
-                _errorReporter.ReportError(String.Format("Conflicting definitions for {0}.",
-                    node.Name), node.Row, node.Col);
-                return false;
+                if (NameAlreadyDefined(node.Name))
+                {
+                    _errorReporter.ReportError(String.Format("Conflicting definitions for {0}.",
+                        node.Name), node.Row, node.Col);
+                    return false;
+                }
+                _types.Add(node.Name);
+                return true;
             }
-            _types.Add(node.Name);
-            return true;
-        }
 
-        private bool NameAlreadyDefined(string name)
-        {
-            return _types.Contains(name) || MiniJavaInfo.IsBuiltInType(name);
+            private bool NameAlreadyDefined(string name)
+            {
+                return _types.Contains(name) || MiniJavaInfo.IsBuiltInType(name);
+            }
         }
-
     }
 }

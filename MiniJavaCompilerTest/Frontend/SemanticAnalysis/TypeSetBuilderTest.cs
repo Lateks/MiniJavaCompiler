@@ -8,7 +8,7 @@ using NUnit.Framework;
 namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
 {
     [TestFixture]
-    public class TypeSetBuilderTest
+    public class TypeSetBuildingTest
     {
         [Test]
         public void ShouldConflictWithPredefinedTypesTest()
@@ -21,8 +21,8 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 new [] { secondClass, thirdClass }));
 
             var errorReporter = new ErrorLogger();
-            var builder = new TypeSetBuilder(program, errorReporter);
-            Assert.Throws<CompilationError>(() => builder.BuildTypeSet());
+            var builder = new SymbolTableBuilder(program, errorReporter);
+            Assert.Throws<CompilationError>(() => builder.BuildSymbolTable());
             var errors = errorReporter.Errors;
             Assert.AreEqual(3, errors.Count);
             Assert.AreEqual("Conflicting definitions for int.", errors[0].Content);
@@ -43,8 +43,8 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 new ClassDeclaration[] { otherClass }));
 
             var errorReporter = new ErrorLogger();
-            var builder = new TypeSetBuilder(program, errorReporter);
-            Assert.Throws<CompilationError>(() => builder.BuildTypeSet());
+            var builder = new SymbolTableBuilder(program, errorReporter);
+            Assert.Throws<CompilationError>(() => builder.BuildSymbolTable());
             var errors = errorReporter.Errors;
             Assert.AreEqual(errors.Count, 1);
             Assert.AreEqual("Conflicting definitions for Foo.", errors[0].Content);
@@ -62,8 +62,8 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 new ClassDeclaration[] { secondClass, thirdClass }));
 
             var errorReporter = new ErrorLogger();
-            var builder = new TypeSetBuilder(program, errorReporter);
-            Assert.Throws<CompilationError>(() => builder.BuildTypeSet());
+            var builder = new SymbolTableBuilder(program, errorReporter);
+            Assert.Throws<CompilationError>(() => builder.BuildSymbolTable());
             var errors = errorReporter.Errors;
             Assert.AreEqual(errors.Count, 1);
             Assert.AreEqual("Conflicting definitions for Bar.", errors[0].Content);
@@ -81,8 +81,8 @@ namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
                 new [] { secondClass, thirdClass }));
 
             var errorReporter = new ErrorLogger();
-            var builder = new TypeSetBuilder(program, errorReporter);
-            var types = builder.BuildTypeSet().ToList();
+            var builder = new SymbolTableBuilder(program, errorReporter);
+            var types = builder.BuildSymbolTable().ScalarTypeNames.ToList();
             Assert.Contains("Foo", types);
             Assert.Contains("Bar", types);
             Assert.Contains("Baz", types);

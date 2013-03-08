@@ -75,11 +75,9 @@ namespace MiniJavaCompiler.Frontend
          */
         private SymbolTable ConstructSymbolTableAndCheckProgram(Program abstractSyntaxTree)
         {
-            var typeSetBuilder = new TypeSetBuilder(abstractSyntaxTree, _errorLog);
             try
             {
-                var types = typeSetBuilder.BuildTypeSet();
-                var symbolTable = new SymbolTableBuilder(abstractSyntaxTree, types, _errorLog).BuildSymbolTable();
+                var symbolTable = new SymbolTableBuilder(abstractSyntaxTree, _errorLog).BuildSymbolTable();
                 new TypeChecker(abstractSyntaxTree, symbolTable, _errorLog).CheckTypesAndReferences();
                 return symbolTable;
             }
