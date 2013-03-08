@@ -47,6 +47,7 @@
   <ItemGroup>
     <Compile Include="Backend\AssemblyBuilder.cs" />
     <Compile Include="Backend\CodeGenerator.cs" />
+    <Compile Include="Backend\InstructionGenerator.cs" />
     <Compile Include="Frontend\FrontEnd.cs" />
     <Compile Include="Support\AbstractSyntaxTree\IntegerLiteralExpression.cs" />
     <Compile Include="Compiler.cs" />
