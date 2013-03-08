@@ -45,6 +45,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Backend\AssemblyBuilder.cs" />
     <Compile Include="Backend\CodeGenerator.cs" />
     <Compile Include="Frontend\FrontEnd.cs" />
     <Compile Include="Support\AbstractSyntaxTree\AbstractSyntaxTree.cs" />

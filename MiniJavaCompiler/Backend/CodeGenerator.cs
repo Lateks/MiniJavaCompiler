@@ -12,16 +12,11 @@ using MiniJavaCompiler.Support;
 
 namespace MiniJavaCompiler.Backend
 {
-    // TODO: divide into (at least) 2 separate passes:
-    // 1. define type and method builders
-    // 2. generate code for methods and finalize types
     public class CodeGenerator : INodeVisitor
     {
         private readonly Program _astRoot;
-        private readonly SymbolTable _symbolTable;
-        private readonly AssemblyBuilder _asmBuilder;
-        private readonly ModuleBuilder _moduleBuilder;
         private readonly Dictionary<Type, ConstructorInfo> _constructors;
+        private readonly SymbolTable _symbolTable;
         private TypeBuilder _currentType;
         private MethodBuilder _currentMethod;
 
@@ -41,37 +36,17 @@ namespace MiniJavaCompiler.Backend
             { MiniJavaInfo.Operator.Not, OpCodes.Not }
         };
 
-        public CodeGenerator(SymbolTable symbolTable, Program abstractSyntaxTree, string moduleName)
+        public CodeGenerator(Program astRoot, SymbolTable symbolTable,
+            Dictionary<Type, ConstructorInfo> constructors)
         {
+            _astRoot = astRoot;
             _symbolTable = symbolTable;
-            _astRoot = abstractSyntaxTree;
-            _constructors = new Dictionary<Type, ConstructorInfo>();
-
-            // Set up a single module assembly.
-            AssemblyName name = new AssemblyName(moduleName);
-            _asmBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(name, AssemblyBuilderAccess.Save);
-            _moduleBuilder = _asmBuilder.DefineDynamicModule(moduleName);
-
-            SetUpScalarTypes();
-        }
-
-        // Defines TypeBuilders for all user defined types and stores them and their constructors.
-        private void SetUpScalarTypes()
-        {
-            foreach (string typeName in _symbolTable.ScalarTypeNames)
-            {
-                TypeSymbol sym = _symbolTable.ResolveTypeName(typeName);
-                TypeBuilder typeBuilder = _moduleBuilder.DefineType(typeName, TypeAttributes.Public | TypeAttributes.Class); // TODO: are these IsByRef by default?
-                sym.Builder = typeBuilder;
-                _constructors[typeBuilder] =
-                    typeBuilder.DefineDefaultConstructor(MethodAttributes.Public | MethodAttributes.Static);
-            }
+            _constructors = constructors;
         }
 
         public void GenerateCode()
         {
             _astRoot.Accept(this);
-            _asmBuilder.Save("out.exe"); // TODO: naming
         }
 
         public void Visit(Program node) { }
@@ -79,29 +54,10 @@ namespace MiniJavaCompiler.Backend
         public void Visit(ClassDeclaration node)
         {
             TypeBuilder thisType = _symbolTable.ResolveTypeName(node.Name).Builder;
-            if (node.InheritedClass != null)
-            {
-                TypeBuilder superClass = _symbolTable.ResolveTypeName(node.InheritedClass).Builder;
-                thisType.SetParent(superClass);
-            }
             _currentType = thisType;
         }
 
-        public void Visit(VariableDeclaration node)
-        {
-            switch (node.VariableKind)
-            {
-                case VariableDeclaration.Kind.Formal:
-                    _currentMethod.DefineParameter(GetParameterIndex(node), ParameterAttributes.In, node.Name); // TODO: is this builder still needed afterwards?
-                    break;
-                case VariableDeclaration.Kind.Local:
-                    _currentMethod.GetILGenerator().DeclareLocal(BuildType(node.Type, node.IsArray));
-                    break;
-                case VariableDeclaration.Kind.Class:
-                    _currentType.DefineField(node.Name, BuildType(node.Type, node.IsArray), FieldAttributes.Public);
-                    break;
-            }
-        }
+        public void Visit(VariableDeclaration node) { }
 
         // If the method is not static, parameter 0 is a reference to the object
         // and this needs to be taken into account.
@@ -111,34 +67,8 @@ namespace MiniJavaCompiler.Backend
         }
 
         public void Visit(MethodDeclaration node)
-        {   
-            MethodBuilder methodBuilder = _currentType.DefineMethod(node.Name, GetMethodAttributes(node));
-            if (node.Name == MiniJavaInfo.MainMethodIdent)
-            {
-                _asmBuilder.SetEntryPoint(methodBuilder);
-            }
-
-            methodBuilder.SetReturnType(GetReturnType(node));
-            methodBuilder.SetParameters(GetParameterTypes(node));
-
-            _currentMethod = methodBuilder;
-        }
-
-        private Type[] GetParameterTypes(MethodDeclaration node)
         {
-            Type[] types = new Type[node.Formals.Count];
-            for (int i = 0; i < node.Formals.Count; i++)
-            {
-                VariableDeclaration decl = node.Formals[i];
-                types[i] = BuildType(decl.Type, decl.IsArray);
-            }
-            return types;
-        }
-
-        private Type GetReturnType(MethodDeclaration node)
-        {
-            MethodSymbol sym = _symbolTable.ResolveClass(node).Scope.ResolveMethod(node.Name);
-            return BuildType(node.Type, node.IsArray);
+            _currentMethod = _symbolTable.Scopes[node].ResolveMethod(node.Name).Builder;
         }
 
         private Type BuildType(string typeName, bool isArray)
@@ -166,16 +96,6 @@ namespace MiniJavaCompiler.Backend
                 type = type.MakeArrayType();
             }
             return type;
-        }
-
-        private static MethodAttributes GetMethodAttributes(MethodDeclaration node)
-        {
-            MethodAttributes attrs = MethodAttributes.Public; // all methods are public
-            if (node.IsStatic)
-            {
-                attrs |= MethodAttributes.Static;
-            }
-            return attrs;
         }
 
         public void Visit(PrintStatement node)
