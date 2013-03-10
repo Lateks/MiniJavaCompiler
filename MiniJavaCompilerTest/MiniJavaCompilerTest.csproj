@@ -48,15 +48,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Frontend\Parsing\OperatorPrecedenceTest.cs" />
-    <Compile Include="Frontend\Parsing\ParserRecoveryTest.cs" />
-    <Compile Include="Frontend\Parsing\ParserTest.cs" />
-    <Compile Include="Frontend\PipelineTest.cs" />
-    <Compile Include="Frontend\Scanning\ScannerTest.cs" />
-    <Compile Include="Frontend\SemanticAnalysis\SymbolTableBuilderTest.cs" />
-    <Compile Include="Frontend\SemanticAnalysis\SymbolTableTest.cs" />
-    <Compile Include="Frontend\SemanticAnalysis\TypeCheckerTest.cs" />
-    <Compile Include="Frontend\SemanticAnalysis\TypeSetBuilderTest.cs" />
+    <Compile Include="FrontEnd\Parsing\OperatorPrecedenceTest.cs" />
+    <Compile Include="FrontEnd\Parsing\ParserRecoveryTest.cs" />
+    <Compile Include="FrontEnd\Parsing\ParserTest.cs" />
+    <Compile Include="FrontEnd\PipelineTest.cs" />
+    <Compile Include="FrontEnd\Scanning\ScannerTest.cs" />
+    <Compile Include="FrontEnd\SemanticAnalysis\SymbolTableBuilderTest.cs" />
+    <Compile Include="FrontEnd\SemanticAnalysis\SymbolTableTest.cs" />
+    <Compile Include="FrontEnd\SemanticAnalysis\TypeCheckerTest.cs" />
+    <Compile Include="FrontEnd\SemanticAnalysis\TypeSetBuilderTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -69,7 +69,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Backend\" />
+    <Folder Include="BackEnd\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

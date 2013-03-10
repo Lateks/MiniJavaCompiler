@@ -8,7 +8,7 @@ using MiniJavaCompiler.Support.SymbolTable.Types;
 using MiniJavaCompiler.Support.SymbolTable.Symbols;
 using System;
 
-namespace MiniJavaCompiler.Frontend.SemanticAnalysis
+namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
 {
     public partial class SymbolTableBuilder : INodeVisitor
     {
@@ -151,12 +151,12 @@ namespace MiniJavaCompiler.Frontend.SemanticAnalysis
         public void Visit(ClassDeclaration node)
         {   // Resolve inheritance relationships.
             var typeSymbol = CurrentScope.ResolveType(node.Name);
-            if (node.InheritedClass != null)
+            if (node.InheritedClassName != null)
             {
-                var inheritedType = (TypeSymbol) CurrentScope.ResolveType(node.InheritedClass);
+                var inheritedType = (TypeSymbol) CurrentScope.ResolveType(node.InheritedClassName);
                 if (inheritedType == null)
                 {
-                    ReportError(String.Format("Unknown type '{0}'.", node.InheritedClass), node.Row, node.Col);
+                    ReportError(String.Format("Unknown type '{0}'.", node.InheritedClassName), node.Row, node.Col);
                 }
                 else
                 {

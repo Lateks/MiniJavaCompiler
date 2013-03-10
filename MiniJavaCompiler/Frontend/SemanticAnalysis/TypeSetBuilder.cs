@@ -3,7 +3,7 @@ using MiniJavaCompiler.Support;
 using MiniJavaCompiler.Support.AbstractSyntaxTree;
 using System;
 
-namespace MiniJavaCompiler.Frontend.SemanticAnalysis
+namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
 {
     public partial class SymbolTableBuilder
     {

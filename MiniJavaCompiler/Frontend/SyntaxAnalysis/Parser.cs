@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using MiniJavaCompiler.Frontend.LexicalAnalysis;
+using MiniJavaCompiler.FrontEnd.LexicalAnalysis;
 using MiniJavaCompiler.Support;
 using ast = MiniJavaCompiler.Support.AbstractSyntaxTree;
 
-namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
+namespace MiniJavaCompiler.FrontEnd.SyntaxAnalysis
 {
     public interface IParser
     {

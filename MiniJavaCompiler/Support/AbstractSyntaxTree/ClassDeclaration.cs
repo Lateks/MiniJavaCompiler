@@ -7,7 +7,7 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
     {
         public bool IsMainClass { get; private set; }
         public string Name { get; private set; }
-        public string InheritedClass { get; private set; }
+        public string InheritedClassName { get; private set; }
         public List<Declaration> Declarations { get; private set; }
 
         public ClassDeclaration(string name, string inherited,
@@ -15,7 +15,7 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
             : base(row, col)
         {
             Name = name;
-            InheritedClass = inherited;
+            InheritedClassName = inherited;
             Declarations = declarations;
         }
 

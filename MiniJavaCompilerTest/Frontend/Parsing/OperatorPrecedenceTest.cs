@@ -1,11 +1,11 @@
 ﻿using System.IO;
-using MiniJavaCompiler.Frontend.LexicalAnalysis;
-using MiniJavaCompiler.Frontend.SyntaxAnalysis;
+using MiniJavaCompiler.FrontEnd.LexicalAnalysis;
+using MiniJavaCompiler.FrontEnd.SyntaxAnalysis;
 using MiniJavaCompiler.Support;
 using MiniJavaCompiler.Support.AbstractSyntaxTree;
 using NUnit.Framework;
 
-namespace MiniJavaCompilerTest.Frontend.Parsing
+namespace MiniJavaCompilerTest.FrontEndTest.Parsing
 {
     [TestFixture]
     class OperatorPrecedenceTest

@@ -10,7 +10,7 @@ using MiniJavaCompiler.Support.SymbolTable.Symbols;
 using MiniJavaCompiler.Support.SymbolTable.Types;
 using MiniJavaCompiler.Support;
 
-namespace MiniJavaCompiler.Backend
+namespace MiniJavaCompiler.BackEnd
 {
     public partial class CodeGenerator
     {
@@ -50,7 +50,7 @@ namespace MiniJavaCompiler.Backend
 
             public void Visit(ClassDeclaration node)
             {
-                TypeBuilder thisType = _parent._symbolTable.ResolveTypeName(node.Name).Builder;
+                TypeBuilder thisType = _parent._types[node.Name];
                 _currentType = thisType;
             }
 
@@ -58,12 +58,14 @@ namespace MiniJavaCompiler.Backend
 
             public void Visit(MethodDeclaration node)
             {
-                _currentMethod = _parent._symbolTable.Scopes[node].ResolveMethod(node.Name).Builder;
+                var sym = _parent._symbolTable.Scopes[node].ResolveMethod(node.Name);
+                _currentMethod = _parent._methods[sym];
             }
 
             public void Visit(PrintStatement node)
             {
-                MethodInfo printMethod = typeof(System.Console).GetMethod("WriteLine", new Type[] { typeof(string) });
+                MethodInfo printMethod = typeof(System.Console).GetMethod(
+                    "WriteLine", new Type[] { typeof(string) });
                 _currentMethod.GetILGenerator().Emit(OpCodes.Call, printMethod);
             }
 
@@ -79,7 +81,8 @@ namespace MiniJavaCompiler.Backend
 
             public void Visit(AssertStatement node)
             {
-                MethodInfo assertMethod = typeof(System.Diagnostics.Debug).GetMethod("Assert", new Type[] { typeof(bool) });
+                MethodInfo assertMethod = typeof(System.Diagnostics.Debug).GetMethod(
+                    "Assert", new Type[] { typeof(bool) });
                 _currentMethod.GetILGenerator().Emit(OpCodes.Call, assertMethod);
             }
 
@@ -124,18 +127,18 @@ namespace MiniJavaCompiler.Backend
 
             public void Visit(MethodInvocation node)
             {
-                MethodInfo method;
+                MethodInfo calledMethod;
                 if (node.MethodOwner.Type is ArrayType)
                 {
-                    method = _parent.BuildType(node.MethodOwner.Type.Name, true).
+                    calledMethod = _parent.BuildType(node.MethodOwner.Type.Name, true).
                         GetMethod("Length", new Type[] { });
                 }
                 else
-                {   // TODO: should there be a separate pass to define all method builders?
-                    method = _parent._symbolTable.ResolveTypeName(node.MethodOwner.Type.Name).
-                        Scope.ResolveMethod(node.MethodName).Builder;
+                {
+                    var methodScope = _parent._symbolTable.ResolveTypeName(node.MethodOwner.Type.Name).Scope;
+                    calledMethod = _parent._methods[methodScope.ResolveMethod(node.MethodName)];
                 }
-                _currentMethod.GetILGenerator().Emit(OpCodes.Call, method);
+                _currentMethod.GetILGenerator().Emit(OpCodes.Call, calledMethod);
             }
 
             public void Visit(InstanceCreationExpression node)
@@ -197,7 +200,6 @@ namespace MiniJavaCompiler.Backend
 
             public void Exit(ClassDeclaration node)
             {
-                _currentType.CreateType();
                 _currentType = null;
             }
 

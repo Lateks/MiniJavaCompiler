@@ -1,11 +1,11 @@
 using System.Collections.Generic;
-using MiniJavaCompiler.Frontend.LexicalAnalysis;
-using MiniJavaCompiler.Frontend.SyntaxAnalysis;
+using MiniJavaCompiler.FrontEnd.LexicalAnalysis;
+using MiniJavaCompiler.FrontEnd.SyntaxAnalysis;
 using MiniJavaCompiler.Support;
 using MiniJavaCompiler.Support.AbstractSyntaxTree;
 using NUnit.Framework;
 
-namespace MiniJavaCompilerTest.Frontend.Parsing
+namespace MiniJavaCompilerTest.FrontEndTest.Parsing
 {
     public class StubScanner : ITokenizer
     {
@@ -78,7 +78,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new StubScanner(programTokens), errorReporter);
             var classDecl = parser.Parse().Classes[0];
-            Assert.That(classDecl.InheritedClass, Is.EqualTo("OtherClass"));
+            Assert.That(classDecl.InheritedClassName, Is.EqualTo("OtherClass"));
             Assert.That(classDecl.Name, Is.EqualTo("ClassName"));
             Assert.NotNull(classDecl.Declarations);
             Assert.That(classDecl.Declarations.Count, Is.EqualTo(0));
@@ -106,7 +106,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new StubScanner(programTokens), errorReporter);
             var classDecl = parser.Parse().Classes[0];
-            Assert.IsNull(classDecl.InheritedClass);
+            Assert.IsNull(classDecl.InheritedClassName);
             Assert.NotNull(classDecl.Declarations);
             Assert.That(classDecl.Declarations.Count, Is.EqualTo(2));
         }
@@ -704,7 +704,7 @@ namespace MiniJavaCompilerTest.Frontend.Parsing
 
             Assert.That(programTree.Classes.Count, Is.EqualTo(1));
             var testClass = (ClassDeclaration)programTree.Classes[0];
-            Assert.IsNull(testClass.InheritedClass);
+            Assert.IsNull(testClass.InheritedClassName);
             Assert.NotNull(testClass.Declarations);
             Assert.That(testClass.Declarations.Count, Is.EqualTo(1));
             var methodDeclaration = (MethodDeclaration)testClass.Declarations[0];

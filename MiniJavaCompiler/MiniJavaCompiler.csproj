@@ -45,10 +45,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Backend\AssemblyBuilder.cs" />
-    <Compile Include="Backend\CodeGenerator.cs" />
-    <Compile Include="Backend\InstructionGenerator.cs" />
-    <Compile Include="Frontend\FrontEnd.cs" />
+    <Compile Include="BackEnd\AssemblyCreator.cs" />
+    <Compile Include="BackEnd\CodeGenerator.cs" />
+    <Compile Include="BackEnd\InstructionGenerator.cs" />
+    <Compile Include="FrontEnd\FrontEnd.cs" />
     <Compile Include="Support\AbstractSyntaxTree\IntegerLiteralExpression.cs" />
     <Compile Include="Compiler.cs" />
     <Compile Include="Support\AbstractSyntaxTree\ArrayIndexingExpression.cs" />
@@ -84,17 +84,17 @@
     <Compile Include="Support\SymbolTable\Symbols\TypeSymbol.cs" />
     <Compile Include="Support\SymbolTable\SymbolTable.cs" />
     <Compile Include="Support\SymbolTable\Types\Types.cs" />
-    <Compile Include="Frontend\SyntaxAnalysis\ListParsers.cs" />
-    <Compile Include="Frontend\SyntaxAnalysis\ExpressionParser.cs" />
-    <Compile Include="Frontend\SyntaxAnalysis\Parser.cs" />
+    <Compile Include="FrontEnd\SyntaxAnalysis\ListParsers.cs" />
+    <Compile Include="FrontEnd\SyntaxAnalysis\ExpressionParser.cs" />
+    <Compile Include="FrontEnd\SyntaxAnalysis\Parser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Frontend\LexicalAnalysis\Scanner.cs" />
-    <Compile Include="Frontend\LexicalAnalysis\ScannerInputReader.cs" />
-    <Compile Include="Frontend\SemanticAnalysis\SymbolTableBuilder.cs" />
-    <Compile Include="Frontend\SyntaxAnalysis\ParserInputReader.cs" />
-    <Compile Include="Frontend\LexicalAnalysis\Tokens.cs" />
-    <Compile Include="Frontend\SemanticAnalysis\TypeChecker.cs" />
-    <Compile Include="Frontend\SemanticAnalysis\TypeSetBuilder.cs" />
+    <Compile Include="FrontEnd\LexicalAnalysis\Scanner.cs" />
+    <Compile Include="FrontEnd\LexicalAnalysis\ScannerInputReader.cs" />
+    <Compile Include="FrontEnd\SemanticAnalysis\SymbolTableBuilder.cs" />
+    <Compile Include="FrontEnd\SyntaxAnalysis\ParserInputReader.cs" />
+    <Compile Include="FrontEnd\LexicalAnalysis\Tokens.cs" />
+    <Compile Include="FrontEnd\SemanticAnalysis\TypeChecker.cs" />
+    <Compile Include="FrontEnd\SemanticAnalysis\TypeSetBuilder.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 
-namespace MiniJavaCompiler.Frontend.LexicalAnalysis
+namespace MiniJavaCompiler.FrontEnd.LexicalAnalysis
 {
     // This exception is thrown if a multiline comment is ended by end of file.
     public class EndlessCommentError : Exception

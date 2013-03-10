@@ -1,8 +1,8 @@
 using System.IO;
-using MiniJavaCompiler.Frontend.LexicalAnalysis;
+using MiniJavaCompiler.FrontEnd.LexicalAnalysis;
 using NUnit.Framework;
 
-namespace MiniJavaCompilerTest.Frontend.Scanning
+namespace MiniJavaCompilerTest.FrontEndTest.Scanning
 {
     [TestFixture]
     public class KeywordTest

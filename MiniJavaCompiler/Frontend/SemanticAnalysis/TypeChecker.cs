@@ -8,7 +8,7 @@ using MiniJavaCompiler.Support.SymbolTable;
 using MiniJavaCompiler.Support.SymbolTable.Types;
 using MiniJavaCompiler.Support.SymbolTable.Symbols;
 
-namespace MiniJavaCompiler.Frontend.SemanticAnalysis
+namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
 {
     /* This class checks that the types, references (variables, methods etc.),
      * return statements and method invocation arguments are acceptable.

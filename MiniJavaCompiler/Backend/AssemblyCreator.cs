@@ -8,7 +8,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
 
-namespace MiniJavaCompiler.Backend
+namespace MiniJavaCompiler.BackEnd
 {
     public partial class CodeGenerator
     {
@@ -39,10 +39,9 @@ namespace MiniJavaCompiler.Backend
             {
                 foreach (string typeName in _parent._symbolTable.ScalarTypeNames)
                 {
-                    TypeSymbol sym = _parent._symbolTable.ResolveTypeName(typeName);
                     TypeBuilder typeBuilder = _parent._moduleBuilder.DefineType(
                         typeName, TypeAttributes.Public | TypeAttributes.Class); // TODO: are these IsByRef by default?
-                    sym.Builder = typeBuilder;
+                    _parent._types[typeName] = typeBuilder;
                     _parent._constructors[typeBuilder] =
                         typeBuilder.DefineDefaultConstructor(MethodAttributes.Public | MethodAttributes.Static);
                 }
@@ -52,10 +51,10 @@ namespace MiniJavaCompiler.Backend
 
             public void Visit(ClassDeclaration node)
             {
-                TypeBuilder thisType = _parent._symbolTable.ResolveTypeName(node.Name).Builder;
-                if (node.InheritedClass != null)
+                TypeBuilder thisType = _parent._types[node.Name];
+                if (node.InheritedClassName != null)
                 {
-                    TypeBuilder superClass = _parent._symbolTable.ResolveTypeName(node.InheritedClass).Builder;
+                    TypeBuilder superClass = _parent._types[node.InheritedClassName];
                     thisType.SetParent(superClass);
                 }
                 _currentType = thisType;
@@ -96,6 +95,9 @@ namespace MiniJavaCompiler.Backend
                 methodBuilder.SetReturnType(GetReturnType(node));
                 methodBuilder.SetParameters(GetParameterTypes(node));
 
+                var sym = _parent._symbolTable.Scopes[node].ResolveMethod(node.Name);
+                _parent._methods[sym] = methodBuilder;
+
                 _currentMethod = methodBuilder;
             }
 
@@ -117,7 +119,6 @@ namespace MiniJavaCompiler.Backend
 
             private Type GetReturnType(MethodDeclaration node)
             {
-                MethodSymbol sym = _parent._symbolTable.ResolveClass(node).Scope.ResolveMethod(node.Name);
                 return _parent.BuildType(node.Type, node.IsArray);
             }
 

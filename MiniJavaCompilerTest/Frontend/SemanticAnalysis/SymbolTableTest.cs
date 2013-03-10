@@ -4,7 +4,7 @@ using MiniJavaCompiler.Support.SymbolTable.Symbols;
 using MiniJavaCompiler.Support.SymbolTable.Types;
 using MiniJavaCompiler.Support.SymbolTable.Scopes;
 
-namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
+namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
 {
     internal static class SymbolCreationHelper
     {

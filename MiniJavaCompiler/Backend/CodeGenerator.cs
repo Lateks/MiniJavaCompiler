@@ -1,6 +1,7 @@
 ﻿using MiniJavaCompiler.Support;
 using MiniJavaCompiler.Support.AbstractSyntaxTree;
 using MiniJavaCompiler.Support.SymbolTable;
+using MiniJavaCompiler.Support.SymbolTable.Symbols;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +9,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
 
-namespace MiniJavaCompiler.Backend
+namespace MiniJavaCompiler.BackEnd
 {
     public partial class CodeGenerator
     {
@@ -16,6 +17,8 @@ namespace MiniJavaCompiler.Backend
         private readonly Program _astRoot;
         private readonly SymbolTable _symbolTable;
         private readonly Dictionary<Type, ConstructorInfo> _constructors;
+        private readonly Dictionary<string, TypeBuilder> _types;
+        private readonly Dictionary<MethodSymbol, MethodBuilder> _methods;
 
         private AssemblyBuilder _asmBuilder;
         private ModuleBuilder _moduleBuilder;
@@ -26,6 +29,8 @@ namespace MiniJavaCompiler.Backend
             _astRoot = abstractSyntaxTree;
             _symbolTable = symbolTable;
             _constructors = new Dictionary<Type, ConstructorInfo>();
+            _types = new Dictionary<string, TypeBuilder>();
+            _methods = new Dictionary<MethodSymbol, MethodBuilder>();
         }
 
         public void GenerateCode(string outputFileName = "out.exe")
@@ -40,7 +45,7 @@ namespace MiniJavaCompiler.Backend
         {
             foreach (var typeName in _symbolTable.ScalarTypeNames)
             {
-                _symbolTable.ResolveTypeName(typeName).Builder.CreateType();
+                _types[typeName].CreateType();
             }
         }
 
@@ -58,7 +63,7 @@ namespace MiniJavaCompiler.Backend
             {
                 type = typeof(void);
             }
-            if (typeName == MiniJavaInfo.IntType)
+            else if (typeName == MiniJavaInfo.IntType)
             {
                 type = typeof(Int32);
             }
@@ -68,7 +73,7 @@ namespace MiniJavaCompiler.Backend
             }
             else
             {
-                type = _symbolTable.ResolveTypeName(typeName).Builder;
+                type = _types[typeName];
             }
 
             if (isArray)

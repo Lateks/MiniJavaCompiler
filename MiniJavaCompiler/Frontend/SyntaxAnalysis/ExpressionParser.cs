@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using MiniJavaCompiler.Frontend.LexicalAnalysis;
+using MiniJavaCompiler.FrontEnd.LexicalAnalysis;
 using MiniJavaCompiler.Support;
 using MiniJavaCompiler.Support.AbstractSyntaxTree;
 
-namespace MiniJavaCompiler.Frontend.SyntaxAnalysis
+namespace MiniJavaCompiler.FrontEnd.SyntaxAnalysis
 {
     // A sub-parser that parses expressions and solves operator precedences.
     // The grammar has a separate level for each operator precedence level.

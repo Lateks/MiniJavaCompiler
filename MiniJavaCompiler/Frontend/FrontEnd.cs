@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using MiniJavaCompiler.Frontend.LexicalAnalysis;
-using MiniJavaCompiler.Frontend.SemanticAnalysis;
-using MiniJavaCompiler.Frontend.SyntaxAnalysis;
+using MiniJavaCompiler.FrontEnd.LexicalAnalysis;
+using MiniJavaCompiler.FrontEnd.SemanticAnalysis;
+using MiniJavaCompiler.FrontEnd.SyntaxAnalysis;
 using MiniJavaCompiler.Support;
 using MiniJavaCompiler.Support.AbstractSyntaxTree;
 using MiniJavaCompiler.Support.SymbolTable;
 
-namespace MiniJavaCompiler.Frontend
+namespace MiniJavaCompiler.FrontEnd
 {
     // Runs the whole front end pipeline. If program analysis fails, the
     // caller can ask for a list of errors.

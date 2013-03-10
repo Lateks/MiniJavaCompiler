@@ -1,11 +1,11 @@
 ﻿using System.IO;
-using MiniJavaCompiler.Frontend;
+using MiniJavaCompiler.FrontEnd;
 using MiniJavaCompiler.Support.AbstractSyntaxTree;
 using MiniJavaCompiler.Support.SymbolTable;
 using NUnit.Framework;
 using System.Linq;
 
-namespace MiniJavaCompilerTest.Frontend
+namespace MiniJavaCompilerTest.FrontEndTest
 {
     [TestFixture]
     class PipelineTest

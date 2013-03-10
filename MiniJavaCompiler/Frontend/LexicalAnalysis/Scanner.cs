@@ -5,7 +5,7 @@ using System.IO;
 using System.Text;
 using MiniJavaCompiler.Support;
 
-namespace MiniJavaCompiler.Frontend.LexicalAnalysis
+namespace MiniJavaCompiler.FrontEnd.LexicalAnalysis
 {
     public interface ITokenizer
     {

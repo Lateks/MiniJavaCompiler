@@ -1,8 +1,8 @@
 using System.IO;
 using System.Linq;
-using MiniJavaCompiler.Frontend.LexicalAnalysis;
-using MiniJavaCompiler.Frontend.SemanticAnalysis;
-using MiniJavaCompiler.Frontend.SyntaxAnalysis;
+using MiniJavaCompiler.FrontEnd.LexicalAnalysis;
+using MiniJavaCompiler.FrontEnd.SemanticAnalysis;
+using MiniJavaCompiler.FrontEnd.SyntaxAnalysis;
 using MiniJavaCompiler.Support;
 using MiniJavaCompiler.Support.AbstractSyntaxTree;
 using MiniJavaCompiler.Support.SymbolTable;
@@ -10,7 +10,7 @@ using MiniJavaCompiler.Support.SymbolTable.Symbols;
 using MiniJavaCompiler.Support.SymbolTable.Types;
 using NUnit.Framework;
 
-namespace MiniJavaCompilerTest.Frontend.SemanticAnalysis
+namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
 {
     [TestFixture]
     class SymbolTableBuilderTest

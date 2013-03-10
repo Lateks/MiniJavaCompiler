@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
-using MiniJavaCompiler.Frontend;
+using MiniJavaCompiler.FrontEnd;
 using MiniJavaCompiler.Support;
 using MiniJavaCompiler.Support.SymbolTable;
 using MiniJavaCompiler.Support.AbstractSyntaxTree;
@@ -47,7 +47,7 @@ namespace MiniJavaCompiler
                 return;
             }
 
-            var frontend = new FrontEnd(fileStream);
+            var frontend = new FrontEnd.FrontEnd(fileStream);
             SymbolTable symbolTable;
             Program abstractSyntaxTree;
             if (frontend.TryProgramAnalysis(out abstractSyntaxTree, out symbolTable))
