@@ -183,12 +183,12 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
 
         private IType CheckCreatedType(InstanceCreationExpression node)
         {
-            var createdTypeSymbol = _symbolTable.ResolveTypeName(node.CreatedType, node.IsArrayCreation);
+            var createdTypeSymbol = _symbolTable.ResolveTypeName(node.CreatedTypeName, node.IsArrayCreation);
             IType createdType;
             if (createdTypeSymbol == null)
             {
                 _errors.ReportError(String.Format("Cannot resolve symbol {0}.",
-                    node.CreatedType), node.Row, node.Col);
+                    node.CreatedTypeName), node.Row, node.Col);
                 createdType = null;
             }
             else

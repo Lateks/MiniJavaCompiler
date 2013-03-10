@@ -6,7 +6,7 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
 {
     public class InstanceCreationExpression : SyntaxElement, IExpression
     {
-        public string CreatedType { get; private set; }
+        public string CreatedTypeName { get; private set; }
         public bool IsArrayCreation { get; private set; }
         public IExpression ArraySize { get; private set; }
         public IType Type { get; set; }
@@ -14,7 +14,7 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
         public InstanceCreationExpression(string type, int row, int col, IExpression arraySize = null)
             : base(row, col)
         {
-            CreatedType = type;
+            CreatedTypeName = type;
             ArraySize = arraySize;
             IsArrayCreation = arraySize != null;
         }

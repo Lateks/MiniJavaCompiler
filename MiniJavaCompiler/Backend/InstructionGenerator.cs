@@ -87,7 +87,7 @@ namespace MiniJavaCompiler.BackEnd
             }
 
             public void Visit(AssignmentStatement node)
-            { // The left hand side of an assignment must be either
+            {   // The left hand side of an assignment must be either
                 // a variable reference or an array indexing expression.
                 var il = _currentMethod.GetILGenerator();
                 if (node.LeftHandSide is VariableReferenceExpression)
@@ -109,9 +109,17 @@ namespace MiniJavaCompiler.BackEnd
                     }
                 }
                 else
-                {
-                    // TODO: handle array case
-                    throw new NotImplementedException();
+                {   // The address to store to should be on the top of the stack just
+                    // under the object being stored.
+                    var rhsType = node.RightHandSide.Type;
+                    if (rhsType == _parent._symbolTable.ResolveTypeName(MiniJavaInfo.IntType).Type)
+                    {
+                        il.Emit(OpCodes.Stind_I4);
+                    }
+                    else
+                    {
+                        il.Emit(OpCodes.Stobj);
+                    }
                 }
             }
 
@@ -127,25 +135,30 @@ namespace MiniJavaCompiler.BackEnd
 
             public void Visit(MethodInvocation node)
             {
-                MethodInfo calledMethod;
                 if (node.MethodOwner.Type is ArrayType)
                 {
-                    calledMethod = _parent.BuildType(node.MethodOwner.Type.Name, true).
-                        GetMethod("Length", new Type[] { });
+                    _currentMethod.GetILGenerator().Emit(OpCodes.Ldlen);
                 }
                 else
-                {
+                {   // TODO: check call parameters
                     var methodScope = _parent._symbolTable.ResolveTypeName(node.MethodOwner.Type.Name).Scope;
-                    calledMethod = _parent._methods[methodScope.ResolveMethod(node.MethodName)];
+                    var calledMethod = _parent._methods[methodScope.ResolveMethod(node.MethodName)];
+                    _currentMethod.GetILGenerator().Emit(OpCodes.Call, calledMethod);
                 }
-                _currentMethod.GetILGenerator().Emit(OpCodes.Call, calledMethod);
             }
 
             public void Visit(InstanceCreationExpression node)
             {
-                // TODO: handle array creation cases
-                Type type = _parent.BuildType(node.CreatedType, node.IsArrayCreation);
-                _currentMethod.GetILGenerator().Emit(OpCodes.Newobj, _parent._constructors[type]);
+                Type type = _parent.BuildType(node.CreatedTypeName, false);
+                var il = _currentMethod.GetILGenerator();
+                if (node.IsArrayCreation)
+                {
+                    il.Emit(OpCodes.Newarr, type);
+                }
+                else
+                {
+                    il.Emit(OpCodes.Newobj, _parent._constructors[type]);
+                }
             }
 
             public void Visit(UnaryOperatorExpression node)
@@ -169,10 +182,12 @@ namespace MiniJavaCompiler.BackEnd
             }
 
             public void Visit(ArrayIndexingExpression node)
-            {
-                throw new NotImplementedException();
+            {   // TODO: should sometimes only the value be loaded (instead of address)?
+                _currentMethod.GetILGenerator().Emit(OpCodes.Ldelema);
             }
 
+            // TODO: if a variable reference is the left-hand side of an
+            // assignment, it should not be loaded on the stack.
             public void Visit(VariableReferenceExpression node)
             {
                 var variable = _parent._symbolTable.Scopes[node].ResolveVariable(node.Name);

@@ -4,6 +4,7 @@ using MiniJavaCompiler.Support.SymbolTable;
 using MiniJavaCompiler.Support.SymbolTable.Symbols;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -58,6 +59,7 @@ namespace MiniJavaCompiler.BackEnd
 
         private Type BuildType(string typeName, bool isArray)
         {
+            Debug.Assert(!(typeName == MiniJavaInfo.VoidType && isArray));
             Type type;
             if (typeName == MiniJavaInfo.VoidType)
             {
