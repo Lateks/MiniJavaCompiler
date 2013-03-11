@@ -24,11 +24,11 @@ namespace MiniJavaCompiler.BackEnd
             }
 
             // Sets up a single module assembly as well as all user-defined types, methods and variables.
-            public void SetUpAssembly()
+            public void SetUpAssembly(string outputFileName)
             {
                 AssemblyName name = new AssemblyName(_parent._moduleName);
                 _parent._asmBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(name, AssemblyBuilderAccess.Save);
-                _parent._moduleBuilder = _parent._asmBuilder.DefineDynamicModule(_parent._moduleName);
+                _parent._moduleBuilder = _parent._asmBuilder.DefineDynamicModule(_parent._moduleName, outputFileName);
 
                 SetUpScalarTypes();
                 _parent._astRoot.Accept(this);
@@ -43,7 +43,7 @@ namespace MiniJavaCompiler.BackEnd
                         typeName, TypeAttributes.Public | TypeAttributes.Class); // TODO: are these IsByRef by default?
                     _parent._types[typeName] = typeBuilder;
                     _parent._constructors[typeBuilder] =
-                        typeBuilder.DefineDefaultConstructor(MethodAttributes.Public | MethodAttributes.Static);
+                        typeBuilder.DefineDefaultConstructor(MethodAttributes.Public);
                 }
             }
 
@@ -68,18 +68,21 @@ namespace MiniJavaCompiler.BackEnd
             public void Visit(VariableDeclaration node)
             {
                 switch (node.VariableKind)
-                {
+                {   // Local and formal variables can be referred to by their index.
+                    // Fields need to be stored as FieldBuilders for future reference.
                     case VariableDeclaration.Kind.Formal:
                         _currentMethod.DefineParameter(GetParameterIndex(node, _currentMethod),
-                            ParameterAttributes.In, node.Name); // TODO: is this builder still needed afterwards?
+                            ParameterAttributes.In, node.Name);
                         break;
                     case VariableDeclaration.Kind.Local:
                         _currentMethod.GetILGenerator().DeclareLocal(
                             _parent.BuildType(node.Type, node.IsArray));
                         break;
                     case VariableDeclaration.Kind.Class:
-                        _currentType.DefineField(node.Name,
-                            _parent.BuildType(node.Type, node.IsArray), FieldAttributes.Public);
+                        var fieldBuilder = _currentType.DefineField(node.Name,
+                            _parent.BuildType(node.Type, node.IsArray), FieldAttributes.Private);
+                        var sym = _parent._symbolTable.Scopes[node].ResolveVariable(node.Name);
+                        _parent._fields[sym] = fieldBuilder;
                         break;
                 }
             }
@@ -89,7 +92,7 @@ namespace MiniJavaCompiler.BackEnd
                 MethodBuilder methodBuilder = _currentType.DefineMethod(node.Name, GetMethodAttributes(node));
                 if (node.Name == MiniJavaInfo.MainMethodIdent)
                 {
-                    _parent._asmBuilder.SetEntryPoint(methodBuilder);
+                    _parent._asmBuilder.SetEntryPoint(methodBuilder, PEFileKinds.ConsoleApplication);
                 }
 
                 methodBuilder.SetReturnType(GetReturnType(node));
@@ -108,6 +111,7 @@ namespace MiniJavaCompiler.BackEnd
 
             private Type[] GetParameterTypes(MethodDeclaration node)
             {
+                if (node.Formals.Count == 0) return Type.EmptyTypes;
                 Type[] types = new Type[node.Formals.Count];
                 for (int i = 0; i < node.Formals.Count; i++)
                 {

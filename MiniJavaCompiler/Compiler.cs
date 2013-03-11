@@ -7,6 +7,7 @@ using MiniJavaCompiler.FrontEnd;
 using MiniJavaCompiler.Support;
 using MiniJavaCompiler.Support.SymbolTable;
 using MiniJavaCompiler.Support.AbstractSyntaxTree;
+using MiniJavaCompiler.BackEnd;
 
 namespace MiniJavaCompiler
 {
@@ -47,16 +48,26 @@ namespace MiniJavaCompiler
                 return;
             }
 
-            var frontend = new FrontEnd.FrontEnd(fileStream);
             SymbolTable symbolTable;
             Program abstractSyntaxTree;
+            if (RunFrontEnd(args[0], fileStream, out symbolTable, out abstractSyntaxTree))
+            {
+                RunBackEnd(symbolTable, abstractSyntaxTree);
+            }
+        }
+
+        private static bool RunFrontEnd(string fileName, StreamReader fileStream,
+            out SymbolTable symbolTable, out Program abstractSyntaxTree)
+        {
+            var frontend = new FrontEnd.FrontEnd(fileStream);
             if (frontend.TryProgramAnalysis(out abstractSyntaxTree, out symbolTable))
             {
-                Console.WriteLine("Program OK.");
+                return true;
             }
             else
             {
-                var sourceCode = File.ReadAllLines(args[0]);
+                Console.WriteLine("Compilation failed.");
+                var sourceCode = File.ReadAllLines(fileName);
                 var sourceLines = sourceCode.Count();
                 string errorCodeDecl = "Code near error source: ";
                 var errors = frontend.GetErrors();
@@ -72,8 +83,14 @@ namespace MiniJavaCompiler
                         Console.WriteLine(new String(' ', errorCodeDecl.Length + error.Col - whitespace - 1) + '^');
                     }
                 }
+                return false;
             }
-            Console.WriteLine("No back end present, exiting...");
+        }
+
+        private static void RunBackEnd(SymbolTable symbolTable, Program abstractSyntaxTree)
+        {
+            var backEnd = new CodeGenerator(symbolTable, abstractSyntaxTree, "MainModule");
+            backEnd.GenerateCode();
         }
     }
 }

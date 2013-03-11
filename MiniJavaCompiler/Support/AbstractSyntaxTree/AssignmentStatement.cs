@@ -17,8 +17,8 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
 
         public override void Accept(INodeVisitor visitor)
         {
-            RightHandSide.Accept(visitor);
             LeftHandSide.Accept(visitor);
+            RightHandSide.Accept(visitor);
             visitor.Visit(this);
         }
     }

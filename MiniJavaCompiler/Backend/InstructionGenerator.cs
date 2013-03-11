@@ -103,7 +103,7 @@ namespace MiniJavaCompiler.BackEnd
                     switch (decl.VariableKind)
                     {
                         case VariableDeclaration.Kind.Class:
-                            il.Emit(OpCodes.Stfld, decl.Name);
+                            il.Emit(OpCodes.Stfld, _parent._fields[variable]);
                             break;
                         case VariableDeclaration.Kind.Local:
                             il.Emit(OpCodes.Stloc, decl.LocalIndex);
@@ -237,16 +237,24 @@ namespace MiniJavaCompiler.BackEnd
 
             public void Visit(VariableReferenceExpression node)
             {
-                if (node.UsedAsAddress) return; // no need to load anything onto the stack
-
+                var il = _currentMethod.GetILGenerator();
                 var variable = _parent._symbolTable.Scopes[node].ResolveVariable(node.Name);
                 var definition = (VariableDeclaration)_parent._symbolTable.Definitions[variable];
-                var il = _currentMethod.GetILGenerator();
+
+                if (node.UsedAsAddress)
+                {
+                    if (definition.VariableKind == VariableDeclaration.Kind.Class)
+                    {   // load a "this" reference
+                        il.Emit(OpCodes.Ldarg_0);
+                    }
+                    return;
+                }
+
                 switch (definition.VariableKind)
                 {
                     case VariableDeclaration.Kind.Class:
                         il.Emit(OpCodes.Ldarg_0);
-                        il.Emit(OpCodes.Ldfld, node.Name);
+                        il.Emit(OpCodes.Ldfld, _parent._fields[variable]);
                         break;
                     case VariableDeclaration.Kind.Formal:
                         il.Emit(OpCodes.Ldarg, GetParameterIndex(definition, _currentMethod));

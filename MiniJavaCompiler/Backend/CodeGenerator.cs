@@ -20,6 +20,7 @@ namespace MiniJavaCompiler.BackEnd
         private readonly Dictionary<Type, ConstructorInfo> _constructors;
         private readonly Dictionary<string, TypeBuilder> _types;
         private readonly Dictionary<MethodSymbol, MethodBuilder> _methods;
+        private readonly Dictionary<VariableSymbol, FieldBuilder> _fields;
 
         private AssemblyBuilder _asmBuilder;
         private ModuleBuilder _moduleBuilder;
@@ -32,12 +33,14 @@ namespace MiniJavaCompiler.BackEnd
             _constructors = new Dictionary<Type, ConstructorInfo>();
             _types = new Dictionary<string, TypeBuilder>();
             _methods = new Dictionary<MethodSymbol, MethodBuilder>();
+            _fields = new Dictionary<VariableSymbol, FieldBuilder>();
         }
 
         public void GenerateCode(string outputFileName = "out.exe")
         {
-            new AssemblyCreator(this).SetUpAssembly(); // Sets up _asmBuilder, _moduleBuilder and _constructors.
+            new AssemblyCreator(this).SetUpAssembly(outputFileName); // Sets up _asmBuilder, _moduleBuilder and _constructors.
             new InstructionGenerator(this).GenerateInstructions();
+            _moduleBuilder.CreateGlobalFunctions();
             FinalizeTypes();
             _asmBuilder.Save(outputFileName);
         }
