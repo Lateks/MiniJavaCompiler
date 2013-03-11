@@ -23,11 +23,11 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
 
         public override void Accept(INodeVisitor visitor)
         {
+            MethodOwner.Accept(visitor);
             foreach (var expr in CallParameters)
             {
                 expr.Accept(visitor);
             }
-            MethodOwner.Accept(visitor);
             visitor.Visit(this);
         }
 

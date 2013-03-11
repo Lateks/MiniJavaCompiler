@@ -113,8 +113,12 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             // and left hand side needs to be an lvalue.
             var lhsType = node.LeftHandSide.Type;
             var rhsType = node.RightHandSide.Type;
-            if (node.LeftHandSide is VariableReferenceExpression || node.LeftHandSide is ArrayIndexingExpression)
+            if (node.LeftHandSide is ILValueExpression || node.LeftHandSide is ErrorType)
             {
+                if (node.LeftHandSide is ILValueExpression)
+                {
+                    ((ILValueExpression)node.LeftHandSide).UsedAsAddress = true;
+                }
                 if (!(rhsType.IsAssignableTo(lhsType)))
                 {
                     // ErrorType should be assignable both ways.

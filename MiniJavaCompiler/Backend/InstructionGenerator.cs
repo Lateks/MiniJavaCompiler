@@ -119,11 +119,11 @@ namespace MiniJavaCompiler.BackEnd
                     var rhsType = node.RightHandSide.Type;
                     if (rhsType == _parent._symbolTable.ResolveTypeName(MiniJavaInfo.IntType).Type)
                     {
-                        il.Emit(OpCodes.Stind_I4);
+                        il.Emit(OpCodes.Stelem_I4);
                     }
                     else
                     {
-                        il.Emit(OpCodes.Stobj);
+                        il.Emit(OpCodes.Stelem_Ref);
                     }
                 }
             }
@@ -221,14 +221,24 @@ namespace MiniJavaCompiler.BackEnd
             }
 
             public void Visit(ArrayIndexingExpression node)
-            {   // TODO: should sometimes only the value be loaded (instead of address)?
-                _currentMethod.GetILGenerator().Emit(OpCodes.Ldelema);
+            {
+                if (node.UsedAsAddress) return; // no need to load anything, index is already on the stack?
+                var il = _currentMethod.GetILGenerator();
+                if (MiniJavaInfo.IsBuiltInType(node.Type.Name))
+                {
+                    il.Emit(OpCodes.Ldelem_I4);
+                }
+                else
+                {
+                    il.Emit(OpCodes.Ldelem_Ref);
+                }
             }
 
-            // TODO: if a variable reference is the left-hand side of an
-            // assignment, it should not be loaded on the stack.
+
             public void Visit(VariableReferenceExpression node)
             {
+                if (node.UsedAsAddress) return; // no need to load anything onto the stack
+
                 var variable = _parent._symbolTable.Scopes[node].ResolveVariable(node.Name);
                 var definition = (VariableDeclaration)_parent._symbolTable.Definitions[variable];
                 var il = _currentMethod.GetILGenerator();

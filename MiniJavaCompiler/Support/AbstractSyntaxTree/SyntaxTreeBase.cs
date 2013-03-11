@@ -18,6 +18,11 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
         IType Type { get; set; }
     }
 
+    public interface ILValueExpression : IExpression
+    {
+        bool UsedAsAddress { get; set; }
+    }
+
     // This class defined the basic information and operations common
     // to all syntax elements.
     public abstract class SyntaxElement : ISyntaxTreeNode

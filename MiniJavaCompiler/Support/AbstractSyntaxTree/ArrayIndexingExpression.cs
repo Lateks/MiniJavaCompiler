@@ -4,11 +4,12 @@ using IType = MiniJavaCompiler.Support.SymbolTable.Types.IType;
 
 namespace MiniJavaCompiler.Support.AbstractSyntaxTree
 {
-    public class ArrayIndexingExpression : SyntaxElement, IExpression
+    public class ArrayIndexingExpression : SyntaxElement, ILValueExpression
     {
         public IExpression ArrayExpr { get; private set; }
         public IExpression IndexExpr { get; private set; }
         public IType Type { get; set; }
+        public bool UsedAsAddress { get; set; }
 
         public ArrayIndexingExpression(IExpression arrayReference,
             IExpression arrayIndex, int row, int col)
@@ -16,12 +17,13 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
         {
             ArrayExpr = arrayReference;
             IndexExpr = arrayIndex;
+            UsedAsAddress = false;
         }
 
         public override void Accept(INodeVisitor visitor)
         {
-            IndexExpr.Accept(visitor);
             ArrayExpr.Accept(visitor);
+            IndexExpr.Accept(visitor);
             visitor.Visit(this);
         }
 
