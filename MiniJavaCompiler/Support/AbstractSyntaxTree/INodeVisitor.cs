@@ -8,7 +8,6 @@
         void Visit(ReturnStatement node);
         void Visit(AssertStatement node);
         void Visit(AssignmentStatement node);
-        void Visit(IfStatement node);
         void Visit(MethodInvocation node);
         void Visit(InstanceCreationExpression node);
         void Visit(UnaryOperatorExpression node);
@@ -27,11 +26,14 @@
 
         // Visits in the middle of handling the node's children.
         void VisitAfterBody(WhileStatement node);
+        void VisitAfterCondition(IfStatement node);
+        void VisitAfterThenBranch(IfStatement node);
 
         // These are for handling e.g. scope exits when needed.
         void Exit(ClassDeclaration node);
         void Exit(MethodDeclaration node);
         void Exit(BlockStatement node);
         void Exit(WhileStatement node);
+        void Exit(IfStatement node);
     }
 }

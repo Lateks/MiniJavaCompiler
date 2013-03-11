@@ -8,6 +8,7 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
         public IExpression Condition { get; private set; }
         public BlockStatement ThenBranch { get; private set; }
         public BlockStatement ElseBranch { get; private set; }
+        public System.Reflection.Emit.Label ExitLabel { get; set; }
 
         public IfStatement(IExpression booleanExp, IStatement thenBranch,
             IStatement elseBranch, int row, int col)
@@ -36,12 +37,14 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
         public override void Accept(INodeVisitor visitor)
         {
             Condition.Accept(visitor);
+            visitor.VisitAfterCondition(this);
             ThenBranch.Accept(visitor);
+            visitor.VisitAfterThenBranch(this);
             if (ElseBranch != null)
             {
                 ElseBranch.Accept(visitor);
             }
-            visitor.Visit(this);
+            visitor.Exit(this);
         }
     }
 }

@@ -142,7 +142,11 @@ namespace MiniJavaCompiler.BackEnd
 
             public void Visit(AssignmentStatement node) { }
 
-            public void Visit(IfStatement node) { }
+            public void VisitAfterCondition(IfStatement node) { }
+
+            public void VisitAfterThenBranch(IfStatement node) { }
+
+            public void Exit(IfStatement node) { }
 
             public void Visit(WhileStatement node) { }
 

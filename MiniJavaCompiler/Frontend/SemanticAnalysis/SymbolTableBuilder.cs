@@ -296,7 +296,11 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             ExitScope();
         }
 
-        public void Visit(IfStatement node)
+        public void VisitAfterCondition(IfStatement node) { }
+
+        public void VisitAfterThenBranch(IfStatement node) { }
+
+        public void Exit(IfStatement node)
         {
             HandleExpressionOrStatementNode(node);
         }

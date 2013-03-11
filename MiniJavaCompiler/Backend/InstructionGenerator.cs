@@ -77,9 +77,8 @@ namespace MiniJavaCompiler.BackEnd
             public void Visit(BlockStatement node)
             {
                 var il = _currentMethod.GetILGenerator();
-                if (node.GenerateJumpLabel)
+                if (node.Label != null)
                 {
-                    node.Label = il.DefineLabel();
                     il.MarkLabel(node.Label);
                 }
                 il.BeginScope();
@@ -129,9 +128,29 @@ namespace MiniJavaCompiler.BackEnd
                 }
             }
 
-            public void Visit(IfStatement node)
+            public void VisitAfterCondition(IfStatement node)
             {
-                throw new NotImplementedException();
+                var il = _currentMethod.GetILGenerator();
+                node.ExitLabel = il.DefineLabel();
+                if (node.ElseBranch != null)
+                {
+                    node.ElseBranch.Label = il.DefineLabel();
+                    il.Emit(OpCodes.Brfalse, node.ElseBranch.Label);
+                }
+                else
+                {
+                    il.Emit(OpCodes.Brfalse, node.ExitLabel);
+                }
+            }
+
+            public void VisitAfterThenBranch(IfStatement node)
+            {
+                _currentMethod.GetILGenerator().Emit(OpCodes.Br, node.ExitLabel);
+            }
+
+            public void Exit(IfStatement node)
+            {
+                _currentMethod.GetILGenerator().MarkLabel(node.ExitLabel);
             }
 
             public void Visit(WhileStatement node)
@@ -139,6 +158,7 @@ namespace MiniJavaCompiler.BackEnd
                 var il = _currentMethod.GetILGenerator();
                 Label test = il.DefineLabel();
                 node.ConditionLabel = test;
+                node.LoopBody.Label = il.DefineLabel();
                 il.Emit(OpCodes.Br, test); // unconditional branch to loop test
             }
 

@@ -23,7 +23,6 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
                 LoopBody = loopBody is BlockStatement
                                ? loopBody as BlockStatement
                                : new BlockStatement(new List<IStatement>() { loopBody }, row, col);
-                LoopBody.GenerateJumpLabel = true;
             }
         }
 
