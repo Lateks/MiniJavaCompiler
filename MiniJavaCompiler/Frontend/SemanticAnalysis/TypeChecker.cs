@@ -135,7 +135,11 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             ArgumentShouldBeBoolean(node, node.Condition);
         }
 
-        public void Visit(WhileStatement node)
+        public void Visit(WhileStatement node) { }
+
+        public void VisitAfterBody(WhileStatement node) { }
+
+        public void Exit(WhileStatement node)
         {
             ArgumentShouldBeBoolean(node, node.LoopCondition);
         }

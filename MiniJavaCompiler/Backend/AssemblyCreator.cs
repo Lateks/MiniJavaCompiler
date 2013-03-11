@@ -146,6 +146,10 @@ namespace MiniJavaCompiler.BackEnd
 
             public void Visit(WhileStatement node) { }
 
+            public void VisitAfterBody(WhileStatement node) { }
+
+            public void Exit(WhileStatement node) { }
+
             public void Visit(MethodInvocation node) { }
 
             public void Visit(InstanceCreationExpression node) { }

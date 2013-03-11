@@ -76,7 +76,13 @@ namespace MiniJavaCompiler.BackEnd
 
             public void Visit(BlockStatement node)
             {
-                _currentMethod.GetILGenerator().BeginScope();
+                var il = _currentMethod.GetILGenerator();
+                if (node.GenerateJumpLabel)
+                {
+                    node.Label = il.DefineLabel();
+                    il.MarkLabel(node.Label);
+                }
+                il.BeginScope();
             }
 
             public void Visit(AssertStatement node)
@@ -130,7 +136,20 @@ namespace MiniJavaCompiler.BackEnd
 
             public void Visit(WhileStatement node)
             {
-                throw new NotImplementedException();
+                var il = _currentMethod.GetILGenerator();
+                Label test = il.DefineLabel();
+                node.ConditionLabel = test;
+                il.Emit(OpCodes.Br, test); // unconditional branch to loop test
+            }
+
+            public void VisitAfterBody(WhileStatement node)
+            {
+                _currentMethod.GetILGenerator().MarkLabel(node.ConditionLabel);
+            }
+
+            public void Exit(WhileStatement node)
+            {
+                _currentMethod.GetILGenerator().Emit(OpCodes.Brtrue, node.LoopBody.Label);
             }
 
             public void Visit(MethodInvocation node)

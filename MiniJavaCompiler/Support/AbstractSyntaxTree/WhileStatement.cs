@@ -7,6 +7,7 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
     {
         public IExpression LoopCondition { get; private set; }
         public BlockStatement LoopBody { get; private set; }
+        public System.Reflection.Emit.Label ConditionLabel { get; set; }
 
         public WhileStatement(IExpression booleanExp, IStatement loopBody,
             int row, int col)
@@ -22,14 +23,17 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
                 LoopBody = loopBody is BlockStatement
                                ? loopBody as BlockStatement
                                : new BlockStatement(new List<IStatement>() { loopBody }, row, col);
+                LoopBody.GenerateJumpLabel = true;
             }
         }
 
         public override void Accept(INodeVisitor visitor)
         {
-            LoopCondition.Accept(visitor);
-            LoopBody.Accept(visitor);
             visitor.Visit(this);
+            LoopBody.Accept(visitor);
+            visitor.VisitAfterBody(this);
+            LoopCondition.Accept(visitor);
+            visitor.Exit(this);
         }
     }
 }

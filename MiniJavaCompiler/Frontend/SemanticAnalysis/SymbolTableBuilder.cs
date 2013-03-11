@@ -336,6 +336,10 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             HandleExpressionOrStatementNode(node);
         }
 
+        public void VisitAfterBody(WhileStatement node) { }
+
+        public void Exit(WhileStatement node) { }
+
         public void Visit(UnaryOperatorExpression node)
         {
             HandleExpressionOrStatementNode(node);
