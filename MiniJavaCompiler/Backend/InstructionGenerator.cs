@@ -277,6 +277,10 @@ namespace MiniJavaCompiler.BackEnd
 
             public void Exit(MethodDeclaration node)
             {
+                if (!(node.MethodBody.Last() is ReturnStatement))
+                {
+                    _currentMethod.GetILGenerator().Emit(OpCodes.Ret);
+                }
                 _currentMethod = null;
             }
 
