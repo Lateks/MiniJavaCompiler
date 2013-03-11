@@ -65,7 +65,7 @@ namespace MiniJavaCompiler.BackEnd
             public void Visit(PrintStatement node)
             {
                 MethodInfo printMethod = typeof(System.Console).GetMethod(
-                    "WriteLine", new Type[] { typeof(string) });
+                    "WriteLine", new Type[] { typeof(Int32) });
                 _currentMethod.GetILGenerator().Emit(OpCodes.Call, printMethod);
             }
 
