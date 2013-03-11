@@ -77,9 +77,9 @@ namespace MiniJavaCompiler.BackEnd
             public void Visit(BlockStatement node)
             {
                 var il = _currentMethod.GetILGenerator();
-                if (node.Label != null)
+                if (node.Label.HasValue)
                 {
-                    il.MarkLabel(node.Label);
+                    il.MarkLabel(node.Label.Value);
                 }
                 il.BeginScope();
             }
@@ -135,7 +135,7 @@ namespace MiniJavaCompiler.BackEnd
                 if (node.ElseBranch != null)
                 {
                     node.ElseBranch.Label = il.DefineLabel();
-                    il.Emit(OpCodes.Brfalse, node.ElseBranch.Label);
+                    il.Emit(OpCodes.Brfalse, node.ElseBranch.Label.Value);
                 }
                 else
                 {
@@ -169,7 +169,7 @@ namespace MiniJavaCompiler.BackEnd
 
             public void Exit(WhileStatement node)
             {
-                _currentMethod.GetILGenerator().Emit(OpCodes.Brtrue, node.LoopBody.Label);
+                _currentMethod.GetILGenerator().Emit(OpCodes.Brtrue, node.LoopBody.Label.Value);
             }
 
             public void Visit(MethodInvocation node)
