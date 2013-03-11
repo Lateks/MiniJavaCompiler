@@ -117,7 +117,7 @@ namespace MiniJavaCompiler.BackEnd
                 {   // The address to store to should be on the top of the stack just
                     // under the object being stored.
                     var rhsType = node.RightHandSide.Type;
-                    if (rhsType == _parent._symbolTable.ResolveTypeName(MiniJavaInfo.IntType).Type)
+                    if (MiniJavaInfo.IsBuiltInType(rhsType.Name))
                     {
                         il.Emit(OpCodes.Stelem_I4);
                     }
@@ -191,7 +191,7 @@ namespace MiniJavaCompiler.BackEnd
                 Type type = _parent.BuildType(node.CreatedTypeName, false);
                 var il = _currentMethod.GetILGenerator();
                 if (node.IsArrayCreation)
-                {
+                {   // arraysize is on top of the stack
                     il.Emit(OpCodes.Newarr, type);
                 }
                 else
