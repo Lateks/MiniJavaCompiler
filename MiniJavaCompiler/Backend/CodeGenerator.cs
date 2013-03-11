@@ -55,9 +55,9 @@ namespace MiniJavaCompiler.BackEnd
 
         // If the method is not static, parameter 0 is a reference to the object
         // and this needs to be taken into account.
-        private static int GetParameterIndex(VariableDeclaration node, MethodBuilder method)
+        private static short GetParameterIndex(VariableDeclaration node, MethodBuilder method)
         {
-            return method.IsStatic ? node.LocalIndex : node.LocalIndex + 1;
+            return method.IsStatic ? node.LocalIndex : (short)(node.LocalIndex + 1);
         }
 
         private Type BuildType(string typeName, bool isArray)

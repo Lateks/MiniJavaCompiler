@@ -37,7 +37,7 @@ namespace MiniJavaCompiler.FrontEnd.SyntaxAnalysis
 
     public class Parser : ParserBase, IParser
     {
-        private int currentLocalIndex;
+        private short currentLocalIndex;
 
         public Parser(ITokenizer input, IErrorReporter reporter, bool debugMode = false)
             : base(new ParserInputReader(input, reporter), reporter, debugMode) { }
@@ -226,7 +226,7 @@ namespace MiniJavaCompiler.FrontEnd.SyntaxAnalysis
             var variableName = Input.MatchAndConsume<IdentifierToken>();
             Input.MatchAndConsume<PunctuationToken>(";");
 
-            int localIndex = currentLocalIndex;
+            short localIndex = currentLocalIndex;
             currentLocalIndex++;
             return new ast.VariableDeclaration(variableName.Lexeme, typeName.Lexeme, isArray,
                 ast.VariableDeclaration.Kind.Local, localIndex, typeName.Row, typeName.Col);
@@ -456,7 +456,7 @@ namespace MiniJavaCompiler.FrontEnd.SyntaxAnalysis
         {
             try
             {
-                int localIndex = currentLocalIndex;
+                short localIndex = currentLocalIndex;
                 currentLocalIndex++;
                 var typeInfo = Type();
                 var type = typeInfo.typeToken;
