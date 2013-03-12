@@ -32,8 +32,7 @@ namespace MiniJavaCompiler.BackEnd
                 { MiniJavaInfo.Operator.And, OpCodes.And },
                 { MiniJavaInfo.Operator.Or, OpCodes.Or },
                 { MiniJavaInfo.Operator.Eq, OpCodes.Ceq },
-                { MiniJavaInfo.Operator.Mod, OpCodes.Rem },
-                { MiniJavaInfo.Operator.Not, OpCodes.Not }
+                { MiniJavaInfo.Operator.Mod, OpCodes.Rem }
             };
 
             public InstructionGenerator(CodeGenerator parent)
@@ -201,7 +200,8 @@ namespace MiniJavaCompiler.BackEnd
 
             public void Visit(UnaryOperatorExpression node)
             {
-                _currentMethod.GetILGenerator().Emit(operators[node.Operator]);
+                _currentMethod.GetILGenerator().Emit(OpCodes.Ldc_I4_0);
+                _currentMethod.GetILGenerator().Emit(OpCodes.Ceq);
             }
 
             public void Visit(BinaryOperatorExpression node)
@@ -211,7 +211,7 @@ namespace MiniJavaCompiler.BackEnd
 
             public void Visit(BooleanLiteralExpression node)
             {
-                _currentMethod.GetILGenerator().Emit(node.Value ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
+                _currentMethod.GetILGenerator().Emit(OpCodes.Ldc_I4, node.Value ? 1 : 0);
             }
 
             public void Visit(ThisExpression node)
