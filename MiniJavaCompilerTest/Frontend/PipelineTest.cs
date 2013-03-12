@@ -238,5 +238,59 @@ namespace MiniJavaCompilerTest.FrontEndTest
             Assert.That(frontend.GetErrors(), Is.Not.Empty);
             reader.Close();
         }
+
+        [Test]
+        public void OrdersErrorsByCodeLocation()
+        {
+            string program = "class Foo {\n" +
+                 "\tpublic static void main() {\n" +
+                 "\t\tint foo;\n" +
+                 "\t\tfoo = 10 + new A().alwaysTrue();\n" +
+                 "\t\tA foo2;\n" +
+                 "\t\t foo2 = new C();\n" +
+                 "\t\tint bar;\n" +
+                 "\t\tbar = new A();\n" +
+                 "\t\tbar = 99999999999999999;\n" +
+                 "\t\tboolean baz; baz = 15 && new A().alwaysTrue(10) || new C() || foo;\n" +
+                 "\t\tbaz = zzz || foo;\n" +
+                 "\t\tbaz = foo && zzz;\n" +
+                 "\t\tbaz = zzz || new C();\n" +
+                 "\t\tfoo = zzz[zzz];\n" +
+                 "\t\tassert(zzz);\n" +
+                 "\t}\n" +
+                 "}\n" +
+                 "class A {\n" +
+                 "\tpublic boolean alwaysTrue() {\n" +
+                 "\t\t if (true) { }\n" +
+                 "\t\t else { return true; }\n" +
+                 "\t}\n" +
+                 "\tpublic void foo() { return 10; }\n" +
+                 "\tpublic boolean bar() { return true; }\n" +
+                 "}\n" +
+                 "class B extends A {" +
+                 "\tpublic boolean alwaysTrue(int foo) { return true; }\n" +
+                 "}\n";
+            var reader = new StringReader(program);
+            var frontend = new FrontEnd(reader);
+            SymbolTable symbolTable;
+            Program syntaxTree;
+            Assert.False(frontend.TryProgramAnalysis(out syntaxTree, out symbolTable));
+            Assert.NotNull(syntaxTree); // syntax analysis was ok
+            Assert.IsNull(symbolTable);
+            Assert.That(frontend.GetErrors(), Is.Not.Empty);
+            reader.Close();
+
+            var errors = frontend.GetErrors();
+            int[] locationValues = new int[errors.Count()];
+            for (int i = 0; i < locationValues.Length; i++)
+            {
+                locationValues[i] = errors[i].Row * 100 + errors[i].Col;
+            }
+            int[] expectedValues = new int[errors.Count()];
+            locationValues.CopyTo(expectedValues, 0);
+            System.Array.Sort(expectedValues);
+
+            CollectionAssert.AreEqual(expectedValues, locationValues);
+        }
     }
 }

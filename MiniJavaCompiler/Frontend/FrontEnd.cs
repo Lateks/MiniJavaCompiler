@@ -27,6 +27,7 @@ namespace MiniJavaCompiler.FrontEnd
         // list of error messages.
         public List<ErrorMessage> GetErrors()
         {
+            _errorLog.Errors.Sort(ErrorMessage.CompareByLocation);
             return _errorLog.Errors;
         }
 
