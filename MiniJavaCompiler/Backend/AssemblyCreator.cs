@@ -40,7 +40,7 @@ namespace MiniJavaCompiler.BackEnd
                 foreach (string typeName in _parent._symbolTable.ScalarTypeNames)
                 {
                     TypeBuilder typeBuilder = _parent._moduleBuilder.DefineType(
-                        typeName, TypeAttributes.Public | TypeAttributes.Class); // TODO: are these IsByRef by default?
+                        typeName, TypeAttributes.Public | TypeAttributes.Class);
                     _parent._types[typeName] = typeBuilder;
                     _parent._constructors[typeBuilder] =
                         typeBuilder.DefineDefaultConstructor(MethodAttributes.Public);

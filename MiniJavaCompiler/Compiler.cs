@@ -11,7 +11,7 @@ using MiniJavaCompiler.BackEnd;
 
 namespace MiniJavaCompiler
 {
-    class Compiler
+    public class Compiler
     {
         private const string usage = "Usage: ./MiniJavaCompiler.exe path/to/source/file";
 

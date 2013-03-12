@@ -49,7 +49,8 @@ namespace MiniJavaCompiler.Support
         private static readonly char[]
             Punctuation = new[] { ';', '(', ')', '[', ']', '.', '{', '}', ',' },
             SingleCharOperatorSymbols = new[] { '/', '+', '-', '*', '<', '>', '%', '!' },
-            MultiCharOperatorStartSymbols = new[] { '&', '=', '|' }; // Only one symbol needed because all two-character operators have the same symbol twice.
+            MultiCharOperatorStartSymbols = new[] { '&', '=', '|' }; // Only one symbol needed because all two-character
+                                                                     // operators have the same symbol repeated twice.
 
         // Note: all of these operators are left-associative.
         // A lower index in the array indicates a lower precedence.
@@ -72,7 +73,9 @@ namespace MiniJavaCompiler.Support
             Types = new[] { IntType, BoolType, VoidType }, // Built-in types are also reserved words.
             ArrayMethods = new[] { "length" };
 
-        private static readonly string[] BuiltIns = new [] { "int", "boolean" }; // Built-in types that can be used as variable and method return types.
+        // Built-in types that can be used as variable and method return types.
+        private static readonly string[] BuiltIns = new [] { "int", "boolean" };
+
         private static readonly string[] UnaryOperators = new [] { "!" };
 
         // Defines the operand and result types of operators for purposes of semantic analysis.

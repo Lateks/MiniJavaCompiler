@@ -81,11 +81,10 @@ namespace MiniJavaCompiler.BackEnd
                 {
                     il.MarkLabel(node.Label.Value);
                 }
-                il.BeginScope();
             }
 
             public void Visit(AssertStatement node)
-            {
+            {   // TODO: test assertions
                 MethodInfo assertMethod = typeof(System.Diagnostics.Debug).GetMethod(
                     "Assert", new Type[] { typeof(bool) });
                 _currentMethod.GetILGenerator().Emit(OpCodes.Call, assertMethod);
@@ -244,7 +243,7 @@ namespace MiniJavaCompiler.BackEnd
                 if (node.UsedAsAddress)
                 {
                     if (definition.VariableKind == VariableDeclaration.Kind.Class)
-                    {   // load a "this" reference
+                    {   // Load a "this" reference.
                         il.Emit(OpCodes.Ldarg_0);
                     }
                     return;
@@ -277,6 +276,7 @@ namespace MiniJavaCompiler.BackEnd
 
             public void Exit(MethodDeclaration node)
             {
+                // Emit the return statement for a void method.
                 if (!(node.MethodBody.Last() is ReturnStatement))
                 {
                     _currentMethod.GetILGenerator().Emit(OpCodes.Ret);
@@ -284,10 +284,7 @@ namespace MiniJavaCompiler.BackEnd
                 _currentMethod = null;
             }
 
-            public void Exit(BlockStatement node)
-            {
-                _currentMethod.GetILGenerator().EndScope();
-            }
+            public void Exit(BlockStatement node) { }
         }
     }
 }
