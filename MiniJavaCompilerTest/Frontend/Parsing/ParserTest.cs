@@ -127,7 +127,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
                 MainClass.Declarations[0]).MethodBody[0];
             Assert.False(variableDecl.IsArray);
             Assert.That(variableDecl.Name, Is.EqualTo("foo"));
-            Assert.That(variableDecl.Type, Is.EqualTo("int"));
+            Assert.That(variableDecl.TypeName, Is.EqualTo("int"));
         }
 
         [Test]
@@ -146,7 +146,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
                 parser.Parse().MainClass.Declarations[0]).MethodBody[0];
             Assert.False(variableDecl.IsArray);
             Assert.That(variableDecl.Name, Is.EqualTo("foo"));
-            Assert.That(variableDecl.Type, Is.EqualTo("SomeType"));
+            Assert.That(variableDecl.TypeName, Is.EqualTo("SomeType"));
         }
 
         [Test]
@@ -167,7 +167,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
                 parser.Parse().MainClass.Declarations[0]).MethodBody[0];
             Assert.True(variableDecl.IsArray);
             Assert.That(variableDecl.Name, Is.EqualTo("foo"));
-            Assert.That(variableDecl.Type, Is.EqualTo("int"));
+            Assert.That(variableDecl.TypeName, Is.EqualTo("int"));
         }
 
         [Test]
@@ -549,7 +549,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
 
             var decl = (VariableDeclaration)mainMethod.MethodBody[0];
             Assert.That(decl.Name, Is.EqualTo("foo"));
-            Assert.That(decl.Type, Is.EqualTo("int"));
+            Assert.That(decl.TypeName, Is.EqualTo("int"));
             Assert.True(decl.IsArray);
             Assert.That(mainMethod.MethodBody[1], Is.InstanceOf<AssignmentStatement>());
 
@@ -712,13 +712,13 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
             
             var formal1 = methodDeclaration.Formals[0];
             Assert.That(formal1.Name, Is.EqualTo("foo"));
-            Assert.That(formal1.Type, Is.EqualTo("int"));
+            Assert.That(formal1.TypeName, Is.EqualTo("int"));
             Assert.That(formal1.LocalIndex, Is.EqualTo(0));
             Assert.False(formal1.IsArray);
 
             var formal2 = methodDeclaration.Formals[1];
             Assert.That(formal2.Name, Is.EqualTo("bar"));
-            Assert.That(formal2.Type, Is.EqualTo("myOwnType"));
+            Assert.That(formal2.TypeName, Is.EqualTo("myOwnType"));
             Assert.That(formal2.LocalIndex, Is.EqualTo(1));
             Assert.False(formal2.IsArray);
         }

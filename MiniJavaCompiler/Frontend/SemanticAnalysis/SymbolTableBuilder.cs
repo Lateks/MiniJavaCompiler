@@ -127,7 +127,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 var typeSymbol = _symbolTable.ResolveTypeName(typeName);
                 if (classDependsOnSelf((ScalarType)typeSymbol.Type))
                 {
-                    var node = (SyntaxElement) _symbolTable.Definitions[typeSymbol];
+                    var node = (SyntaxElement) _symbolTable.Declarations[typeSymbol];
                     ReportError(
                         ErrorTypes.CyclicInheritance,
                         String.Format("cyclic inheritance involving {0}",
@@ -173,7 +173,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 }
             }
             _symbolTable.Scopes.Add(node, typeSymbol.Scope);
-            _symbolTable.Definitions.Add(typeSymbol, node);
+            _symbolTable.Declarations.Add(typeSymbol, node);
             EnterScope(typeSymbol.Scope);
         }
 
@@ -190,7 +190,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             var variableSymbol = new VariableSymbol(node.Name, variableType, CurrentScope);
             if ((CurrentScope as IVariableScope).Define(variableSymbol))
             {
-                _symbolTable.Definitions.Add(variableSymbol, node);
+                _symbolTable.Declarations.Add(variableSymbol, node);
                 _symbolTable.Scopes.Add(node, CurrentScope);
             }
             else
@@ -203,7 +203,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
         {
             Debug.Assert(CurrentScope is IMethodScope);
 
-            var methodReturnType = node.Type == MiniJavaInfo.VoidType ? VoidType.GetInstance() : CheckDeclaredType(node);
+            var methodReturnType = node.TypeName == MiniJavaInfo.VoidType ? VoidType.GetInstance() : CheckDeclaredType(node);
             var methodScope = (IMethodScope) CurrentScope;
             var methodSymbol = new MethodSymbol(node.Name, methodReturnType, methodScope, node.IsStatic);
             IScope scope = methodSymbol.Scope;
@@ -213,7 +213,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 scope = new ErrorScope(CurrentScope); // Make an error scope to stand in for the method scope for purposes of recovery.
             }                                         // (Both are IVariableScopes.)
 
-            _symbolTable.Definitions.Add(methodSymbol, node);
+            _symbolTable.Declarations.Add(methodSymbol, node);
             _symbolTable.Scopes.Add(node, scope);
 
             EnterScope(scope);
@@ -221,13 +221,13 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
 
         private IType CheckDeclaredType(Declaration node)
         {
-            var nodeScalarTypeSymbol = _symbolTable.ResolveTypeName(node.Type);
+            var nodeScalarTypeSymbol = _symbolTable.ResolveTypeName(node.TypeName);
             if (nodeScalarTypeSymbol == null)
             {
                 // Note: this error is also reported when a void type is encountered
                 // for something other than a method declaration.
                 ReportError(ErrorTypes.TypeReference,
-                    String.Format("Unknown type '{0}'.", node.Type), node);
+                    String.Format("Unknown type '{0}'.", node.TypeName), node);
                 return ErrorType.GetInstance();
             }
             return BuildType(node, (ScalarType) nodeScalarTypeSymbol.Type);
@@ -238,7 +238,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             IType actualType;
             if (node.IsArray)
             {
-                var arraySymbol = _symbolTable.ResolveTypeName(node.Type, node.IsArray);
+                var arraySymbol = _symbolTable.ResolveTypeName(node.TypeName, node.IsArray);
                 if (arraySymbol == null)
                 {
                     actualType = DefineArrayType(nodeScalarType);

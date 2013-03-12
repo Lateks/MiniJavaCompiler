@@ -1,16 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using MiniJavaCompiler.Support;
+﻿using MiniJavaCompiler.Support;
 using MiniJavaCompiler.Support.AbstractSyntaxTree;
 using MiniJavaCompiler.Support.SymbolTable;
 using MiniJavaCompiler.Support.SymbolTable.Types;
 using MiniJavaCompiler.Support.SymbolTable.Symbols;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 
 namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
 {
-    /* This class checks that the types, references (variables, methods etc.),
+    /* This class checks that types, references (variables, methods etc.),
      * return statements and method invocation arguments are acceptable.
      * 
      * Does not produce any output except for error message output to
@@ -33,7 +33,10 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
         // with types or references.
         public void RunCheck()
         {
-            if (!(new TypeChecker(this).RunCheck() && new UninitializedLocalDetector(this).RunCheck()))
+            var success = true;
+            success &= new ReferenceChecker(this).RunCheck();
+            success &= new TypeChecker(this).RunCheck();
+            if (!success)
             {
                 throw new CompilationError();
             }

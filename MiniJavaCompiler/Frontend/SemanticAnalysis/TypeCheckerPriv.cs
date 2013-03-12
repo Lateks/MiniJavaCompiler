@@ -17,7 +17,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
         {
             private void CheckForOverloading(MethodDeclaration node, TypeSymbol classSymbol, MethodSymbol superClassMethod)
             {
-                var superClassMethodDeclaration = (MethodDeclaration)_parent._symbolTable.Definitions[superClassMethod];
+                var superClassMethodDeclaration = (MethodDeclaration)_parent._symbolTable.Declarations[superClassMethod];
                 if (OverloadsSuperClassMethod(node, superClassMethodDeclaration))
                 {
                     var msg = String.Format("Method {0} in class {1} overloads a method in class {2}. Overloading is not allowed.",
@@ -34,38 +34,6 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                         node.Name, classSymbol.Name, classSymbol.SuperClass.Name);
                     ReportError(ErrorTypes.InvalidOverride, msg, node);
                 }
-            }
-
-            private MethodSymbol ResolveMethod(MethodInvocation node, IType methodOwnerType)
-            {
-                MethodSymbol method = null;
-                if (node.MethodOwner is ThisExpression)
-                {   // Method called is defined by the enclosing class or its superclasses.
-                    method = _parent._symbolTable.Scopes[node].ResolveMethod(node.MethodName);
-                }
-                else if (methodOwnerType is ScalarType || methodOwnerType is ArrayType)
-                {
-                    var typeSymbol = _parent._symbolTable.ResolveTypeName(methodOwnerType.Name);
-                    method = typeSymbol.Scope.ResolveMethod(node.MethodName);
-                }
-                return method;
-            }
-
-            private IType CheckCreatedType(InstanceCreationExpression node)
-            {
-                var createdTypeSymbol = _parent._symbolTable.ResolveTypeName(node.CreatedTypeName, node.IsArrayCreation);
-                IType createdType;
-                if (createdTypeSymbol == null)
-                {
-                    ReportError(ErrorTypes.TypeReference,
-                        String.Format("Cannot resolve symbol {0}.", node.CreatedTypeName), node);
-                    createdType = null;
-                }
-                else
-                {
-                    createdType = createdTypeSymbol.Type;
-                }
-                return createdType;
             }
 
             private void CheckArraySizeType(InstanceCreationExpression node)
@@ -158,20 +126,19 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 }
             }
 
-            private void ValidateMethodCall(MethodSymbol method, MethodInvocation node, IType methodOwnerType)
+            private void ValidateMethodCall(MethodInvocation node)
             {
-                if (method == null) // method does not exist
+                if (node.MethodOwner.Type is ArrayType || node.ReferencedMethod == null)
                 {
-                    ReportError(ErrorTypes.MethodReference,
-                        String.Format("Cannot resolve symbol {0}.", node.MethodName), node);
                     return;
                 }
 
-                if (methodOwnerType is ArrayType) return; // no checks done, there can be no call params
+                if (node.ReferencedMethod.ReturnType is ErrorType)
+                {
+                    _checkOK = false;
+                }
 
-                if (method.Type is ErrorType) _checkOK = false;
-
-                if (method.IsStatic)
+                if (node.ReferencedMethod.IsStatic)
                 {
                     // Note: this is not an actual error in Java, where static methods can
                     // be referenced even through instances. However, since in MiniJava the
@@ -184,22 +151,29 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                     return;
                 }
 
-                var methodDecl = (MethodDeclaration)_parent._symbolTable.Definitions[method];
-                if (node.CallParameters.Count != methodDecl.Formals.Count)
+                if (node.CallParameters.Count != node.ReferencedMethod.Formals.Count)
                 {
                     ReportError(
                         ErrorTypes.TypeError,
                         String.Format("Wrong number of arguments to method {0} ({1} for {2}).",
-                        node.MethodName, node.CallParameters.Count, methodDecl.Formals.Count), node);
+                        node.MethodName, node.CallParameters.Count, node.ReferencedMethod.Formals.Count), node);
                     return;
                 }
 
-                ValidateCallParameterTypes(node, methodDecl);
+                ValidateCallParameterTypes(node, node.ReferencedMethod);
             }
 
-            private void ReportError(ErrorTypes type, string errorMsg, SyntaxElement node)
+            private void ReportError(ErrorTypes type, string errorMsg, SyntaxElement node,
+                SyntaxElement referencedNode = null)
             {
-                _parent._errors.ReportError(type, errorMsg, node);
+                if (referencedNode == null)
+                {
+                    _parent._errors.ReportError(type, errorMsg, node);
+                }
+                else
+                {
+                    _parent._errors.ReportError(type, errorMsg, node, referencedNode);
+                }
                 _checkOK = false;
             }
 
@@ -209,7 +183,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 for (int i = 0; i < methodDecl.Formals.Count; i++)
                 {
                     var callParamType = callParamTypes[i];
-                    var formalParamType = _parent._symbolTable.ResolveTypeName(methodDecl.Formals[i].Type,
+                    var formalParamType = _parent._symbolTable.ResolveTypeName(methodDecl.Formals[i].TypeName,
                         methodDecl.Formals[i].IsArray).Type;
                     if (!callParamType.IsAssignableTo(formalParamType))
                     {
@@ -221,27 +195,11 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 }
             }
 
-            private bool VariableDeclaredBeforeReference(VariableSymbol varSymbol,
-                VariableReferenceExpression reference)
-            {
-                if (varSymbol.Scope is TypeSymbol)
-                {   // Variables defined on the class level are visible
-                    // in all scopes internal to the class.
-                    return true;
-                }
-                var declaration = (VariableDeclaration)_parent._symbolTable.Definitions[varSymbol];
-                return declaration.Row < reference.Row ||
-                    (declaration.Row == reference.Row && declaration.Col < reference.Col);
-            }
-
             // Allows covariance.
             private bool SuperClassMethodHasADifferentReturnType(MethodDeclaration method,
                 MethodDeclaration superClassMethod)
-            {
-                var returnType = _parent._symbolTable.ResolveTypeName(method.Type, method.IsArray).Type;
-                var superClassMethodReturnType = _parent._symbolTable.ResolveTypeName(
-                    superClassMethod.Type, superClassMethod.IsArray).Type;
-                return !returnType.IsAssignableTo(superClassMethodReturnType);
+            {;
+                return !method.ReturnType.IsAssignableTo(superClassMethod.ReturnType);
             }
 
             private bool OverloadsSuperClassMethod(MethodDeclaration method,
@@ -254,11 +212,9 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 bool formalsEqual = true;
                 for (int i = 0; i < method.Formals.Count && formalsEqual; i++)
                 {
-                    var methodFormal = _parent._symbolTable.ResolveTypeName(
-                        method.Formals[i].Type, method.Formals[i].IsArray);
-                    var superFormal = _parent._symbolTable.ResolveTypeName(
-                        superClassMethod.Formals[i].Type, superClassMethod.Formals[i].IsArray);
-                    formalsEqual = methodFormal.Equals(superFormal);
+                    var methodFormal = method.Formals[i].Type; // TODO: may be errortype!
+                    var superFormal = superClassMethod.Formals[i].Type; // TODO: -"-
+                    formalsEqual = methodFormal.Equals(superFormal); // TODO: BUG BUG BUG (formalsEqual &= ...), write a test
                 }
                 return !formalsEqual;
             }

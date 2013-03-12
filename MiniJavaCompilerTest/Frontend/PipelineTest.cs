@@ -159,7 +159,7 @@ namespace MiniJavaCompilerTest.FrontEndTest
             Assert.NotNull(syntaxTree); // syntax analysis was ok
             Assert.IsNull(symbolTable);
             Assert.That(frontend.GetErrors(), Is.Not.Empty);
-            Assert.That(frontend.GetErrors().Last().ToString(), Is.StringContaining("Missing return statement in method ComputeFac"));
+            Assert.That(frontend.GetErrors().Last().ToString(), Is.StringContaining("missing return statement in method ComputeFac"));
             reader.Close();
         }
 

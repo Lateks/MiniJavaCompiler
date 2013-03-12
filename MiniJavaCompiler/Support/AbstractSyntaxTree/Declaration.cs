@@ -7,7 +7,7 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
     public abstract class Declaration : SyntaxElement
     {
         public string Name { get; private set; }
-        public string Type { get; private set; }
+        public string TypeName { get; private set; }
         public bool IsArray { get; private set; }
 
         protected Declaration(string name, string type, bool isArray,
@@ -15,7 +15,7 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
             : base(row, col)
         {
             Name = name;
-            Type = type;
+            TypeName = type;
             IsArray = isArray;
         }
     }

@@ -14,12 +14,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
     {
         // The public methods of TypeChecker are defined in this file.
         // This class checks that operand and argument types are ok and
-        // that references to variables and methods are valid (but does
-        // not check variable initialization).
-        //
-        // It also annotates the tree with type information and other
-        // relevant data. (TODO: should this be done as a separate pass
-        // to clean up the TypeChecker?)
+        // that local variables have been initialized before reference.
         private partial class TypeChecker : INodeVisitor
         {
             private SemanticsChecker _parent;
@@ -49,7 +44,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             public void Visit(VariableDeclaration node) { }
 
             public void Visit(MethodDeclaration node)
-            {  // Check that the method does not overload a method in a superclass.
+            {   // Check that the method does not overload a method in a superclass.
                 // Only overriding is allowed.
                 var classSymbol = _parent._symbolTable.ResolveClass(node);
                 var superClassMethod = classSymbol.SuperClass == null ? null :
@@ -76,8 +71,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
 
             public void Visit(ReturnStatement node)
             {
-                var argType = node.ReturnValue.Type;
-                _returnTypes.Push(argType);
+                _returnTypes.Push(node.ReturnValue.Type);
             }
 
             public void Visit(BlockStatement node) { }
@@ -94,10 +88,6 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 var rhsType = node.RightHandSide.Type;
                 if (node.LeftHandSide is ILValueExpression || node.LeftHandSide is ErrorType)
                 {
-                    if (node.LeftHandSide is ILValueExpression)
-                    {
-                        ((ILValueExpression)node.LeftHandSide).UsedAsAddress = true;
-                    }
                     if (!(rhsType.IsAssignableTo(lhsType)))
                     {
                         // ErrorType should be assignable both ways.
@@ -136,33 +126,16 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             }
 
             public void Visit(MethodInvocation node)
-            {   // Note: in this implementation the main method cannot be called
-                // from inside the program because there would be no sensible use
-                // for such a method call - and there are no other static methods
-                // - so implementing it would have been pointless.
-                var methodOwnerType = node.MethodOwner.Type;
-                MethodSymbol method = null;
-                if (methodOwnerType == VoidType.GetInstance())
-                {
-                    ReportError(
-                        ErrorTypes.LvalueReference,
-                        String.Format("{0} cannot be dereferenced.", methodOwnerType.Name), node);
-                }
-                else
-                {
-                    method = ResolveMethod(node, methodOwnerType);
-                    ValidateMethodCall(method, node, methodOwnerType);
-                }
-
-                // Expected return type, may be void.
-                node.Type = method == null ? ErrorType.GetInstance() : method.Type;
+            {
+                ValidateMethodCall(node);
             }
 
             public void Visit(InstanceCreationExpression node)
             {
-                IType createdType = CheckCreatedType(node);
-                CheckArraySizeType(node);
-                node.Type = createdType ?? ErrorType.GetInstance();
+                if (node.IsArrayCreation)
+                {
+                    CheckArraySizeType(node);
+                }
             }
 
             public void Visit(UnaryOperatorExpression node)
@@ -177,7 +150,6 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                         String.Format("Cannot apply operator {0} on operand of type {1}.",
                         node.Operator, actualOperandType.Name), node);
                 }
-                node.Type = _parent._symbolTable.ResolveTypeName(op.ResultType).Type;
             }
 
             public void Visit(BinaryOperatorExpression node)
@@ -191,18 +163,11 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 {
                     CheckBinaryOperatorOperands(node, node.LeftOperand.Type, node.RightOperand.Type);
                 }
-                node.Type = _parent._symbolTable.ResolveTypeName(op.ResultType).Type;
             }
 
-            public void Visit(BooleanLiteralExpression node)
-            {
-                node.Type = _parent._symbolTable.ResolveTypeName(MiniJavaInfo.BoolType).Type;
-            }
+            public void Visit(BooleanLiteralExpression node) { }
 
-            public void Visit(ThisExpression node)
-            {
-                node.Type = _parent._symbolTable.ResolveClass(node).Type;
-            }
+            public void Visit(ThisExpression node) { }
 
             public void Visit(ArrayIndexingExpression node)
             {
@@ -218,25 +183,35 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 {   // Array must be indexed with an expression that evaluates into an int value.
                     ReportError(ErrorTypes.TypeError, "Invalid array index.", node);
                 }
-                node.Type = arrayType is ArrayType ?
-                    (IType)(arrayType as ArrayType).ElementType : ErrorType.GetInstance();
             }
 
             public void Visit(VariableReferenceExpression node)
             {
                 var scope = _parent._symbolTable.Scopes[node];
-                var symbol = scope.ResolveVariable(node.Name);
-                if (symbol == null || !VariableDeclaredBeforeReference(symbol, node))
-                {
-                    ReportError(ErrorTypes.LvalueReference,
-                        String.Format("Cannot resolve symbol {0}.", node.Name), node);
-                }
-                else if (symbol != null && symbol.Type is ErrorType)
-                {
-                    _checkOK = false;
-                }
+                var variableSymbol = scope.ResolveVariable(node.Name);
+                if (variableSymbol == null) return; // resolving error has already been reported
+                                                    // TODO: should symbol be stored on the reference expression?
 
-                node.Type = symbol == null ? ErrorType.GetInstance() : symbol.Type;
+                var declaration = (VariableDeclaration)_parent._symbolTable.Declarations[variableSymbol];
+                if (declaration.VariableKind != VariableDeclaration.Kind.Local) return;
+
+                if (node.UsedAsAddress)
+                {
+                    declaration.IsInitialized = true;
+                }
+                else if (!declaration.IsInitialized && !ErrorsAlreadyReported(node, declaration))
+                {
+                    ReportError(
+                        ErrorTypes.UninitializedLocal,
+                        String.Format("variable {0} might not have been initialized",
+                        node.Name), node, declaration);
+                }
+            }
+
+            private bool ErrorsAlreadyReported(VariableReferenceExpression reference, VariableDeclaration declaration)
+            {
+                return _parent._errors.HasErrorReportForReferenceTo(ErrorTypes.UninitializedLocal, declaration) ||
+                    _parent._errors.HasErrorReportForNode(ErrorTypes.LvalueReference, reference);
             }
 
             public void Visit(IntegerLiteralExpression node)
@@ -250,7 +225,6 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                         node.Value), node);
                 }
                 node.IntValue = value;
-                node.Type = _parent._symbolTable.ResolveTypeName(MiniJavaInfo.IntType).Type;
             }
 
             public void Exit(ClassDeclaration node) { }
@@ -275,7 +249,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 {
                     ReportError(
                         ErrorTypes.TypeError,
-                        String.Format("Missing return statement in method {0}.",
+                        String.Format("missing return statement in method {0}.",
                         method.Name), node);
                 }
                 else
@@ -284,7 +258,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                     {
                         ReportError(
                             ErrorTypes.TypeError,
-                            String.Format("Missing return statement in method {0}.",
+                            String.Format("missing return statement in method {0}.",
                             method.Name), node);
                     }
                     // Return types can be checked even if some branches were missing

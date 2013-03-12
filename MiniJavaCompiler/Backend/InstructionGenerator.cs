@@ -98,7 +98,7 @@ namespace MiniJavaCompiler.BackEnd
                 {
                     var reference = (VariableReferenceExpression)node.LeftHandSide;
                     var variable = _parent._symbolTable.Scopes[reference].ResolveVariable(reference.Name);
-                    var decl = (VariableDeclaration)_parent._symbolTable.Definitions[variable];
+                    var decl = (VariableDeclaration)_parent._symbolTable.Declarations[variable];
                     switch (decl.VariableKind)
                     {
                         case VariableDeclaration.Kind.Class:
@@ -238,7 +238,7 @@ namespace MiniJavaCompiler.BackEnd
             {
                 var il = _currentMethod.GetILGenerator();
                 var variable = _parent._symbolTable.Scopes[node].ResolveVariable(node.Name);
-                var definition = (VariableDeclaration)_parent._symbolTable.Definitions[variable];
+                var definition = (VariableDeclaration)_parent._symbolTable.Declarations[variable];
 
                 if (node.UsedAsAddress)
                 {

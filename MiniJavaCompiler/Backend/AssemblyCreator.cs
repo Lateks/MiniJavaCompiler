@@ -76,11 +76,11 @@ namespace MiniJavaCompiler.BackEnd
                         break;
                     case VariableDeclaration.Kind.Local:
                         _currentMethod.GetILGenerator().DeclareLocal(
-                            _parent.BuildType(node.Type, node.IsArray));
+                            _parent.BuildType(node.TypeName, node.IsArray));
                         break;
                     case VariableDeclaration.Kind.Class:
                         var fieldBuilder = _currentType.DefineField(node.Name,
-                            _parent.BuildType(node.Type, node.IsArray), FieldAttributes.Private);
+                            _parent.BuildType(node.TypeName, node.IsArray), FieldAttributes.Private);
                         var sym = _parent._symbolTable.Scopes[node].ResolveVariable(node.Name);
                         _parent._fields[sym] = fieldBuilder;
                         break;
@@ -116,14 +116,14 @@ namespace MiniJavaCompiler.BackEnd
                 for (int i = 0; i < node.Formals.Count; i++)
                 {
                     VariableDeclaration decl = node.Formals[i];
-                    types[i] = _parent.BuildType(decl.Type, decl.IsArray);
+                    types[i] = _parent.BuildType(decl.TypeName, decl.IsArray);
                 }
                 return types;
             }
 
             private Type GetReturnType(MethodDeclaration node)
             {
-                return _parent.BuildType(node.Type, node.IsArray);
+                return _parent.BuildType(node.TypeName, node.IsArray);
             }
 
             private static MethodAttributes GetMethodAttributes(MethodDeclaration node)
