@@ -37,14 +37,9 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             private MethodSymbol ResolveMethod(MethodInvocation node, IType methodOwnerType)
             {
                 MethodSymbol method = null;
-
                 if (node.MethodOwner is ThisExpression)
                 {   // Method called is defined by the enclosing class or its superclasses.
                     method = _parent._symbolTable.Scopes[node].ResolveMethod(node.MethodName);
-                }
-                else if (methodOwnerType == VoidType.GetInstance())
-                {
-                    ReportError(String.Format("Cannot call a method on type {0}.", methodOwnerType.Name), node);
                 }
                 else if (methodOwnerType is ScalarType || methodOwnerType is ArrayType)
                 {
@@ -191,7 +186,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
 
             private void ReportError(string errorMsg, SyntaxElement node)
             {
-                _parent._errors.ReportError(errorMsg, node.Row, node.Col);
+                _parent._errors.ReportError(errorMsg, node);
                 _checkOK = false;
             }
 

@@ -116,9 +116,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
-                Assert.AreEqual(2, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot call a method on type void"));
-                Assert.That(errors.Errors[1].ToString(), Is.StringContaining("Cannot resolve symbol bar"));
+                Assert.AreEqual(1, errors.Count);
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("void cannot be dereferenced"));
             }
 
             [Test]
@@ -1095,7 +1094,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
         {
             [Test]
             public void VoidMethodCannotHaveAReturnStatement()
-            {
+            {   // Note: MiniJava does not define an empty return statement.
                 string program = "class Foo{\n" +
                                  "\t public static void main() { return 42; }\n" +
                                  "}\n";
@@ -1103,7 +1102,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Method of type void cannot have return statements"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("cannot return a value from a method whose result type is void"));
             }
 
             [Test]
@@ -1837,7 +1836,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 Assert.That(errors.Errors[15].ToString(), Is.StringContaining("Cannot resolve symbol zzz")); // No error about array index type because variable could not be resolved.
                 Assert.That(errors.Errors[16].ToString(), Is.StringContaining("Cannot resolve symbol zzz")); // No error about invalid argument to assert statement because variable could not be resolved.
                 Assert.That(errors.Errors[17].ToString(), Is.StringContaining("Missing return statement in method alwaysTrue"));
-                Assert.That(errors.Errors[18].ToString(), Is.StringContaining("Method of type void cannot have return statements"));
+                Assert.That(errors.Errors[18].ToString(), Is.StringContaining("cannot return a value from a method whose result type is void"));
                 Assert.That(errors.Errors[19].ToString(), Is.StringContaining("Method alwaysTrue in class B overloads a method in class A"));
             }
 

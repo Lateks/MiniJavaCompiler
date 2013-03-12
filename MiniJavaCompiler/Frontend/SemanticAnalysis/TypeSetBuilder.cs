@@ -37,7 +37,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 if (NameAlreadyDefined(node.Name))
                 {
                     _errorReporter.ReportError(String.Format("Conflicting definitions for {0}.",
-                        node.Name), node.Row, node.Col);
+                        node.Name), node);
                     return false;
                 }
                 _types.Add(node.Name);

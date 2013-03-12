@@ -135,9 +135,16 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 // for such a method call - and there are no other static methods
                 // - so implementing it would have been pointless.
                 var methodOwnerType = node.MethodOwner.Type;
-                MethodSymbol method = ResolveMethod(node, methodOwnerType);
-
-                ValidateMethodCall(method, node, methodOwnerType);
+                MethodSymbol method = null;
+                if (methodOwnerType == VoidType.GetInstance())
+                {
+                    ReportError(String.Format("{0} cannot be dereferenced.", methodOwnerType.Name), node);
+                }
+                else
+                {
+                    method = ResolveMethod(node, methodOwnerType);
+                    ValidateMethodCall(method, node, methodOwnerType);
+                }
 
                 // Expected return type, may be void.
                 node.Type = method == null ? ErrorType.GetInstance() : method.Type;
@@ -242,7 +249,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                     // (because Mini-Java does not allow empty return statements).
                     if (numReturnStatements > 0)
                     {
-                        ReportError(String.Format("Method of type {0} cannot have return statements.",
+                        ReportError(String.Format("cannot return a value from a method whose result type is {0}",
                             method.Type.Name), node);
                         _returnTypes.Clear();
                     }

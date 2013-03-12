@@ -102,9 +102,11 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
 
         private void SetUpArrayBase()
         {
-            var anyTypeSym = TypeSymbol.MakeScalarTypeSymbol(MiniJavaInfo.AnyType, _symbolTable.GlobalScope);
+            var anyTypeSym = TypeSymbol.MakeScalarTypeSymbol(
+                MiniJavaInfo.AnyType, _symbolTable.GlobalScope);
             _symbolTable.GlobalScope.Define(anyTypeSym);
-            var arrayBaseSym = TypeSymbol.MakeArrayTypeSymbol((ScalarType)anyTypeSym.Type, _symbolTable.GlobalScope);
+            var arrayBaseSym = TypeSymbol.MakeArrayTypeSymbol(
+                (ScalarType)anyTypeSym.Type, _symbolTable.GlobalScope);
             _symbolTable.GlobalScope.Define(arrayBaseSym);
 
             var intType = _symbolTable.GlobalScope.ResolveType(MiniJavaInfo.IntType).Type;
@@ -125,7 +127,8 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 if (classDependsOnSelf((ScalarType)typeSymbol.Type))
                 {
                     var node = (SyntaxElement) _symbolTable.Definitions[typeSymbol];
-                    ReportError(String.Format("Class {0} depends on itself.", typeSymbol.Type.Name), node.Row, node.Col);
+                    ReportError(String.Format("Class {0} depends on itself.",
+                        typeSymbol.Type.Name), node);
                     cyclicInheritanceFound = true;
                 }
             }
@@ -156,7 +159,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 var inheritedType = (TypeSymbol) CurrentScope.ResolveType(node.InheritedClassName);
                 if (inheritedType == null)
                 {
-                    ReportError(String.Format("Unknown type '{0}'.", node.InheritedClassName), node.Row, node.Col);
+                    ReportError(String.Format("Unknown type '{0}'.", node.InheritedClassName), node);
                 }
                 else
                 {
@@ -217,7 +220,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             {
                 // Note: this error is also reported when a void type is encountered
                 // for something other than a method declaration.
-                ReportError(String.Format("Unknown type '{0}'.", node.Type), node.Row, node.Col);
+                ReportError(String.Format("Unknown type '{0}'.", node.Type), node);
                 return ErrorType.GetInstance();
             }
             return BuildType(node, (ScalarType) nodeScalarTypeSymbol.Type);
@@ -258,7 +261,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             var scalarTypeSymbol = _symbolTable.ResolveTypeName(node.CreatedTypeName);
             if (scalarTypeSymbol == null)
             {
-                ReportError(String.Format("Unknown type '{0}'.", node.CreatedTypeName), node.Row, node.Col);
+                ReportError(String.Format("Unknown type '{0}'.", node.CreatedTypeName), node);
             }
             else if (node.IsArrayCreation && _symbolTable.ResolveTypeName(node.CreatedTypeName, node.IsArrayCreation) == null)
             {
@@ -270,12 +273,12 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
         private void ReportSymbolDefinitionError(Declaration node)
         {
             string errorMessage = String.Format("Symbol '{0}' is already defined.", node.Name);
-            ReportError(errorMessage, node.Row, node.Col);
+            ReportError(errorMessage, node);
         }
 
-        private void ReportError(string message, int row, int col)
+        private void ReportError(string message, SyntaxElement node)
         {
-            _errorReporter.ReportError(message, row, col);
+            _errorReporter.ReportError(message, node);
         }
 
         public void Exit(MethodDeclaration node)
