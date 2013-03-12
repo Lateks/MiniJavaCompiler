@@ -66,6 +66,23 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             }
 
             [Test]
+            public void LocalVariableInitializationErrorIsOnlyReportedOnce()
+            {
+                string program = "class Foo {\n" +
+                  "\tpublic static void main() {\n" +
+                  "\t\t int[] foo;\n" +
+                  "\t\t foo[0] = 0;\n" +
+                  "\t\t foo[1] = 1;\n" +
+                  "\t}\n" +
+                  "}\n";
+                IErrorReporter errors;
+                var checker = SetUpTypeAndReferenceChecker(program, out errors);
+                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.AreEqual(1, errors.Count);
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("foo might not have been initialized"));
+            }
+
+            [Test]
             public void ClassVariableIsInitializedAutomaticallyAndCanBeReferenced()
             {
                 string program = "class Foo {\n" +

@@ -42,11 +42,14 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 {
                     declaration.IsInitialized = true;
                 }
-                else if (!declaration.IsInitialized)
+                else if (!declaration.IsInitialized &&
+                    !_parent._errors.HasErrorReportForReferenceTo(ErrorTypes.UninitializedLocal, declaration))
                 {
                     _checkOK = false;
-                    _parent._errors.ReportError(String.Format("Variable {0} might not have been initialized.",
-                        node.Name), node.Row, node.Col);
+                    _parent._errors.ReportError(
+                        ErrorTypes.UninitializedLocal,
+                        String.Format("variable {0} might not have been initialized",
+                        node.Name), node, declaration);
                 }
             }
 

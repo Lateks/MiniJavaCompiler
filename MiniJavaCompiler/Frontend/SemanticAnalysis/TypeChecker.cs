@@ -68,7 +68,9 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 if (type is ErrorType) return; // Type errors are never checked in recovery.
                 if (type.Name != MiniJavaInfo.IntType)
                 {
-                    ReportError(String.Format("Cannot print expression of type {0}.", type.Name), node);
+                    ReportError(
+                        ErrorTypes.TypeError,
+                        String.Format("Cannot print expression of type {0}.", type.Name), node);
                 }
             }
 
@@ -100,13 +102,17 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                     {
                         // ErrorType should be assignable both ways.
                         Debug.Assert(!(lhsType is ErrorType || rhsType is ErrorType));
-                        ReportError(String.Format("Cannot assign expression of type {0} to variable of type {1}.",
+                        ReportError(
+                            ErrorTypes.TypeError,
+                            String.Format("Cannot assign expression of type {0} to variable of type {1}.",
                             rhsType.Name, lhsType.Name), node);
                     }
                 }
                 else
                 {
-                    ReportError("Assignment receiver expression is not assignable (an lvalue required).",
+                    ReportError(
+                        ErrorTypes.LvalueReference,
+                        "Assignment receiver expression is not assignable (an lvalue required).",
                         node);
                 }
             }
@@ -138,7 +144,9 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 MethodSymbol method = null;
                 if (methodOwnerType == VoidType.GetInstance())
                 {
-                    ReportError(String.Format("{0} cannot be dereferenced.", methodOwnerType.Name), node);
+                    ReportError(
+                        ErrorTypes.LvalueReference,
+                        String.Format("{0} cannot be dereferenced.", methodOwnerType.Name), node);
                 }
                 else
                 {
@@ -164,7 +172,9 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 var actualOperandType = node.Operand.Type;
                 if (!actualOperandType.IsAssignableTo(expectedOperandType))
                 {
-                    ReportError(String.Format("Cannot apply operator {0} on operand of type {1}.",
+                    ReportError(
+                        ErrorTypes.TypeError,
+                        String.Format("Cannot apply operator {0} on operand of type {1}.",
                         node.Operator, actualOperandType.Name), node);
                 }
                 node.Type = _parent._symbolTable.ResolveTypeName(op.ResultType).Type;
@@ -199,12 +209,14 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 var arrayType = node.ArrayExpr.Type;
                 if (!(arrayType is ErrorType) && !(arrayType is ArrayType))
                 {   // Only arrays can be indexed. Resolving errors are ignored.
-                    ReportError(String.Format("Cannot index into expression of type {0}.", arrayType.Name), node);
+                    ReportError(
+                        ErrorTypes.TypeError,
+                        String.Format("Cannot index into expression of type {0}.", arrayType.Name), node);
                 }
                 var indexType = node.IndexExpr.Type;
                 if (!indexType.IsAssignableTo(_parent._symbolTable.ResolveTypeName(MiniJavaInfo.IntType).Type))
                 {   // Array must be indexed with an expression that evaluates into an int value.
-                    ReportError("Invalid array index.", node);
+                    ReportError(ErrorTypes.TypeError, "Invalid array index.", node);
                 }
                 node.Type = arrayType is ArrayType ?
                     (IType)(arrayType as ArrayType).ElementType : ErrorType.GetInstance();
@@ -216,7 +228,8 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 var symbol = scope.ResolveVariable(node.Name);
                 if (symbol == null || !VariableDeclaredBeforeReference(symbol, node))
                 {
-                    ReportError(String.Format("Cannot resolve symbol {0}.", node.Name), node);
+                    ReportError(ErrorTypes.LvalueReference,
+                        String.Format("Cannot resolve symbol {0}.", node.Name), node);
                 }
                 else if (symbol != null && symbol.Type is ErrorType)
                 {
@@ -231,7 +244,9 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 int value;
                 if (!Int32.TryParse(node.Value, out value))
                 {
-                    ReportError(String.Format("Cannot fit integer literal {0} into a 32-bit integer variable.",
+                    ReportError(
+                        ErrorTypes.TypeError,
+                        String.Format("Cannot fit integer literal {0} into a 32-bit integer variable.",
                         node.Value), node);
                 }
                 node.IntValue = value;
@@ -249,21 +264,27 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                     // (because Mini-Java does not allow empty return statements).
                     if (numReturnStatements > 0)
                     {
-                        ReportError(String.Format("cannot return a value from a method whose result type is {0}",
+                        ReportError(
+                            ErrorTypes.TypeError,
+                            String.Format("cannot return a value from a method whose result type is {0}",
                             method.Type.Name), node);
                         _returnTypes.Clear();
                     }
                 }
                 else if (numReturnStatements == 0)
                 {
-                    ReportError(String.Format("Missing return statement in method {0}.",
+                    ReportError(
+                        ErrorTypes.TypeError,
+                        String.Format("Missing return statement in method {0}.",
                         method.Name), node);
                 }
                 else
                 {
                     if (!AllBranchesReturnAValue(node))
                     {
-                        ReportError(String.Format("Missing return statement in method {0}.",
+                        ReportError(
+                            ErrorTypes.TypeError,
+                            String.Format("Missing return statement in method {0}.",
                             method.Name), node);
                     }
                     // Return types can be checked even if some branches were missing

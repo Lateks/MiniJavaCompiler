@@ -125,7 +125,7 @@ namespace MiniJavaCompiler.FrontEnd.SyntaxAnalysis
             catch (SyntaxError e)
             {
                 if (DebugMode) throw;
-                ErrorReporter.ReportError(e.Message, e.Row, e.Col);
+                ErrorReporter.ReportError(ErrorTypes.Syntax, e.Message, e.Row, e.Col);
             }
             catch (LexicalError)
             {

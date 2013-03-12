@@ -20,17 +20,19 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 var superClassMethodDeclaration = (MethodDeclaration)_parent._symbolTable.Definitions[superClassMethod];
                 if (OverloadsSuperClassMethod(node, superClassMethodDeclaration))
                 {
-                    ReportError(String.Format("Method {0} in class {1} overloads a method in class {2}. Overloading is not allowed.",
-                        node.Name, classSymbol.Name, classSymbol.SuperClass.Name), node);
+                    var msg = String.Format("Method {0} in class {1} overloads a method in class {2}. Overloading is not allowed.",
+                        node.Name, classSymbol.Name, classSymbol.SuperClass.Name);
+                    ReportError(ErrorTypes.InvalidOverride, msg, node);
                 }
 
                 // Subclass methods can have covariant return types with respect to overridden
                 // superclass methods. (Note: arrays are still non-covariant.)
                 if (SuperClassMethodHasADifferentReturnType(node, superClassMethodDeclaration))
                 {
-                    ReportError(String.Format(
+                    var msg = String.Format(
                         "Method {0} in class {1} has a different return type from overridden method in class {2}.",
-                        node.Name, classSymbol.Name, classSymbol.SuperClass.Name), node);
+                        node.Name, classSymbol.Name, classSymbol.SuperClass.Name);
+                    ReportError(ErrorTypes.InvalidOverride, msg, node);
                 }
             }
 
@@ -55,8 +57,8 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 IType createdType;
                 if (createdTypeSymbol == null)
                 {
-                    ReportError(String.Format("Cannot resolve symbol {0}.",
-                        node.CreatedTypeName), node);
+                    ReportError(ErrorTypes.TypeReference,
+                        String.Format("Cannot resolve symbol {0}.", node.CreatedTypeName), node);
                     createdType = null;
                 }
                 else
@@ -73,7 +75,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                     var integerType = _parent._symbolTable.ResolveTypeName(MiniJavaInfo.IntType).Type;
                     if (!node.ArraySize.Type.IsAssignableTo(integerType))
                     {
-                        ReportError("Array size must be numeric.", node);
+                        ReportError(ErrorTypes.TypeError, "Array size must be numeric.", node);
                     }
                 }
             }
@@ -149,7 +151,9 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 if (argType == ErrorType.GetInstance()) return;
                 if (argType.Name != MiniJavaInfo.BoolType)
                 {
-                    ReportError(String.Format("Cannot convert expression of type {0} to boolean.",
+                    ReportError(
+                        ErrorTypes.TypeError,
+                        String.Format("Cannot convert expression of type {0} to boolean.",
                         argType.Name), node);
                 }
             }
@@ -158,7 +162,8 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             {
                 if (method == null) // method does not exist
                 {
-                    ReportError(String.Format("Cannot resolve symbol {0}.", node.MethodName), node);
+                    ReportError(ErrorTypes.MethodReference,
+                        String.Format("Cannot resolve symbol {0}.", node.MethodName), node);
                     return;
                 }
 
@@ -168,7 +173,13 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
 
                 if (method.IsStatic)
                 {
-                    ReportError(String.Format("Cannot call static method {0} on an instance.",
+                    // Note: this is not an actual error in Java, where static methods can
+                    // be referenced even through instances. However, since in MiniJava the
+                    // only static method is the main method, I have prevented calls to static
+                    // methods altogether. (In Java, of course, even the main method CAN be
+                    // called from inside the program, but who would want to do that?)
+                    ReportError(ErrorTypes.MethodReference,
+                        String.Format("Cannot call static method {0}.",
                         node.MethodName), node);
                     return;
                 }
@@ -176,7 +187,9 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 var methodDecl = (MethodDeclaration)_parent._symbolTable.Definitions[method];
                 if (node.CallParameters.Count != methodDecl.Formals.Count)
                 {
-                    ReportError(String.Format("Wrong number of arguments to method {0} ({1} for {2}).",
+                    ReportError(
+                        ErrorTypes.TypeError,
+                        String.Format("Wrong number of arguments to method {0} ({1} for {2}).",
                         node.MethodName, node.CallParameters.Count, methodDecl.Formals.Count), node);
                     return;
                 }
@@ -184,9 +197,9 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 ValidateCallParameterTypes(node, methodDecl);
             }
 
-            private void ReportError(string errorMsg, SyntaxElement node)
+            private void ReportError(ErrorTypes type, string errorMsg, SyntaxElement node)
             {
-                _parent._errors.ReportError(errorMsg, node);
+                _parent._errors.ReportError(type, errorMsg, node);
                 _checkOK = false;
             }
 
@@ -200,9 +213,10 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                         methodDecl.Formals[i].IsArray).Type;
                     if (!callParamType.IsAssignableTo(formalParamType))
                     {
-                        ReportError(String.Format(
+                        var msg = String.Format(
                             "Wrong type of argument to method {0}. Expected {1} but got {2}.",
-                            node.MethodName, formalParamType.Name, callParamType.Name), node);
+                            node.MethodName, formalParamType.Name, callParamType.Name);
+                        ReportError(ErrorTypes.TypeError, msg, node);
                     }
                 }
             }
@@ -279,14 +293,15 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                     errormsg = String.Format("Cannot apply operator {0} on arguments of type {1} and {2}.",
                         opRepr, left.Name, right.Name);
                 }
-                ReportError(errormsg, node);
+                ReportError(ErrorTypes.TypeError, errormsg, node);
             }
 
             private void CheckOperandCompatibility(BinaryOperatorExpression node, IType left, IType right)
             {
                 if (left.IsAssignableTo(right) || right.IsAssignableTo(left))
                     return;
-                ReportError(String.Format("Cannot apply operator {0} on arguments of type {1} and {2}.",
+                ReportError(ErrorTypes.TypeError,
+                    String.Format("Cannot apply operator {0} on arguments of type {1} and {2}.",
                     node.Operator, left.Name, right.Name), node);
             }
 
@@ -298,7 +313,8 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                     if (!returnType.IsAssignableTo(method.Type))
                     {   // The type of object returned by the return statement must match the method's
                         // declared return type.
-                        ReportError(String.Format("Cannot convert expression of type {0} to {1}.",
+                        ReportError(ErrorTypes.TypeError,
+                            String.Format("Cannot convert expression of type {0} to {1}.",
                             returnType.Name, method.Type.Name), node);
                     }
                 }

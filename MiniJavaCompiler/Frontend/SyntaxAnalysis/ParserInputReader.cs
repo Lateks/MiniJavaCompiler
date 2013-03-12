@@ -217,7 +217,8 @@ namespace MiniJavaCompiler.FrontEnd.SyntaxAnalysis
             if (_tokenStream.CurrentToken is ErrorToken)
             {
                 var error = (ErrorToken)_tokenStream.CurrentToken;
-                _errorReporter.ReportError(error.Message, error.Row, error.Col);
+                _errorReporter.ReportError(ErrorTypes.Lexical,
+                    error.Message, error.Row, error.Col);
                 return error;
             }
             else

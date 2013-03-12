@@ -64,7 +64,7 @@ namespace MiniJavaCompiler.FrontEnd.SyntaxAnalysis
             catch (OutOfInput e)
             {
                 if (DebugMode) throw;
-                ErrorReporter.ReportError(e.Message, -1, -1);
+                ErrorReporter.ReportError(ErrorTypes.Lexical, e.Message, -1, -1);
                 throw new CompilationError();
             }
 
@@ -108,7 +108,7 @@ namespace MiniJavaCompiler.FrontEnd.SyntaxAnalysis
             catch (SyntaxError e)
             {
                 if (DebugMode) throw;
-                ErrorReporter.ReportError(e.Message, e.Row, e.Col);
+                ErrorReporter.ReportError(ErrorTypes.Syntax, e.Message, e.Row, e.Col);
             }
             catch (LexicalError)
             {
@@ -136,7 +136,7 @@ namespace MiniJavaCompiler.FrontEnd.SyntaxAnalysis
             catch (SyntaxError e)
             {
                 if (DebugMode) throw;
-                ErrorReporter.ReportError(e.Message, e.Row, e.Col);
+                ErrorReporter.ReportError(ErrorTypes.Syntax, e.Message, e.Row, e.Col);
             }
             catch (LexicalError)
             {
@@ -178,7 +178,7 @@ namespace MiniJavaCompiler.FrontEnd.SyntaxAnalysis
             catch (SyntaxError e)
             {
                 if (DebugMode) throw;
-                ErrorReporter.ReportError(e.Message, e.Row, e.Col);
+                ErrorReporter.ReportError(ErrorTypes.Syntax, e.Message, e.Row, e.Col);
             }
             catch (LexicalError)
             {
@@ -411,7 +411,7 @@ namespace MiniJavaCompiler.FrontEnd.SyntaxAnalysis
             catch (SyntaxError e)
             {
                 if (DebugMode) throw;
-                ErrorReporter.ReportError(e.Message, e.Row, e.Col);
+                ErrorReporter.ReportError(ErrorTypes.Syntax, e.Message, e.Row, e.Col);
             }
             catch (LexicalError)
             {
@@ -467,7 +467,7 @@ namespace MiniJavaCompiler.FrontEnd.SyntaxAnalysis
             catch (SyntaxError e)
             {
                 if (DebugMode) throw;
-                ErrorReporter.ReportError(e.Message, e.Row, e.Col);
+                ErrorReporter.ReportError(ErrorTypes.Syntax, e.Message, e.Row, e.Col);
             }
             catch (LexicalError)
             {

@@ -6,14 +6,31 @@ using System.Text;
 
 namespace MiniJavaCompiler.Support
 {
+    public enum ErrorTypes
+    {
+        Lexical,
+        Syntax,
+        InvalidOverride,
+        CyclicInheritance,
+        MethodReference,
+        LvalueReference,
+        TypeReference,
+        ConflictingDefinitions,
+        TypeError,
+        UninitializedLocal
+    }
+
     // This error can be used in all stages of compilation
     // to indicate failure.
     public class CompilationError : Exception { }
 
     public interface IErrorReporter
     {
-        void ReportError(string message, int row, int col);
-        void ReportError(string message, SyntaxElement node);
+        void ReportError(ErrorTypes type, string message, int row, int col);
+        void ReportError(ErrorTypes type, string message, SyntaxElement node);
+        void ReportError(ErrorTypes type, string message, SyntaxElement node, SyntaxElement referredNode);
+        bool HasErrorReportForNode(ErrorTypes type, SyntaxElement node);
+        bool HasErrorReportForReferenceTo(ErrorTypes type, Declaration node);
         List<ErrorMessage> Errors { get; }
         int Count { get; }
     }
@@ -31,14 +48,31 @@ namespace MiniJavaCompiler.Support
             Errors = new List<ErrorMessage>();
         }
 
-        public void ReportError(string message, int row, int col)
+        public void ReportError(ErrorTypes type, string message, int row, int col)
         {
-            Errors.Add(new ErrorMessage(message, row, col));
+            Errors.Add(new ErrorMessage(type, message, row, col));
         }
 
-        public void ReportError(string message, SyntaxElement node)
+        public void ReportError(ErrorTypes type, string message,
+            SyntaxElement node)
         {
-            Errors.Add(new ErrorMessage(message, node));
+            Errors.Add(new ErrorMessage(type, message, node));
+        }
+
+        public void ReportError(ErrorTypes type, string message,
+            SyntaxElement node, SyntaxElement referredNode)
+        {
+            Errors.Add(new ErrorMessage(type, message, node, referredNode));
+        }
+
+        public bool HasErrorReportForNode(ErrorTypes type, SyntaxElement node)
+        {
+            return Errors.FindIndex((errMsg) => errMsg.ErrorType == type && errMsg.ProblemNode == node) > -1;
+        }
+
+        public bool HasErrorReportForReferenceTo(ErrorTypes type, Declaration node)
+        {
+            return Errors.FindIndex((errMsg) => errMsg.ErrorType == type && errMsg.ReferencedNode == node) > -1;
         }
 
         public int Count
@@ -60,37 +94,56 @@ namespace MiniJavaCompiler.Support
             private set;
         }
 
-        private int _row;
-        private int _col;
+        // Used with reference errors (Method, Lvalue, UninitializedLocal).
+        public SyntaxElement ReferencedNode
+        {
+            get;
+            set;
+        }
+
+        public ErrorTypes ErrorType
+        {
+            get;
+            private set;
+        }
+
         public int Row
         {
-            get
-            {
-                return _row;
-            }
+            get;
+            private set;
         }
         public int Col
         {
-            get
-            {
-                return _col;
-            }
+            get;
+            private set;
         }
 
-        public ErrorMessage(string message, SyntaxElement node)
+        private ErrorMessage(ErrorTypes type, string message, SyntaxElement node,
+            SyntaxElement referencedNode, int row, int col)
         {
+            ErrorType = type;
             Content = message;
             ProblemNode = node;
-            _row = node.Row;
-            _col = node.Col;
+            ReferencedNode = referencedNode;
+            Row = row;
+            Col = col;
         }
 
-        public ErrorMessage(string message, int row, int col)
+        public ErrorMessage(ErrorTypes type, string message, SyntaxElement node)
+            : this(type, message, node, null, node.Row, node.Col) { }
+
+        public ErrorMessage(ErrorTypes type, string message, SyntaxElement node,
+            SyntaxElement referencedNode)
+            : this(type, message, node, referencedNode, node.Row, node.Col) { }
+
+        public ErrorMessage(ErrorTypes type, string message, int row, int col)
+            : this(type, message, null, null, row, col)
         {
-            Content = message;
-            ProblemNode = null;
-            _row = row;
-            _col = col;
+            if (type != ErrorTypes.Lexical && type != ErrorTypes.Syntax)
+            {
+                throw new ArgumentException("Invalid constructor for this type of message." +
+                    " Are you using the correct overload?");
+            }
         }
 
         public override string ToString()
