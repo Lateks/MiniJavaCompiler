@@ -1466,6 +1466,24 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             }
 
             [Test]
+            public void IgnoresUnresolvedParameterTypeInOverloadCheck()
+            {
+                string program = "class Foo{\n" +
+                 "\t public static void main() { }\n" +
+                 "}\n" +
+                 "class A {\n" +
+                 "\t public int foo(C foo) { return 10; }\n" +
+                 "}\n" +
+                 "class B extends A {\n" +
+                 "\t public int foo(int foo) { return 0; }\n" +
+                 "}\n";
+                IErrorReporter errors;
+                var checker = SetUpTypeAndReferenceChecker(program, out errors);
+                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.AreEqual(0, errors.Count);
+            }
+
+            [Test]
             public void ReturnTypeContravarianceIsNotAllowedInOverridingMethods()
             {
                 string program = "class Foo{\n" +
@@ -1709,7 +1727,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             {
                 string program = "class Foo{\n" +
                                  "\t public static void main() {\n" +
-                                 "\t\t System.out.println(new A().foo(10, new B(), 11));\n" +
+                                 "\t\t System.out.println(new A().foo(10, 11, new B()));\n" +
                                  "}\n" +
                                  "}\n" +
                                  "class A {\n" +
@@ -1721,6 +1739,26 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Wrong type of argument to method foo"));
+            }
+
+            [Test]
+            public void IgnoresParametersWithUnresolvedTypesInTypeCheck()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() {\n" +
+                                 "\t\t System.out.println(new A().foo(new C()));\n" +
+                                 "\t\t System.out.println(new A().foo(10));\n" +
+                                 "}\n" +
+                                 "}\n" +
+                                 "class A {\n" +
+                                 "\t public int foo(B bar) { return 0; }" +
+                                 "}\n";
+                IErrorReporter errors;
+                var checker = SetUpTypeAndReferenceChecker(program, out errors);
+                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.AreEqual(1, errors.Count);
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot resolve symbol C"));
+                // And no errors about method call parameters...
             }
 
             [Test]

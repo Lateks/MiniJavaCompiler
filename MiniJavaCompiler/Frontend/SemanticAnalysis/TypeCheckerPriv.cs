@@ -26,7 +26,9 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 }
 
                 // Subclass methods can have covariant return types with respect to overridden
-                // superclass methods. (Note: arrays are still non-covariant.)
+                // superclass methods. (Note: arrays are still non-covariant, see the ArrayType
+                // class.)
+                // http://docs.oracle.com/javase/specs/jls/se7/html/jls-8.html#jls-8.4.5
                 if (SuperClassMethodHasADifferentReturnType(node, superClassMethodDeclaration))
                 {
                     var msg = String.Format(
@@ -66,7 +68,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 // There were no return statements on this level, so all
                 // conditional branches must return a value.
                 var conditionalStatements = new Stack<IfStatement>(flattenedStatementsInBlock.OfType<IfStatement>());
-                if (!conditionalStatements.Any())
+                if (conditionalStatements.Count == 0)
                 {
                     return false; // No conditional branches, so the block never returns a value.
                 }
@@ -183,8 +185,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 for (int i = 0; i < methodDecl.Formals.Count; i++)
                 {
                     var callParamType = callParamTypes[i];
-                    var formalParamType = _parent._symbolTable.ResolveTypeName(methodDecl.Formals[i].TypeName,
-                        methodDecl.Formals[i].IsArray).Type;
+                    var formalParamType = methodDecl.Formals[i].Type;
                     if (!callParamType.IsAssignableTo(formalParamType))
                     {
                         var msg = String.Format(
@@ -195,7 +196,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 }
             }
 
-            // Allows covariance.
+            // Allows covariance for scalar types.
             private bool SuperClassMethodHasADifferentReturnType(MethodDeclaration method,
                 MethodDeclaration superClassMethod)
             {;
@@ -212,9 +213,16 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 bool formalsEqual = true;
                 for (int i = 0; i < method.Formals.Count && formalsEqual; i++)
                 {
-                    var methodFormal = method.Formals[i].Type; // TODO: may be errortype!
-                    var superFormal = superClassMethod.Formals[i].Type; // TODO: -"-
-                    formalsEqual = methodFormal.Equals(superFormal); // TODO: BUG BUG BUG (formalsEqual &= ...), write a test
+                    var methodFormal = method.Formals[i].Type;
+                    var superFormal = superClassMethod.Formals[i].Type;
+                    // The method's formal parameter may not be a subtype of the
+                    // superclass method's formal parameter type:
+                    // http://docs.oracle.com/javase/specs/jls/se7/html/jls-8.html#jls-8.4.2
+                    // (This would be overloading.)
+                    if (methodFormal != ErrorType.GetInstance() && superFormal != ErrorType.GetInstance())
+                    {
+                        formalsEqual = methodFormal.Equals(superFormal);
+                    }
                 }
                 return !formalsEqual;
             }

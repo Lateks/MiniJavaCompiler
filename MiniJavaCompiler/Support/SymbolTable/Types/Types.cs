@@ -85,6 +85,9 @@ namespace MiniJavaCompiler.Support.SymbolTable.Types
             return String.Format("{0}[]", elementType.Name);
         }
 
+        // Arrays do not allow for covariance in MiniJava (unlike in Java):
+        // "Array types are compatible only if they have the same element type"
+        // (http://www.cs.helsinki.fi/u/vihavain/k12/compiler_project/project/minijavasyntax.html).
         public bool IsAssignableTo(IType other)
         {
             if (other == ErrorType.GetInstance())

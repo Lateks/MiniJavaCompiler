@@ -125,7 +125,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             var dependentClasses = new List<string>();
             foreach (var typeName in _symbolTable.ScalarTypeNames) {
                 var typeSymbol = _symbolTable.ResolveTypeName(typeName);
-                if (classDependsOnSelf((ScalarType)typeSymbol.Type))
+                if (ClassDependsOnSelf((ScalarType)typeSymbol.Type))
                 {
                     var node = (SyntaxElement) _symbolTable.Declarations[typeSymbol];
                     ReportError(
@@ -140,7 +140,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
 
         // Check implemented according to description in:
         // http://docs.oracle.com/javase/specs/jls/se7/html/jls-8.html#jls-8.1.4
-        private bool classDependsOnSelf(ScalarType classSymbol)
+        private bool ClassDependsOnSelf(ScalarType classSymbol)
         {
             ScalarType currentClass = classSymbol;
             while (currentClass.SuperType != null && currentClass.SuperType != classSymbol)
