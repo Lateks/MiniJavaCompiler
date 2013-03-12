@@ -78,7 +78,7 @@ namespace MiniJavaCompiler.FrontEnd
             try
             {
                 var symbolTable = new SymbolTableBuilder(abstractSyntaxTree, _errorLog).BuildSymbolTable();
-                new TypeChecker(abstractSyntaxTree, symbolTable, _errorLog).CheckTypesAndReferences();
+                new SemanticsChecker(abstractSyntaxTree, symbolTable, _errorLog).RunCheck();
                 return symbolTable;
             }
             catch (CompilationError)

@@ -49,6 +49,8 @@
     <Compile Include="BackEnd\CodeGenerator.cs" />
     <Compile Include="BackEnd\InstructionGenerator.cs" />
     <Compile Include="FrontEnd\FrontEnd.cs" />
+    <Compile Include="FrontEnd\SemanticAnalysis\TypeChecker.cs" />
+    <Compile Include="FrontEnd\SemanticAnalysis\TypeCheckerPriv.cs" />
     <Compile Include="Support\AbstractSyntaxTree\IntegerLiteralExpression.cs" />
     <Compile Include="Compiler.cs" />
     <Compile Include="Support\AbstractSyntaxTree\ArrayIndexingExpression.cs" />
@@ -93,7 +95,7 @@
     <Compile Include="FrontEnd\SemanticAnalysis\SymbolTableBuilder.cs" />
     <Compile Include="FrontEnd\SyntaxAnalysis\ParserInputReader.cs" />
     <Compile Include="FrontEnd\LexicalAnalysis\Tokens.cs" />
-    <Compile Include="FrontEnd\SemanticAnalysis\TypeChecker.cs" />
+    <Compile Include="FrontEnd\SemanticAnalysis\SemanticsChecker.cs" />
     <Compile Include="FrontEnd\SemanticAnalysis\TypeSetBuilder.cs" />
   </ItemGroup>
   <ItemGroup>
