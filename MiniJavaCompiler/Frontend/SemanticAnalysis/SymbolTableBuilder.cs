@@ -165,7 +165,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 {
                     ReportError(
                         ErrorTypes.TypeReference,
-                        String.Format("Unknown type '{0}'.", node.InheritedClassName), node);
+                        String.Format("Unknown type {0}.", node.InheritedClassName), node);
                 }
                 else
                 {
@@ -227,7 +227,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 // Note: this error is also reported when a void type is encountered
                 // for something other than a method declaration.
                 ReportError(ErrorTypes.TypeReference,
-                    String.Format("Unknown type '{0}'.", node.TypeName), node);
+                    String.Format("Unknown type {0}.", node.TypeName), node);
                 return ErrorType.GetInstance();
             }
             return BuildType(node, (ScalarType) nodeScalarTypeSymbol.Type);
@@ -268,7 +268,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             var scalarTypeSymbol = _symbolTable.ResolveTypeName(node.CreatedTypeName);
             if (scalarTypeSymbol == null)
             {
-                ReportError(ErrorTypes.TypeReference, String.Format("Unknown type '{0}'.", node.CreatedTypeName), node);
+                ReportError(ErrorTypes.TypeReference, String.Format("Unknown type {0}.", node.CreatedTypeName), node);
             }
             else if (node.IsArrayCreation && _symbolTable.ResolveTypeName(node.CreatedTypeName, node.IsArrayCreation) == null)
             {
@@ -279,7 +279,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
 
         private void ReportSymbolDefinitionError(Declaration node)
         {
-            string errorMessage = String.Format("Symbol '{0}' is already defined.", node.Name);
+            string errorMessage = String.Format("Symbol {0} is already defined.", node.Name);
             ReportError(ErrorTypes.ConflictingDefinitions, errorMessage, node);
         }
 

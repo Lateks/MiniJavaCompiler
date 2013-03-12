@@ -442,7 +442,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(2, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot resolve symbol A"));
-                Assert.That(errors.Errors[1].ToString(), Is.StringContaining("Cannot resolve symbol length")); // method cannot be resolved because type could not either
+                Assert.That(errors.Errors[1].ToString(), Is.StringContaining("Cannot resolve symbol length")); // method cannot be resolved because type could not be either
             }
         }
 

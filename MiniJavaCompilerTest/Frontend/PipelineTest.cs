@@ -188,6 +188,28 @@ namespace MiniJavaCompilerTest.FrontEndTest
         }
 
         [Test]
+        public void OnlyReportsTypeResolvingErrorsOnce()
+        {
+            string program = "class Factorial {\n" +
+                             "\t public static void main () {\n" +
+                             "\t\t System.out.println (new Fac ().ComputeFac (10));\n" +
+                             "} \n\n" +
+                             "} \n";
+            var reader = new StringReader(program);
+            var frontend = new FrontEnd(reader);
+            SymbolTable symbolTable;
+            Program syntaxTree;
+            Assert.False(frontend.TryProgramAnalysis(out syntaxTree, out symbolTable));
+            Assert.NotNull(syntaxTree); // syntax analysis was ok
+            Assert.IsNull(symbolTable);
+            var errors = frontend.GetErrors();
+            Assert.AreEqual(2, errors.Count);
+            Assert.That(errors[0].Content, Is.StringContaining("Unknown type Fac"));
+            Assert.That(errors[1].Content, Is.StringContaining("Cannot resolve symbol ComputeFac"));
+            reader.Close();
+        }
+
+        [Test]
         public void FailsIfThereAreReferenceOrTypeErrors()
         {
             string program = "class Factorial {\n" +

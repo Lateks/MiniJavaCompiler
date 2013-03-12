@@ -73,7 +73,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                              "\t void foo; \n" +
                              "} \n\n";
             Assert.False(BuildSymbolTableFor(program));
-            Assert.That(_errors.Errors.First().Content, Is.StringContaining("Unknown type 'void'"));
+            Assert.That(_errors.Errors.First().Content, Is.StringContaining("Unknown type void"));
         }
 
         [Test]
@@ -157,7 +157,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                  "class Bar extends Baz { } \n\n";
             Assert.False(BuildSymbolTableFor(program));
             Assert.That(_errors.Count, Is.EqualTo(1));
-            Assert.That(_errors.Errors.First().Content, Is.StringContaining("Unknown type 'Baz'"));
+            Assert.That(_errors.Errors.First().Content, Is.StringContaining("Unknown type Baz"));
         }
 
         [Test]
@@ -171,7 +171,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                  "class Bar { Baz foo; } \n\n";
             Assert.False(BuildSymbolTableFor(program));
             Assert.That(_errors.Count, Is.EqualTo(1));
-            Assert.That(_errors.Errors.First().Content, Is.StringContaining("Unknown type 'Baz'"));
+            Assert.That(_errors.Errors.First().Content, Is.StringContaining("Unknown type Baz"));
         }
 
         [Test]
@@ -185,8 +185,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                  "class Bar { public Baz foo(Buzz foo) { } } \n\n";
             Assert.False(BuildSymbolTableFor(program));
             Assert.That(_errors.Count, Is.EqualTo(2));
-            Assert.That(_errors.Errors[0].Content, Is.StringContaining("Unknown type 'Baz'"));
-            Assert.That(_errors.Errors[1].Content, Is.StringContaining("Unknown type 'Buzz'"));
+            Assert.That(_errors.Errors[0].Content, Is.StringContaining("Unknown type Baz"));
+            Assert.That(_errors.Errors[1].Content, Is.StringContaining("Unknown type Buzz"));
         }
 
         [Test]
@@ -207,7 +207,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             Assert.AreEqual(2, _errors.Errors.Count);
             foreach (var error in _errors.Errors)
             {
-                Assert.That(error.Content, Is.StringContaining("Symbol 'foo' is already defined"));
+                Assert.That(error.Content, Is.StringContaining("Symbol foo is already defined"));
             }
         }
 
@@ -230,8 +230,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                              "} \n\n";
             Assert.False(BuildSymbolTableFor(program));
             Assert.AreEqual(5, _errors.Errors.Count);
-            Assert.AreEqual(4, _errors.Errors.Count(err => err.ToString().Contains("Symbol 'foo' is already defined")));
-            Assert.AreEqual(1, _errors.Errors.Count(err => err.ToString().Contains("Symbol 'bar' is already defined")));
+            Assert.AreEqual(4, _errors.Errors.Count(err => err.ToString().Contains("Symbol foo is already defined")));
+            Assert.AreEqual(1, _errors.Errors.Count(err => err.ToString().Contains("Symbol bar is already defined")));
         }
 
         [Test]

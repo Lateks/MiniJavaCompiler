@@ -207,8 +207,15 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 IType createdType;
                 if (createdTypeSymbol == null)
                 {
-                    ReportError(ErrorTypes.TypeReference,
-                        String.Format("Cannot resolve symbol {0}.", node.CreatedTypeName), node);
+                    if (!_parent._errors.HasErrorReportForNode(ErrorTypes.TypeReference, node))
+                    {
+                        ReportError(ErrorTypes.TypeReference,
+                            String.Format("Cannot resolve symbol {0}.", node.CreatedTypeName), node);
+                    }
+                    else
+                    {
+                        _checkOK = false;
+                    }
                     createdType = null;
                 }
                 else
