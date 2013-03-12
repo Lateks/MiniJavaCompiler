@@ -27,19 +27,19 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                                                          * the expressions they return will be stored here and
                                                          * checked when exiting the method declaration.
                                                          */
-            private bool _checkFailed;
+            private bool _checkOK;
 
             public TypeChecker(SemanticsChecker parent)
             {
                 _parent = parent;
                 _returnTypes = new Stack<IType>();
-                _checkFailed = false;
+                _checkOK = true;
             }
 
             public bool RunCheck()
             {
                 _parent._programRoot.Accept(this);
-                return !_checkFailed;
+                return _checkOK;
             }
 
             public void Visit(Program node) { }
@@ -213,7 +213,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 }
                 else if (symbol != null && symbol.Type is ErrorType)
                 {
-                    _checkFailed = true;
+                    _checkOK = false;
                 }
 
                 node.Type = symbol == null ? ErrorType.GetInstance() : symbol.Type;

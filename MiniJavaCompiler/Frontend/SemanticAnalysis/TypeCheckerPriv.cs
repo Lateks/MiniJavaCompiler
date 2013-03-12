@@ -169,7 +169,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
 
                 if (methodOwnerType is ArrayType) return; // no checks done, there can be no call params
 
-                if (method.Type is ErrorType) _checkFailed = true;
+                if (method.Type is ErrorType) _checkOK = false;
 
                 if (method.IsStatic)
                 {
@@ -192,7 +192,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             private void ReportError(string errorMsg, SyntaxElement node)
             {
                 _parent._errors.ReportError(errorMsg, node.Row, node.Col);
-                _checkFailed = true;
+                _checkOK = false;
             }
 
             private void ValidateCallParameterTypes(MethodInvocation node, MethodDeclaration methodDecl)

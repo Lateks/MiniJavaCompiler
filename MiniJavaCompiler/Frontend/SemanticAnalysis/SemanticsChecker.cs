@@ -33,8 +33,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
         // with types or references.
         public void RunCheck()
         {
-            var success = new TypeChecker(this).RunCheck();
-            if (!success)
+            if (!(new TypeChecker(this).RunCheck() && new UninitializedLocalDetector(this).RunCheck()))
             {
                 throw new CompilationError();
             }

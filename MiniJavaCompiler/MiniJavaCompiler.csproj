@@ -51,6 +51,7 @@
     <Compile Include="FrontEnd\FrontEnd.cs" />
     <Compile Include="FrontEnd\SemanticAnalysis\TypeChecker.cs" />
     <Compile Include="FrontEnd\SemanticAnalysis\TypeCheckerPriv.cs" />
+    <Compile Include="FrontEnd\SemanticAnalysis\UninitializedLocalDetector.cs" />
     <Compile Include="Support\AbstractSyntaxTree\IntegerLiteralExpression.cs" />
     <Compile Include="Compiler.cs" />
     <Compile Include="Support\AbstractSyntaxTree\ArrayIndexingExpression.cs" />
