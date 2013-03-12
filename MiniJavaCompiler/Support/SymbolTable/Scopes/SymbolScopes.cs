@@ -6,9 +6,10 @@ using MiniJavaCompiler.Support.SymbolTable.Symbols;
 
 namespace MiniJavaCompiler.Support.SymbolTable.Scopes
 {
-    public class MethodBodyScope : ScopeBase, IVariableScope
+    public class MethodBodyScope : VariableScopeBase, IVariableScope
     {
-        public MethodBodyScope(IMethodScope enclosingScope) : base(enclosingScope) { }
+        public MethodBodyScope(IMethodScope enclosingScope)
+            : base(enclosingScope, true) { }
 
         public new bool Define(VariableSymbol sym)
         {
@@ -16,12 +17,13 @@ namespace MiniJavaCompiler.Support.SymbolTable.Scopes
         }
     }
 
-    public class ClassScope : ScopeBase, IVariableScope, IMethodScope
+    public class ClassScope : VariableScopeBase, IVariableScope, IMethodScope
     {
         public ClassScope SuperClassScope { get; set; }
         public TypeSymbol Symbol { get; set; }
 
-        public ClassScope(ITypeScope enclosingScope) : base(enclosingScope) { }
+        public ClassScope(ITypeScope enclosingScope)
+            : base(enclosingScope) { }
 
         public new bool Define(VariableSymbol sym)
         {

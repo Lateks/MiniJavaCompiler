@@ -212,6 +212,52 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
         }
 
         [Test]
+        public void NameCanBeRedefinedAfterScopeEnds()
+        {
+            string program = "class Factorial {\n" +
+                             "\t public static void main () {\n" +
+                             "\t\t while (true) {\n" +
+                             "\t\t\t int foo;\n" +
+                             "\t\t\t foo = 0;\n" +
+                             "\t\t }\n" + // scope for foo ends
+                             "\t\t int foo;\n" +
+                             "\t} \n" +
+                             "} \n\n";
+            Assert.True(BuildSymbolTableFor(program));
+        }
+
+        [Test]
+        public void CannotRedefineLocalNamesInsideTheSameScopeEvenInsideBlocks()
+        {
+            string program = "class Factorial {\n" +
+                             "\t public static void main () {\n" +
+                             "\t\t int foo;\n" +
+                             "\t\t while (true) {\n" +
+                             "\t\t\t int foo;\n" + // the original foo is still in scope
+                             "\t\t }\n" +
+                             "\t} \n" +
+                             "} \n\n";
+            Assert.False(BuildSymbolTableFor(program));
+            Assert.AreEqual(1, _errors.Errors.Count);
+            Assert.That(_errors.Errors[0].Content, Is.StringContaining("Symbol foo is already defined"));
+        }
+
+        [Test]
+        public void CanRedefineFieldsInLocalScope()
+        {
+            string program = "class Factorial {\n" +
+                             "  public static void main () { } \n" +
+                             "} \n" +
+                             "class Foo {" +
+                             "  int foo;" +
+                             "  public int bar() {" +
+                             "    int foo;" +
+                             "  }" +
+                             "}";
+            Assert.True(BuildSymbolTableFor(program));
+        }
+
+        [Test]
         public void RecoversFromMethodAndVariableDefinitionFailure()
         {
             string program = "class Factorial {\n" +

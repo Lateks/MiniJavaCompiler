@@ -228,14 +228,13 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             private bool VariableDeclaredBeforeReference(VariableSymbol varSymbol,
                 VariableReferenceExpression reference)
             {
-                if (varSymbol.Scope is TypeSymbol)
-                {   // Variables defined on the class level are visible
-                    // in all scopes internal to the class.
-                    return true;
-                }
                 var declaration = (VariableDeclaration)_parent._symbolTable.Declarations[varSymbol];
-                return declaration.Row < reference.Row ||
-                    (declaration.Row == reference.Row && declaration.Col < reference.Col);
+                if (declaration.VariableKind == VariableDeclaration.Kind.Local)
+                {
+                    return declaration.Row < reference.Row ||
+                        (declaration.Row == reference.Row && declaration.Col < reference.Col);
+                }
+                return true;
             }
         }
     }

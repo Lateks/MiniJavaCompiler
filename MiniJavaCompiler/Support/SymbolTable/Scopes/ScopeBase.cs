@@ -28,17 +28,17 @@ namespace MiniJavaCompiler.Support.SymbolTable.Scopes
             EnclosingScope = enclosingScope;
         }
 
-        protected bool Define(VariableSymbol sym)
+        protected virtual bool Define(VariableSymbol sym)
         {
             return DefineSymbolIn<VariableSymbol>(sym, _variableTable);
         }
 
-        protected bool Define(MethodSymbol sym)
+        protected virtual bool Define(MethodSymbol sym)
         {
             return DefineSymbolIn<MethodSymbol>(sym, _methodTable);
         }
 
-        protected bool Define(TypeSymbol sym)
+        protected virtual bool Define(TypeSymbol sym)
         {
             return DefineSymbolIn<TypeSymbol>(sym, _typeTable);
         }

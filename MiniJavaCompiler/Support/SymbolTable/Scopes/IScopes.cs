@@ -21,6 +21,8 @@ namespace MiniJavaCompiler.Support.SymbolTable.Scopes
     public interface IVariableScope : IScope
     {
         bool Define(VariableSymbol sym);
+        VariableSymbol ResolveLocalVariable(string name);
+        bool IsLocalScope { get; }
     }
 
     public interface IMethodScope : IScope

@@ -15,20 +15,25 @@ namespace MiniJavaCompiler.Support.SymbolTable.Scopes
     }
 
     // Used for block scopes.
-    public class LocalScope : ScopeBase, IVariableScope
+    public class LocalScope : VariableScopeBase, IVariableScope
     {
         // Note: A local scope can only be defined inside a variable scope
         // (another block or a method body).
-        public LocalScope(IVariableScope enclosingScope) : base(enclosingScope) { }
+        public LocalScope(IVariableScope enclosingScope)
+            : base(enclosingScope, true) { }
 
         public new bool Define(VariableSymbol sym)
         {
+            if (ResolveLocalVariable(sym.Name) != null)
+            {
+                return false;
+            }
             return base.Define(sym);
         }
     }
 
     // Used for error recovery when the correct type of scope cannot be constructed.
-    public class ErrorScope : ScopeBase, IVariableScope
+    public class ErrorScope : VariableScopeBase, IVariableScope
     {
         public ErrorScope(IScope enclosingScope) : base(enclosingScope) { }
 

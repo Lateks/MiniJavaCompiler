@@ -82,6 +82,7 @@
     <Compile Include="Support\SymbolTable\Scopes\IScopes.cs" />
     <Compile Include="Support\SymbolTable\Scopes\ScopeBase.cs" />
     <Compile Include="Support\SymbolTable\Scopes\SymbolScopes.cs" />
+    <Compile Include="Support\SymbolTable\Scopes\VariableScopeBase.cs" />
     <Compile Include="Support\SymbolTable\Symbols\SimpleSymbols.cs" />
     <Compile Include="Support\SymbolTable\Symbols\Symbol.cs" />
     <Compile Include="Support\SymbolTable\Symbols\TypeSymbol.cs" />
