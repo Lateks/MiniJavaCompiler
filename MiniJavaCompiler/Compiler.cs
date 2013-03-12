@@ -77,14 +77,47 @@ namespace MiniJavaCompiler
                     if (error.Row > 0 && error.Row <= sourceLines)
                     {
                         var sourceLine = sourceCode[error.Row - 1];
-                        var trimmedCode = sourceLine.TrimStart().Replace('\t', ' ');
-                        var whitespace = sourceLine.Length - trimmedCode.Length;
-                        Console.WriteLine(errorCodeDecl + trimmedCode);
-                        Console.WriteLine(new String(' ', errorCodeDecl.Length + error.Col - whitespace - 1) + '^');
+                        PrintError(errorCodeDecl, sourceLine, error.Col);
                     }
                 }
                 return false;
             }
+        }
+
+        private static void PrintError(string errorCodeDecl, string sourceLine, int errorCol)
+        {
+            var splitCodeLines = sourceLine.Split(';');
+            string errorLine;
+            if (splitCodeLines.Length > 0)
+            {
+                int index = GetIndex(splitCodeLines, errorCol);
+                errorLine = splitCodeLines[index];
+                if (index != splitCodeLines.Length - 1)
+                {
+                    errorLine += ";"; // restore the semicolon for printing
+                }
+                errorCol -= splitCodeLines.Take(index).Select<string, int>((s) => s.Length + 1).Sum(); // + 1 for removed semicolons
+            }
+            else
+            {
+                errorLine = sourceLine;
+            }
+            var trimmedLine = errorLine.TrimStart().Replace('\t', ' ').Replace('\v', ' ');
+            errorCol -= errorLine.Length - trimmedLine.Length;
+            Console.WriteLine(errorCodeDecl + trimmedLine);
+            Console.WriteLine(new String(' ', errorCodeDecl.Length + errorCol - 1) + '^');
+        }
+
+        private static int GetIndex(string[] splitCodeLines, int col)
+        {
+            int lengthSoFar = 0;
+            int index = -1;
+            while (lengthSoFar < col && index < splitCodeLines.Length)
+            {
+                index++;
+                lengthSoFar += splitCodeLines[index].Length + 1; // + 1 for removed semicolons
+            }
+            return index;
         }
 
         private static void RunBackEnd(SymbolTable symbolTable, Program abstractSyntaxTree)
