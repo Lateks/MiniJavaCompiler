@@ -122,6 +122,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
         private bool CheckForCyclicInheritance()
         {
             bool cyclicInheritanceFound = false;
+            var dependentClasses = new List<string>();
             foreach (var typeName in _symbolTable.ScalarTypeNames) {
                 var typeSymbol = _symbolTable.ResolveTypeName(typeName);
                 if (classDependsOnSelf((ScalarType)typeSymbol.Type))
@@ -129,7 +130,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                     var node = (SyntaxElement) _symbolTable.Definitions[typeSymbol];
                     ReportError(
                         ErrorTypes.CyclicInheritance,
-                        String.Format("Class {0} depends on itself.",
+                        String.Format("cyclic inheritance involving {0}",
                         typeSymbol.Type.Name), node);
                     cyclicInheritanceFound = true;
                 }
@@ -137,6 +138,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             return cyclicInheritanceFound;
         }
 
+        // Check implemented according to description in:
         // http://docs.oracle.com/javase/specs/jls/se7/html/jls-8.html#jls-8.1.4
         private bool classDependsOnSelf(ScalarType classSymbol)
         {
@@ -145,7 +147,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             {
                 currentClass = currentClass.SuperType;
             }
-            return currentClass.SuperType != null;
+            return currentClass.SuperType == classSymbol;
         }
 
         public void Visit(Program node)

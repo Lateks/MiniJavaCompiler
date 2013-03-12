@@ -183,7 +183,7 @@ namespace MiniJavaCompilerTest.FrontEndTest
             Assert.NotNull(syntaxTree); // syntax analysis was ok
             Assert.IsNull(symbolTable);
             Assert.That(frontend.GetErrors(), Is.Not.Empty);
-            Assert.That(frontend.GetErrors().Last().ToString(), Is.StringContaining("Class B depends on itself"));
+            Assert.That(frontend.GetErrors().Last().ToString(), Is.StringContaining("cyclic inheritance involving B"));
             reader.Close();
         }
 
