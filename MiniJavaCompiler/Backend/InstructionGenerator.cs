@@ -19,20 +19,25 @@ namespace MiniJavaCompiler.BackEnd
             private CodeGenerator _parent;
             private TypeBuilder _currentType;
             private MethodBuilder _currentMethod;
-
-            private static Dictionary<MiniJavaInfo.Operator, OpCode> operators =
-                new Dictionary<MiniJavaInfo.Operator, OpCode>()
+            private ILGenerator IL
             {
-                { MiniJavaInfo.Operator.Add, OpCodes.Add },
-                { MiniJavaInfo.Operator.Sub, OpCodes.Sub },
-                { MiniJavaInfo.Operator.Div, OpCodes.Div },
-                { MiniJavaInfo.Operator.Mul, OpCodes.Mul },
-                { MiniJavaInfo.Operator.Lt, OpCodes.Clt },
-                { MiniJavaInfo.Operator.Gt, OpCodes.Cgt },
-                { MiniJavaInfo.Operator.And, OpCodes.And },
-                { MiniJavaInfo.Operator.Or, OpCodes.Or },
-                { MiniJavaInfo.Operator.Eq, OpCodes.Ceq },
-                { MiniJavaInfo.Operator.Mod, OpCodes.Rem }
+                get { return _currentMethod.GetILGenerator(); }
+            }
+
+            private static Dictionary<MiniJavaInfo.Operator, OpCode[]> operatorOpCodes =
+                new Dictionary<MiniJavaInfo.Operator, OpCode[]>()
+            {
+                { MiniJavaInfo.Operator.Add, new OpCode[] { OpCodes.Add } },
+                { MiniJavaInfo.Operator.Sub, new OpCode[] { OpCodes.Sub } },
+                { MiniJavaInfo.Operator.Div, new OpCode[] { OpCodes.Div } },
+                { MiniJavaInfo.Operator.Mul, new OpCode[] { OpCodes.Mul } },
+                { MiniJavaInfo.Operator.Lt,  new OpCode[] { OpCodes.Clt } },
+                { MiniJavaInfo.Operator.Gt,  new OpCode[] { OpCodes.Cgt } },
+                { MiniJavaInfo.Operator.And, new OpCode[] { OpCodes.And } },
+                { MiniJavaInfo.Operator.Or,  new OpCode[] { OpCodes.Or  } },
+                { MiniJavaInfo.Operator.Eq,  new OpCode[] { OpCodes.Ceq } },
+                { MiniJavaInfo.Operator.Mod, new OpCode[] { OpCodes.Rem } },
+                { MiniJavaInfo.Operator.Not, new OpCode[] { OpCodes.Ldc_I4_0, OpCodes.Ceq } }
             };
 
             public InstructionGenerator(CodeGenerator parent)
@@ -63,36 +68,48 @@ namespace MiniJavaCompiler.BackEnd
 
             public void Visit(PrintStatement node)
             {
-                MethodInfo printMethod = typeof(System.Console).GetMethod(
-                    "WriteLine", new Type[] { typeof(Int32) });
-                _currentMethod.GetILGenerator().Emit(OpCodes.Call, printMethod);
+                IL.Emit(OpCodes.Call, GetPrintMethod<Int32>());
+            }
+
+            private static MethodInfo GetPrintMethod<T>()
+            {
+                return typeof(System.Console).GetMethod("WriteLine", new Type[] { typeof(T) });
             }
 
             public void Visit(ReturnStatement node)
             {
-                _currentMethod.GetILGenerator().Emit(OpCodes.Ret);
+                IL.Emit(OpCodes.Ret);
             }
 
             public void Visit(BlockStatement node)
             {
-                var il = _currentMethod.GetILGenerator();
                 if (node.Label.HasValue)
                 {
-                    il.MarkLabel(node.Label.Value);
+                    IL.MarkLabel(node.Label.Value);
                 }
             }
 
             public void Visit(AssertStatement node)
-            {   // TODO: test assertions
-                MethodInfo assertMethod = typeof(System.Diagnostics.Debug).GetMethod(
-                    "Assert", new Type[] { typeof(bool) });
-                _currentMethod.GetILGenerator().Emit(OpCodes.Call, assertMethod);
+            {
+                var jumpLabel = IL.DefineLabel();
+                IL.Emit(OpCodes.Brtrue, jumpLabel); // assertion ok
+
+
+                IL.Emit(OpCodes.Ldstr, String.Format("Exception occurred: AssertionError at {0}.{1}({2},{3})",
+                    _currentMethod.DeclaringType.Name, _currentMethod.Name, node.Row, node.Col));
+                IL.Emit(OpCodes.Call, GetPrintMethod<String>());
+
+                MethodInfo exitMethod = typeof(System.Environment).GetMethod(
+                    "Exit", new Type[] { typeof(Int32) });
+                IL.Emit(OpCodes.Ldc_I4_1); // failure status
+                IL.Emit(OpCodes.Call, exitMethod);
+
+                IL.MarkLabel(jumpLabel);
             }
 
             public void Visit(AssignmentStatement node)
             {   // The left hand side of an assignment must be either
                 // a variable reference or an array indexing expression.
-                var il = _currentMethod.GetILGenerator();
                 if (node.LeftHandSide is VariableReferenceExpression)
                 {
                     var reference = (VariableReferenceExpression)node.LeftHandSide;
@@ -101,13 +118,13 @@ namespace MiniJavaCompiler.BackEnd
                     switch (decl.VariableKind)
                     {
                         case VariableDeclaration.Kind.Class:
-                            il.Emit(OpCodes.Stfld, _parent._fields[variable]);
+                            IL.Emit(OpCodes.Stfld, _parent._fields[variable]);
                             break;
                         case VariableDeclaration.Kind.Local:
-                            il.Emit(OpCodes.Stloc, decl.LocalIndex);
+                            IL.Emit(OpCodes.Stloc, decl.LocalIndex);
                             break;
                         case VariableDeclaration.Kind.Formal:
-                            il.Emit(OpCodes.Starg, GetParameterIndex(decl, _currentMethod));
+                            IL.Emit(OpCodes.Starg, GetParameterIndex(decl, _currentMethod));
                             break;
                     }
                 }
@@ -117,64 +134,62 @@ namespace MiniJavaCompiler.BackEnd
                     var rhsType = node.RightHandSide.Type;
                     if (MiniJavaInfo.IsBuiltInType(rhsType.Name))
                     {
-                        il.Emit(OpCodes.Stelem_I4);
+                        IL.Emit(OpCodes.Stelem_I4);
                     }
                     else
                     {
-                        il.Emit(OpCodes.Stelem_Ref);
+                        IL.Emit(OpCodes.Stelem_Ref);
                     }
                 }
             }
 
             public void VisitAfterCondition(IfStatement node)
             {
-                var il = _currentMethod.GetILGenerator();
-                node.ExitLabel = il.DefineLabel();
+                node.ExitLabel = IL.DefineLabel();
                 if (node.ElseBranch != null)
                 {
-                    node.ElseBranch.Label = il.DefineLabel();
-                    il.Emit(OpCodes.Brfalse, node.ElseBranch.Label.Value);
+                    node.ElseBranch.Label = IL.DefineLabel();
+                    IL.Emit(OpCodes.Brfalse, node.ElseBranch.Label.Value);
                 }
                 else
                 {
-                    il.Emit(OpCodes.Brfalse, node.ExitLabel);
+                    IL.Emit(OpCodes.Brfalse, node.ExitLabel);
                 }
             }
 
             public void VisitAfterThenBranch(IfStatement node)
             {
-                _currentMethod.GetILGenerator().Emit(OpCodes.Br, node.ExitLabel);
+                IL.Emit(OpCodes.Br, node.ExitLabel);
             }
 
             public void Exit(IfStatement node)
             {
-                _currentMethod.GetILGenerator().MarkLabel(node.ExitLabel);
+                IL.MarkLabel(node.ExitLabel);
             }
 
             public void Visit(WhileStatement node)
             {
-                var il = _currentMethod.GetILGenerator();
-                Label test = il.DefineLabel();
+                Label test = IL.DefineLabel();
                 node.ConditionLabel = test;
-                node.LoopBody.Label = il.DefineLabel();
-                il.Emit(OpCodes.Br, test); // unconditional branch to loop test
+                node.LoopBody.Label = IL.DefineLabel();
+                IL.Emit(OpCodes.Br, test); // unconditional branch to loop test
             }
 
             public void VisitAfterBody(WhileStatement node)
             {
-                _currentMethod.GetILGenerator().MarkLabel(node.ConditionLabel);
+                IL.MarkLabel(node.ConditionLabel);
             }
 
             public void Exit(WhileStatement node)
             {
-                _currentMethod.GetILGenerator().Emit(OpCodes.Brtrue, node.LoopBody.Label.Value);
+                IL.Emit(OpCodes.Brtrue, node.LoopBody.Label.Value);
             }
 
             public void Visit(MethodInvocation node)
             {
                 if (node.MethodOwner.Type is ArrayType)
                 {
-                    _currentMethod.GetILGenerator().Emit(OpCodes.Ldlen);
+                    IL.Emit(OpCodes.Ldlen);
                 }
                 else
                 {   // TODO: check call parameters
@@ -187,56 +202,60 @@ namespace MiniJavaCompiler.BackEnd
             public void Visit(InstanceCreationExpression node)
             {
                 Type type = _parent.BuildType(node.CreatedTypeName, false);
-                var il = _currentMethod.GetILGenerator();
                 if (node.IsArrayCreation)
                 {   // arraysize is on top of the stack
-                    il.Emit(OpCodes.Newarr, type);
+                    IL.Emit(OpCodes.Newarr, type);
                 }
                 else
                 {
-                    il.Emit(OpCodes.Newobj, _parent._constructors[type]);
+                    IL.Emit(OpCodes.Newobj, _parent._constructors[type]);
                 }
             }
 
             public void Visit(UnaryOperatorExpression node)
             {
-                _currentMethod.GetILGenerator().Emit(OpCodes.Ldc_I4_0);
-                _currentMethod.GetILGenerator().Emit(OpCodes.Ceq);
+                EmitOperator(node.Operator);
             }
 
             public void Visit(BinaryOperatorExpression node)
             {
-                _currentMethod.GetILGenerator().Emit(operators[node.Operator]);
+                EmitOperator(node.Operator);
+            }
+
+            private void EmitOperator(MiniJavaInfo.Operator op)
+            {
+                foreach (var opcode in operatorOpCodes[op])
+                {
+                    IL.Emit(opcode);
+                }
             }
 
             public void Visit(BooleanLiteralExpression node)
             {
-                _currentMethod.GetILGenerator().Emit(OpCodes.Ldc_I4, node.Value ? 1 : 0);
+                IL.Emit(OpCodes.Ldc_I4, node.Value ? 1 : 0);
             }
 
             public void Visit(ThisExpression node)
             {
-                _currentMethod.GetILGenerator().Emit(OpCodes.Ldarg_0);
+                IL.Emit(OpCodes.Ldarg_0);
             }
 
             public void Visit(ArrayIndexingExpression node)
             {
                 if (node.UsedAsAddress) return; // no need to load anything, index is already on the stack?
-                var il = _currentMethod.GetILGenerator();
                 if (MiniJavaInfo.IsBuiltInType(node.Type.Name))
                 {
-                    il.Emit(OpCodes.Ldelem_I4);
+                    IL.Emit(OpCodes.Ldelem_I4);
                 }
                 else
                 {
-                    il.Emit(OpCodes.Ldelem_Ref);
+                    IL.Emit(OpCodes.Ldelem_Ref);
                 }
             }
 
 
             public void Visit(VariableReferenceExpression node)
             {
-                var il = _currentMethod.GetILGenerator();
                 var variable = _parent._symbolTable.Scopes[node].ResolveVariable(node.Name);
                 var definition = (VariableDeclaration)_parent._symbolTable.Declarations[variable];
 
@@ -244,7 +263,7 @@ namespace MiniJavaCompiler.BackEnd
                 {
                     if (definition.VariableKind == VariableDeclaration.Kind.Class)
                     {   // Load a "this" reference.
-                        il.Emit(OpCodes.Ldarg_0);
+                        IL.Emit(OpCodes.Ldarg_0);
                     }
                     return;
                 }
@@ -252,21 +271,21 @@ namespace MiniJavaCompiler.BackEnd
                 switch (definition.VariableKind)
                 {
                     case VariableDeclaration.Kind.Class:
-                        il.Emit(OpCodes.Ldarg_0);
-                        il.Emit(OpCodes.Ldfld, _parent._fields[variable]);
+                        IL.Emit(OpCodes.Ldarg_0);
+                        IL.Emit(OpCodes.Ldfld, _parent._fields[variable]);
                         break;
                     case VariableDeclaration.Kind.Formal:
-                        il.Emit(OpCodes.Ldarg, GetParameterIndex(definition, _currentMethod));
+                        IL.Emit(OpCodes.Ldarg, GetParameterIndex(definition, _currentMethod));
                         break;
                     case VariableDeclaration.Kind.Local:
-                        il.Emit(OpCodes.Ldloc, definition.LocalIndex);
+                        IL.Emit(OpCodes.Ldloc, definition.LocalIndex);
                         break;
                 }
             }
 
             public void Visit(IntegerLiteralExpression node)
             {
-                _currentMethod.GetILGenerator().Emit(OpCodes.Ldc_I4, node.IntValue);
+                IL.Emit(OpCodes.Ldc_I4, node.IntValue);
             }
 
             public void Exit(ClassDeclaration node)
@@ -279,7 +298,7 @@ namespace MiniJavaCompiler.BackEnd
                 // Emit the return statement for a void method.
                 if (!(node.MethodBody.Last() is ReturnStatement))
                 {
-                    _currentMethod.GetILGenerator().Emit(OpCodes.Ret);
+                    IL.Emit(OpCodes.Ret);
                 }
                 _currentMethod = null;
             }
