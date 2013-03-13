@@ -29,7 +29,7 @@ namespace MiniJavaCompiler.Support.SymbolTable.Scopes
             return ((IVariableScope)EnclosingScope).ResolveLocalVariable(name);
         }
 
-        public new bool Define(VariableSymbol sym)
+        public new virtual bool Define(VariableSymbol sym)
         {
             return base.Define(sym);
         }

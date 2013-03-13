@@ -6,29 +6,19 @@ using MiniJavaCompiler.Support.SymbolTable.Symbols;
 
 namespace MiniJavaCompiler.Support.SymbolTable.Scopes
 {
-    public class MethodBodyScope : VariableScopeBase, IVariableScope
+    public class MethodBodyScope : VariableScopeBase
     {
         public MethodBodyScope(IMethodScope enclosingScope)
             : base(enclosingScope, true) { }
-
-        public new bool Define(VariableSymbol sym)
-        {
-            return base.Define(sym);
-        }
     }
 
-    public class ClassScope : VariableScopeBase, IVariableScope, IMethodScope
+    public class ClassScope : VariableScopeBase, IMethodScope
     {
         public ClassScope SuperClassScope { get; set; }
         public TypeSymbol Symbol { get; set; }
 
         public ClassScope(ITypeScope enclosingScope)
             : base(enclosingScope) { }
-
-        public new bool Define(VariableSymbol sym)
-        {
-            return base.Define(sym);
-        }
 
         public new bool Define(MethodSymbol sym)
         {
