@@ -13,7 +13,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
     public partial class SemanticsChecker
     {
         // These are the private helper methods used by TypeChecker.
-        private partial class TypeChecker : INodeVisitor
+        private partial class TypeChecker : NodeVisitorBase
         {
             private void CheckForOverloading(MethodDeclaration node, TypeSymbol classSymbol, MethodSymbol superClassMethod)
             {

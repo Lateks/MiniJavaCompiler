@@ -36,4 +36,38 @@
         void Exit(WhileStatement node);
         void Exit(IfStatement node);
     }
+
+    public abstract class NodeVisitorBase : INodeVisitor
+    {
+        public virtual void Visit(Program node) { }
+        public virtual void Visit(VariableDeclaration node) { }
+        public virtual void Visit(PrintStatement node) { }
+        public virtual void Visit(ReturnStatement node) { }
+        public virtual void Visit(AssertStatement node) { }
+        public virtual void Visit(AssignmentStatement node) { }
+        public virtual void Visit(MethodInvocation node) { }
+        public virtual void Visit(InstanceCreationExpression node) { }
+        public virtual void Visit(UnaryOperatorExpression node) { }
+        public virtual void Visit(BinaryOperatorExpression node) { }
+        public virtual void Visit(BooleanLiteralExpression node) { }
+        public virtual void Visit(ThisExpression node) { }
+        public virtual void Visit(ArrayIndexingExpression node) { }
+        public virtual void Visit(VariableReferenceExpression node) { }
+        public virtual void Visit(IntegerLiteralExpression node) { }
+
+        public virtual void Visit(ClassDeclaration node) { }
+        public virtual void Visit(MethodDeclaration node) { }
+        public virtual void Visit(BlockStatement node) { }
+        public virtual void Visit(WhileStatement node) { }
+
+        public virtual void VisitAfterBody(WhileStatement node) { }
+        public virtual void VisitAfterCondition(IfStatement node) { }
+        public virtual void VisitAfterThenBranch(IfStatement node) { }
+
+        public virtual void Exit(ClassDeclaration node) { }
+        public virtual void Exit(MethodDeclaration node) { }
+        public virtual void Exit(BlockStatement node) { }
+        public virtual void Exit(WhileStatement node) { }
+        public virtual void Exit(IfStatement node) { }
+    }
 }

@@ -12,7 +12,7 @@ namespace MiniJavaCompiler.BackEnd
 {
     public partial class CodeGenerator
     {
-        private class AssemblyCreator : INodeVisitor
+        private class AssemblyCreator : NodeVisitorBase
         {
             private CodeGenerator _parent;
             private TypeBuilder _currentType;
@@ -47,9 +47,7 @@ namespace MiniJavaCompiler.BackEnd
                 }
             }
 
-            public void Visit(Program node) { }
-
-            public void Visit(ClassDeclaration node)
+            public override void Visit(ClassDeclaration node)
             {
                 TypeBuilder thisType = _parent._types[node.Name];
                 if (node.InheritedClassName != null)
@@ -60,12 +58,12 @@ namespace MiniJavaCompiler.BackEnd
                 _currentType = thisType;
             }
 
-            public void Exit(ClassDeclaration node)
+            public override void Exit(ClassDeclaration node)
             {
                 _currentType = null;
             }
 
-            public void Visit(VariableDeclaration node)
+            public override void Visit(VariableDeclaration node)
             {
                 switch (node.VariableKind)
                 {   // Local and formal variables can be referred to by their index.
@@ -87,7 +85,7 @@ namespace MiniJavaCompiler.BackEnd
                 }
             }
 
-            public void Visit(MethodDeclaration node)
+            public override void Visit(MethodDeclaration node)
             {
                 MethodBuilder methodBuilder = _currentType.DefineMethod(node.Name, GetMethodAttributes(node));
                 if (node.Name == MiniJavaInfo.MainMethodIdent)
@@ -104,7 +102,7 @@ namespace MiniJavaCompiler.BackEnd
                 _currentMethod = methodBuilder;
             }
 
-            public void Exit(MethodDeclaration node)
+            public override void Exit(MethodDeclaration node)
             {
                 _currentMethod = null;
             }
@@ -135,48 +133,6 @@ namespace MiniJavaCompiler.BackEnd
                 }
                 return attrs;
             }
-
-            public void Visit(PrintStatement node) { }
-
-            public void Visit(ReturnStatement node) { }
-
-            public void Visit(BlockStatement node) { }
-
-            public void Visit(AssertStatement node) { }
-
-            public void Visit(AssignmentStatement node) { }
-
-            public void VisitAfterCondition(IfStatement node) { }
-
-            public void VisitAfterThenBranch(IfStatement node) { }
-
-            public void Exit(IfStatement node) { }
-
-            public void Visit(WhileStatement node) { }
-
-            public void VisitAfterBody(WhileStatement node) { }
-
-            public void Exit(WhileStatement node) { }
-
-            public void Visit(MethodInvocation node) { }
-
-            public void Visit(InstanceCreationExpression node) { }
-
-            public void Visit(UnaryOperatorExpression node) { }
-
-            public void Visit(BinaryOperatorExpression node) { }
-
-            public void Visit(BooleanLiteralExpression node) { }
-
-            public void Visit(ThisExpression node) { }
-
-            public void Visit(ArrayIndexingExpression node) { }
-
-            public void Visit(VariableReferenceExpression node) { }
-
-            public void Visit(IntegerLiteralExpression node) { }
-
-            public void Exit(BlockStatement node) { }
         }
     }
 }

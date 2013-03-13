@@ -15,7 +15,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
         // The public methods of TypeChecker are defined in this file.
         // This class checks that operand and argument types are ok and
         // that local variables have been initialized before reference.
-        private partial class TypeChecker : INodeVisitor
+        private partial class TypeChecker : NodeVisitorBase
         {
             private SemanticsChecker _parent;
             private readonly Stack<IType> _returnTypes; /* When return statements are encountered, the types of
@@ -37,13 +37,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 return _checkOK;
             }
 
-            public void Visit(Program node) { }
-
-            public void Visit(ClassDeclaration node) { }
-
-            public void Visit(VariableDeclaration node) { }
-
-            public void Visit(MethodDeclaration node)
+            public override void Visit(MethodDeclaration node)
             {   // Check that the method does not overload a method in a superclass.
                 // Only overriding is allowed.
                 var classSymbol = _parent._symbolTable.ResolveClass(node);
@@ -57,7 +51,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 CheckForOverloading(node, classSymbol, superClassMethod);
             }
 
-            public void Visit(PrintStatement node)
+            public override void Visit(PrintStatement node)
             {   // Argument must be an integer.
                 var type = node.Argument.Type;
                 if (type is ErrorType) return; // Type errors are never checked in recovery.
@@ -69,19 +63,17 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 }
             }
 
-            public void Visit(ReturnStatement node)
+            public override void Visit(ReturnStatement node)
             {
                 _returnTypes.Push(node.ReturnValue.Type);
             }
 
-            public void Visit(BlockStatement node) { }
-
-            public void Visit(AssertStatement node)
+            public override void Visit(AssertStatement node)
             {
                 ArgumentShouldBeBoolean(node, node.Condition);
             }
 
-            public void Visit(AssignmentStatement node)
+            public override void Visit(AssignmentStatement node)
             {   // The type of right hand side must match the left hand side
                 // and left hand side needs to be an lvalue.
                 var lhsType = node.LeftHandSide.Type;
@@ -107,30 +99,22 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 }
             }
 
-            public void VisitAfterCondition(IfStatement node) { }
-
-            public void VisitAfterThenBranch(IfStatement node) { }
-
-            public void Exit(IfStatement node)
+            public override void Exit(IfStatement node)
             {
                 ArgumentShouldBeBoolean(node, node.Condition);
             }
 
-            public void Visit(WhileStatement node) { }
-
-            public void VisitAfterBody(WhileStatement node) { }
-
-            public void Exit(WhileStatement node)
+            public override void Exit(WhileStatement node)
             {
                 ArgumentShouldBeBoolean(node, node.LoopCondition);
             }
 
-            public void Visit(MethodInvocation node)
+            public override void Visit(MethodInvocation node)
             {
                 ValidateMethodCall(node);
             }
 
-            public void Visit(InstanceCreationExpression node)
+            public override void Visit(InstanceCreationExpression node)
             {
                 if (node.IsArrayCreation)
                 {
@@ -138,7 +122,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 }
             }
 
-            public void Visit(UnaryOperatorExpression node)
+            public override void Visit(UnaryOperatorExpression node)
             {
                 var op = MiniJavaInfo.GetOperator(node.Operator);
                 var expectedOperandType = _parent._symbolTable.ResolveTypeName(op.OperandType).Type;
@@ -152,7 +136,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 }
             }
 
-            public void Visit(BinaryOperatorExpression node)
+            public override void Visit(BinaryOperatorExpression node)
             {
                 var op = MiniJavaInfo.GetOperator(node.Operator);
                 if (op.OperandType == MiniJavaInfo.AnyType)
@@ -165,11 +149,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 }
             }
 
-            public void Visit(BooleanLiteralExpression node) { }
-
-            public void Visit(ThisExpression node) { }
-
-            public void Visit(ArrayIndexingExpression node)
+            public override void Visit(ArrayIndexingExpression node)
             {
                 var arrayType = node.ArrayExpr.Type;
                 if (!(arrayType is ErrorType) && !(arrayType is ArrayType))
@@ -185,7 +165,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 }
             }
 
-            public void Visit(VariableReferenceExpression node)
+            public override void Visit(VariableReferenceExpression node)
             {
                 var scope = _parent._symbolTable.Scopes[node];
                 var variableSymbol = scope.ResolveVariable(node.Name);
@@ -214,7 +194,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                     _parent._errors.HasErrorReportForNode(ErrorTypes.LvalueReference, reference);
             }
 
-            public void Visit(IntegerLiteralExpression node)
+            public override void Visit(IntegerLiteralExpression node)
             {
                 int value;
                 if (!Int32.TryParse(node.Value, out value))
@@ -227,9 +207,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 node.IntValue = value;
             }
 
-            public void Exit(ClassDeclaration node) { }
-
-            public void Exit(MethodDeclaration node)
+            public override void Exit(MethodDeclaration node)
             {
                 var method = _parent._symbolTable.Scopes[node].ResolveMethod(node.Name);
                 int numReturnStatements = _returnTypes.Count;
@@ -266,8 +244,6 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                     CheckReturnTypes(node, method);
                 }
             }
-
-            public void Exit(BlockStatement node) { }
         }
     }
 }

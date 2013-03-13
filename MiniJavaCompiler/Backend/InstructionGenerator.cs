@@ -14,7 +14,7 @@ namespace MiniJavaCompiler.BackEnd
 {
     public partial class CodeGenerator
     {
-        private class InstructionGenerator : INodeVisitor
+        private class InstructionGenerator : NodeVisitorBase
         {
             private CodeGenerator _parent;
             private TypeBuilder _currentType;
@@ -50,23 +50,19 @@ namespace MiniJavaCompiler.BackEnd
                 _parent._astRoot.Accept(this);
             }
 
-            public void Visit(Program node) { }
-
-            public void Visit(ClassDeclaration node)
+            public override void Visit(ClassDeclaration node)
             {
                 TypeBuilder thisType = _parent._types[node.Name];
                 _currentType = thisType;
             }
 
-            public void Visit(VariableDeclaration node) { }
-
-            public void Visit(MethodDeclaration node)
+            public override void Visit(MethodDeclaration node)
             {
                 var sym = _parent._symbolTable.Scopes[node].ResolveMethod(node.Name);
                 _currentMethod = _parent._methods[sym];
             }
 
-            public void Visit(PrintStatement node)
+            public override void Visit(PrintStatement node)
             {
                 IL.Emit(OpCodes.Call, GetPrintMethod<Int32>());
             }
@@ -76,12 +72,12 @@ namespace MiniJavaCompiler.BackEnd
                 return typeof(System.Console).GetMethod("WriteLine", new Type[] { typeof(T) });
             }
 
-            public void Visit(ReturnStatement node)
+            public override void Visit(ReturnStatement node)
             {
                 IL.Emit(OpCodes.Ret);
             }
 
-            public void Visit(BlockStatement node)
+            public override void Visit(BlockStatement node)
             {
                 if (node.Label.HasValue)
                 {
@@ -89,7 +85,7 @@ namespace MiniJavaCompiler.BackEnd
                 }
             }
 
-            public void Visit(AssertStatement node)
+            public override void Visit(AssertStatement node)
             {
                 var jumpLabel = IL.DefineLabel();
                 IL.Emit(OpCodes.Brtrue, jumpLabel); // assertion ok
@@ -107,7 +103,7 @@ namespace MiniJavaCompiler.BackEnd
                 IL.MarkLabel(jumpLabel);
             }
 
-            public void Visit(AssignmentStatement node)
+            public override void Visit(AssignmentStatement node)
             {   // The left hand side of an assignment must be either
                 // a variable reference or an array indexing expression.
                 if (node.LeftHandSide is VariableReferenceExpression)
@@ -143,7 +139,7 @@ namespace MiniJavaCompiler.BackEnd
                 }
             }
 
-            public void VisitAfterCondition(IfStatement node)
+            public override void VisitAfterCondition(IfStatement node)
             {
                 node.ExitLabel = IL.DefineLabel();
                 if (node.ElseBranch != null)
@@ -157,17 +153,17 @@ namespace MiniJavaCompiler.BackEnd
                 }
             }
 
-            public void VisitAfterThenBranch(IfStatement node)
+            public override void VisitAfterThenBranch(IfStatement node)
             {
                 IL.Emit(OpCodes.Br, node.ExitLabel);
             }
 
-            public void Exit(IfStatement node)
+            public override void Exit(IfStatement node)
             {
                 IL.MarkLabel(node.ExitLabel);
             }
 
-            public void Visit(WhileStatement node)
+            public override void Visit(WhileStatement node)
             {
                 Label test = IL.DefineLabel();
                 node.ConditionLabel = test;
@@ -175,17 +171,17 @@ namespace MiniJavaCompiler.BackEnd
                 IL.Emit(OpCodes.Br, test); // unconditional branch to loop test
             }
 
-            public void VisitAfterBody(WhileStatement node)
+            public override void VisitAfterBody(WhileStatement node)
             {
                 IL.MarkLabel(node.ConditionLabel);
             }
 
-            public void Exit(WhileStatement node)
+            public override void Exit(WhileStatement node)
             {
                 IL.Emit(OpCodes.Brtrue, node.LoopBody.Label.Value);
             }
 
-            public void Visit(MethodInvocation node)
+            public override void Visit(MethodInvocation node)
             {
                 if (node.MethodOwner.Type is ArrayType)
                 {
@@ -199,7 +195,7 @@ namespace MiniJavaCompiler.BackEnd
                 }
             }
 
-            public void Visit(InstanceCreationExpression node)
+            public override void Visit(InstanceCreationExpression node)
             {
                 Type type = _parent.BuildType(node.CreatedTypeName, false);
                 if (node.IsArrayCreation)
@@ -212,12 +208,12 @@ namespace MiniJavaCompiler.BackEnd
                 }
             }
 
-            public void Visit(UnaryOperatorExpression node)
+            public override void Visit(UnaryOperatorExpression node)
             {
                 EmitOperator(node.Operator);
             }
 
-            public void Visit(BinaryOperatorExpression node)
+            public override void Visit(BinaryOperatorExpression node)
             {
                 EmitOperator(node.Operator);
             }
@@ -230,17 +226,17 @@ namespace MiniJavaCompiler.BackEnd
                 }
             }
 
-            public void Visit(BooleanLiteralExpression node)
+            public override void Visit(BooleanLiteralExpression node)
             {
                 IL.Emit(OpCodes.Ldc_I4, node.Value ? 1 : 0);
             }
 
-            public void Visit(ThisExpression node)
+            public override void Visit(ThisExpression node)
             {
                 IL.Emit(OpCodes.Ldarg_0);
             }
 
-            public void Visit(ArrayIndexingExpression node)
+            public override void Visit(ArrayIndexingExpression node)
             {
                 if (node.UsedAsAddress) return; // no need to load anything, index is already on the stack?
                 if (MiniJavaInfo.IsBuiltInType(node.Type.Name))
@@ -254,7 +250,7 @@ namespace MiniJavaCompiler.BackEnd
             }
 
 
-            public void Visit(VariableReferenceExpression node)
+            public override void Visit(VariableReferenceExpression node)
             {
                 var variable = _parent._symbolTable.Scopes[node].ResolveVariable(node.Name);
                 var definition = (VariableDeclaration)_parent._symbolTable.Declarations[variable];
@@ -283,17 +279,17 @@ namespace MiniJavaCompiler.BackEnd
                 }
             }
 
-            public void Visit(IntegerLiteralExpression node)
+            public override void Visit(IntegerLiteralExpression node)
             {
                 IL.Emit(OpCodes.Ldc_I4, node.IntValue);
             }
 
-            public void Exit(ClassDeclaration node)
+            public override void Exit(ClassDeclaration node)
             {
                 _currentType = null;
             }
 
-            public void Exit(MethodDeclaration node)
+            public override void Exit(MethodDeclaration node)
             {
                 // Emit the return statement for a void method.
                 if (!(node.MethodBody.Last() is ReturnStatement))
@@ -302,8 +298,6 @@ namespace MiniJavaCompiler.BackEnd
                 }
                 _currentMethod = null;
             }
-
-            public void Exit(BlockStatement node) { }
         }
     }
 }

@@ -10,7 +10,7 @@ using System;
 
 namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
 {
-    public partial class SymbolTableBuilder : INodeVisitor
+    public partial class SymbolTableBuilder : NodeVisitorBase
     {
         private readonly SymbolTable _symbolTable;
         private readonly Program _syntaxTree;
@@ -150,12 +150,12 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             return currentClass.SuperType == classSymbol;
         }
 
-        public void Visit(Program node)
+        public override void Visit(Program node)
         {
             _symbolTable.Scopes.Add(node, _symbolTable.GlobalScope);
         }
 
-        public void Visit(ClassDeclaration node)
+        public override void Visit(ClassDeclaration node)
         {   // Resolve inheritance relationships.
             var typeSymbol = CurrentScope.ResolveType(node.Name);
             if (node.InheritedClassName != null)
@@ -177,12 +177,12 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             EnterScope(typeSymbol.Scope);
         }
 
-        public void Exit(ClassDeclaration node)
+        public override void Exit(ClassDeclaration node)
         {
             ExitScope();
         }
 
-        public void Visit(VariableDeclaration node)
+        public override void Visit(VariableDeclaration node)
         {
             Debug.Assert(CurrentScope is IVariableScope);
 
@@ -199,7 +199,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             }
         }
 
-        public void Visit(MethodDeclaration node)
+        public override void Visit(MethodDeclaration node)
         {
             Debug.Assert(CurrentScope is IMethodScope);
 
@@ -263,7 +263,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             return sym.Type;
         }
 
-        public void Visit(InstanceCreationExpression node)
+        public override void Visit(InstanceCreationExpression node)
         {
             var scalarTypeSymbol = _symbolTable.ResolveTypeName(node.CreatedTypeName);
             if (scalarTypeSymbol == null)
@@ -288,12 +288,12 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             _errorReporter.ReportError(type, message, node);
         }
 
-        public void Exit(MethodDeclaration node)
+        public override void Exit(MethodDeclaration node)
         {
             ExitScope();
         }
 
-        public void Visit(BlockStatement node)
+        public override void Visit(BlockStatement node)
         {
             Debug.Assert(CurrentScope is IVariableScope);
             var blockScope = new LocalScope((IVariableScope) CurrentScope);
@@ -301,85 +301,77 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             EnterScope(blockScope);
         }
 
-        public void Exit(BlockStatement node)
+        public override void Exit(BlockStatement node)
         {
             ExitScope();
         }
 
-        public void VisitAfterCondition(IfStatement node) { }
-
-        public void VisitAfterThenBranch(IfStatement node) { }
-
-        public void Exit(IfStatement node)
+        public override void Exit(IfStatement node)
         {
             HandleExpressionOrStatementNode(node);
         }
 
-        public void Visit(VariableReferenceExpression node)
+        public override void Visit(VariableReferenceExpression node)
         {
             HandleExpressionOrStatementNode(node);
         }
 
-        public void Visit(MethodInvocation node)
+        public override void Visit(MethodInvocation node)
         {
             HandleExpressionOrStatementNode(node);
         }
 
-        public void Visit(PrintStatement node)
+        public override void Visit(PrintStatement node)
         {
             HandleExpressionOrStatementNode(node);
         }
 
-        public void Visit(ReturnStatement node)
+        public override void Visit(ReturnStatement node)
         {
             HandleExpressionOrStatementNode(node);
         }
 
-        public void Visit(AssertStatement node)
+        public override void Visit(AssertStatement node)
         {
             HandleExpressionOrStatementNode(node);
         }
 
-        public void Visit(AssignmentStatement node)
+        public override void Visit(AssignmentStatement node)
         {
             HandleExpressionOrStatementNode(node);
         }
 
-        public void Visit(WhileStatement node)
+        public override void Visit(WhileStatement node)
         {
             HandleExpressionOrStatementNode(node);
         }
 
-        public void VisitAfterBody(WhileStatement node) { }
-
-        public void Exit(WhileStatement node) { }
-
-        public void Visit(UnaryOperatorExpression node)
+        public override void Visit(UnaryOperatorExpression node)
         {
             HandleExpressionOrStatementNode(node);
         }
 
-        public void Visit(BinaryOperatorExpression node)
+        public override void Visit(BinaryOperatorExpression node)
         {
             HandleExpressionOrStatementNode(node);
         }
 
-        public void Visit(BooleanLiteralExpression node)
+        public override void Visit(BooleanLiteralExpression node)
         {
             HandleExpressionOrStatementNode(node);
         }
 
-        public void Visit(ThisExpression node)
+        public override void Visit(ThisExpression node)
         {
             HandleExpressionOrStatementNode(node);
         }
 
-        public void Visit(ArrayIndexingExpression node)
+        public override void Visit(ArrayIndexingExpression node)
         {
             HandleExpressionOrStatementNode(node);
         }
 
-        public void Visit(IntegerLiteralExpression node)
+        public override void Visit(IntegerLiteralExpression node)
         {
             HandleExpressionOrStatementNode(node);
         }
