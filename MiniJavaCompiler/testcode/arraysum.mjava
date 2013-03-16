@@ -1,0 +1,35 @@
+class TestProgram{
+  public static void main () {
+    Array arr;
+    arr = new Array();
+    arr.setup();
+    System.out.println (arr.sum());
+  }
+}
+class Array {
+  int[] array;
+  public void setup() {
+    array = new int[10];
+    int i;
+    i = 0;
+    while (i < array.length)
+    {
+      array[i] = i;
+      i = i + 1;
+    }
+  }
+
+  public int sum () {
+    assert (array[0] == 0);
+    int i;
+    i = 0;
+    int sum;
+    sum = 0;
+    while (i < array.length)
+    {
+      sum = sum + array[i];
+      i = i + 1;
+    }
+    return sum;
+  }
+}

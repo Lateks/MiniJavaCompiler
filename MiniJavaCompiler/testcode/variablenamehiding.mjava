@@ -1,0 +1,78 @@
+class Test
+{
+  public static void main()
+  {
+    A a;
+    a = new A();
+    a.printVariables1(1); // prints 1 and 1
+    a.printField(); // prints 2 and 0
+    a.printVariables2(); // prints 2 and 2 and 1 and 3
+    System.out.println(a.BFactory().getVal()); // prints 10
+
+    B b1;
+    B b2;
+    b1 = new B();
+    b2 = new B();
+    b1.setVal(2);
+    b2.setVal(3);
+    assert(!(b1.getVal() == b2.getVal())); // ok
+    assert(b1.getVal() == b2.getVal()); // fails
+  }
+}
+
+class A
+{
+  int i;
+
+  public void printVariables1(int i)
+  {
+    System.out.println(i); // prints the argument value
+    {
+      System.out.println(i);
+    }
+  }
+
+  public void printField()
+  {
+    {
+      int i;
+      i = 2;
+      System.out.println(i); // prints 2
+    }
+    System.out.println(i); // prints 0
+  }
+
+  public void printVariables2()
+  {
+    int i;
+    i = 2;
+    System.out.println(i); // prints 2
+    {
+      System.out.println(i); // prints 2
+      int j;
+      j = 1;
+      System.out.println(j); // prints 1
+    }
+    int j;
+    j = 3;
+    System.out.println(j); // prints 3
+  }
+
+  public A getA() {
+    return this;
+  }
+
+  public B BFactory() {
+    B temp;
+    temp = new B();
+    temp.setVal(10);
+    return temp;
+  }
+}
+
+class B
+{
+  int val;
+  public void setVal(int i) { val = i; }
+  public int getVal() { return val; }
+}

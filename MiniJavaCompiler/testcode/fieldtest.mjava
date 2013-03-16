@@ -1,0 +1,13 @@
+class Foo {
+  public static void main() {
+    System.out.println(new Bar().getField());
+  }
+}
+
+class Bar {
+  int field;
+  public int getField() {
+    int local;
+    return local;
+  }
+}

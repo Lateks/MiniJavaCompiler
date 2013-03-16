@@ -1,0 +1,8 @@
+class Foo {
+  public static void main() {
+    boolean foo;
+    foo = 0 == 0;
+    if (!foo)
+      System.out.println(1);
+  }
+}

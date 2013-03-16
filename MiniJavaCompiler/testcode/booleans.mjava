@@ -1,0 +1,25 @@
+class TestProgram{
+  public static void main () {
+    int arrLen;
+    arrLen = 10;
+    boolean[] arr;
+    arr = new boolean[arrLen];
+    {
+      int i;
+      i = 0;
+      while (i < arr.length)
+      {
+        if (i % 2 == 0)
+          arr[i] = true;
+        else
+          arr[i] = false;
+        i = i + 1;
+      }
+    }
+
+    if (arr[6])
+      System.out.println (1);
+    else
+      System.out.println (0);
+  }
+}

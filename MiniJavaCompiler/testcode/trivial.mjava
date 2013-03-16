@@ -1,0 +1,6 @@
+class Test {
+  public static void main() {
+    if (0 == 0)
+      System.out.println(1);
+  }
+}

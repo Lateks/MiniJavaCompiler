@@ -1,0 +1,33 @@
+class Test
+{
+  public static void main()
+  {
+    Test2 a;
+    a = new Test2();
+    if (!(20 % 2 == 0 && // true
+	  2 + 2 == 5 &&  // false, short circuits
+          a.makeAssertion())) // makeAssertion is never called
+    {
+      System.out.println(1);
+    }
+    if (10 % 2 == 0 || // true, short circuits
+        a.makeAssertion()) // makeAssertion is never called
+    {
+      System.out.println(1);
+    }
+    if (10 % 2 == 0 && // true
+        a.makeAssertion()) // makeAssertion is called and assert fails
+    {
+      System.out.println(0);
+    }
+  }
+}
+
+class Test2
+{
+  public boolean makeAssertion()
+  {
+    assert(false);
+    return true;
+  }
+}
