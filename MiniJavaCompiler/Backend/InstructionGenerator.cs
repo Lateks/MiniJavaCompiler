@@ -33,8 +33,8 @@ namespace MiniJavaCompiler.BackEnd
                 { MiniJavaInfo.Operator.Mul, new OpCode[] { OpCodes.Mul } },
                 { MiniJavaInfo.Operator.Lt,  new OpCode[] { OpCodes.Clt } },
                 { MiniJavaInfo.Operator.Gt,  new OpCode[] { OpCodes.Cgt } },
-                { MiniJavaInfo.Operator.And, new OpCode[] { OpCodes.And } },
-                { MiniJavaInfo.Operator.Or,  new OpCode[] { OpCodes.Or  } },
+                { MiniJavaInfo.Operator.And, new OpCode[] { } },
+                { MiniJavaInfo.Operator.Or,  new OpCode[] { } },
                 { MiniJavaInfo.Operator.Eq,  new OpCode[] { OpCodes.Ceq } },
                 { MiniJavaInfo.Operator.Mod, new OpCode[] { OpCodes.Rem } },
                 { MiniJavaInfo.Operator.Not, new OpCode[] { OpCodes.Ldc_I4_0, OpCodes.Ceq } }
@@ -188,7 +188,7 @@ namespace MiniJavaCompiler.BackEnd
                     IL.Emit(OpCodes.Ldlen);
                 }
                 else
-                {   // TODO: check call parameters
+                {
                     var methodScope = _parent._symbolTable.ResolveTypeName(node.MethodOwner.Type.Name).Scope;
                     var calledMethod = _parent._methods[methodScope.ResolveMethod(node.MethodName)];
                     _currentMethod.GetILGenerator().Emit(OpCodes.Call, calledMethod);
@@ -213,9 +213,40 @@ namespace MiniJavaCompiler.BackEnd
                 EmitOperator(node.Operator);
             }
 
+            public override void VisitAfterLHS(BinaryOperatorExpression node)
+            {
+                if (!MiniJavaInfo.IsLogicalOperator(node.Operator))
+                    return;
+                // Emit the first jump code required for boolean operator short circuit.
+                var jumpLabel = IL.DefineLabel();
+                node.AfterLabel = jumpLabel;
+                switch (node.Operator)
+                {
+                    case MiniJavaInfo.Operator.Or:
+                        IL.Emit(OpCodes.Brtrue, jumpLabel);
+                        break;
+                    case MiniJavaInfo.Operator.And:
+                        IL.Emit(OpCodes.Brfalse, jumpLabel);
+                        break;
+                    default:
+                        break;
+                }
+            }
+
             public override void Visit(BinaryOperatorExpression node)
             {
                 EmitOperator(node.Operator);
+                if (MiniJavaInfo.IsLogicalOperator(node.Operator))
+                {   // Emit the second jump code and jump labels required
+                    // for boolean operator short circuit.
+                    var rhsJumpLabel = IL.DefineLabel();
+                    IL.Emit(OpCodes.Br, rhsJumpLabel);
+                    IL.MarkLabel(node.AfterLabel.Value);
+                    var successCode = node.Operator == MiniJavaInfo.Operator.And ?
+                        OpCodes.Ldc_I4_0 : OpCodes.Ldc_I4_1;
+                    IL.Emit(successCode);
+                    IL.MarkLabel(rhsJumpLabel); // We jump here if rhs was evaluated.
+                }
             }
 
             private void EmitOperator(MiniJavaInfo.Operator op)
@@ -228,7 +259,7 @@ namespace MiniJavaCompiler.BackEnd
 
             public override void Visit(BooleanLiteralExpression node)
             {
-                IL.Emit(OpCodes.Ldc_I4, node.Value ? 1 : 0);
+                IL.Emit(node.Value ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
             }
 
             public override void Visit(ThisExpression node)

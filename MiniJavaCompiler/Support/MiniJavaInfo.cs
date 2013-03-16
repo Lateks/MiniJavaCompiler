@@ -101,6 +101,23 @@ namespace MiniJavaCompiler.Support
             return BuiltIns.Contains(typeName);
         }
 
+        public static bool IsLogicalOperator(Operator op)
+        {
+            var opInfo = Operators[op];
+            return opInfo.OperandType == BoolType && opInfo.ResultType == BoolType;
+        }
+
+        public static bool IsComparisonOperator(Operator op)
+        {
+            var opInfo = Operators[op];
+            return opInfo.OperandType != BoolType && opInfo.ResultType == BoolType;
+        }
+
+        public static bool IsArithmeticOperator(Operator op)
+        {
+            return Operators[op].ResultType == IntType;
+        }
+
         public static string[] BuiltInTypes()
         {
             return CopyArray(BuiltIns);

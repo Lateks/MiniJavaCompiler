@@ -75,7 +75,7 @@
     <Compile Include="Support\AbstractSyntaxTree\VariableReferenceExpression.cs" />
     <Compile Include="Support\AbstractSyntaxTree\WhileStatement.cs" />
     <Compile Include="Support\Errors.cs" />
-    <Compile Include="Support\AbstractSyntaxTree\INodeVisitor.cs" />
+    <Compile Include="Support\AbstractSyntaxTree\NodeVisitor.cs" />
     <Compile Include="Support\AbstractSyntaxTree\IfStatement.cs" />
     <Compile Include="Support\MiniJavaInfo.cs" />
     <Compile Include="Support\SymbolTable\Scopes\GenericScopes.cs" />

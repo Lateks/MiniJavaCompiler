@@ -21,8 +21,7 @@ namespace MiniJavaCompiler.Support.SymbolTable.Scopes
                 return _variableTable[name];
             }
             if (EnclosingScope == null ||
-                !(EnclosingScope is IVariableScope) ||
-                !((IVariableScope)EnclosingScope).IsLocalScope)
+                !((EnclosingScope is IVariableScope) && ((IVariableScope)EnclosingScope).IsLocalScope))
             {
                 return null;
             }
