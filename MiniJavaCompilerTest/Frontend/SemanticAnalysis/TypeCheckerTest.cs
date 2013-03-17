@@ -1465,8 +1465,16 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 Assert.DoesNotThrow(checker.RunCheck);
             }
 
+            // Note: this differs from Java specification. Return type covariance
+            // is not implemented because the .NET runtime does not support it
+            // natively and therefore this would require a substantial amount of
+            // work in implementing a working method dispatch strategy.
+            //
+            // According to Eric Lippert, this is the reason return type covariance
+            // is not supported by C# either (see his post at
+            // http://stackoverflow.com/questions/5709034/does-c-sharp-support-return-type-covariance/5709191#5709191).
             [Test]
-            public void ReturnTypeCovarianceIsAllowedInOverridingMethods()
+            public void ReturnTypeCovarianceIsNOTAllowedInOverridingMethods()
             {
                 string program = "class Foo{\n" +
                                  "\t public static void main() { }\n" +
@@ -1479,7 +1487,10 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.DoesNotThrow(checker.RunCheck);
+                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.AreEqual(1, errors.Count);
+                Assert.That(errors.Errors[0].Content,
+                    Is.StringContaining("different return type"));
             }
 
             [Test]

@@ -138,6 +138,10 @@ namespace MiniJavaCompiler.BackEnd
                 {
                     attrs |= MethodAttributes.Static;
                 }
+                else
+                {
+                    attrs |= MethodAttributes.Virtual;
+                }
                 return attrs;
             }
         }

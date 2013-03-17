@@ -25,11 +25,10 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                     ReportError(ErrorTypes.InvalidOverride, msg, node);
                 }
 
-                // Subclass methods can have covariant return types with respect to overridden
-                // superclass methods. (Note: arrays are still non-covariant, see the ArrayType
-                // class.)
-                // http://docs.oracle.com/javase/specs/jls/se7/html/jls-8.html#jls-8.4.5
-                if (SuperClassMethodHasADifferentReturnType(node, superClassMethodDeclaration))
+                // Subclass methods CANNOT have covariant return types with respect to overridden
+                // superclass methods, though this is allowed in Java. This is because the .NET runtime
+                // does not natively support them. (Reference link can be found in tests and docs.)
+                if (node.ReturnType != superClassMethodDeclaration.ReturnType)
                 {
                     var msg = String.Format(
                         "Method {0} in class {1} has a different return type from overridden method in class {2}.",
@@ -194,14 +193,6 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                         ReportError(ErrorTypes.TypeError, msg, node);
                     }
                 }
-            }
-
-            // Allows covariance for scalar types.
-            private bool SuperClassMethodHasADifferentReturnType(MethodDeclaration method,
-                MethodDeclaration superClassMethod)
-            {;
-                return !(method.ReturnType == superClassMethod.ReturnType ||
-                    method.ReturnType.IsAssignableTo(superClassMethod.ReturnType));
             }
 
             private bool OverloadsSuperClassMethod(MethodDeclaration method,

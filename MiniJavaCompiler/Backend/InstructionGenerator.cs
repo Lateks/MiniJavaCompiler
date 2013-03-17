@@ -203,7 +203,7 @@ namespace MiniJavaCompiler.BackEnd
                 {
                     var methodScope = _parent._symbolTable.ResolveTypeName(node.MethodOwner.Type.Name).Scope;
                     var calledMethod = _parent._methods[methodScope.ResolveMethod(node.MethodName)];
-                    _currentMethod.GetILGenerator().Emit(OpCodes.Call, calledMethod);
+                    IL.Emit(OpCodes.Callvirt, calledMethod);
                 }
             }
 

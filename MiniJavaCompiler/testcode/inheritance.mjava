@@ -1,0 +1,156 @@
+class Test
+{
+  public static void main()
+  {
+    new AnimalFactory().build().say(); // prints 0
+    SnakeFactory fac;
+    fac = new SnakeFactory();
+
+    Animal s1;
+    s1 = fac.build();
+    assert(s1.getIdentity() == 2 && s1.getWeight() == 2 &&
+           !s1.isMammal() && s1.calculateValue() == 4);
+    s1.say(); // prints 5555
+
+    Animal s2;
+    s2 = s1;
+    assert(s2 == s1);
+    Animal s3;
+    s3 = fac.build();
+    assert(!(s3 == s1 || s3 == s2));
+
+    AnimalFactory fac2;
+    fac2 = new CatFactory();
+    Animal c;
+    c = fac2.build(); // this erroneously calls the build method in class AnimalFactory
+    assert(c.getIdentity() == 1 && c.getWeight() == 8 && c.isMammal());
+    assert(c.calculateValue() == 8);
+    c.say(); // prints 42
+
+    fac2 = new SlothFactory();
+    Animal s;
+    s = fac2.build();
+    assert(s.getIdentity() == 3 && s.getWeight() == 10 && s.isMammal());
+    assert(s.calculateValue() == 0);
+    s.say(); // prints 0 because say is not overridden in Sloth
+  }
+}
+
+class AnimalFactory
+{
+  public Animal build()
+  {
+    return new Animal();
+  }
+}
+
+class SnakeFactory extends AnimalFactory
+{
+  public Animal build()
+  {
+    Snake s;
+    s = new Snake();
+    s.setup();
+    return s;
+  }
+}
+
+class CatFactory extends AnimalFactory
+{
+  public Animal build()
+  {
+    Cat c;
+    c = new Cat();
+    c.setup();
+    return c;
+  }
+}
+
+class SlothFactory extends AnimalFactory
+{
+  public Animal build()
+  {
+    Sloth s;
+    s = new Sloth();
+    s.setup();
+    return s;
+  }
+}
+
+class Animal
+{
+  int weight;
+  int identity;
+  boolean isMammal;
+
+  public void setWeight(int value) { weight = value; }
+  public int getWeight() { return weight; }
+
+  public void setIdentity(int value) { identity = value; }
+  public int getIdentity() { return identity; }
+
+  public void setIsMammal(boolean value) { isMammal = value; }
+  public boolean isMammal() { return isMammal; }
+
+  public void say()
+  {
+    System.out.println(0);
+  }
+
+  public int calculateValue()
+  {
+    return 0;
+  }
+}
+
+class Cat extends Animal
+{
+  public void setup()
+  {
+    this.setWeight(8);
+    this.setIdentity(1);
+    this.setIsMammal(true);
+  }
+
+  public void say()
+  {
+    System.out.println(42);
+  }
+
+  public int calculateValue()
+  {
+    return this.getWeight() * this.getIdentity();
+  }
+}
+
+class Snake extends Animal
+{
+  public void setup()
+  {
+    this.setWeight(2);
+    this.setIdentity(2);
+    this.setIsMammal(false);
+  }
+
+  public void say()
+  {
+    System.out.println(5555);
+  }
+
+  public int calculateValue()
+  {
+    return this.getWeight() * this.getIdentity();
+  }
+}
+
+class Sloth extends Animal
+{
+  public void setup()
+  {
+    this.setWeight(10);
+    this.setIdentity(3);
+    this.setIsMammal(true);
+  }
+
+  // Does not override say().
+}
