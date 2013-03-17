@@ -1,3 +1,4 @@
+// Demonstrates semantic error detection and reporting.
 class Foo {
   public static void main() {
     int foo;

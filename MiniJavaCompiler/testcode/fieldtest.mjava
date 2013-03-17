@@ -7,7 +7,6 @@ class Foo {
 class Bar {
   int field;
   public int getField() {
-    int local;
-    return local;
+    return field;
   }
 }

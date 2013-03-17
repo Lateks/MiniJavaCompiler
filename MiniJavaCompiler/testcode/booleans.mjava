@@ -7,19 +7,22 @@ class TestProgram{
     {
       int i;
       i = 0;
-      while (i < arr.length)
+      while (i < arr.length) // index is true if even, false if odd
       {
-        if (i % 2 == 0)
-          arr[i] = true;
-        else
-          arr[i] = false;
+        arr[i] = i % 2 == 0;
         i = i + 1;
       }
     }
 
-    if (arr[6])
-      System.out.println (1);
-    else
-      System.out.println (0);
+    int i;
+    i = 0;
+    while (i < arr.length) // prints 1 0 1 0 1 0 1 0 1 0
+    {
+      if (arr[i])
+        System.out.println (1);
+      else
+        System.out.println (0);
+      i = i + 1;
+    }
   }
 }

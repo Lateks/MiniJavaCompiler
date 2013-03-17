@@ -15,8 +15,9 @@ class Test
     b2 = new B();
     b1.setVal(2);
     b2.setVal(3);
+    // testing assertions
     assert(!(b1.getVal() == b2.getVal())); // ok
-    assert(b1.getVal() == b2.getVal()); // fails
+    assert(b1.getVal() == b2.getVal()); // fails (at 19,5)
   }
 }
 
@@ -28,7 +29,7 @@ class A
   {
     System.out.println(i); // prints the argument value
     {
-      System.out.println(i);
+      System.out.println(i); // still the same argument value
     }
   }
 
@@ -39,7 +40,7 @@ class A
       i = 2;
       System.out.println(i); // prints 2
     }
-    System.out.println(i); // prints 0
+    System.out.println(i); // prints 0 (instance field i)
   }
 
   public void printVariables2()
@@ -53,7 +54,7 @@ class A
       j = 1;
       System.out.println(j); // prints 1
     }
-    int j;
+    int j; // can be done because j is out of scope
     j = 3;
     System.out.println(j); // prints 3
   }

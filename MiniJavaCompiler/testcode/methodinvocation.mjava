@@ -2,13 +2,13 @@ class Foo {
   public static void main() {
     DumbCalculator calc;
     calc = new DumbCalculator();
-    System.out.println(calc.sum(3, 5));
-    System.out.println(calc.minus(6, 2));
+    System.out.println(calc.sum(3, 5)); // prints 8
+    System.out.println(calc.minus(6, 2)); // prints 4
     int[] arr;
     arr = new int[5];
     arr[0] = 1; arr[1] = 2; arr[2] = 5; arr[3] = 4; arr[4] = 1; // sum of odd numbers = 7
-    System.out.println(calc.arraySum(arr, true));
-    System.out.println(calc.arraySum(arr, false));
+    System.out.println(calc.arraySum(arr, true)); // prints 7
+    System.out.println(calc.arraySum(arr, false)); // prints 13 (sum of all numbers in the array)
 
     Integer foo;
     foo = new Integer();
@@ -16,7 +16,7 @@ class Foo {
     Integer bar;
     bar = new Integer();
     bar.setValue(2);
-    System.out.println(calc.IntegerMinus(foo, bar));
+    System.out.println(calc.IntegerMinus(foo, bar)); // 
   }
 }
 
