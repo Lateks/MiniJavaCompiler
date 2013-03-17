@@ -128,9 +128,13 @@ namespace MiniJavaCompiler.BackEnd
                 {   // The address to store to should be on the top of the stack just
                     // under the object being stored.
                     var rhsType = node.RightHandSide.Type;
-                    if (MiniJavaInfo.IsBuiltInType(rhsType.Name))
+                    if (rhsType.Name == MiniJavaInfo.IntType)
                     {
                         IL.Emit(OpCodes.Stelem_I4);
+                    }
+                    else if (rhsType.Name == MiniJavaInfo.BoolType)
+                    {
+                        IL.Emit(OpCodes.Stelem_I1);
                     }
                     else
                     {
@@ -270,9 +274,13 @@ namespace MiniJavaCompiler.BackEnd
             public override void Visit(ArrayIndexingExpression node)
             {
                 if (node.UsedAsAddress) return; // no need to load anything, index is already on the stack?
-                if (MiniJavaInfo.IsBuiltInType(node.Type.Name))
+                if (node.Type.Name == MiniJavaInfo.IntType)
                 {
                     IL.Emit(OpCodes.Ldelem_I4);
+                }
+                else if (node.Type.Name == MiniJavaInfo.BoolType)
+                {
+                    IL.Emit(OpCodes.Ldelem_I1);
                 }
                 else
                 {
