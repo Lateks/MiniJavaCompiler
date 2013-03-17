@@ -1449,6 +1449,23 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             }
 
             [Test]
+            public void CanOverrideAVoidSuperClassMethod()
+            {
+                string program = "class Foo{\n" +
+                                 "\t public static void main() { }\n" +
+                                 "}\n" +
+                                 "class A {\n" +
+                                 "\t public void doSomething() { }\n" +
+                                 "}\n" +
+                                 "class B extends A {\n" +
+                                 "\t public void doSomething() { }\n" +
+                                 "}\n";
+                IErrorReporter errors;
+                var checker = SetUpTypeAndReferenceChecker(program, out errors);
+                Assert.DoesNotThrow(checker.RunCheck);
+            }
+
+            [Test]
             public void ReturnTypeCovarianceIsAllowedInOverridingMethods()
             {
                 string program = "class Foo{\n" +

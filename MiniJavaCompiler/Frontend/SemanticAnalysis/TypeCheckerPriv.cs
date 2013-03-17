@@ -200,7 +200,8 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             private bool SuperClassMethodHasADifferentReturnType(MethodDeclaration method,
                 MethodDeclaration superClassMethod)
             {;
-                return !method.ReturnType.IsAssignableTo(superClassMethod.ReturnType);
+                return !(method.ReturnType == superClassMethod.ReturnType ||
+                    method.ReturnType.IsAssignableTo(superClassMethod.ReturnType));
             }
 
             private bool OverloadsSuperClassMethod(MethodDeclaration method,
