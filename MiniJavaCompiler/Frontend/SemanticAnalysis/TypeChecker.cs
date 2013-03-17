@@ -86,8 +86,8 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                         Debug.Assert(!(lhsType is ErrorType || rhsType is ErrorType));
                         ReportError(
                             ErrorTypes.TypeError,
-                            String.Format("Cannot assign expression of type {0} to variable of type {1}.",
-                            rhsType.Name, lhsType.Name), node);
+                            String.Format("incompatible types (expected {0}, found {1}).",
+                            lhsType.Name, rhsType.Name), node);
                     }
                 }
                 else

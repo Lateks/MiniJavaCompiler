@@ -808,7 +808,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot assign").And.
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("incompatible types").And.
                     StringContaining("A").And.StringContaining("B"));
             }
 
@@ -830,7 +830,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot assign").And.
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("incompatible types").And.
                     StringContaining("int").And.StringContaining("boolean"));
             }
 
@@ -848,7 +848,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot assign").And.
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("incompatible types").And.
                     StringContaining("A").And.StringContaining("boolean"));
             }
 
@@ -866,7 +866,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot assign").And.
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("incompatible types").And.
                     StringContaining("A").And.StringContaining("A[]"));
             }
 
@@ -884,8 +884,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot assign").And.
-                    StringContaining("A").And.StringContaining("A[]"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("incompatible types").And.
+                    StringContaining("expected A").And.StringContaining("found A[]"));
             }
 
             [Test]
@@ -903,7 +903,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot assign").And.
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("incompatible types").And.
                     StringContaining("A").And.StringContaining("B"));
             }
 
@@ -936,7 +936,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot assign expression of type void"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("incompatible types").
+                    And.StringContaining("expected int").And.StringContaining("found void"));
             }
         }
 
@@ -1027,8 +1028,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot assign").
-                    And.StringContaining("type A").And.StringContaining("type B"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("incompatible types").
+                    And.StringContaining("found A").And.StringContaining("expected B"));
             }
 
             [Test]
@@ -1085,8 +1086,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot assign").
-                    And.StringContaining("B[]").And.StringContaining("A[]"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("incompatible types").
+                    And.StringContaining("found B[]").And.StringContaining("expected A[]"));
             }
 
             [Test]
@@ -1913,7 +1914,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 Assert.That(errors.Errors[7].ToString(), Is.StringContaining("Cannot resolve symbol zzz")); // Note: No error about array index type because variable could not be resolved.
                 Assert.That(errors.Errors[8].ToString(), Is.StringContaining("Cannot resolve symbol zzz")); // Note: No error about invalid argument to assert statement because variable could not be resolved.
                 Assert.That(errors.Errors[9].ToString(), Is.StringContaining("Cannot apply operator + on arguments of type int and boolean"));
-                Assert.That(errors.Errors[10].ToString(), Is.StringContaining("Cannot assign expression of type A to variable of type int"));
+                Assert.That(errors.Errors[10].ToString(), Is.StringContaining("incompatible types (expected int, found A)"));
                 Assert.That(errors.Errors[11].ToString(), Is.StringContaining("Cannot fit integer literal 99999999999999999 into a 32-bit integer variable"));
                 Assert.That(errors.Errors[12].ToString(), Is.StringContaining("Wrong number of arguments to method alwaysTrue (1 for 0)"));
                 Assert.That(errors.Errors[13].ToString(), Is.StringContaining("Cannot apply operator && on arguments of type int and boolean"));
