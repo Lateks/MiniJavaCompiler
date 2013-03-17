@@ -16,7 +16,7 @@ class Foo {
     Integer bar;
     bar = new Integer();
     bar.setValue(2);
-    System.out.println(calc.IntegerMinus(foo, bar)); // 
+    assert(calc.IntegerMinus(foo, bar) == 1);
   }
 }
 

@@ -17,7 +17,7 @@ class Test
     b2.setVal(3);
     // testing assertions
     assert(!(b1.getVal() == b2.getVal())); // ok
-    assert(b1.getVal() == b2.getVal()); // fails (at 19,5)
+    assert(b1.getVal() == b2.getVal()); // fails (at 20,5)
   }
 }
 

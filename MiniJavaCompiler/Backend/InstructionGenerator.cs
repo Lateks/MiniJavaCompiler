@@ -24,7 +24,7 @@ namespace MiniJavaCompiler.BackEnd
                 get { return _currentMethod.GetILGenerator(); }
             }
 
-            private static Dictionary<MiniJavaInfo.Operator, OpCode[]> operatorOpCodes =
+            private static Dictionary<MiniJavaInfo.Operator, OpCode[]> _operatorOpCodes =
                 new Dictionary<MiniJavaInfo.Operator, OpCode[]>()
             {
                 { MiniJavaInfo.Operator.Add, new OpCode[] { OpCodes.Add } },
@@ -33,11 +33,24 @@ namespace MiniJavaCompiler.BackEnd
                 { MiniJavaInfo.Operator.Mul, new OpCode[] { OpCodes.Mul } },
                 { MiniJavaInfo.Operator.Lt,  new OpCode[] { OpCodes.Clt } },
                 { MiniJavaInfo.Operator.Gt,  new OpCode[] { OpCodes.Cgt } },
-                { MiniJavaInfo.Operator.And, new OpCode[] { } },
-                { MiniJavaInfo.Operator.Or,  new OpCode[] { } },
+                { MiniJavaInfo.Operator.And, new OpCode[] { } }, // Logical operators receive special treatment
+                { MiniJavaInfo.Operator.Or,  new OpCode[] { } }, // due to short circuiting.
                 { MiniJavaInfo.Operator.Eq,  new OpCode[] { OpCodes.Ceq } },
                 { MiniJavaInfo.Operator.Mod, new OpCode[] { OpCodes.Rem } },
                 { MiniJavaInfo.Operator.Not, new OpCode[] { OpCodes.Ldc_I4_0, OpCodes.Ceq } }
+            };
+
+            private static OpCode[] _int32LoadOpcodes = new OpCode[]
+            {
+                OpCodes.Ldc_I4_0,
+                OpCodes.Ldc_I4_1,
+                OpCodes.Ldc_I4_2,
+                OpCodes.Ldc_I4_3,
+                OpCodes.Ldc_I4_4,
+                OpCodes.Ldc_I4_5,
+                OpCodes.Ldc_I4_6,
+                OpCodes.Ldc_I4_7,
+                OpCodes.Ldc_I4_8
             };
 
             public InstructionGenerator(CodeGenerator parent)
@@ -125,10 +138,10 @@ namespace MiniJavaCompiler.BackEnd
                             IL.Emit(OpCodes.Stfld, _parent._fields[variable]);
                             break;
                         case VariableDeclaration.Kind.Local:
-                            IL.Emit(OpCodes.Stloc, decl.LocalIndex);
+                            EmitLocalStore(decl.LocalIndex);
                             break;
                         case VariableDeclaration.Kind.Formal:
-                            IL.Emit(OpCodes.Starg, GetParameterIndex(decl, _currentMethod));
+                            EmitArgStore(GetParameterIndex(decl, _currentMethod));
                             break;
                     }
                 }
@@ -263,7 +276,7 @@ namespace MiniJavaCompiler.BackEnd
 
             private void EmitOperator(MiniJavaInfo.Operator op)
             {
-                foreach (var opcode in operatorOpCodes[op])
+                foreach (var opcode in _operatorOpCodes[op])
                 {
                     IL.Emit(opcode);
                 }
@@ -318,17 +331,24 @@ namespace MiniJavaCompiler.BackEnd
                         IL.Emit(OpCodes.Ldfld, _parent._fields[variable]);
                         break;
                     case VariableDeclaration.Kind.Formal:
-                        IL.Emit(OpCodes.Ldarg, GetParameterIndex(definition, _currentMethod));
+                        EmitArgLoad(GetParameterIndex(definition, _currentMethod));
                         break;
                     case VariableDeclaration.Kind.Local:
-                        IL.Emit(OpCodes.Ldloc, definition.LocalIndex);
+                        EmitLocalLoad(definition.LocalIndex);
                         break;
                 }
             }
 
             public override void Visit(IntegerLiteralExpression node)
             {
-                IL.Emit(OpCodes.Ldc_I4, node.IntValue);
+                if (node.IntValue >= 0 && node.IntValue < _int32LoadOpcodes.Length)
+                {
+                    IL.Emit(_int32LoadOpcodes[node.IntValue]);
+                }
+                else
+                {
+                    IL.Emit(OpCodes.Ldc_I4, node.IntValue);
+                }
             }
 
             public override void Exit(ClassDeclaration node)
@@ -339,11 +359,111 @@ namespace MiniJavaCompiler.BackEnd
             public override void Exit(MethodDeclaration node)
             {
                 // Emit the return statement for a void method.
-                if (!(node.MethodBody.Last() is ReturnStatement))
+                if (node.MethodBody.Count == 0 ||
+                    !(node.MethodBody.Last() is ReturnStatement))
                 {
                     IL.Emit(OpCodes.Ret);
                 }
                 _currentMethod = null;
+            }
+
+            private void EmitArgLoad(int index)
+            {
+                switch (index)
+                {
+                    case 0:
+                        IL.Emit(OpCodes.Ldarg_0);
+                        return;
+                    case 1:
+                        IL.Emit(OpCodes.Ldarg_1);
+                        return;
+                    case 2:
+                        IL.Emit(OpCodes.Ldarg_2);
+                        return;
+                    case 3:
+                        IL.Emit(OpCodes.Ldarg_3);
+                        return;
+                    default:
+                        break;
+                }
+                if (index <= Byte.MaxValue)
+                {
+                    IL.Emit(OpCodes.Ldarg_S, (Byte) index);
+                }
+                else
+                {
+                    IL.Emit(OpCodes.Ldarg, index);
+                }
+            }
+
+            private void EmitArgStore(int index)
+            {
+                if (index <= Byte.MaxValue)
+                {
+                    IL.Emit(OpCodes.Starg_S, (Byte) index);
+                }
+                else
+                {
+                    IL.Emit(OpCodes.Starg, index);
+                }
+            }
+
+            private void EmitLocalLoad(int index)
+            {
+                switch (index)
+                {
+                    case 0:
+                        IL.Emit(OpCodes.Ldloc_0);
+                        return;
+                    case 1:
+                        IL.Emit(OpCodes.Ldloc_1);
+                        return;
+                    case 2:
+                        IL.Emit(OpCodes.Ldloc_2);
+                        return;
+                    case 3:
+                        IL.Emit(OpCodes.Ldloc_3);
+                        return;
+                    default:
+                        break;
+                }
+                if (index <= Byte.MaxValue)
+                {
+                    IL.Emit(OpCodes.Ldloc_S, (Byte) index);
+                }
+                else
+                {
+                    IL.Emit(OpCodes.Ldloc, index);
+                }
+            }
+
+            private void EmitLocalStore(int index)
+            {
+                switch (index)
+                {
+                    case 0:
+                        IL.Emit(OpCodes.Stloc_0);
+                        return;
+                    case 1:
+                        IL.Emit(OpCodes.Stloc_1);
+                        return;
+                    case 2:
+                        IL.Emit(OpCodes.Stloc_2);
+                        return;
+                    case 3:
+                        IL.Emit(OpCodes.Stloc_3);
+                        return;
+                    default:
+                        break;
+                }
+                if (index <= Byte.MaxValue)
+                {
+                    IL.Emit(OpCodes.Stloc_S, (Byte) index);
+                }
+                else
+                {
+                    IL.Emit(OpCodes.Stloc, index);
+                }
             }
         }
     }
