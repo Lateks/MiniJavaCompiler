@@ -13,7 +13,7 @@ namespace MiniJavaCompiler
 {
     public class Compiler
     {
-        private const string usage = "Usage: ./MiniJavaCompiler.exe path/to/source/file";
+        private const string usage = "Usage: ./MiniJavaCompiler.exe path/to/source/file [output/file/path]";
 
         static void Main(string[] args)
         {
@@ -22,6 +22,7 @@ namespace MiniJavaCompiler
                 Console.WriteLine(usage);
                 return;
             }
+            
             StreamReader fileStream;
             try
             {
@@ -52,7 +53,7 @@ namespace MiniJavaCompiler
             Program abstractSyntaxTree;
             if (RunFrontEnd(args[0], fileStream, out symbolTable, out abstractSyntaxTree))
             {
-                RunBackEnd(symbolTable, abstractSyntaxTree);
+                RunBackEnd(symbolTable, abstractSyntaxTree, args.Count() > 1 ? args[1] : null);
             }
         }
 
@@ -86,21 +87,20 @@ namespace MiniJavaCompiler
 
         private static void PrintError(string errorCodeDecl, string sourceLine, int errorCol)
         {
-            var splitCodeLines = sourceLine.Split(';');
-            string errorLine;
-            if (splitCodeLines.Length > 0)
+            string errorLine = sourceLine;
+            if (errorLine.Length > 120)
             {
-                int index = GetIndex(splitCodeLines, errorCol);
-                errorLine = splitCodeLines[index];
-                if (index != splitCodeLines.Length - 1)
+                var splitCodeLines = sourceLine.Split(';');
+                if (splitCodeLines.Length > 0)
                 {
-                    errorLine += ";"; // restore the semicolon for printing
+                    int index = GetIndex(splitCodeLines, errorCol);
+                    errorLine = splitCodeLines[index];
+                    if (index != splitCodeLines.Length - 1)
+                    {
+                        errorLine += ";"; // restore the semicolon for printing
+                    }
+                    errorCol -= splitCodeLines.Take(index).Select<string, int>((s) => s.Length + 1).Sum(); // + 1 for removed semicolons
                 }
-                errorCol -= splitCodeLines.Take(index).Select<string, int>((s) => s.Length + 1).Sum(); // + 1 for removed semicolons
-            }
-            else
-            {
-                errorLine = sourceLine;
             }
             var trimmedLine = errorLine.TrimStart().Replace('\t', ' ').Replace('\v', ' ');
             errorCol -= errorLine.Length - trimmedLine.Length;
@@ -120,10 +120,21 @@ namespace MiniJavaCompiler
             return index;
         }
 
-        private static void RunBackEnd(SymbolTable symbolTable, Program abstractSyntaxTree)
+        private static void RunBackEnd(SymbolTable symbolTable, Program abstractSyntaxTree, string fileName)
         {
-            var backEnd = new CodeGenerator(symbolTable, abstractSyntaxTree, "MainModule");
-            backEnd.GenerateCode();
+            var backEnd = new CodeGenerator(symbolTable, abstractSyntaxTree, "MainModule$0");
+            if (fileName != null)
+            {
+                if (fileName.Substring(fileName.Length - 4, 4) != ".exe")
+                {
+                    fileName += ".exe";
+                }
+                backEnd.GenerateCode(fileName);
+            }
+            else
+            {
+                backEnd.GenerateCode();
+            }
         }
     }
 }
