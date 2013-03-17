@@ -17,7 +17,7 @@ namespace MiniJavaCompiler.BackEnd
         private readonly string _moduleName;
         private readonly Program _astRoot;
         private readonly SymbolTable _symbolTable;
-        private readonly Dictionary<Type, ConstructorInfo> _constructors;
+        private readonly Dictionary<Type, ConstructorBuilder> _constructors;
 
         // Type, method and field builders need to be stored for reference in
         // code generation. Local variables and parameters can be referenced
@@ -34,7 +34,7 @@ namespace MiniJavaCompiler.BackEnd
             _moduleName = moduleName;
             _astRoot = abstractSyntaxTree;
             _symbolTable = symbolTable;
-            _constructors = new Dictionary<Type, ConstructorInfo>();
+            _constructors = new Dictionary<Type, ConstructorBuilder>();
             _types = new Dictionary<string, TypeBuilder>();
             _methods = new Dictionary<MethodSymbol, MethodBuilder>();
             _fields = new Dictionary<VariableSymbol, FieldBuilder>();

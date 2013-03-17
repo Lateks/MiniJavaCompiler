@@ -54,6 +54,14 @@ namespace MiniJavaCompiler.BackEnd
             {
                 TypeBuilder thisType = _parent._types[node.Name];
                 _currentType = thisType;
+                if (node.InheritedClassName != null)
+                {   // Emit non-default constructor body.
+                    var superType = _parent._types[node.InheritedClassName];
+                    var il = _parent._constructors[thisType].GetILGenerator();
+                    il.Emit(OpCodes.Ldarg_0);
+                    il.Emit(OpCodes.Call, _parent._constructors[superType]);
+                    il.Emit(OpCodes.Ret);
+                }
             }
 
             public override void Visit(MethodDeclaration node)

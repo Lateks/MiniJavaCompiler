@@ -34,16 +34,14 @@ namespace MiniJavaCompiler.BackEnd
                 _parent._astRoot.Accept(this);
             }
 
-            // Defines TypeBuilders for all user defined types and stores them and their constructors.
+            // Defines TypeBuilders for all user defined types and stores them
+            // for later reference.
             private void SetUpScalarTypes()
             {
                 foreach (string typeName in _parent._symbolTable.ScalarTypeNames)
                 {
-                    TypeBuilder typeBuilder = _parent._moduleBuilder.DefineType(
+                    _parent._types[typeName] = _parent._moduleBuilder.DefineType(
                         typeName, TypeAttributes.Public | TypeAttributes.Class);
-                    _parent._types[typeName] = typeBuilder;
-                    _parent._constructors[typeBuilder] =
-                        typeBuilder.DefineDefaultConstructor(MethodAttributes.Public);
                 }
             }
 
@@ -51,9 +49,18 @@ namespace MiniJavaCompiler.BackEnd
             {
                 TypeBuilder thisType = _parent._types[node.Name];
                 if (node.InheritedClassName != null)
-                {
+                {   // Define non-default constructor. Constructor body is not emitted
+                    // until instruction generation.
                     TypeBuilder superClass = _parent._types[node.InheritedClassName];
                     thisType.SetParent(superClass);
+                    _parent._constructors[thisType] =
+                        thisType.DefineConstructor(MethodAttributes.Public,
+                        CallingConventions.HasThis, Type.EmptyTypes);
+                }
+                else
+                {
+                    _parent._constructors[thisType] =
+                        thisType.DefineDefaultConstructor(MethodAttributes.Public);
                 }
                 _currentType = thisType;
             }
