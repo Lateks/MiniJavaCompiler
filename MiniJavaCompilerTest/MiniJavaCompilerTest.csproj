@@ -53,10 +53,24 @@
     <Compile Include="FrontEnd\Parsing\ParserTest.cs" />
     <Compile Include="FrontEnd\PipelineTest.cs" />
     <Compile Include="FrontEnd\Scanning\ScannerTest.cs" />
+    <Compile Include="FrontEnd\SemanticAnalysis\ArithmeticBinaryOperatorTest.cs" />
+    <Compile Include="FrontEnd\SemanticAnalysis\ArrayTypeTest.cs" />
+    <Compile Include="FrontEnd\SemanticAnalysis\AssignmentTypeCheckTest.cs" />
+    <Compile Include="FrontEnd\SemanticAnalysis\ComparisonOperatorsTest.cs" />
+    <Compile Include="FrontEnd\SemanticAnalysis\EqualsOperatorTypeCheckTest.cs" />
+    <Compile Include="FrontEnd\SemanticAnalysis\IntegerLiteralsTest.cs" />
+    <Compile Include="FrontEnd\SemanticAnalysis\MethodCallParameterCheckTest.cs" />
+    <Compile Include="FrontEnd\SemanticAnalysis\OverridingAndOverloadingCheckTest.cs" />
+    <Compile Include="FrontEnd\SemanticAnalysis\PolymorphismTest.cs" />
+    <Compile Include="FrontEnd\SemanticAnalysis\LogicalBinaryOperatorTest.cs" />
+    <Compile Include="FrontEnd\SemanticAnalysis\RecoveryTest.cs" />
+    <Compile Include="FrontEnd\SemanticAnalysis\ReferenceCheckTest.cs" />
+    <Compile Include="FrontEnd\SemanticAnalysis\ReturnStatementChecksTest.cs" />
     <Compile Include="FrontEnd\SemanticAnalysis\SymbolTableBuilderTest.cs" />
     <Compile Include="FrontEnd\SemanticAnalysis\SymbolTableTest.cs" />
-    <Compile Include="FrontEnd\SemanticAnalysis\TypeCheckerTest.cs" />
+    <Compile Include="FrontEnd\SemanticAnalysis\TypeCheckerTestBase.cs" />
     <Compile Include="FrontEnd\SemanticAnalysis\TypeSetBuilderTest.cs" />
+    <Compile Include="FrontEnd\SemanticAnalysis\UnaryOperatorTypeCheckTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
