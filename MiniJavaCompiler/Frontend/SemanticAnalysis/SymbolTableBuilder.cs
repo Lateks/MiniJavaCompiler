@@ -201,7 +201,6 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
 
         // Detects possible duplicate declaration of a method identifier.
         // A dummy scope is made to stand in for the method scope.
-        // TODO: is this scope handled properly in the following phase?
         public override void Visit(MethodDeclaration node)
         {
             Debug.Assert(CurrentScope is IMethodScope);

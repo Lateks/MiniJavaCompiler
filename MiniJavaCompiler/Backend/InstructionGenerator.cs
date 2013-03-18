@@ -214,8 +214,7 @@ namespace MiniJavaCompiler.BackEnd
                 }
                 else
                 {
-                    var methodScope = _parent._symbolTable.ResolveType(node.MethodOwner.Type.Name).Scope;
-                    var calledMethod = _parent._methods[methodScope.ResolveMethod(node.MethodName)];
+                    var calledMethod = _parent._methods[node.ReferencedMethod.Symbol];
                     IL.Emit(OpCodes.Callvirt, calledMethod);
                 }
             }

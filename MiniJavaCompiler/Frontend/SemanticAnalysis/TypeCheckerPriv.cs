@@ -15,7 +15,8 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
         // These are the private helper methods used by TypeChecker.
         private partial class TypeChecker : NodeVisitorBase
         {
-            private void CheckForOverloading(MethodDeclaration node, TypeSymbol classSymbol, MethodSymbol superClassMethod)
+            private void CheckForOverloading(MethodDeclaration node,
+                TypeSymbol classSymbol, MethodSymbol superClassMethod)
             {
                 var superClassMethodDeclaration = (MethodDeclaration)superClassMethod.Declaration;
                 if (OverloadsSuperClassMethod(node, superClassMethodDeclaration))
@@ -116,14 +117,14 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
 
             private void ArgumentShouldBeBoolean(SyntaxElement node, IExpression argument)
             {
-                var argType = argument.Type;
-                if (argType == ErrorType.GetInstance()) return;
-                if (argType.Name != MiniJavaInfo.BoolType)
+                if (argument.Type == ErrorType.GetInstance())
+                    return;
+                if (argument.Type.Name != MiniJavaInfo.BoolType)
                 {
                     ReportError(
                         ErrorTypes.TypeError,
                         String.Format("Cannot convert expression of type {0} to boolean.",
-                        argType.Name), node);
+                        argument.Type.Name), node);
                 }
             }
 
@@ -134,11 +135,6 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                     // take parameters. If ReferencedMethod is set to null, the method
                     // could not be resolved and this error has already been reported.
                     return;
-                }
-
-                if (node.ReferencedMethod.ReturnType is ErrorType)
-                {
-                    _checkOK = false;
                 }
 
                 if (node.ReferencedMethod.IsStatic)
@@ -232,6 +228,12 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 Debug.Assert(!(left is ErrorType && right is ErrorType));
 
                 ReportBinaryOperatorError(node, left, right);
+            }
+
+            private bool ErrorsAlreadyReported(VariableReferenceExpression reference, VariableDeclaration declaration)
+            {
+                return _parent._errors.HasErrorReportForReferenceTo(ErrorTypes.UninitializedLocal, declaration) ||
+                    _parent._errors.HasErrorReportForNode(ErrorTypes.LvalueReference, reference);
             }
 
             private void ReportBinaryOperatorError(BinaryOperatorExpression node, IType left, IType right)

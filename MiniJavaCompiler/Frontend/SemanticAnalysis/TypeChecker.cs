@@ -17,7 +17,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
         // that local variables have been initialized before reference.
         private partial class TypeChecker : NodeVisitorBase
         {
-            private SemanticsChecker _parent;
+            private readonly SemanticsChecker _parent;
             private readonly Stack<IType> _returnTypes; /* When return statements are encountered, the types of
                                                          * the expressions they return are stored here and
                                                          * checked when exiting the method declaration.
@@ -43,12 +43,10 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 var classSymbol = node.DeclaringType;
                 var superClassMethod = classSymbol.SuperClass == null ? null :
                     classSymbol.SuperClass.Scope.ResolveMethod(node.Name);
-                if (superClassMethod == null) // Did not override or overload another method.
+                if (superClassMethod != null)
                 {
-                    return;
+                    CheckForOverloading(node, classSymbol, superClassMethod);
                 }
-
-                CheckForOverloading(node, classSymbol, superClassMethod);
             }
 
             public override void Visit(PrintStatement node)
@@ -76,10 +74,10 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             public override void Visit(AssignmentStatement node)
             {   // The type of right hand side must match the left hand side
                 // and left hand side needs to be an lvalue.
-                var lhsType = node.LeftHandSide.Type;
-                var rhsType = node.RightHandSide.Type;
-                if (node.LeftHandSide is ILValueExpression || node.LeftHandSide is ErrorType)
+                if (node.LeftHandSide is ILValueExpression)
                 {
+                    var lhsType = node.LeftHandSide.Type;
+                    var rhsType = node.RightHandSide.Type;
                     if (!(rhsType.IsAssignableTo(lhsType)))
                     {
                         // ErrorType should be assignable both ways.
@@ -90,7 +88,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                             lhsType.Name, rhsType.Name), node);
                     }
                 }
-                else
+                else if (node.LeftHandSide != ErrorType.GetInstance())
                 {
                     ReportError(
                         ErrorTypes.LvalueReference,
@@ -167,12 +165,12 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
 
             public override void Visit(VariableReferenceExpression node)
             {
-                var scope = node.Scope;
-                var variableSymbol = scope.ResolveVariable(node.Name);
+                var variableSymbol = node.Scope.ResolveVariable(node.Name);
                 if (variableSymbol == null) return; // resolving error has already been reported
 
                 var declaration = (VariableDeclaration)variableSymbol.Declaration;
-                if (declaration.VariableKind != VariableDeclaration.Kind.Local) return;
+                if (declaration.VariableKind != VariableDeclaration.Kind.Local)
+                    return;
 
                 if (node.UsedAsAddress)
                 {
@@ -185,12 +183,6 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                         String.Format("Variable {0} might not have been initialized.",
                         node.Name), node, declaration);
                 }
-            }
-
-            private bool ErrorsAlreadyReported(VariableReferenceExpression reference, VariableDeclaration declaration)
-            {
-                return _parent._errors.HasErrorReportForReferenceTo(ErrorTypes.UninitializedLocal, declaration) ||
-                    _parent._errors.HasErrorReportForNode(ErrorTypes.LvalueReference, reference);
             }
 
             public override void Visit(IntegerLiteralExpression node)

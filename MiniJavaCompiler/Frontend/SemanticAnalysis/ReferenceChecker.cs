@@ -6,7 +6,6 @@ using MiniJavaCompiler.Support.SymbolTable.Types;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.Linq;
 using System.Text;
 
@@ -18,7 +17,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
         // for the type checking phase.
         private class ReferenceChecker : NodeVisitorBase
         {
-            private SemanticsChecker _parent;
+            private readonly SemanticsChecker _parent;
             private bool _checkOK;
 
             public ReferenceChecker(SemanticsChecker parent)
@@ -41,6 +40,16 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 }
             }
 
+            public override void Visit(MethodDeclaration node)
+            {
+                node.DeclaringType = GetSurroundingClass(node);
+                Debug.Assert(node.DeclaringType != null);
+                if (node.ReturnType is ErrorType)
+                {
+                    _checkOK = false;
+                }
+            }
+
             public override void Visit(AssignmentStatement node)
             {
                 if (node.LeftHandSide is ILValueExpression)
@@ -53,37 +62,19 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
 
             public override void Visit(MethodInvocation node)
             {
-                var methodOwnerType = node.MethodOwner.Type;
-                if (methodOwnerType == VoidType.GetInstance())
+                MethodSymbol method = ResolveMethod(node, node.MethodOwner.Type);
+                if (method == null)
                 {
-                    ReportError(
-                        ErrorTypes.LvalueReference,
-                        String.Format("{0} cannot be dereferenced.",
-                        CultureInfo.CurrentCulture.TextInfo.ToTitleCase(methodOwnerType.Name)),
-                        node);
-                }
-                else if (methodOwnerType == ErrorType.GetInstance())
-                {
-                    _checkOK = false; // do not check the method reference
+                    node.Type = ErrorType.GetInstance();
                 }
                 else
                 {
-                    MethodSymbol method = ResolveMethod(node, methodOwnerType);
-                    if (method != null)
-                    {
-                        if (method.Declaration != null)
-                        {   // There is no AST node declaration for built-in methods (namely, array length).
-                            node.ReferencedMethod = (MethodDeclaration)method.Declaration;
-                        }
-                        node.Type = method.Type;
+                    if (method.Declaration != null)
+                    {   // There is no AST node declaration for built-in methods (namely, array length).
+                        node.ReferencedMethod = (MethodDeclaration)method.Declaration;
                     }
-                    else
-                    {
-                        ReportError(ErrorTypes.MethodReference,
-                            String.Format("Cannot find symbol {0}.", node.MethodName), node);
-                    }
+                    node.Type = method.Type;
                 }
-                node.Type = node.Type ?? ErrorType.GetInstance();
             }
 
             public override void Visit(InstanceCreationExpression node)
@@ -128,7 +119,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                     ReportError(ErrorTypes.LvalueReference,
                         String.Format("Cannot find symbol {0}.", node.Name), node);
                 }
-                else if (symbol != null && symbol.Type is ErrorType)
+                else if (symbol != null && symbol.Type == ErrorType.GetInstance())
                 {
                     _checkOK = false;
                 }
@@ -141,15 +132,6 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 node.Type = _parent._symbolTable.ResolveType(MiniJavaInfo.IntType).Type;
             }
 
-            public override void Visit(MethodDeclaration node)
-            {
-                node.DeclaringType = GetSurroundingClass(node);
-                if (node.ReturnType is ErrorType)
-                {
-                    _checkOK = false;
-                }
-            }
-
             private void ReportError(ErrorTypes type, string errorMsg, SyntaxElement node)
             {
                 _parent._errors.ReportError(type, errorMsg, node);
@@ -159,14 +141,26 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             private MethodSymbol ResolveMethod(MethodInvocation node, IType methodOwnerType)
             {
                 MethodSymbol method = null;
-                if (node.MethodOwner is ThisExpression)
-                {   // Method called is defined by the enclosing class or its superclasses.
-                    method = node.Scope.ResolveMethod(node.MethodName);
+                if (methodOwnerType == VoidType.GetInstance())
+                {
+                    ReportError(
+                        ErrorTypes.LvalueReference,
+                        String.Format("Void cannot be dereferenced."),
+                        node);
                 }
                 else if (methodOwnerType is ScalarType || methodOwnerType is ArrayType)
                 {
                     var typeSymbol = _parent._symbolTable.ResolveType(methodOwnerType.Name);
                     method = typeSymbol.Scope.ResolveMethod(node.MethodName);
+                    if (method == null)
+                    {
+                        ReportError(ErrorTypes.MethodReference,
+                            String.Format("Cannot find symbol {0}.", node.MethodName), node);
+                    }
+                }
+                else // ErrorType
+                {
+                    _checkOK = false;
                 }
                 return method;
             }
@@ -176,7 +170,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 IType createdType;
                 if (node.CreatedTypeName == MiniJavaInfo.VoidType)
                 {
-                    Debug.Assert(node.IsArrayCreation); // otherwise this should not have passed the parser
+                    Debug.Assert(node.IsArrayCreation); // ...otherwise this should not have passed the parser.
                     ReportError(ErrorTypes.TypeError, String.Format("Illegal type void for array elements."), node);
                     createdType = ErrorType.GetInstance();
                 }

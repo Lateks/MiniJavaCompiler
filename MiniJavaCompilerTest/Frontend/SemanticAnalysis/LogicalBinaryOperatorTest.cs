@@ -71,6 +71,42 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             }
 
             [Theory]
+            public void InvalidLeftOperandAndErrorTypeAsOperandsTest(string op)
+            {
+                string program = "class Foo {\n" +
+                                 "  public static void main() {\n" +
+                                 "    boolean foo;\n" +
+                                 "    foo = new A() " + op + " bar;\n" +
+                                 "  }\n" +
+                                 "}\n" +
+                                 "class A { }\n";
+                IErrorReporter errors;
+                var checker = SetUpTypeAndReferenceChecker(program, out errors);
+                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.AreEqual(2, errors.Count);
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot find symbol bar"));
+                Assert.That(errors.Errors[1].ToString(), Is.StringContaining("Invalid operand of type A"));
+            }
+
+            [Theory]
+            public void InvalidRightOperandAndErrorTypeAsOperandsTest(string op)
+            {
+                string program = "class Foo {\n" +
+                                 "  public static void main() {\n" +
+                                 "    boolean foo;\n" +
+                                 "    foo = bar " + op + " new A();\n" +
+                                 "  }\n" +
+                                 "}\n" +
+                                 "class A { }\n";
+                IErrorReporter errors;
+                var checker = SetUpTypeAndReferenceChecker(program, out errors);
+                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.AreEqual(2, errors.Count);
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot find symbol bar"));
+                Assert.That(errors.Errors[1].ToString(), Is.StringContaining("Invalid operand of type A"));
+            }
+
+            [Theory]
             public void ValidOperandsForALogicalOperatorTest(string op)
             {
                 string program = "class Foo {\n" +
