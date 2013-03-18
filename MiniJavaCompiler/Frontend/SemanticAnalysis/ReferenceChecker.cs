@@ -1,5 +1,6 @@
 ﻿using MiniJavaCompiler.Support;
 using MiniJavaCompiler.Support.AbstractSyntaxTree;
+using MiniJavaCompiler.Support.SymbolTable.Scopes;
 using MiniJavaCompiler.Support.SymbolTable.Symbols;
 using MiniJavaCompiler.Support.SymbolTable.Types;
 using System;
@@ -110,7 +111,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
 
             public override void Visit(ThisExpression node)
             {
-                node.Type = _parent._symbolTable.ResolveClass(node).Type;
+                node.Type = GetSurroundingClass(node).Type;
             }
 
             public override void Visit(ArrayIndexingExpression node)
@@ -122,8 +123,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
 
             public override void Visit(VariableReferenceExpression node)
             {
-                var scope = _parent._symbolTable.Scopes[node];
-                var symbol = scope.ResolveVariable(node.Name);
+                var symbol = node.Scope.ResolveVariable(node.Name);
                 if (symbol == null || !VariableDeclaredBeforeReference(symbol, node))
                 {
                     ReportError(ErrorTypes.LvalueReference,
@@ -144,6 +144,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
 
             public override void Visit(MethodDeclaration node)
             {
+                node.DeclaringType = GetSurroundingClass(node);
                 if (node.ReturnType is ErrorType)
                 {
                     _checkOK = false;
@@ -161,7 +162,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 MethodSymbol method = null;
                 if (node.MethodOwner is ThisExpression)
                 {   // Method called is defined by the enclosing class or its superclasses.
-                    method = _parent._symbolTable.Scopes[node].ResolveMethod(node.MethodName);
+                    method = node.Scope.ResolveMethod(node.MethodName);
                 }
                 else if (methodOwnerType is ScalarType || methodOwnerType is ArrayType)
                 {
@@ -214,6 +215,16 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                         (declaration.Row == reference.Row && declaration.Col < reference.Col);
                 }
                 return true;
+            }
+
+            private TypeSymbol GetSurroundingClass(ISyntaxTreeNode node)
+            {
+                var scope = node.Scope;
+                while (!(scope == null) && !(scope is ClassScope))
+                {
+                    scope = scope.EnclosingScope;
+                }
+                return scope != null ? (scope as ClassScope).Symbol : null;
             }
         }
     }

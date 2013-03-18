@@ -338,7 +338,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             var numVariable = facMethod.Scope.ResolveVariable("num");
             Assert.That(numVariable, Is.Not.Null);
             var numVariableNode = _symbolTable.Declarations[numVariable];
-            Assert.That(_symbolTable.Scopes[numVariableNode], Is.EqualTo(facMethod.Scope));
+            Assert.That(numVariableNode.Scope, Is.EqualTo(facMethod.Scope));
             Assert.That(numVariable.Type, Is.InstanceOf<ScalarType>());
             Assert.That(numVariable.Type.Name, Is.EqualTo("int"));
             Assert.AreEqual(numVariable.Type, facMethod.Type);

@@ -152,7 +152,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
 
         public override void Visit(Program node)
         {
-            _symbolTable.Scopes.Add(node, _symbolTable.GlobalScope);
+            node.Scope = _symbolTable.GlobalScope;
         }
 
         // Detects references to unknown types in class inheritance
@@ -174,7 +174,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                     typeSymbol.SuperClass = inheritedType;
                 }
             }
-            _symbolTable.Scopes.Add(node, typeSymbol.Scope);
+            node.Scope = typeSymbol.Scope;
             _symbolTable.Declarations.Add(typeSymbol, node);
             EnterScope(typeSymbol.Scope);
         }
@@ -194,7 +194,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             if ((CurrentScope as IVariableScope).Define(variableSymbol))
             {
                 _symbolTable.Declarations.Add(variableSymbol, node);
-                _symbolTable.Scopes.Add(node, CurrentScope);
+                node.Scope = CurrentScope;
             }
             else
             {
@@ -225,7 +225,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             }                                         // (Both are IVariableScopes.)
 
             _symbolTable.Declarations.Add(node.Symbol, node);
-            _symbolTable.Scopes.Add(node, scope);
+            node.Scope = scope;
 
             EnterScope(scope);
         }
@@ -257,7 +257,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
         {
             Debug.Assert(CurrentScope is IVariableScope);
             var blockScope = new LocalScope((IVariableScope) CurrentScope);
-            _symbolTable.Scopes.Add(node, blockScope);
+            node.Scope = blockScope;
             EnterScope(blockScope);
         }
 
@@ -338,7 +338,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
 
         private void HandleExpressionOrStatementNode(ISyntaxTreeNode node)
         {
-            _symbolTable.Scopes.Add(node, CurrentScope);
+            node.Scope = CurrentScope;
         }
 
         private void ReportTypeNameError(string typeName, SyntaxElement node)

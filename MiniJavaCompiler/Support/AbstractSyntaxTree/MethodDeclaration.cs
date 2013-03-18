@@ -11,7 +11,7 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
         public List<VariableDeclaration> Formals { get; private set; }
         public List<IStatement> MethodBody { get; private set; }
         public bool IsStatic { get; private set; }
-        public ClassDeclaration DeclaringType { get; set; }
+        public TypeSymbol DeclaringType { get; set; }
         public IType ReturnType { get; set; }
         public MethodSymbol Symbol { get; set; }
 

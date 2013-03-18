@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MiniJavaCompiler.Support.SymbolTable.Scopes;
+using System;
 using System.Collections.Generic;
 
 namespace MiniJavaCompiler.Support.AbstractSyntaxTree
@@ -8,6 +9,7 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
     {
         public ClassDeclaration MainClass { get; private set; }
         public List<ClassDeclaration> Classes { get; private set; }
+        public IScope Scope { get; set; }
 
         public Program(ClassDeclaration mainClass,
                        List<ClassDeclaration> classDeclarations)

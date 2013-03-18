@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MiniJavaCompiler.Support.SymbolTable.Scopes;
+using System;
 using System.Collections.Generic;
 using IType = MiniJavaCompiler.Support.SymbolTable.Types.IType;
 
@@ -7,6 +8,7 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
     // This is the base interface that represents a node in the syntax tree.
     public interface ISyntaxTreeNode
     {
+        IScope Scope { get; set; }
         void Accept(INodeVisitor visitor);
     }
 
@@ -29,6 +31,7 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
     {
         public int Row { get; private set; }
         public int Col { get; private set; }
+        public IScope Scope { get; set; }
 
         protected SyntaxElement(int row, int col)
         {

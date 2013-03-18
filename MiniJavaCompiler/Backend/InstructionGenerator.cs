@@ -79,7 +79,7 @@ namespace MiniJavaCompiler.BackEnd
 
             public override void Visit(MethodDeclaration node)
             {
-                var sym = _parent._symbolTable.Scopes[node].ResolveMethod(node.Name);
+                var sym = node.Symbol;
                 _currentMethod = _parent._methods[sym];
             }
 
@@ -130,7 +130,7 @@ namespace MiniJavaCompiler.BackEnd
                 if (node.LeftHandSide is VariableReferenceExpression)
                 {
                     var reference = (VariableReferenceExpression)node.LeftHandSide;
-                    var variable = _parent._symbolTable.Scopes[reference].ResolveVariable(reference.Name);
+                    var variable = reference.Scope.ResolveVariable(reference.Name);
                     var decl = (VariableDeclaration)_parent._symbolTable.Declarations[variable];
                     switch (decl.VariableKind)
                     {
@@ -312,7 +312,7 @@ namespace MiniJavaCompiler.BackEnd
 
             public override void Visit(VariableReferenceExpression node)
             {
-                var variable = _parent._symbolTable.Scopes[node].ResolveVariable(node.Name);
+                var variable = node.Scope.ResolveVariable(node.Name);
                 var definition = (VariableDeclaration)_parent._symbolTable.Declarations[variable];
 
                 if (node.UsedAsAddress)

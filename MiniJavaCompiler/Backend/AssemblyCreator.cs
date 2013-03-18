@@ -86,7 +86,7 @@ namespace MiniJavaCompiler.BackEnd
                     case VariableDeclaration.Kind.Class:
                         var fieldBuilder = _currentType.DefineField(node.Name,
                             _parent.BuildType(node.TypeName, node.IsArray), FieldAttributes.Private);
-                        var sym = _parent._symbolTable.Scopes[node].ResolveVariable(node.Name);
+                        var sym = node.Scope.ResolveVariable(node.Name);
                         _parent._fields[sym] = fieldBuilder;
                         break;
                 }
@@ -103,7 +103,7 @@ namespace MiniJavaCompiler.BackEnd
                 methodBuilder.SetReturnType(GetReturnType(node));
                 methodBuilder.SetParameters(GetParameterTypes(node));
 
-                var sym = _parent._symbolTable.Scopes[node].ResolveMethod(node.Name);
+                var sym = node.Scope.ResolveMethod(node.Name);
                 _parent._methods[sym] = methodBuilder;
 
                 _currentMethod = methodBuilder;
