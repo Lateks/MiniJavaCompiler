@@ -32,19 +32,11 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 return _checkOK;
             }
 
-            public override void Visit(Program node) { }
-
             public override void Visit(VariableDeclaration node)
             {
-                var typeSym = _parent._symbolTable.ResolveTypeName(node.TypeName, node.IsArray);
-                if (typeSym == null)
+                if (node.Type is ErrorType)
                 {
-                    node.Type = ErrorType.GetInstance();
                     _checkOK = false;
-                }
-                else
-                {
-                    node.Type = typeSym.Type;
                 }
             }
 
@@ -145,13 +137,9 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
 
             public override void Visit(MethodDeclaration node)
             {
-                if (node.TypeName == MiniJavaInfo.VoidType)
+                if (node.ReturnType is ErrorType)
                 {
-                    node.ReturnType = VoidType.GetInstance();
-                }
-                else
-                {
-                    node.ReturnType = _parent._symbolTable.ResolveTypeName(node.TypeName, node.IsArray).Type;
+                    _checkOK = false;
                 }
             }
 

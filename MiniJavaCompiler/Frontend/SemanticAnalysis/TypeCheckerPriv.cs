@@ -207,7 +207,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 {
                     var methodFormal = method.Formals[i].Type;
                     var superFormal = superClassMethod.Formals[i].Type;
-                    // The method's formal parameter may not be a subtype of the
+                    // The method's formal parameter cannot be a subtype of the
                     // superclass method's formal parameter type:
                     // http://docs.oracle.com/javase/specs/jls/se7/html/jls-8.html#jls-8.4.2
                     // (This would be overloading.)
@@ -267,8 +267,8 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 {
                     var returnType = _returnTypes.Pop();
                     if (!returnType.IsAssignableTo(method.Type))
-                    {   // The type of object returned by the return statement must match the method's
-                        // declared return type.
+                    {   // The type of object returned by the return statement
+                        // must match the method's declared return type.
                         ReportError(ErrorTypes.TypeError,
                             String.Format("Cannot convert expression of type {0} to {1}.",
                             returnType.Name, method.Type.Name), node);

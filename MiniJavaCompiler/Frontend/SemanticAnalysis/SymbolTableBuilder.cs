@@ -184,8 +184,8 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
         {
             Debug.Assert(CurrentScope is IVariableScope);
 
-            var variableType = CheckDeclaredType(node);
-            var variableSymbol = new VariableSymbol(node.Name, variableType, CurrentScope);
+            node.Type = CheckDeclaredType(node);
+            var variableSymbol = new VariableSymbol(node.Name, node.Type, CurrentScope);
             if ((CurrentScope as IVariableScope).Define(variableSymbol))
             {
                 _symbolTable.Declarations.Add(variableSymbol, node);
@@ -201,9 +201,9 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
         {
             Debug.Assert(CurrentScope is IMethodScope);
 
-            var methodReturnType = CheckDeclaredType(node);
+            node.ReturnType = CheckDeclaredType(node);
             var methodScope = (IMethodScope) CurrentScope;
-            var methodSymbol = new MethodSymbol(node.Name, methodReturnType, methodScope, node.IsStatic);
+            var methodSymbol = new MethodSymbol(node.Name, node.ReturnType, methodScope, node.IsStatic);
             IScope scope = methodSymbol.Scope;
             if (!methodScope.Define(methodSymbol))
             {

@@ -19,7 +19,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
         {
             private SemanticsChecker _parent;
             private readonly Stack<IType> _returnTypes; /* When return statements are encountered, the types of
-                                                         * the expressions they return will be stored here and
+                                                         * the expressions they return are stored here and
                                                          * checked when exiting the method declaration.
                                                          */
             private bool _checkOK;
