@@ -434,5 +434,16 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
             Assert.That(_errorLog.Errors.Count, Is.EqualTo(1));
             Assert.That(_errorLog.Errors[0].ToString(), Is.StringContaining("Unexpected token '#'"));
         }
+
+        [Test]
+        public void EndOfFileInTheMiddleOfAVariableDeclaration()
+        {
+            string program = "class Foo {\n" +
+                             "\t public static void main() { A[";
+            SetUpParser(program);
+            Assert.Throws<CompilationError>(() => _parser.Parse());
+            Assert.That(_errorLog.Errors.Count, Is.EqualTo(1));
+            Assert.That(_errorLog.Errors[0].ToString(), Is.StringContaining("Reached end of file"));
+        }
     }
 }

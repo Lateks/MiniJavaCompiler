@@ -130,7 +130,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                     var node = (SyntaxElement) _symbolTable.Declarations[typeSymbol];
                     ReportError(
                         ErrorTypes.CyclicInheritance,
-                        String.Format("cyclic inheritance involving {0}",
+                        String.Format("Cyclic inheritance involving {0}.",
                         typeSymbol.Type.Name), node);
                     cyclicInheritanceFound = true;
                 }

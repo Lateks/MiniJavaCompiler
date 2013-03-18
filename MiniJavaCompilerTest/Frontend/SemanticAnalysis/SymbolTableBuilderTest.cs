@@ -116,7 +116,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                              "}\n";
             Assert.False(BuildSymbolTableFor(program));
             Assert.That(_errors.Count, Is.EqualTo(1));
-            Assert.That(_errors.Errors[0].Content, Is.StringContaining("cyclic inheritance involving Foo"));
+            Assert.That(_errors.Errors[0].Content, Is.StringContaining("Cyclic inheritance involving Foo"));
         }
 
         [Test]
@@ -141,9 +141,9 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                              "} \n";
             Assert.False(BuildSymbolTableFor(program));
             Assert.That(_errors.Count, Is.EqualTo(3));
-            Assert.That(_errors.Errors[0].Content, Is.StringContaining("cyclic inheritance involving Foo"));
-            Assert.That(_errors.Errors[1].Content, Is.StringContaining("cyclic inheritance involving Bar"));
-            Assert.That(_errors.Errors[2].Content, Is.StringContaining("cyclic inheritance involving Baz"));
+            Assert.That(_errors.Errors[0].Content, Is.StringContaining("Cyclic inheritance involving Foo"));
+            Assert.That(_errors.Errors[1].Content, Is.StringContaining("Cyclic inheritance involving Bar"));
+            Assert.That(_errors.Errors[2].Content, Is.StringContaining("Cyclic inheritance involving Baz"));
         }
 
         [Test]

@@ -159,7 +159,7 @@ namespace MiniJavaCompilerTest.FrontEndTest
             Assert.NotNull(syntaxTree); // syntax analysis was ok
             Assert.IsNull(symbolTable);
             Assert.That(frontend.GetErrors(), Is.Not.Empty);
-            Assert.That(frontend.GetErrors().Last().ToString(), Is.StringContaining("missing return statement in method ComputeFac"));
+            Assert.That(frontend.GetErrors().Last().ToString(), Is.StringContaining("Missing return statement in method ComputeFac"));
             reader.Close();
         }
 
@@ -183,7 +183,7 @@ namespace MiniJavaCompilerTest.FrontEndTest
             Assert.NotNull(syntaxTree); // syntax analysis was ok
             Assert.IsNull(symbolTable);
             Assert.That(frontend.GetErrors(), Is.Not.Empty);
-            Assert.That(frontend.GetErrors().Last().ToString(), Is.StringContaining("cyclic inheritance involving B"));
+            Assert.That(frontend.GetErrors().Last().ToString(), Is.StringContaining("Cyclic inheritance involving B"));
             reader.Close();
         }
 
@@ -205,7 +205,7 @@ namespace MiniJavaCompilerTest.FrontEndTest
             var errors = frontend.GetErrors();
             Assert.AreEqual(2, errors.Count);
             Assert.That(errors[0].Content, Is.StringContaining("Unknown type Fac"));
-            Assert.That(errors[1].Content, Is.StringContaining("Cannot resolve symbol ComputeFac"));
+            Assert.That(errors[1].Content, Is.StringContaining("Cannot find symbol ComputeFac"));
             reader.Close();
         }
 

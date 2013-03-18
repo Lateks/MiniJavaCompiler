@@ -24,7 +24,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("cannot return a value from a method whose result type is void"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot return a value from a method whose result type is void"));
             }
 
             [Test]
@@ -40,7 +40,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("missing return statement"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Missing return statement"));
             }
 
             [Test]
@@ -94,7 +94,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("missing return statement"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Missing return statement"));
             }
 
             [Test]
@@ -117,7 +117,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("missing return statement"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Missing return statement"));
             }
 
             [Test]
@@ -138,7 +138,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("missing return statement"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Missing return statement"));
             }
 
             [Test]

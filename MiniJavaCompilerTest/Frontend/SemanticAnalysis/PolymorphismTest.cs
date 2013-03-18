@@ -45,7 +45,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("incompatible types").
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Incompatible types").
                     And.StringContaining("found A").And.StringContaining("expected B"));
             }
 
@@ -88,7 +88,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot resolve").
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot find").
                     And.StringContaining("foo"));
             }
 
@@ -104,7 +104,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("incompatible types").
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Incompatible types").
                     And.StringContaining("found B[]").And.StringContaining("expected A[]"));
             }
 

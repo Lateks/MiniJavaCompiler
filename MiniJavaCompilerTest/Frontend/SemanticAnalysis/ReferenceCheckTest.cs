@@ -96,7 +96,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot resolve symbol bar"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot find symbol bar"));
             }
 
             [Test]
@@ -114,7 +114,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("void cannot be dereferenced"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Void cannot be dereferenced"));
             }
 
             [Test]
@@ -131,7 +131,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot resolve symbol bar"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot find symbol bar"));
             }
 
             [Test]
@@ -200,7 +200,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("resolve").
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("find").
                     And.StringContaining("bar"));
                 Assert.AreEqual(6, errors.Errors[0].Row);
             }
@@ -316,7 +316,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot resolve").And.StringContaining("foo"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot find").And.StringContaining("foo"));
             }
 
             [Test]
@@ -331,7 +331,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot resolve").And.StringContaining("foo"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot find").And.StringContaining("foo"));
 
             }
 
@@ -349,7 +349,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot resolve symbol foo"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot find symbol foo"));
             }
 
             [Test]
@@ -366,7 +366,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot resolve symbol foo"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot find symbol foo"));
             }
 
             [Test]
@@ -384,7 +384,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot resolve symbol foo"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot find symbol foo"));
             }
 
             [Test]
@@ -440,8 +440,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(2, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot resolve symbol A"));
-                Assert.That(errors.Errors[1].ToString(), Is.StringContaining("Cannot resolve symbol foo"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot find symbol A"));
+                Assert.That(errors.Errors[1].ToString(), Is.StringContaining("Cannot find symbol foo"));
             }
 
             [Test]
@@ -454,8 +454,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(2, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot resolve symbol A"));
-                Assert.That(errors.Errors[1].ToString(), Is.StringContaining("Cannot resolve symbol length")); // method cannot be resolved because type could not be found
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot find symbol A"));
+                Assert.That(errors.Errors[1].ToString(), Is.StringContaining("Cannot find symbol length")); // method cannot be resolved because type could not be found
             }
         }
     }

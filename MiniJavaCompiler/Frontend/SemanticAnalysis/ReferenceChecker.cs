@@ -5,6 +5,7 @@ using MiniJavaCompiler.Support.SymbolTable.Types;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 
@@ -62,7 +63,9 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 {
                     ReportError(
                         ErrorTypes.LvalueReference,
-                        String.Format("{0} cannot be dereferenced.", methodOwnerType.Name), node);
+                        String.Format("{0} cannot be dereferenced.",
+                        CultureInfo.CurrentCulture.TextInfo.ToTitleCase(methodOwnerType.Name)),
+                        node);
                     node.Type = ErrorType.GetInstance();
                     return;
                 }
@@ -79,7 +82,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 else
                 {
                     ReportError(ErrorTypes.MethodReference,
-                        String.Format("Cannot resolve symbol {0}.", node.MethodName), node);
+                        String.Format("Cannot find symbol {0}.", node.MethodName), node);
                     node.Type = ErrorType.GetInstance();
                 }
             }
@@ -125,7 +128,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 if (symbol == null || !VariableDeclaredBeforeReference(symbol, node))
                 {
                     ReportError(ErrorTypes.LvalueReference,
-                        String.Format("Cannot resolve symbol {0}.", node.Name), node);
+                        String.Format("Cannot find symbol {0}.", node.Name), node);
                 }
                 else if (symbol != null && symbol.Type is ErrorType)
                 {
@@ -182,7 +185,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                     if (!_parent._errors.HasErrorReportForNode(ErrorTypes.TypeReference, node))
                     {
                         ReportError(ErrorTypes.TypeReference,
-                            String.Format("Cannot resolve symbol {0}.", node.CreatedTypeName), node);
+                            String.Format("Cannot find symbol {0}.", node.CreatedTypeName), node);
                     }
                     else
                     {

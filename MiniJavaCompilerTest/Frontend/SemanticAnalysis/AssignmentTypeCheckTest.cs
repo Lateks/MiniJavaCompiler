@@ -61,7 +61,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("incompatible types").And.
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Incompatible types").And.
                     StringContaining("A").And.StringContaining("B"));
             }
 
@@ -83,7 +83,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("incompatible types").And.
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Incompatible types").And.
                     StringContaining("int").And.StringContaining("boolean"));
             }
 
@@ -101,7 +101,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("incompatible types").And.
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Incompatible types").And.
                     StringContaining("A").And.StringContaining("boolean"));
             }
 
@@ -119,7 +119,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("incompatible types").And.
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Incompatible types").And.
                     StringContaining("A").And.StringContaining("A[]"));
             }
 
@@ -137,7 +137,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("incompatible types").And.
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Incompatible types").And.
                     StringContaining("expected A").And.StringContaining("found A[]"));
             }
 
@@ -156,7 +156,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("incompatible types").And.
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Incompatible types").And.
                     StringContaining("A").And.StringContaining("B"));
             }
 
@@ -189,7 +189,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("incompatible types").
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Incompatible types").
                     And.StringContaining("expected int").And.StringContaining("found void"));
             }
         }

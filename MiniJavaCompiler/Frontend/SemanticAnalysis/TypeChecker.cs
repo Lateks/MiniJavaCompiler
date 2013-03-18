@@ -86,7 +86,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                         Debug.Assert(!(lhsType is ErrorType || rhsType is ErrorType));
                         ReportError(
                             ErrorTypes.TypeError,
-                            String.Format("incompatible types (expected {0}, found {1}).",
+                            String.Format("Incompatible types (expected {0}, found {1}).",
                             lhsType.Name, rhsType.Name), node);
                     }
                 }
@@ -183,7 +183,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 {
                     ReportError(
                         ErrorTypes.UninitializedLocal,
-                        String.Format("variable {0} might not have been initialized",
+                        String.Format("Variable {0} might not have been initialized",
                         node.Name), node, declaration);
                 }
             }
@@ -218,31 +218,21 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                     {
                         ReportError(
                             ErrorTypes.TypeError,
-                            String.Format("cannot return a value from a method whose result type is {0}",
+                            String.Format("Cannot return a value from a method whose result type is {0}.",
                             method.Type.Name), node);
                         _returnTypes.Clear();
                     }
                 }
-                else if (numReturnStatements == 0)
+                else if (numReturnStatements == 0 || !AllBranchesReturnAValue(node))
                 {
                     ReportError(
                         ErrorTypes.TypeError,
-                        String.Format("missing return statement in method {0}.",
+                        String.Format("Missing return statement in method {0}.",
                         method.Name), node);
                 }
-                else
-                {
-                    if (!AllBranchesReturnAValue(node))
-                    {
-                        ReportError(
-                            ErrorTypes.TypeError,
-                            String.Format("missing return statement in method {0}.",
-                            method.Name), node);
-                    }
-                    // Return types can be checked even if some branches were missing
-                    // a return statement.
-                    CheckReturnTypes(node, method);
-                }
+                // Return types can be checked even if some branches were missing
+                // a return statement.
+                CheckReturnTypes(node, method);
             }
         }
     }

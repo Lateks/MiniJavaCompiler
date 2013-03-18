@@ -188,7 +188,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                     if (!callParamType.IsAssignableTo(formalParamType))
                     {
                         var msg = String.Format(
-                            "Wrong type of argument to method {0}. Expected {1} but got {2}.",
+                            "Wrong type of argument to method {0}. Expected {1} but found {2}.",
                             node.MethodName, formalParamType.Name, callParamType.Name);
                         ReportError(ErrorTypes.TypeError, msg, node);
                     }

@@ -17,7 +17,7 @@ namespace MiniJavaCompiler.Support.SymbolTable.Types
     public class ErrorType : IType
     {
         private static readonly ErrorType Instance = new ErrorType();
-        public string Name { get { return "RESOLVE_ERROR"; } }
+        public string Name { get { return "TYPE_ERROR"; } }
 
         private ErrorType() { }
 
