@@ -13,7 +13,7 @@ namespace MiniJavaCompiler.FrontEnd.SyntaxAnalysis
         IToken Peek();
 
         // Attempts to peek some steps forward (steps must be a positive number).
-        // Will throw an exception if there is not enough input.
+        // Will throw an OutOfInput exception if there is not enough input.
         IToken PeekForward(int steps);
 
         /* Checks that the current input token is of the expected type and matches the expected value.
@@ -45,17 +45,10 @@ namespace MiniJavaCompiler.FrontEnd.SyntaxAnalysis
 
     public class LexicalError : Exception { }
 
-    public class SyntaxError : Exception
+    public class SyntaxError : CodeError
     {
-        public int Row { get; private set; }
-        public int Col { get; private set; }
-
         public SyntaxError(string message, int row, int col)
-            : base(message)
-        {
-            Row = row;
-            Col = col;
-        }
+            : base(message, row, col) { }
     }
 
     // This class handles matching individual tokens, reporting lexical errors and peeking at input.
@@ -238,8 +231,8 @@ namespace MiniJavaCompiler.FrontEnd.SyntaxAnalysis
                                ? TokenDescriptions.Describe(typeof(TExpectedType))
                                : "'" + expectedValue + "'";
             if (token is EndOfFile)
-                return new SyntaxError(String.Format("Reached end of file while parsing for {0}.", expected),
-                                       token.Row, token.Col);
+                return new OutOfInput(String.Format("Reached end of file while parsing for {0}.", expected),
+                    token.Row, token.Col);
             else
             {
                 return new SyntaxError(String.Format("Expected {0} but got {1} '{2}'.", expected,

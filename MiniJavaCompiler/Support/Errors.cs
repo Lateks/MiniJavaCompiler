@@ -24,6 +24,22 @@ namespace MiniJavaCompiler.Support
     // to indicate failure.
     public class CompilationError : Exception { }
 
+    // And exception with row and column information.
+    // Used as a base class for different frontend exceptions
+    // that require row and column information.
+    public abstract class CodeError : Exception
+    {
+        public int Row { get; private set; }
+        public int Col { get; private set; }
+
+        public CodeError(string message, int row, int col)
+            : base(message)
+        {
+            Row = row;
+            Col = col;
+        }
+    }
+
     public interface IErrorReporter
     {
         void ReportError(ErrorTypes type, string message, int row, int col);
@@ -96,6 +112,8 @@ namespace MiniJavaCompiler.Support
             get;
             private set;
         }
+
+        // The node where the problem was detected.
         public SyntaxElement ProblemNode
         {
             get;

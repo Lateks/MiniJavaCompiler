@@ -14,9 +14,10 @@ namespace MiniJavaCompiler.FrontEnd.LexicalAnalysis
 
     // This exception is thrown by the scanner if NextToken is called after
     // end of file.
-    public class OutOfInput : Exception
+    public class OutOfInput : CodeError
     {
-        public OutOfInput(string message) : base(message) { }
+        public OutOfInput(string message, int row, int col)
+            : base(message, row, col) { }
     }
 
     public class MiniJavaScanner : ITokenizer
@@ -43,7 +44,7 @@ namespace MiniJavaCompiler.FrontEnd.LexicalAnalysis
         {
             if (_tokens.Count > 0)
                 return _tokens.Dequeue();
-            throw new OutOfInput("Reached end of file while parsing.");
+            throw new OutOfInput("Reached end of file while parsing.", _input.Row, _input.Col);
         }
 
         /* Passes through the code once and builds a queue of tokens.

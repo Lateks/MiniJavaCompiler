@@ -105,21 +105,20 @@ namespace MiniJavaCompiler.FrontEnd.SyntaxAnalysis
                 else
                 {
                     var token = Input.Consume<IToken>();
-                    var errorMessage = "";
-                    if (token is ErrorToken)
+                    if (token is EndOfFile)
                     {
-                        errorMessage = "Encountered a lexical error while parsing an expression.";
+                        throw new OutOfInput("Reached end of file while parsing an expression.", token.Row, token.Col);
                     }
-                    else if (token is EndOfFile)
+                    else if (token is ErrorToken)
                     {
-                        errorMessage = "Reached end of file while parsing an expression.";
+                        throw new LexicalError();
                     }
                     else
                     {
-                        errorMessage = String.Format("Invalid start token '{0}' of type {1} for an expression.",
+                        var errorMessage = String.Format("Invalid start token '{0}' of type {1} for an expression.",
                             token.Lexeme, TokenDescriptions.Describe(token.GetType()));
+                        throw new SyntaxError(errorMessage, token.Row, token.Col);
                     }
-                    throw new SyntaxError(errorMessage, token.Row, token.Col);
                 }
             }
             catch (SyntaxError e)
@@ -174,8 +173,8 @@ namespace MiniJavaCompiler.FrontEnd.SyntaxAnalysis
                 case "false":
                     return MakeBooleanLiteral(false);
                 default:
-                    throw new SyntaxError(String.Format("Invalid keyword '{0}' starting an expression.",
-                        token.Lexeme, TokenDescriptions.Describe(token.GetType())), token.Row, token.Col);
+                    throw new SyntaxError(String.Format("Invalid {0} '{1}' starting an expression.",
+                        TokenDescriptions.Describe(token.GetType()), token.Lexeme), token.Row, token.Col);
             }
         }
 

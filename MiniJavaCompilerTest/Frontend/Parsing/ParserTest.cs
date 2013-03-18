@@ -21,7 +21,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
             if (_tokens.Count > 0)
                 return _tokens.Dequeue();
             else
-                throw new OutOfInput("Ran out of input tokens.");
+                throw new OutOfInput("Ran out of input tokens.", -1, -1);
         }
     }
 

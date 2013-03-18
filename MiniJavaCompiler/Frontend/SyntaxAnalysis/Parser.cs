@@ -64,7 +64,7 @@ namespace MiniJavaCompiler.FrontEnd.SyntaxAnalysis
             catch (OutOfInput e)
             {
                 if (DebugMode) throw;
-                ErrorReporter.ReportError(ErrorTypes.Lexical, e.Message, -1, -1);
+                ErrorReporter.ReportError(ErrorTypes.Lexical, e.Message, e.Row, e.Col);
                 throw new CompilationError();
             }
 
@@ -391,21 +391,20 @@ namespace MiniJavaCompiler.FrontEnd.SyntaxAnalysis
                 {
                     followSet = new string[] { ";", "}" }; // If we're here, we don't know what kind of a declaration was attempted, so we just let
                     var token = Input.Consume<IToken>();   // the recovery routine parse until whichever punctuation token comes first and try to continue.
-                    string errorMsg = "";
                     if (token is EndOfFile)
                     {
-                        errorMsg = String.Format("Reached end of file while parsing a declaration.");
+                        throw new OutOfInput("Reached end of file while parsing a declaration.", token.Row, token.Col);
                     }
                     else if (token is ErrorToken)
                     {
-                        errorMsg = String.Format("Lexical error while parsing a declaration.");
+                        throw new LexicalError();
                     }
                     else
                     {
-                        errorMsg = String.Format("Invalid token '{0}' of type {1} starting a declaration.",
+                        var errorMsg = String.Format("Invalid token '{0}' of type {1} starting a declaration.",
                             token.Lexeme, TokenDescriptions.Describe(token.GetType()));
+                        throw new SyntaxError(errorMsg, token.Row, token.Col);
                     }
-                    throw new SyntaxError(errorMsg, token.Row, token.Col);
                 }
             }
             catch (SyntaxError e)
