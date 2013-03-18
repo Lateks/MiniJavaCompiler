@@ -179,7 +179,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                     declaration.IsInitialized = true;
                 }
                 else if (!declaration.IsInitialized && !ErrorsAlreadyReported(node, declaration))
-                {
+                {   // This error is reported only once per variable declaration.
                     ReportError(
                         ErrorTypes.UninitializedLocal,
                         String.Format("Variable {0} might not have been initialized",
@@ -200,7 +200,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 {
                     ReportError(
                         ErrorTypes.TypeError,
-                        String.Format("Cannot fit integer literal {0} into a 32-bit integer variable.",
+                        String.Format("Integer number {0} too large.",
                         node.Value), node);
                 }
                 node.IntValue = value;

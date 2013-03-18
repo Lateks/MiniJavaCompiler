@@ -62,7 +62,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 Assert.That(errors.Errors[9].ToString(), Is.StringContaining("Variable foo might not have been initialized"));
                 Assert.That(errors.Errors[10].ToString(), Is.StringContaining("Cannot apply operator + on arguments of type int and boolean"));
                 Assert.That(errors.Errors[11].ToString(), Is.StringContaining("Incompatible types (expected int, found A)"));
-                Assert.That(errors.Errors[12].ToString(), Is.StringContaining("Cannot fit integer literal 99999999999999999 into a 32-bit integer variable"));
+                Assert.That(errors.Errors[12].ToString(), Is.StringContaining("Integer number 99999999999999999 too large."));
                 Assert.That(errors.Errors[13].ToString(), Is.StringContaining("Wrong number of arguments to method alwaysTrue (1 for 0)"));
                 Assert.That(errors.Errors[14].ToString(), Is.StringContaining("Cannot apply operator && on arguments of type int and boolean"));
                 Assert.That(errors.Errors[15].ToString(), Is.StringContaining("Cannot apply operator || on arguments of type boolean and int"));

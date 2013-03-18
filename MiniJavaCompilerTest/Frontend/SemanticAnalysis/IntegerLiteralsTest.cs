@@ -21,7 +21,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "   public static void main() {\n" +
                                  "     int foo;\n" +
                                  "     foo = 0;\n" +
-                                 "     foo = 00115;\n" + // this would be an octal number literal in Java but is interpreted as int (with leading zeros dropped) in MiniJava
+                                 "     foo = 00115;\n" + // this would be an octal integer literal in Java but is interpreted as int (with leading zeros dropped) in this implementation
                                  "     foo = 999999999;\n" +
                                  "     foo = 2147483647;\n" +
                                  "}\n" +
@@ -44,8 +44,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("2147483648").
-                    And.StringContaining("Cannot fit").And.StringContaining("32-bit integer"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("2147483648")
+                    .And.StringContaining("too large"));
             }
         }
     }
