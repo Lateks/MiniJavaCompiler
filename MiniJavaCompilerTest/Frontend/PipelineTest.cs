@@ -203,9 +203,8 @@ namespace MiniJavaCompilerTest.FrontEndTest
             Assert.NotNull(syntaxTree); // syntax analysis was ok
             Assert.IsNull(symbolTable);
             var errors = frontend.GetErrors();
-            Assert.AreEqual(2, errors.Count);
+            Assert.AreEqual(1, errors.Count);
             Assert.That(errors[0].Content, Is.StringContaining("Unknown type Fac"));
-            Assert.That(errors[1].Content, Is.StringContaining("Cannot find symbol ComputeFac"));
             reader.Close();
         }
 

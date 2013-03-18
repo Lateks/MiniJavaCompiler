@@ -431,6 +431,27 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             }
 
             [Test]
+            public void DoesNotReportReferenceErrorForMethodIfTypeNotResolved()
+            {
+                string program = "class Foo {\n" +
+                  "  public static void main()\n" +
+                  "  {\n" +
+                  "    new A().foo();\n" +
+                  "    A foo;\n" +
+                  "    foo.foo();\n" +
+                  "  }\n" +
+                 "}\n";
+                IErrorReporter errors;
+                var checker = SetUpTypeAndReferenceChecker(program, out errors);
+                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.AreEqual(2, errors.Count);
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Unknown type A.")); // instance creation error (no error about "A foo;" because declarations are checked in symbol table building phase)
+                Assert.That(errors.Errors[1].ToString(), Is.StringContaining("Variable foo might not have been initialized."));
+                // No errors about symbol foo() not being found because the compiler
+                // does not even know where to start looking...
+            }
+
+            [Test]
             public void TypeMustBeResolvableInInstanceCreation()
             {
                 string program = "class Foo {\n" +
@@ -439,9 +460,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
-                Assert.AreEqual(2, errors.Count);
+                Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Unknown type A"));
-                Assert.That(errors.Errors[1].ToString(), Is.StringContaining("Cannot find symbol foo"));
             }
 
             [Test]
@@ -453,9 +473,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
-                Assert.AreEqual(2, errors.Count);
+                Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Unknown type A"));
-                Assert.That(errors.Errors[1].ToString(), Is.StringContaining("Cannot find symbol length")); // method cannot be resolved because type could not be found
             }
 
             [Test]
@@ -467,9 +486,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
-                Assert.AreEqual(2, errors.Count);
+                Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Illegal type void for array elements."));
-                Assert.That(errors.Errors[1].ToString(), Is.StringContaining("Cannot find symbol length"));
             }
         }
     }

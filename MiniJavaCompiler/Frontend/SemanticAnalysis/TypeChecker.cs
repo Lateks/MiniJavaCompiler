@@ -182,7 +182,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 {   // This error is reported only once per variable declaration.
                     ReportError(
                         ErrorTypes.UninitializedLocal,
-                        String.Format("Variable {0} might not have been initialized",
+                        String.Format("Variable {0} might not have been initialized.",
                         node.Name), node, declaration);
                 }
             }

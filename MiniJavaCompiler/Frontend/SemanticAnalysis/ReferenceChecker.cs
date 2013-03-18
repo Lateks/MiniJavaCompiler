@@ -60,7 +60,10 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                         String.Format("{0} cannot be dereferenced.",
                         CultureInfo.CurrentCulture.TextInfo.ToTitleCase(methodOwnerType.Name)),
                         node);
-                    node.Type = ErrorType.GetInstance();
+                }
+                else if (methodOwnerType == ErrorType.GetInstance())
+                {
+                    _checkOK = false; // do not check the method reference
                 }
                 else
                 {
@@ -78,9 +81,9 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                     {
                         ReportError(ErrorTypes.MethodReference,
                             String.Format("Cannot find symbol {0}.", node.MethodName), node);
-                        node.Type = ErrorType.GetInstance();
                     }
                 }
+                node.Type = node.Type ?? ErrorType.GetInstance();
             }
 
             public override void Visit(InstanceCreationExpression node)

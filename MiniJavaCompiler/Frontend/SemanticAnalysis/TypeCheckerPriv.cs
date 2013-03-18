@@ -130,7 +130,9 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             private void ValidateMethodCall(MethodInvocation node)
             {
                 if (node.MethodOwner.Type is ArrayType || node.ReferencedMethod == null)
-                {
+                {   // Array's length method does not need to be checked because it cannot
+                    // take parameters. If ReferencedMethod is set to null, the method
+                    // could not be resolved and this error has already been reported.
                     return;
                 }
 
