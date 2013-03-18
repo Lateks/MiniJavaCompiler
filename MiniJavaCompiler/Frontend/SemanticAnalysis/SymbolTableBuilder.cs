@@ -57,7 +57,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 fatalError = true;
             }
 
-            if (fatalError)
+            if (fatalError) // does not throw a compilation error unless error is fatal
             {
                 throw new CompilationError();
             }

@@ -42,7 +42,7 @@ namespace MiniJavaCompiler.FrontEnd
                 return false;
             }
             symbolTable = ConstructSymbolTableAndCheckProgram(abstractSyntaxTree);
-            return symbolTable != null;
+            return symbolTable != null && _errorLog.Count == 0;
         }
 
         /* Performs lexical and semantic analysis. Returns null if either phase fails.
@@ -72,8 +72,8 @@ namespace MiniJavaCompiler.FrontEnd
          * 1. Building a symbol table. This checks that there are no name clashes in
          *    type declarations or cyclic dependencies. Cyclic dependencies are treated
          *    as fatal errors and will lead to type and reference checks not being run.
-         *    However, the compiler does proceed to the next phase even if name clashes
-         *    are found - though of course this may result in strange error reports.
+         *    If name clashes are found, the compiler will not even proceed to check
+         *    cyclic dependencies. This is also treated as a fatal error.
          * 2. Semantic checks. This phase checks first the validity of name references
          *    and then performs type checks on all expressions. References to possibly
          *    uninitialized variables are also detected.
