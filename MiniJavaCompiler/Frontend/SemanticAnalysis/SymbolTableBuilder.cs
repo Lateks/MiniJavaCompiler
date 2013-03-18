@@ -12,10 +12,11 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
 {
     public partial class SymbolTableBuilder : NodeVisitorBase
     {
-        private readonly SymbolTable _symbolTable;
+        private readonly GlobalScope _globalScope;
         private readonly Program _syntaxTree;
         private readonly IErrorReporter _errorReporter;
         private readonly Stack<IScope> _scopeStack;
+        private IEnumerable<string> _scalarTypeNames;
 
         private IScope CurrentScope
         {
@@ -36,19 +37,18 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
         {
             _errorReporter = errorReporter;
             _syntaxTree = node;
-
-            _symbolTable = new SymbolTable();
+            _globalScope = new GlobalScope();
 
             _scopeStack = new Stack<IScope>();
         }
 
-        public SymbolTable BuildSymbolTable()
+        public void BuildSymbolTable()
         {
             bool fatalError;
             if (GetTypes())
             {
                 SetupGlobalScope();
-                EnterScope(_symbolTable.GlobalScope);
+                EnterScope(_globalScope);
                 _syntaxTree.Accept(this);
                 fatalError = CheckForCyclicInheritance();
             }
@@ -61,14 +61,11 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             {
                 throw new CompilationError();
             }
-            return _symbolTable;
         }
 
         private bool GetTypes()
         {
-            IEnumerable<string> types;
-            bool success = new TypeSetBuilder(_syntaxTree, _errorReporter).BuildTypeSet(out types);
-            _symbolTable.ScalarTypeNames = types;
+            bool success = new TypeSetBuilder(_syntaxTree, _errorReporter).BuildTypeSet(out _scalarTypeNames);
             return success;
         }
 
@@ -80,13 +77,13 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
 
         private void SetUpUserDefinedTypes()
         {
-            foreach (var typeName in _symbolTable.ScalarTypeNames)
+            foreach (var typeName in _scalarTypeNames)
             {
                 // Note: classes are set up without superclass information because
                 // all class symbols need to be created before superclass relations
                 // can be set.
-                var sym = TypeSymbol.MakeScalarTypeSymbol(typeName, _symbolTable.GlobalScope);
-                _symbolTable.GlobalScope.Define(sym);
+                var sym = TypeSymbol.MakeScalarTypeSymbol(typeName, _globalScope);
+                _globalScope.Define(sym);
             }
         }
 
@@ -94,8 +91,8 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
         {
             foreach (var type in MiniJavaInfo.BuiltInTypes())
             {
-                var sym = TypeSymbol.MakeScalarTypeSymbol(type, _symbolTable.GlobalScope);
-                _symbolTable.GlobalScope.Define(sym);
+                var sym = TypeSymbol.MakeScalarTypeSymbol(type, _globalScope);
+                _globalScope.Define(sym);
             }
             SetUpArrayBase();
         }
@@ -103,13 +100,13 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
         private void SetUpArrayBase()
         {
             var anyTypeSym = TypeSymbol.MakeScalarTypeSymbol(
-                MiniJavaInfo.AnyType, _symbolTable.GlobalScope);
-            _symbolTable.GlobalScope.Define(anyTypeSym);
+                MiniJavaInfo.AnyType, _globalScope);
+            _globalScope.Define(anyTypeSym);
             var arrayBaseSym = TypeSymbol.MakeArrayTypeSymbol(
-                (ScalarType)anyTypeSym.Type, _symbolTable.GlobalScope);
-            _symbolTable.GlobalScope.Define(arrayBaseSym);
+                (ScalarType)anyTypeSym.Type, _globalScope);
+            _globalScope.Define(arrayBaseSym);
 
-            var intType = _symbolTable.GlobalScope.ResolveType(MiniJavaInfo.IntType).Type;
+            var intType = _globalScope.ResolveType(MiniJavaInfo.IntType).Type;
             var arrayBaseScope = (IMethodScope)arrayBaseSym.Scope;
 
             foreach (string methodName in MiniJavaInfo.ArrayMethodNames())
@@ -123,8 +120,8 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
         {
             bool cyclicInheritanceFound = false;
             var dependentClasses = new List<string>();
-            foreach (var typeName in _symbolTable.ScalarTypeNames) {
-                var typeSymbol = _symbolTable.ResolveTypeName(typeName);
+            foreach (var typeName in _globalScope.UserDefinedTypeNames) {
+                var typeSymbol = _globalScope.ResolveType(typeName);
                 if (ClassDependsOnSelf((ScalarType)typeSymbol.Type))
                 {
                     var node = (SyntaxElement) typeSymbol.Declaration;
@@ -152,7 +149,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
 
         public override void Visit(Program node)
         {
-            node.Scope = _symbolTable.GlobalScope;
+            node.Scope = _globalScope;
         }
 
         // Detects references to unknown types in class inheritance
@@ -238,9 +235,9 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             // errors.
             if (node.CreatedTypeName != MiniJavaInfo.VoidType)
             {
-                var scalarTypeSymbol = _symbolTable.ResolveTypeName(node.CreatedTypeName);
+                var scalarTypeSymbol = _globalScope.ResolveType(node.CreatedTypeName);
                 if (scalarTypeSymbol != null && node.IsArrayCreation &&
-                    _symbolTable.ResolveTypeName(node.CreatedTypeName, node.IsArrayCreation) == null)
+                    _globalScope.ResolveArrayType(node.CreatedTypeName) == null)
                 {
                     DefineArrayType((ScalarType)scalarTypeSymbol.Type);
                 }
@@ -380,7 +377,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             }
             else
             {
-                var nodeScalarTypeSymbol = _symbolTable.ResolveTypeName(node.TypeName);
+                var nodeScalarTypeSymbol = _globalScope.ResolveType(node.TypeName);
                 if (nodeScalarTypeSymbol == null)
                 {   // Note: this error is also reported when a void type is encountered
                     // for something other than a method declaration.
@@ -400,7 +397,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             IType actualType;
             if (node.IsArray)
             {
-                var arraySymbol = _symbolTable.ResolveTypeName(node.TypeName, node.IsArray);
+                var arraySymbol = _globalScope.ResolveArrayType(node.TypeName);
                 if (arraySymbol == null)
                 {
                     actualType = DefineArrayType(nodeScalarType);
@@ -419,9 +416,9 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
 
         private IType DefineArrayType(ScalarType nodeScalarType)
         {
-            var sym = TypeSymbol.MakeArrayTypeSymbol(nodeScalarType, _symbolTable.GlobalScope);
-            sym.SuperClass = _symbolTable.ResolveTypeName(MiniJavaInfo.AnyType, true);
-            _symbolTable.GlobalScope.Define(sym);
+            var sym = TypeSymbol.MakeArrayTypeSymbol(nodeScalarType, _globalScope);
+            sym.SuperClass = _globalScope.ResolveArrayType(MiniJavaInfo.AnyType);
+            _globalScope.Define(sym);
             return sym.Type;
         }
     }

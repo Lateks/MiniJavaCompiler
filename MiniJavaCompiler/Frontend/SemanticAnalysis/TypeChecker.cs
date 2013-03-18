@@ -125,7 +125,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             public override void Visit(UnaryOperatorExpression node)
             {
                 var op = MiniJavaInfo.GetOperator(node.Operator);
-                var expectedOperandType = _parent._symbolTable.ResolveTypeName(op.OperandType).Type;
+                var expectedOperandType = _parent._symbolTable.ResolveType(op.OperandType).Type;
                 var actualOperandType = node.Operand.Type;
                 if (!actualOperandType.IsAssignableTo(expectedOperandType))
                 {
@@ -159,7 +159,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                         String.Format("Cannot index into expression of type {0}.", arrayType.Name), node);
                 }
                 var indexType = node.IndexExpr.Type;
-                if (!indexType.IsAssignableTo(_parent._symbolTable.ResolveTypeName(MiniJavaInfo.IntType).Type))
+                if (!indexType.IsAssignableTo(_parent._symbolTable.ResolveType(MiniJavaInfo.IntType).Type))
                 {   // Array must be indexed with an expression that evaluates into an int value.
                     ReportError(ErrorTypes.TypeError, "Invalid array index.", node);
                 }

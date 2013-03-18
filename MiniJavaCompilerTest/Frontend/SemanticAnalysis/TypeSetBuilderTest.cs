@@ -4,6 +4,7 @@ using MiniJavaCompiler.FrontEnd.SemanticAnalysis;
 using MiniJavaCompiler.Support;
 using MiniJavaCompiler.Support.AbstractSyntaxTree;
 using NUnit.Framework;
+using MiniJavaCompiler.Support.SymbolTable.Scopes;
 
 namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
 {
@@ -82,7 +83,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
 
             var errorReporter = new ErrorLogger();
             var builder = new SymbolTableBuilder(program, errorReporter);
-            var types = builder.BuildSymbolTable().ScalarTypeNames.ToList();
+            builder.BuildSymbolTable();
+            var types = (program.Scope as GlobalScope).UserDefinedTypeNames.ToList();
             Assert.Contains("Foo", types);
             Assert.Contains("Bar", types);
             Assert.Contains("Baz", types);

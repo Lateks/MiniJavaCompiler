@@ -41,7 +41,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             {
                 if (node.IsArrayCreation)
                 {
-                    var integerType = _parent._symbolTable.ResolveTypeName(MiniJavaInfo.IntType).Type;
+                    var integerType = _parent._symbolTable.ResolveType(MiniJavaInfo.IntType).Type;
                     if (!node.ArraySize.Type.IsAssignableTo(integerType))
                     {
                         ReportError(ErrorTypes.TypeError, "Array size must be numeric.", node);
@@ -224,7 +224,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             private void CheckBinaryOperatorOperands(BinaryOperatorExpression node, IType left, IType right)
             {
                 var op = MiniJavaInfo.GetOperator(node.Operator);
-                var expected = _parent._symbolTable.ResolveTypeName(op.OperandType).Type;
+                var expected = _parent._symbolTable.ResolveType(op.OperandType).Type;
                 if (left.IsAssignableTo(expected) && right.IsAssignableTo(expected))
                 { // Everything OK.
                     return;

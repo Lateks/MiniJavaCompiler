@@ -9,6 +9,7 @@ using MiniJavaCompiler.Support.SymbolTable;
 using MiniJavaCompiler.Support.SymbolTable.Symbols;
 using MiniJavaCompiler.Support.SymbolTable.Types;
 using NUnit.Framework;
+using MiniJavaCompiler.Support.SymbolTable.Scopes;
 
 namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
 {
@@ -16,9 +17,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
     class SymbolTableBuilderTest
     {
         private IErrorReporter _errors;
-        private SymbolTable _symbolTable;
 
-        private bool BuildSymbolTableFor(string program)
+        private bool BuildSymbolTableFor(string program, out GlobalScope symbolTable)
         {
             var reader = new StringReader(program);
             var scanner = new MiniJavaScanner(reader);
@@ -33,11 +33,13 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
 
             try
             {
-                _symbolTable = symbolTableBuilder.BuildSymbolTable();
+                symbolTableBuilder.BuildSymbolTable();
+                symbolTable = syntaxTree.Scope as GlobalScope;
                 return _errors.Count == 0;
             }
             catch (CompilationError)
             {
+                symbolTable = null;
                 return false;
             }
         }
@@ -55,8 +57,9 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                              "     System.out.println(42);\n" +
                              "  } \n" +
                              "} \n\n";
-            Assert.True(BuildSymbolTableFor(program));
-            var fooClass = (TypeSymbol)_symbolTable.GlobalScope.ResolveType("Foo");
+            GlobalScope scope;
+            Assert.True(BuildSymbolTableFor(program, out scope));
+            var fooClass = (TypeSymbol)scope.ResolveType("Foo");
             var fooMethod = fooClass.Scope.ResolveMethod("foo");
             Assert.That(fooMethod.Type, Is.InstanceOf<VoidType>());
         }
@@ -72,7 +75,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                              "class Foo {\n" +
                              "   void foo; \n" +
                              "} \n\n";
-            Assert.False(BuildSymbolTableFor(program));
+            GlobalScope scope;
+            Assert.False(BuildSymbolTableFor(program, out scope));
             Assert.That(_errors.Errors.First().Content, Is.StringContaining("Illegal type void in variable declaration."));
         }
 
@@ -93,9 +97,10 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                              "class Bar extends Foo {\n" +
                              "   int foo; \n" +
                              "} \n";
-            Assert.True(BuildSymbolTableFor(program));
-            var fooClass = (TypeSymbol)_symbolTable.GlobalScope.ResolveType("Foo");
-            var barClass = (TypeSymbol)_symbolTable.GlobalScope.ResolveType("Bar");
+            GlobalScope scope;
+            Assert.True(BuildSymbolTableFor(program, out scope));
+            var fooClass = (TypeSymbol)scope.ResolveType("Foo");
+            var barClass = (TypeSymbol)scope.ResolveType("Bar");
             Assert.That(barClass.SuperClass, Is.EqualTo(fooClass));
             Assert.That(barClass.Scope.ResolveMethod("foo"), Is.Not.Null);
         }
@@ -114,7 +119,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                              "     return 42; \n" +
                              "  } \n" +
                              "}\n";
-            Assert.False(BuildSymbolTableFor(program));
+            GlobalScope scope;
+            Assert.False(BuildSymbolTableFor(program, out scope));
             Assert.That(_errors.Count, Is.EqualTo(1));
             Assert.That(_errors.Errors[0].Content, Is.StringContaining("Cyclic inheritance involving Foo"));
         }
@@ -139,7 +145,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                              "class Baz extends Bar {\n" +
                              "   int foo; \n" +
                              "} \n";
-            Assert.False(BuildSymbolTableFor(program));
+            GlobalScope scope;
+            Assert.False(BuildSymbolTableFor(program, out scope));
             Assert.That(_errors.Count, Is.EqualTo(3));
             Assert.That(_errors.Errors[0].Content, Is.StringContaining("Cyclic inheritance involving Foo"));
             Assert.That(_errors.Errors[1].Content, Is.StringContaining("Cyclic inheritance involving Bar"));
@@ -155,7 +162,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                  "  } \n" +
                  "} \n\n" +
                  "class Bar extends Baz { } \n\n";
-            Assert.False(BuildSymbolTableFor(program));
+            GlobalScope scope;
+            Assert.False(BuildSymbolTableFor(program, out scope));
             Assert.That(_errors.Count, Is.EqualTo(1));
             Assert.That(_errors.Errors.First().Content, Is.StringContaining("Unknown type Baz"));
         }
@@ -169,7 +177,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                  "  } \n" +
                  "} \n\n" +
                  "class Bar { Baz foo; } \n\n";
-            Assert.False(BuildSymbolTableFor(program));
+            GlobalScope scope;
+            Assert.False(BuildSymbolTableFor(program, out scope));
             Assert.That(_errors.Count, Is.EqualTo(1));
             Assert.That(_errors.Errors.First().Content, Is.StringContaining("Unknown type Baz"));
         }
@@ -183,7 +192,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                  "  } \n" +
                  "} \n\n" +
                  "class Bar { public Baz foo(Buzz foo) { } } \n\n";
-            Assert.False(BuildSymbolTableFor(program));
+            GlobalScope scope;
+            Assert.False(BuildSymbolTableFor(program, out scope));
             Assert.That(_errors.Count, Is.EqualTo(2));
             Assert.That(_errors.Errors[0].Content, Is.StringContaining("Unknown type Baz"));
             Assert.That(_errors.Errors[1].Content, Is.StringContaining("Unknown type Buzz"));
@@ -203,7 +213,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                              "   public int foo() { } \n" +
                              "   public int foo() { } \n" +
                              "} \n\n";
-            Assert.False(BuildSymbolTableFor(program));
+            GlobalScope scope;
+            Assert.False(BuildSymbolTableFor(program, out scope));
             Assert.AreEqual(2, _errors.Errors.Count);
             foreach (var error in _errors.Errors)
             {
@@ -223,7 +234,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                              "     int foo;\n" +
                              "  } \n" +
                              "} \n\n";
-            Assert.True(BuildSymbolTableFor(program));
+            GlobalScope scope;
+            Assert.True(BuildSymbolTableFor(program, out scope));
         }
 
         [Test]
@@ -237,7 +249,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                              "     }\n" +
                              "  } \n" +
                              "} \n\n";
-            Assert.False(BuildSymbolTableFor(program));
+            GlobalScope scope;
+            Assert.False(BuildSymbolTableFor(program, out scope));
             Assert.AreEqual(1, _errors.Errors.Count);
             Assert.That(_errors.Errors[0].Content, Is.StringContaining("Symbol foo is already defined"));
         }
@@ -254,7 +267,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                              "    int foo;" +
                              "  }" +
                              "}";
-            Assert.True(BuildSymbolTableFor(program));
+            GlobalScope scope;
+            Assert.True(BuildSymbolTableFor(program, out scope));
         }
 
         [Test]
@@ -274,7 +288,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                              "   public int foo() { } \n" + // fourth error
                              "   int foo; \n" + // fifth error
                              "} \n\n";
-            Assert.False(BuildSymbolTableFor(program));
+            GlobalScope scope;
+            Assert.False(BuildSymbolTableFor(program, out scope));
             Assert.AreEqual(5, _errors.Errors.Count);
             Assert.AreEqual(4, _errors.Errors.Count(err => err.ToString().Contains("Symbol foo is already defined")));
             Assert.AreEqual(1, _errors.Errors.Count(err => err.ToString().Contains("Symbol bar is already defined")));
@@ -291,7 +306,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                              "class A {\n" +
                              "  public void[] foo() { }\n" +
                              "}";
-            Assert.False(BuildSymbolTableFor(program));
+            GlobalScope scope;
+            Assert.False(BuildSymbolTableFor(program, out scope));
             Assert.AreEqual(2, _errors.Errors.Count);
             Assert.That(_errors.Errors[0].Content, Is.StringContaining("Illegal type void in variable declaration"));
             Assert.That(_errors.Errors[1].Content, Is.StringContaining("Illegal type void for array elements"));
@@ -319,14 +335,15 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                              "     return num_aux;\n" +
                              "   }\n" +
                              "}\n";
-            Assert.True(BuildSymbolTableFor(program));
+            GlobalScope scope;
+            Assert.True(BuildSymbolTableFor(program, out scope));
 
-            var firstClass = _symbolTable.GlobalScope.ResolveType("Factorial");
+            var firstClass = scope.ResolveType("Factorial");
             Assert.That(firstClass, Is.InstanceOf<TypeSymbol>());
 
             Assert.That(firstClass.Scope.ResolveMethod("main"), Is.Not.Null);
 
-            var secondClass = _symbolTable.GlobalScope.ResolveType("Fac");
+            var secondClass = scope.ResolveType("Fac");
             Assert.That(secondClass, Is.Not.Null);
 
             var FacClassScope = (TypeSymbol) secondClass;

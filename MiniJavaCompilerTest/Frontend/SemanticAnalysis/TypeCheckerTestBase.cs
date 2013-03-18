@@ -24,11 +24,10 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             var symbolTableBuilder = new SymbolTableBuilder(syntaxTree, errors);
             Assert.That(errors.Errors, Is.Empty);
 
-            SymbolTable symbolTable = null;
-            Assert.DoesNotThrow(() => symbolTable = symbolTableBuilder.BuildSymbolTable());
+            Assert.DoesNotThrow(() => symbolTableBuilder.BuildSymbolTable());
             errorLog = new ErrorLogger();
 
-            return new SemanticsChecker(syntaxTree, symbolTable, errorLog);
+            return new SemanticsChecker(syntaxTree, errorLog);
         }
     }
 }

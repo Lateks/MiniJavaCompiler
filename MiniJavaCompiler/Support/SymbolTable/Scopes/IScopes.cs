@@ -10,6 +10,7 @@ namespace MiniJavaCompiler.Support.SymbolTable.Scopes
         MethodSymbol ResolveMethod(string name);
         VariableSymbol ResolveVariable(string name);
         TypeSymbol ResolveType(string name);
+        TypeSymbol ResolveArrayType(string name);
         IScope EnclosingScope { get; }
     }
 

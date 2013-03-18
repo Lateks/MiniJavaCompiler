@@ -1,6 +1,7 @@
 ﻿using MiniJavaCompiler.Support;
 using MiniJavaCompiler.Support.AbstractSyntaxTree;
 using MiniJavaCompiler.Support.SymbolTable;
+using MiniJavaCompiler.Support.SymbolTable.Scopes;
 using MiniJavaCompiler.Support.SymbolTable.Symbols;
 using System;
 using System.Collections.Generic;
@@ -16,7 +17,7 @@ namespace MiniJavaCompiler.BackEnd
     {
         private readonly string _moduleName;
         private readonly Program _astRoot;
-        private readonly SymbolTable _symbolTable;
+        private readonly GlobalScope _symbolTable;
         private readonly Dictionary<Type, ConstructorBuilder> _constructors;
 
         // Type, method and field builders need to be stored for reference in
@@ -29,11 +30,13 @@ namespace MiniJavaCompiler.BackEnd
         private AssemblyBuilder _asmBuilder;
         private ModuleBuilder _moduleBuilder;
 
-        public CodeGenerator(SymbolTable symbolTable, Program abstractSyntaxTree, string moduleName)
+        public CodeGenerator(Program abstractSyntaxTree, string moduleName)
         {
+            if (abstractSyntaxTree.Scope == null)
+                throw new ArgumentException("Global scope is undefined.");
             _moduleName = moduleName;
             _astRoot = abstractSyntaxTree;
-            _symbolTable = symbolTable;
+            _symbolTable = (GlobalScope) abstractSyntaxTree.Scope;
             _constructors = new Dictionary<Type, ConstructorBuilder>();
             _types = new Dictionary<string, TypeBuilder>();
             _methods = new Dictionary<MethodSymbol, MethodBuilder>();
@@ -51,7 +54,7 @@ namespace MiniJavaCompiler.BackEnd
 
         private void FinalizeTypes()
         {
-            foreach (var typeName in _symbolTable.ScalarTypeNames)
+            foreach (var typeName in _symbolTable.UserDefinedTypeNames)
             {
                 _types[typeName].CreateType();
             }

@@ -38,7 +38,7 @@ namespace MiniJavaCompiler.BackEnd
             // for later reference.
             private void SetUpScalarTypes()
             {
-                foreach (string typeName in _parent._symbolTable.ScalarTypeNames)
+                foreach (string typeName in _parent._symbolTable.UserDefinedTypeNames)
                 {
                     _parent._types[typeName] = _parent._moduleBuilder.DefineType(
                         typeName, TypeAttributes.Public | TypeAttributes.Class);

@@ -80,5 +80,10 @@ namespace MiniJavaCompiler.Support.SymbolTable.Scopes
             }
             return EnclosingScope == null ? null : EnclosingScope.ResolveType(name);
         }
+
+        public TypeSymbol ResolveArrayType(string scalarTypeName)
+        {
+            return ResolveType(scalarTypeName + "[]");
+        }
     }
 }

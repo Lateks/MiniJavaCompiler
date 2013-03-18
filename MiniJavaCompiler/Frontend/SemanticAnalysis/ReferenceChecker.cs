@@ -94,18 +94,18 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             public override void Visit(UnaryOperatorExpression node)
             {
                 var op = MiniJavaInfo.GetOperator(node.Operator);
-                node.Type = _parent._symbolTable.ResolveTypeName(op.ResultType).Type;
+                node.Type = _parent._symbolTable.ResolveType(op.ResultType).Type;
             }
 
             public override void Visit(BinaryOperatorExpression node)
             {
                 var op = MiniJavaInfo.GetOperator(node.Operator);
-                node.Type = _parent._symbolTable.ResolveTypeName(op.ResultType).Type;
+                node.Type = _parent._symbolTable.ResolveType(op.ResultType).Type;
             }
 
             public override void Visit(BooleanLiteralExpression node)
             {
-                node.Type = _parent._symbolTable.ResolveTypeName(MiniJavaInfo.BoolType).Type;
+                node.Type = _parent._symbolTable.ResolveType(MiniJavaInfo.BoolType).Type;
             }
 
             public override void Visit(ThisExpression node)
@@ -138,7 +138,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
 
             public override void Visit(IntegerLiteralExpression node)
             {
-                node.Type = _parent._symbolTable.ResolveTypeName(MiniJavaInfo.IntType).Type;
+                node.Type = _parent._symbolTable.ResolveType(MiniJavaInfo.IntType).Type;
             }
 
             public override void Visit(MethodDeclaration node)
@@ -165,7 +165,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 }
                 else if (methodOwnerType is ScalarType || methodOwnerType is ArrayType)
                 {
-                    var typeSymbol = _parent._symbolTable.ResolveTypeName(methodOwnerType.Name);
+                    var typeSymbol = _parent._symbolTable.ResolveType(methodOwnerType.Name);
                     method = typeSymbol.Scope.ResolveMethod(node.MethodName);
                 }
                 return method;
@@ -182,7 +182,9 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 }
                 else
                 {
-                    var createdTypeSymbol = _parent._symbolTable.ResolveTypeName(node.CreatedTypeName, node.IsArrayCreation);
+                    var createdTypeSymbol = node.IsArrayCreation ?
+                        _parent._symbolTable.ResolveArrayType(node.CreatedTypeName) :
+                        _parent._symbolTable.ResolveType(node.CreatedTypeName);
                     if (createdTypeSymbol == null)
                     {
                         if (!_parent._errors.HasErrorReportForNode(ErrorTypes.TypeReference, node))

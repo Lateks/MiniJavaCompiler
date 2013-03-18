@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using MiniJavaCompiler.Support.SymbolTable.Scopes;
 
 namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
 {
@@ -18,14 +19,16 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
      */ 
     public partial class SemanticsChecker
     {
-        private readonly SymbolTable _symbolTable;
+        private readonly GlobalScope _symbolTable;
         private readonly Program _programRoot;
         private readonly IErrorReporter _errors;
 
-        public SemanticsChecker(Program program, SymbolTable symbolTable, IErrorReporter errorReporter)
+        public SemanticsChecker(Program program, IErrorReporter errorReporter)
         {
+            if (program.Scope == null)
+                throw new ArgumentException("Global scope is undefined.");
             _programRoot = program;
-            _symbolTable = symbolTable;
+            _symbolTable = (GlobalScope)program.Scope;
             _errors = errorReporter;
         }
 

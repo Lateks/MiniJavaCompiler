@@ -31,10 +31,8 @@ namespace MiniJavaCompilerTest.FrontEndTest
                              "}\n";
             var reader = new StringReader(program);
             var frontend = new FrontEnd(reader);
-            SymbolTable symbolTable;
             Program syntaxTree;
-            Assert.True(frontend.TryProgramAnalysis(out syntaxTree, out symbolTable));
-            Assert.NotNull(symbolTable);
+            Assert.True(frontend.TryProgramAnalysis(out syntaxTree));
             Assert.NotNull(syntaxTree);
             Assert.That(frontend.GetErrors(), Is.Empty);
             reader.Close();
@@ -61,10 +59,8 @@ namespace MiniJavaCompilerTest.FrontEndTest
                              "}\n";
             var reader = new StringReader(program);
             var frontend = new FrontEnd(reader);
-            SymbolTable symbolTable;
             Program syntaxTree;
-            Assert.False(frontend.TryProgramAnalysis(out syntaxTree, out symbolTable));
-            Assert.IsNull(symbolTable);
+            Assert.False(frontend.TryProgramAnalysis(out syntaxTree));
             Assert.IsNull(syntaxTree);
             Assert.That(frontend.GetErrors(), Is.Not.Empty);
             reader.Close();
@@ -91,10 +87,8 @@ namespace MiniJavaCompilerTest.FrontEndTest
                              "}\n";
             var reader = new StringReader(program);
             var frontend = new FrontEnd(reader);
-            SymbolTable symbolTable;
             Program syntaxTree;
-            Assert.False(frontend.TryProgramAnalysis(out syntaxTree, out symbolTable));
-            Assert.IsNull(symbolTable);
+            Assert.False(frontend.TryProgramAnalysis(out syntaxTree));
             Assert.IsNull(syntaxTree);
             Assert.That(frontend.GetErrors(), Is.Not.Empty);
             reader.Close();
@@ -121,11 +115,9 @@ namespace MiniJavaCompilerTest.FrontEndTest
                              "}\n";
             var reader = new StringReader(program);
             var frontend = new FrontEnd(reader);
-            SymbolTable symbolTable;
             Program syntaxTree;
-            Assert.False(frontend.TryProgramAnalysis(out syntaxTree, out symbolTable));
+            Assert.False(frontend.TryProgramAnalysis(out syntaxTree));
             Assert.NotNull(syntaxTree); // syntax analysis was ok
-            Assert.IsNull(symbolTable);
             Assert.That(frontend.GetErrors(), Is.Not.Empty);
             Assert.That(frontend.GetErrors().Last().ToString(), Is.StringContaining("Conflicting definitions for Factorial"));
             reader.Close();
@@ -153,11 +145,9 @@ namespace MiniJavaCompilerTest.FrontEndTest
                              "}\n";
             var reader = new StringReader(program);
             var frontend = new FrontEnd(reader);
-            SymbolTable symbolTable;
             Program syntaxTree;
-            Assert.False(frontend.TryProgramAnalysis(out syntaxTree, out symbolTable));
+            Assert.False(frontend.TryProgramAnalysis(out syntaxTree));
             Assert.NotNull(syntaxTree); // syntax analysis was ok
-            Assert.IsNull(symbolTable);
             Assert.That(frontend.GetErrors(), Is.Not.Empty);
             Assert.That(frontend.GetErrors().Last().ToString(), Is.StringContaining("Missing return statement in method ComputeFac"));
             reader.Close();
@@ -177,11 +167,9 @@ namespace MiniJavaCompilerTest.FrontEndTest
                              "}\n";
             var reader = new StringReader(program);
             var frontend = new FrontEnd(reader);
-            SymbolTable symbolTable;
             Program syntaxTree;
-            Assert.False(frontend.TryProgramAnalysis(out syntaxTree, out symbolTable));
+            Assert.False(frontend.TryProgramAnalysis(out syntaxTree));
             Assert.NotNull(syntaxTree); // syntax analysis was ok
-            Assert.IsNull(symbolTable);
             Assert.That(frontend.GetErrors(), Is.Not.Empty);
             Assert.That(frontend.GetErrors().Last().ToString(), Is.StringContaining("Cyclic inheritance involving B"));
             reader.Close();
@@ -197,11 +185,9 @@ namespace MiniJavaCompilerTest.FrontEndTest
                              "} \n";
             var reader = new StringReader(program);
             var frontend = new FrontEnd(reader);
-            SymbolTable symbolTable;
             Program syntaxTree;
-            Assert.False(frontend.TryProgramAnalysis(out syntaxTree, out symbolTable));
+            Assert.False(frontend.TryProgramAnalysis(out syntaxTree));
             Assert.NotNull(syntaxTree); // syntax analysis was ok
-            Assert.IsNull(symbolTable);
             var errors = frontend.GetErrors();
             Assert.AreEqual(1, errors.Count);
             Assert.That(errors[0].Content, Is.StringContaining("Unknown type Fac"));
@@ -229,11 +215,9 @@ namespace MiniJavaCompilerTest.FrontEndTest
                              "}\n";
             var reader = new StringReader(program);
             var frontend = new FrontEnd(reader);
-            SymbolTable symbolTable;
             Program syntaxTree;
-            Assert.False(frontend.TryProgramAnalysis(out syntaxTree, out symbolTable));
+            Assert.False(frontend.TryProgramAnalysis(out syntaxTree));
             Assert.NotNull(syntaxTree); // syntax analysis was ok
-            Assert.IsNull(symbolTable);
             Assert.That(frontend.GetErrors(), Is.Not.Empty);
             reader.Close();
         }
@@ -260,9 +244,8 @@ namespace MiniJavaCompilerTest.FrontEndTest
                  "}\n";
             var reader = new StringReader(program);
             var frontend = new FrontEnd(reader);
-            SymbolTable symbolTable;
             Program syntaxTree;
-            Assert.False(frontend.TryProgramAnalysis(out syntaxTree, out symbolTable));
+            Assert.False(frontend.TryProgramAnalysis(out syntaxTree));
             Assert.NotNull(syntaxTree); // syntax analysis was ok
             var errors = frontend.GetErrors();
             Assert.AreEqual(5, errors.Count);
@@ -308,11 +291,9 @@ namespace MiniJavaCompilerTest.FrontEndTest
                  "}\n";
             var reader = new StringReader(program);
             var frontend = new FrontEnd(reader);
-            SymbolTable symbolTable;
             Program syntaxTree;
-            Assert.False(frontend.TryProgramAnalysis(out syntaxTree, out symbolTable));
+            Assert.False(frontend.TryProgramAnalysis(out syntaxTree));
             Assert.NotNull(syntaxTree); // syntax analysis was ok
-            Assert.IsNull(symbolTable);
             Assert.That(frontend.GetErrors(), Is.Not.Empty);
             reader.Close();
 

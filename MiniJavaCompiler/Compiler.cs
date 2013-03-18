@@ -49,19 +49,17 @@ namespace MiniJavaCompiler
                 return;
             }
 
-            SymbolTable symbolTable;
             Program abstractSyntaxTree;
-            if (RunFrontEnd(args[0], fileStream, out symbolTable, out abstractSyntaxTree))
+            if (RunFrontEnd(args[0], fileStream, out abstractSyntaxTree))
             {
-                RunBackEnd(symbolTable, abstractSyntaxTree, args.Count() > 1 ? args[1] : null);
+                RunBackEnd(abstractSyntaxTree, args.Count() > 1 ? args[1] : null);
             }
         }
 
-        private static bool RunFrontEnd(string fileName, StreamReader fileStream,
-            out SymbolTable symbolTable, out Program abstractSyntaxTree)
+        private static bool RunFrontEnd(string fileName, StreamReader fileStream, out Program abstractSyntaxTree)
         {
             var frontend = new FrontEnd.FrontEnd(fileStream);
-            if (frontend.TryProgramAnalysis(out abstractSyntaxTree, out symbolTable))
+            if (frontend.TryProgramAnalysis(out abstractSyntaxTree))
             {
                 return true;
             }
@@ -120,9 +118,9 @@ namespace MiniJavaCompiler
             return index;
         }
 
-        private static void RunBackEnd(SymbolTable symbolTable, Program abstractSyntaxTree, string fileName)
+        private static void RunBackEnd(Program abstractSyntaxTree, string fileName)
         {
-            var backEnd = new CodeGenerator(symbolTable, abstractSyntaxTree, "MainModule$0");
+            var backEnd = new CodeGenerator(abstractSyntaxTree, "MainModule$0");
             if (fileName != null)
             {
                 if (fileName.Substring(fileName.Length - 4, 4) != ".exe")

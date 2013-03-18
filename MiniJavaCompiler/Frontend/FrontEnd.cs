@@ -33,16 +33,14 @@ namespace MiniJavaCompiler.FrontEnd
         }
 
         // Returns a boolean value indicating program analysis success (true) or failure (false).
-        public bool TryProgramAnalysis(out Program abstractSyntaxTree, out SymbolTable symbolTable)
+        public bool TryProgramAnalysis(out Program abstractSyntaxTree)
         {
             abstractSyntaxTree = ConstructAbstractSyntaxTree();
             if (abstractSyntaxTree == null)
             {
-                symbolTable = null;
                 return false;
             }
-            symbolTable = ConstructSymbolTableAndCheckProgram(abstractSyntaxTree);
-            return symbolTable != null && _errorLog.Count == 0;
+            return ConstructSymbolTableAndCheckProgram(abstractSyntaxTree) && _errorLog.Count == 0;
         }
 
         /* Performs lexical and semantic analysis. Returns null if either phase fails.
@@ -80,17 +78,17 @@ namespace MiniJavaCompiler.FrontEnd
          * 
          * All errors are logged in the error log.
          */
-        private SymbolTable ConstructSymbolTableAndCheckProgram(Program abstractSyntaxTree)
+        private bool ConstructSymbolTableAndCheckProgram(Program abstractSyntaxTree)
         {
             try
             {
-                var symbolTable = new SymbolTableBuilder(abstractSyntaxTree, _errorLog).BuildSymbolTable();
-                new SemanticsChecker(abstractSyntaxTree, symbolTable, _errorLog).RunCheck();
-                return symbolTable;
+                new SymbolTableBuilder(abstractSyntaxTree, _errorLog).BuildSymbolTable();
+                new SemanticsChecker(abstractSyntaxTree, _errorLog).RunCheck();
+                return true;
             }
             catch (CompilationError)
             {
-                return null;
+                return false;
             }
         }
     }
