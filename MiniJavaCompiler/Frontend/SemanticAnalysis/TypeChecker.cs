@@ -171,7 +171,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 var variableSymbol = scope.ResolveVariable(node.Name);
                 if (variableSymbol == null) return; // resolving error has already been reported
 
-                var declaration = (VariableDeclaration)_parent._symbolTable.Declarations[variableSymbol];
+                var declaration = (VariableDeclaration)variableSymbol.Declaration;
                 if (declaration.VariableKind != VariableDeclaration.Kind.Local) return;
 
                 if (node.UsedAsAddress)

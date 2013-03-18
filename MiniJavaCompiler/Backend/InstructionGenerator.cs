@@ -131,7 +131,7 @@ namespace MiniJavaCompiler.BackEnd
                 {
                     var reference = (VariableReferenceExpression)node.LeftHandSide;
                     var variable = reference.Scope.ResolveVariable(reference.Name);
-                    var decl = (VariableDeclaration)_parent._symbolTable.Declarations[variable];
+                    var decl = (VariableDeclaration)variable.Declaration;
                     switch (decl.VariableKind)
                     {
                         case VariableDeclaration.Kind.Class:
@@ -313,7 +313,7 @@ namespace MiniJavaCompiler.BackEnd
             public override void Visit(VariableReferenceExpression node)
             {
                 var variable = node.Scope.ResolveVariable(node.Name);
-                var definition = (VariableDeclaration)_parent._symbolTable.Declarations[variable];
+                var definition = (VariableDeclaration)variable.Declaration;
 
                 if (node.UsedAsAddress)
                 {

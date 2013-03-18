@@ -11,12 +11,10 @@ namespace MiniJavaCompiler.Support.SymbolTable
     {
         public IEnumerable<string> ScalarTypeNames { get; set; }
         public readonly GlobalScope GlobalScope;
-        public readonly Dictionary<Symbol, ISyntaxTreeNode> Declarations; // Maps method, variable and user defined type symbols to their definitions in the AST.
 
         public SymbolTable()
         {
             GlobalScope = new GlobalScope();
-            Declarations = new Dictionary<Symbol, ISyntaxTreeNode>();
         }
 
         public TypeSymbol ResolveTypeName(string typeName, bool makeArray = false)

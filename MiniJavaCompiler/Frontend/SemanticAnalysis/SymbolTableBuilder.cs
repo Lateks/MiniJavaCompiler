@@ -127,7 +127,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 var typeSymbol = _symbolTable.ResolveTypeName(typeName);
                 if (ClassDependsOnSelf((ScalarType)typeSymbol.Type))
                 {
-                    var node = (SyntaxElement) _symbolTable.Declarations[typeSymbol];
+                    var node = (SyntaxElement) typeSymbol.Declaration;
                     ReportError(
                         ErrorTypes.CyclicInheritance,
                         String.Format("Cyclic inheritance involving {0}.",
@@ -175,7 +175,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 }
             }
             node.Scope = typeSymbol.Scope;
-            _symbolTable.Declarations.Add(typeSymbol, node);
+            typeSymbol.Declaration = node;
             EnterScope(typeSymbol.Scope);
         }
 
@@ -193,7 +193,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             var variableSymbol = new VariableSymbol(node.Name, node.Type, CurrentScope);
             if ((CurrentScope as IVariableScope).Define(variableSymbol))
             {
-                _symbolTable.Declarations.Add(variableSymbol, node);
+                variableSymbol.Declaration = node;
                 node.Scope = CurrentScope;
             }
             else
@@ -224,7 +224,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 scope = new ErrorScope(CurrentScope); // Make an error scope to stand in for the method scope for purposes of recovery.
             }                                         // (Both are IVariableScopes.)
 
-            _symbolTable.Declarations.Add(node.Symbol, node);
+            node.Symbol.Declaration = node;
             node.Scope = scope;
 
             EnterScope(scope);

@@ -71,10 +71,9 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                     MethodSymbol method = ResolveMethod(node, methodOwnerType);
                     if (method != null)
                     {
-                        // TODO: store declarations in symbols
-                        if (_parent._symbolTable.Declarations.ContainsKey(method))
+                        if (method.Declaration != null)
                         {   // There is no AST node declaration for built-in methods (namely, array length).
-                            node.ReferencedMethod = (MethodDeclaration)_parent._symbolTable.Declarations[method];
+                            node.ReferencedMethod = (MethodDeclaration)method.Declaration;
                         }
                         node.Type = method.Type;
                     }
@@ -208,7 +207,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             private bool VariableDeclaredBeforeReference(VariableSymbol varSymbol,
                 VariableReferenceExpression reference)
             {
-                var declaration = (VariableDeclaration)_parent._symbolTable.Declarations[varSymbol];
+                var declaration = (VariableDeclaration)varSymbol.Declaration;
                 if (declaration.VariableKind == VariableDeclaration.Kind.Local)
                 {
                     return declaration.Row < reference.Row ||

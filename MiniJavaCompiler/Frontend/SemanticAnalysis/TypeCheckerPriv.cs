@@ -17,7 +17,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
         {
             private void CheckForOverloading(MethodDeclaration node, TypeSymbol classSymbol, MethodSymbol superClassMethod)
             {
-                var superClassMethodDeclaration = (MethodDeclaration)_parent._symbolTable.Declarations[superClassMethod];
+                var superClassMethodDeclaration = (MethodDeclaration)superClassMethod.Declaration;
                 if (OverloadsSuperClassMethod(node, superClassMethodDeclaration))
                 {
                     var msg = String.Format("Method {0} in class {1} overloads a method in class {2}. Overloading is not allowed.",
