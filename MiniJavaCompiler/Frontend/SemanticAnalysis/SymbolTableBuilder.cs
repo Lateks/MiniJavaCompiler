@@ -163,9 +163,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 var inheritedType = (TypeSymbol) CurrentScope.ResolveType(node.InheritedClassName);
                 if (inheritedType == null)
                 {
-                    ReportError(
-                        ErrorTypes.TypeReference,
-                        String.Format("Unknown type {0}.", node.InheritedClassName), node);
+                    ReportTypeNameError(node.InheritedClassName, node);
                 }
                 else
                 {
@@ -203,7 +201,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
         {
             Debug.Assert(CurrentScope is IMethodScope);
 
-            var methodReturnType = node.TypeName == MiniJavaInfo.VoidType ? VoidType.GetInstance() : CheckDeclaredType(node);
+            var methodReturnType = CheckDeclaredType(node);
             var methodScope = (IMethodScope) CurrentScope;
             var methodSymbol = new MethodSymbol(node.Name, methodReturnType, methodScope, node.IsStatic);
             IScope scope = methodSymbol.Scope;
@@ -221,16 +219,39 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
 
         private IType CheckDeclaredType(Declaration node)
         {
-            var nodeScalarTypeSymbol = _symbolTable.ResolveTypeName(node.TypeName);
-            if (nodeScalarTypeSymbol == null)
+            IType declaredType;
+            if (node.TypeName == MiniJavaInfo.VoidType)
             {
-                // Note: this error is also reported when a void type is encountered
-                // for something other than a method declaration.
-                ReportError(ErrorTypes.TypeReference,
-                    String.Format("Unknown type {0}.", node.TypeName), node);
-                return ErrorType.GetInstance();
+                if (node is VariableDeclaration)
+                {
+                    ReportError(ErrorTypes.TypeReference, "Illegal type void in variable declaration.", node);
+                    declaredType = ErrorType.GetInstance();
+                }
+                else if (node.IsArray)
+                {
+                    ReportError(ErrorTypes.TypeReference, "Illegal type void for array elements.", node);
+                    declaredType = ErrorType.GetInstance();
+                }
+                else
+                {
+                    declaredType = VoidType.GetInstance();
+                }
             }
-            return BuildType(node, (ScalarType) nodeScalarTypeSymbol.Type);
+            else
+            {
+                var nodeScalarTypeSymbol = _symbolTable.ResolveTypeName(node.TypeName);
+                if (nodeScalarTypeSymbol == null)
+                {   // Note: this error is also reported when a void type is encountered
+                    // for something other than a method declaration.
+                    ReportTypeNameError(node.TypeName, node);
+                    declaredType = ErrorType.GetInstance();
+                }
+                else
+                {
+                    declaredType = BuildType(node, (ScalarType)nodeScalarTypeSymbol.Type);
+                }
+            }
+            return declaredType;
         }
 
         private IType BuildType(Declaration node, ScalarType nodeScalarType)
@@ -268,9 +289,10 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             var scalarTypeSymbol = _symbolTable.ResolveTypeName(node.CreatedTypeName);
             if (scalarTypeSymbol == null)
             {
-                ReportError(ErrorTypes.TypeReference, String.Format("Unknown type {0}.", node.CreatedTypeName), node);
+                ReportTypeNameError(node.CreatedTypeName, node);
             }
-            else if (node.IsArrayCreation && _symbolTable.ResolveTypeName(node.CreatedTypeName, node.IsArrayCreation) == null)
+            else if (node.IsArrayCreation && _symbolTable.ResolveTypeName(
+                node.CreatedTypeName, node.IsArrayCreation) == null)
             {
                 DefineArrayType((ScalarType) scalarTypeSymbol.Type);
             }
@@ -299,6 +321,12 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             var blockScope = new LocalScope((IVariableScope) CurrentScope);
             _symbolTable.Scopes.Add(node, blockScope);
             EnterScope(blockScope);
+        }
+
+        private void ReportTypeNameError(string typeName, SyntaxElement node)
+        {
+            ReportError(ErrorTypes.TypeReference,
+                String.Format("Unknown type {0}.", typeName), node);
         }
 
         public override void Exit(BlockStatement node)

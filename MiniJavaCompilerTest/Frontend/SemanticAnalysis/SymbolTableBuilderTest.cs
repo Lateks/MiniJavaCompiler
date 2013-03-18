@@ -73,7 +73,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                              "   void foo; \n" +
                              "} \n\n";
             Assert.False(BuildSymbolTableFor(program));
-            Assert.That(_errors.Errors.First().Content, Is.StringContaining("Unknown type void"));
+            Assert.That(_errors.Errors.First().Content, Is.StringContaining("Illegal type void in variable declaration."));
         }
 
         [Test]
@@ -278,6 +278,23 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             Assert.AreEqual(5, _errors.Errors.Count);
             Assert.AreEqual(4, _errors.Errors.Count(err => err.ToString().Contains("Symbol foo is already defined")));
             Assert.AreEqual(1, _errors.Errors.Count(err => err.ToString().Contains("Symbol bar is already defined")));
+        }
+
+        [Test]
+        public void ArrayElementTypeCannotBeVoid()
+        {
+            string program = "class Foo {\n" +
+                             "  public static void main() {\n" +
+                             "    void[] foo;\n" +
+                             "  }\n" +
+                             "}\n" +
+                             "class A {\n" +
+                             "  public void[] foo() { }\n" +
+                             "}";
+            Assert.False(BuildSymbolTableFor(program));
+            Assert.AreEqual(2, _errors.Errors.Count);
+            Assert.That(_errors.Errors[0].Content, Is.StringContaining("Illegal type void in variable declaration"));
+            Assert.That(_errors.Errors[1].Content, Is.StringContaining("Illegal type void for array elements"));
         }
 
         [Test]

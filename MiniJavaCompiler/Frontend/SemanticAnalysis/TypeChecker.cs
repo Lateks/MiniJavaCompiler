@@ -170,7 +170,6 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 var scope = _parent._symbolTable.Scopes[node];
                 var variableSymbol = scope.ResolveVariable(node.Name);
                 if (variableSymbol == null) return; // resolving error has already been reported
-                                                    // TODO: should symbol be stored on the reference expression?
 
                 var declaration = (VariableDeclaration)_parent._symbolTable.Declarations[variableSymbol];
                 if (declaration.VariableKind != VariableDeclaration.Kind.Local) return;
