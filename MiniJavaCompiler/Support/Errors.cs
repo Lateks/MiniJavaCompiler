@@ -35,6 +35,14 @@ namespace MiniJavaCompiler.Support
         int Count { get; }
     }
 
+    public class ErrorReporterFactory
+    {
+        public static IErrorReporter CreateErrorLogger()
+        {
+            return new ErrorLogger();
+        }
+    }
+
     public class ErrorLogger : IErrorReporter
     {
         public List<ErrorMessage> Errors

@@ -38,9 +38,9 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void ReferenceToUndeclaredVariableReferenceCausesError()
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t\tSystem.out.println(foo);\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "    System.out.println(foo);\n" +
+                                 "  }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -53,10 +53,10 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void LocalVariableMustBeInitializedBeforeReference()
             {
                 string program = "class Foo {\n" +
-                  "\tpublic static void main() {\n" +
-                  "\t\tint foo;\n" +
-                  "\t\tSystem.out.println(foo);\n" +
-                  "\t}\n" +
+                  "  public static void main() {\n" +
+                  "    int foo;\n" +
+                  "    System.out.println(foo);\n" +
+                  "  }\n" +
                   "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -69,11 +69,11 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void LocalVariableInitializationErrorIsOnlyReportedOnce()
             {
                 string program = "class Foo {\n" +
-                  "\tpublic static void main() {\n" +
-                  "\t\t int[] foo;\n" +
-                  "\t\t foo[0] = 0;\n" +
-                  "\t\t foo[1] = 1;\n" +
-                  "\t}\n" +
+                  "  public static void main() {\n" +
+                  "     int[] foo;\n" +
+                  "     foo[0] = 0;\n" +
+                  "     foo[1] = 1;\n" +
+                  "  }\n" +
                   "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -86,15 +86,15 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void ClassVariableIsInitializedAutomaticallyAndCanBeReferenced()
             {
                 string program = "class Foo {\n" +
-                  "\t public static void main() {\n" +
-                  "\t\t Bar foo;\n" +
-                  "\t\t foo = new Bar();\n" +
-                  "\t\t System.out.println(foo.getFieldValue());\n" +
-                  "\t}\n" +
+                  "   public static void main() {\n" +
+                  "     Bar foo;\n" +
+                  "     foo = new Bar();\n" +
+                  "     System.out.println(foo.getFieldValue());\n" +
+                  "  }\n" +
                   "}\n" +
                   "class Bar {\n" +
-                  "\t int x;\n" +
-                  "\t public int getFieldValue() { return x; }\n" +
+                  "   int x;\n" +
+                  "   public int getFieldValue() { return x; }\n" +
                   "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -106,11 +106,11 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void CannotCallMethodForABuiltInType()
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t\tint foo;\n" +
-                                 "\t\tfoo = 42;\n" +
-                                 "\t\tSystem.out.println(foo.bar());\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "    int foo;\n" +
+                                 "    foo = 42;\n" +
+                                 "    System.out.println(foo.bar());\n" +
+                                 "  }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -123,12 +123,12 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void CannotCallMethodForAVoidType()
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t\tSystem.out.println(new A().foo().bar());\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "    System.out.println(new A().foo().bar());\n" +
+                                 "  }\n" +
                                  "}\n" +
                                  "class A {\n" +
-                                 "\t public void foo() { }\n" +
+                                 "   public void foo() { }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -141,11 +141,11 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void CannotCallMethodOtherThanLengthForArray()
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t\tint[] foo;\n" +
-                                 "\t\tfoo = new int[10];\n" +
-                                 "\t\tSystem.out.println(foo.bar());\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "    int[] foo;\n" +
+                                 "    foo = new int[10];\n" +
+                                 "    System.out.println(foo.bar());\n" +
+                                 "  }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -158,11 +158,11 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void CanCallLengthMethodForArray()
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t\tint[] foo;\n" +
-                                 "\t\tfoo = new int[10];\n" +
-                                 "\t\tSystem.out.println(foo.length);\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "    int[] foo;\n" +
+                                 "    foo = new int[10];\n" +
+                                 "    System.out.println(foo.length);\n" +
+                                 "  }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -170,47 +170,80 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             }
 
             [Test]
-            public void CanCallResolvableMethodInSameClass()
+            public void CanCallResolvableMethodsInSameClassOrSuperclass()
             {
-                string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t}\n" +
-                                 "}\n\n" +
-                                 "class A {\n" +
-                                 "\tpublic boolean foo()" +
-                                 "\t{\n" +
-                                 "\t\treturn true;" +
-                                 "\t}\n" +
-                                 "}\n" +
-                                 "class B extends A {\n" +
-                                 "\tpublic boolean bar() {\n" +
-                                 "\t\treturn this.foo();\n" +
-                                 "\t}\n" +
-                                 "}\n";
+                string program = "class Foo {" +
+                                 "  public static void main() { }" +
+                                 "}" +
+                                 "class A {" +
+                                 "  public boolean foo()" +
+                                 "  {" +
+                                 "    return true;" +
+                                 "  }" +
+                                 "}" +
+                                 "class B extends A {" +
+                                 "  public boolean bar() {" +
+                                 "    this.baz();" +
+                                 "    return this.foo();" +
+                                 "  }" +
+                                 "  public void baz() { }" +
+                                 "}";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.DoesNotThrow(checker.RunCheck);
+            }
+
+            [Test]
+            public void CannotCallSubclassMethodThroughSuperclassVariable()
+            {
+                string program = "class Foo {\n" +
+                                 "  public static void main() {\n" +
+                                 "    A a;\n" +
+                                 "    a = new B();\n" +
+                                 "    a.foo(); // Ok, and calls the method defined in B (although this is actually resolved at runtime).\n" +
+                                 "    a.bar(); // Not ok, because bar cannot be resolved at compile time.\n" +
+                                 "  }\n" +
+                                 "}\n" +
+                                 "class A {\n" +
+                                 "  public boolean foo()\n" +
+                                 "  {\n" +
+                                 "    return true;\n" +
+                                 "  }\n" +
+                                 "}\n" +
+                                 "class B extends A {\n" +
+                                 "  public boolean foo() {\n" +
+                                 "    return false;\n" +
+                                 "  }\n" +
+                                 "  public void bar() { }\n" +
+                                 "}";
+                IErrorReporter errors;
+                var checker = SetUpTypeAndReferenceChecker(program, out errors);
+                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.AreEqual(1, errors.Count);
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("resolve").
+                    And.StringContaining("bar"));
+                Assert.AreEqual(6, errors.Errors[0].Row);
             }
 
             [Test]
             public void CanCallMethodForAnInstance()
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "  }\n" +
                                  "}\n\n" +
                                  "class A {\n" +
-                                 "\tpublic boolean foo()" +
-                                 "\t{\n" +
-                                 "\t\treturn true;" +
-                                 "\t}\n" +
+                                 "  public boolean foo()" +
+                                 "  {\n" +
+                                 "    return true;" +
+                                 "  }\n" +
                                  "}\n" +
                                  "class B {\n" +
-                                 "\tA bar;\n" +
-                                 "\tpublic boolean bar() {\n" +
-                                 "\t\tbar = new A();\n" +
-                                 "\t\treturn bar.foo();\n" +
-                                 "\t}\n" +
+                                 "  A bar;\n" +
+                                 "  public boolean bar() {\n" +
+                                 "    bar = new A();\n" +
+                                 "    return bar.foo();\n" +
+                                 "  }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -221,19 +254,19 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void CanCallMethodForAJustCreatedInstance()
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "  }\n" +
                                  "}\n\n" +
                                  "class A {\n" +
-                                 "\tpublic boolean foo()" +
-                                 "\t{\n" +
-                                 "\t\treturn true;" +
-                                 "\t}\n" +
+                                 "  public boolean foo()" +
+                                 "  {\n" +
+                                 "    return true;" +
+                                 "  }\n" +
                                  "}\n" +
                                  "class B {\n" +
-                                 "\tpublic boolean bar() {\n" +
-                                 "\t\treturn new A().foo();\n" +
-                                 "\t}\n" +
+                                 "  public boolean bar() {\n" +
+                                 "    return new A().foo();\n" +
+                                 "  }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -244,14 +277,14 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void CannotCallUndefinedMethod()
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "  }\n" +
                                  "}\n\n" +
                                  "class A {\n" +
-                                 "\tpublic boolean foo()" +
-                                 "\t{\n" +
-                                 "\t\treturn this.bar();" +
-                                 "\t}\n" +
+                                 "  public boolean foo()" +
+                                 "  {\n" +
+                                 "    return this.bar();" +
+                                 "  }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -264,18 +297,18 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void CanReferenceVariableFromEnclosingClassScope()
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "  }\n" +
                                  "}\n\n" +
                                  "class A {\n" +
-                                 "\tint foo;" +
-                                 "\tpublic int foo()" +
-                                 "\t{\n" +
-                                 "\t\tfoo = 42;" +
-                                 "\t\t while (foo > 0)\n" +
-                                 "\t\t\t foo = foo - 1;\n" +
-                                 "\t\treturn foo;" +
-                                 "\t}\n" +
+                                 "  int foo;" +
+                                 "  public int foo()" +
+                                 "  {\n" +
+                                 "    foo = 42;" +
+                                 "     while (foo > 0)\n" +
+                                 "       foo = foo - 1;\n" +
+                                 "    return foo;" +
+                                 "  }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -286,18 +319,18 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void VariableMustBeDeclaredBeforeReference()
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t }\n" +
+                                 "  public static void main() {\n" +
+                                 "   }\n" +
                                  "}\n\n" +
                                  "class A {\n" +
-                                 "\t public boolean foo()" +
-                                 "\t{\n" +
-                                 "\t\t if (42 == 42)\n" +
-                                 "\t\t\t return foo;\n" +
-                                 "\t\t else\n" +
-                                 "\t\t\t return false;\n" +
-                                 "\t\t boolean foo;\n" +
-                                 "\t}\n" +
+                                 "   public boolean foo()" +
+                                 "  {\n" +
+                                 "     if (42 == 42)\n" +
+                                 "       return foo;\n" +
+                                 "     else\n" +
+                                 "       return false;\n" +
+                                 "     boolean foo;\n" +
+                                 "  }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -310,9 +343,9 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void VariableMustBeDeclaredBeforeReferenceEvenIfOnTheSamePhysicalRow()
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\tSystem.out.println(foo); int foo; foo = 4;" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "  System.out.println(foo); int foo; foo = 4;" +
+                                 "  }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -326,11 +359,11 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void IfBlockHasItsOwnScope()
             {
                 string program = "class Factorial {\n" +
-                                 "\t public static void main () {\n" +
-                                 "\t\t if (true)\n" +
-                                 "\t\t\t int foo;" +
-                                 "\t\t foo = 42;\n" +
-                                 "\t} \n" +
+                                 "   public static void main () {\n" +
+                                 "     if (true)\n" +
+                                 "       int foo;" +
+                                 "     foo = 42;\n" +
+                                 "  } \n" +
                                  "} \n\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -343,11 +376,11 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void WhileLoopHasItsOwnScope()
             {
                 string program = "class Factorial {\n" +
-                                 "\t public static void main () {\n" +
-                                 "\t\t while (true)\n" +
-                                 "\t\t\t int foo;" +
-                                 "\t\t foo = 42;\n" +
-                                 "\t} \n" +
+                                 "   public static void main () {\n" +
+                                 "     while (true)\n" +
+                                 "       int foo;" +
+                                 "     foo = 42;\n" +
+                                 "  } \n" +
                                  "} \n\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -360,12 +393,12 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void IfAndElseBlocksAreInSeparateScopes()
             {
                 string program = "class Factorial {\n" +
-                                 "\t public static void main () {\n" +
-                                 "\t\t if (true)\n" +
-                                 "\t\t\t int foo;" +
-                                 "\t\t else \n" +
-                                 "\t\t\t foo = 42;\n" +
-                                 "\t} \n" +
+                                 "   public static void main () {\n" +
+                                 "     if (true)\n" +
+                                 "       int foo;" +
+                                 "     else \n" +
+                                 "       foo = 42;\n" +
+                                 "  } \n" +
                                  "} \n\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -378,16 +411,16 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void CannotCallAStaticMethodForAnInstance()
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "  }\n" +
                                  "}\n\n" +
                                  "class A {\n" +
-                                 "\tint foo;" +
-                                 "\tpublic int foo()" +
-                                 "\t{\n" +
-                                 "\t\tnew Foo().main();" +
-                                 "\t\treturn 1;" +
-                                 "\t}\n" +
+                                 "  int foo;" +
+                                 "  public int foo()" +
+                                 "  {\n" +
+                                 "    new Foo().main();" +
+                                 "    return 1;" +
+                                 "  }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -400,17 +433,17 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void CanDoRecursion()
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "  }\n" +
                                  "}\n\n" +
                                  "class A {\n" +
-                                 "\tpublic int fib(int n)" +
-                                 "\t{\n" +
-                                 "\t\tif (n == 0 || n == 1)\n" +
-                                 "\t\t\t return 1;\n" +
-                                 "\t\telse\n" +
-                                 "\t\t\t return this.fib(n-1) + this.fib(n-2);\n" +
-                                 "\t}\n" +
+                                 "  public int fib(int n)" +
+                                 "  {\n" +
+                                 "    if (n == 0 || n == 1)\n" +
+                                 "       return 1;\n" +
+                                 "    else\n" +
+                                 "       return this.fib(n-1) + this.fib(n-2);\n" +
+                                 "  }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -421,7 +454,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void TypeMustBeResolvableInInstanceCreation()
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() { int foo; foo = new A().foo(); }\n" +
+                                 "  public static void main() { int foo; foo = new A().foo(); }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -435,7 +468,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void TypeMustBeResolvableInArrayCreation()
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() { int foo; foo = new A[10].length; }\n" +
+                                 "  public static void main() { int foo; foo = new A[10].length; }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -453,10 +486,10 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void InvalidOperandTypeForAUnaryOperatorCausesError()
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t\tboolean foo;\n" +
-                                 "\t\tfoo = !42;\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "    boolean foo;\n" +
+                                 "    foo = !42;\n" +
+                                 "  }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -470,11 +503,11 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void ValidOperandForAUnaryOperator()
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t\tboolean foo;\n" +
-                                 "\t\tfoo = !true;\n" +
-                                 "\t\tfoo = !foo;\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "    boolean foo;\n" +
+                                 "    foo = !true;\n" +
+                                 "    foo = !foo;\n" +
+                                 "  }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -485,11 +518,11 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void CannotIndexNonArrayExpression()
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t\t int foo;\n" +
-                                 "\t\t foo = 0;\n" +
-                                 "\t\t foo[0] = 42;\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "     int foo;\n" +
+                                 "     foo = 0;\n" +
+                                 "     foo[0] = 42;\n" +
+                                 "  }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -502,11 +535,11 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void ArrayIndexExpressionMustBeAnInteger()
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t\tint[] foo;\n" +
-                                 "\t\tfoo = new int[10];\n" +
-                                 "\t\tfoo[true] = 0;\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "    int[] foo;\n" +
+                                 "    foo = new int[10];\n" +
+                                 "    foo[true] = 0;\n" +
+                                 "  }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -519,7 +552,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void ArraySizeMustBeAnInteger()
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() { int foo; foo = new int[true].length; }\n" +
+                                 "  public static void main() { int foo; foo = new int[true].length; }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -532,7 +565,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void ValidArraySize()
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() { int foo; foo = new int[10 + 11 % 2].length; }\n" +
+                                 "  public static void main() { int foo; foo = new int[10 + 11 % 2].length; }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -550,10 +583,10 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void InvalidLeftOperandForAnArithmeticBinaryOperatorCausesError(string op)
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t\tint foo;\n" +
-                                 "\t\tfoo = new A() " + op + " 1;\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "    int foo;\n" +
+                                 "    foo = new A() " + op + " 1;\n" +
+                                 "  }\n" +
                                  "}\n" +
                                  "class A { }";
                 IErrorReporter errors;
@@ -567,10 +600,10 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void InvalidRightOperandForAnArithmeticBinaryOperatorCausesError(string op)
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t\tint foo;\n" +
-                                 "\t\tfoo = 1 " + op + " true;\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "    int foo;\n" +
+                                 "    foo = 1 " + op + " true;\n" +
+                                 "  }\n" +
                                  "}\n" +
                                  "class A { }";
                 IErrorReporter errors;
@@ -584,10 +617,10 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void InvalidBothOperandsForAnArithmeticBinaryOperatorCausesError(string op)
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t\tint foo;\n" +
-                                 "\t\tfoo = new A() " + op + " true;\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "    int foo;\n" +
+                                 "    foo = new A() " + op + " true;\n" +
+                                 "  }\n" +
                                  "}\n" +
                                  "class A { }";
                 IErrorReporter errors;
@@ -601,11 +634,11 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void ValidOperandsForAnArithmeticBinaryOperator(string op)
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t\tint foo;\n" +
-                                 "\t\tfoo = 5;\n" +
-                                 "\t\tfoo = foo " + op + " 1;\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "    int foo;\n" +
+                                 "    foo = 5;\n" +
+                                 "    foo = foo " + op + " 1;\n" +
+                                 "  }\n" +
                                  "}\n" +
                                  "class A { }";
                 IErrorReporter errors;
@@ -624,10 +657,10 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void InvalidLeftOperandForALogicalOperatorTest(string op)
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t\tboolean foo;\n" +
-                                 "\t\tfoo = new A() " + op + " false;\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "    boolean foo;\n" +
+                                 "    foo = new A() " + op + " false;\n" +
+                                 "  }\n" +
                                  "}\n" +
                                  "class A { }";
                 IErrorReporter errors;
@@ -641,10 +674,10 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void InvalidRightOperandForALogicalOperatorTest(string op)
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t\tboolean foo;\n" +
-                                 "\t\tfoo = true " + op + " 1;\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "    boolean foo;\n" +
+                                 "    foo = true " + op + " 1;\n" +
+                                 "  }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -657,10 +690,10 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void InvalidBothOperandsForALogicalOperatorTest(string op)
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t\tboolean foo;\n" +
-                                 "\t\tfoo = new A() " + op + " 1;\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "    boolean foo;\n" +
+                                 "    foo = new A() " + op + " 1;\n" +
+                                 "  }\n" +
                                  "}\n" +
                                  "class A { }\n";
                 IErrorReporter errors;
@@ -674,10 +707,10 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void ValidOperandsForALogicalOperatorTest(string op)
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t\tboolean foo;\n" +
-                                 "\t\tfoo = true " + op + " foo;\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "    boolean foo;\n" +
+                                 "    foo = true " + op + " foo;\n" +
+                                 "  }\n" +
                                  "}\n" +
                                  "class A { }\n";
                 IErrorReporter errors;
@@ -696,10 +729,10 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void InvalidLeftOperandForAComparisonOperatorTest(string op)
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t\tboolean foo;\n" +
-                                 "\t\tfoo = new A() " + op + " 100;\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "    boolean foo;\n" +
+                                 "    foo = new A() " + op + " 100;\n" +
+                                 "  }\n" +
                                  "}\n" +
                                  "class A { }";
                 IErrorReporter errors;
@@ -713,10 +746,10 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void InvalidRightOperandForAComparisonOperatorTest(string op)
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t\tboolean foo;\n" +
-                                 "\t\tfoo = 99 " + op + " false;\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "    boolean foo;\n" +
+                                 "    foo = 99 " + op + " false;\n" +
+                                 "  }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -729,10 +762,10 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void InvalidBothOperandsForAComparisonOperatorTest(string op)
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t\tboolean foo;\n" +
-                                 "\t\tfoo = new A() " + op + " false;\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "    boolean foo;\n" +
+                                 "    foo = new A() " + op + " false;\n" +
+                                 "  }\n" +
                                  "}\n" +
                                  "class A { }\n";
                 IErrorReporter errors;
@@ -746,10 +779,10 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void ValidOperandsForAComparisonOperatorTest(string op)
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t\tboolean foo;\n" +
-                                 "\t\tfoo = 4 " + op + " 5;\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "    boolean foo;\n" +
+                                 "    foo = 4 " + op + " 5;\n" +
+                                 "  }\n" +
                                  "}\n" +
                                  "class A { }\n";
                 IErrorReporter errors;
@@ -765,26 +798,26 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void BasicValidAssignmentsTest()
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t\tint foo;\n" +
-                                 "\t\tfoo = 10;\n" +
-                                 "\t\tint bar;\n" +
-                                 "\t\tbar = foo;\n" +
-                                 "\t\tboolean baz; baz = new A().alwaysTrue();\n" +
-                                 "\t\tboolean baz_copy;\n" +
-                                 "\t\tbaz_copy = true\n;" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "    int foo;\n" +
+                                 "    foo = 10;\n" +
+                                 "    int bar;\n" +
+                                 "    bar = foo;\n" +
+                                 "    boolean baz; baz = new A().alwaysTrue();\n" +
+                                 "    boolean baz_copy;\n" +
+                                 "    baz_copy = true\n;" +
+                                 "  }\n" +
                                  "}\n" +
                                  "class A {\n" +
-                                 "\tA foo;\n" +
-                                 "\tpublic boolean alwaysTrue() {\n" +
-                                 "\t\tfoo = new A();\n" +
-                                 "\t\t A[] bar;\n" +
-                                 "\t\t bar = new A[2];\n" +
-                                 "\t\tbar[0] = foo;\n" + // can insert an object of type A into an array of type A
-                                 "\t\tbar[1] = new B();\n" + // can also insert an object of type B that inherits from A, even though corresponding array types would be incompatible
-                                 "\t\treturn true;\n\n" +
-                                 "\t}\n" +
+                                 "  A foo;\n" +
+                                 "  public boolean alwaysTrue() {\n" +
+                                 "    foo = new A();\n" +
+                                 "     A[] bar;\n" +
+                                 "     bar = new A[2];\n" +
+                                 "    bar[0] = foo;\n" + // can insert an object of type A into an array of type A
+                                 "    bar[1] = new B();\n" + // can also insert an object of type B that inherits from A, even though corresponding array types would be incompatible
+                                 "    return true;\n\n" +
+                                 "  }\n" +
                                  "}\n" +
                                  "class B extends A { }\n";
                 IErrorReporter errors;
@@ -796,11 +829,11 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void InvalidArrayIndexAssignment()
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t\t A[] foo;\n" +
-                                 "\t\t foo = new A[10];\n" +
-                                 "\t\t foo[0] = new B();\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "     A[] foo;\n" +
+                                 "     foo = new A[10];\n" +
+                                 "     foo[0] = new B();\n" +
+                                 "  }\n" +
                                  "}\n" +
                                  "class A { }\n" +
                                  "class B { }\n";
@@ -816,15 +849,15 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void InvalidAssignmentToBuiltInFromMethod()
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t\tboolean foo;\n" +
-                                 "\t\tfoo = new A().foo();\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "    boolean foo;\n" +
+                                 "    foo = new A().foo();\n" +
+                                 "  }\n" +
                                  "}\n" +
                                  "class A {\n" +
-                                 "\tpublic int foo() {" +
-                                 "\t\treturn 42;\n" +
-                                 "\t}\n" +
+                                 "  public int foo() {" +
+                                 "    return 42;\n" +
+                                 "  }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -838,10 +871,10 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void InvalidAssignmentToBuiltIn()
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t\tboolean foo;\n" +
-                                 "\t\tfoo = new A();\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "    boolean foo;\n" +
+                                 "    foo = new A();\n" +
+                                 "  }\n" +
                                  "}\n" +
                                  "class A { }\n";
                 IErrorReporter errors;
@@ -856,10 +889,10 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void InvalidAssignmentToArrayVariable()
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t\tA[] foo;\n" +
-                                 "\t\tfoo = new A();\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "    A[] foo;\n" +
+                                 "    foo = new A();\n" +
+                                 "  }\n" +
                                  "}\n" +
                                  "class A { }\n";
                 IErrorReporter errors;
@@ -874,10 +907,10 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void InvalidArrayAssignment()
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t\tA foo;\n" +
-                                 "\t\tfoo = new A[10];\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "    A foo;\n" +
+                                 "    foo = new A[10];\n" +
+                                 "  }\n" +
                                  "}\n" +
                                  "class A { }\n";
                 IErrorReporter errors;
@@ -892,10 +925,10 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void InvalidAssignmentToUserDefinedTypeVariable()
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t\tA foo;\n" +
-                                 "\t\tfoo = new B();\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "    A foo;\n" +
+                                 "    foo = new B();\n" +
+                                 "  }\n" +
                                  "}\n" +
                                  "class A { }\n" +
                                  "class B { }\n";
@@ -911,9 +944,9 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void UnassignableLeftHandSideInAssignment()
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t new A() = new A();\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "   new A() = new A();\n" +
+                                 "  }\n" +
                                  "}\n" +
                                  "class A { }\n";
                 IErrorReporter errors;
@@ -927,9 +960,9 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void CannotAssignReturnTypeOfVoidMethod()
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t int foo; foo = new A().foo();\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "   int foo; foo = new A().foo();\n" +
+                                 "  }\n" +
                                  "}\n" +
                                  "class A { public void foo() { } }\n";
                 IErrorReporter errors;
@@ -948,19 +981,19 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void ValidEqualsOperations()
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t boolean a;\n" +
-                                 "\t int b; b = 10;\n" +
-                                 "\t a = 10 == 42;\n" +
-                                 "\t a = b == 10;\n" +
-                                 "\t a = false == true;\n" +
-                                 "\t A foo;\n foo = new A();\n" +
-                                 "\t a = new A() == foo;\n" +
-                                 "\t a = new B() == new A();\n" +
-                                 "\t a = foo == new B();\n" +
-                                 "\t a = new A[10] == new A[10];\n" +
-                                 "\t a = new int[10] == new int[100];\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "   boolean a;\n" +
+                                 "   int b; b = 10;\n" +
+                                 "   a = 10 == 42;\n" +
+                                 "   a = b == 10;\n" +
+                                 "   a = false == true;\n" +
+                                 "   A foo;\n foo = new A();\n" +
+                                 "   a = new A() == foo;\n" +
+                                 "   a = new B() == new A();\n" +
+                                 "   a = foo == new B();\n" +
+                                 "   a = new A[10] == new A[10];\n" +
+                                 "   a = new int[10] == new int[100];\n" +
+                                 "  }\n" +
                                  "}\n" +
                                  "class A { }\n" +
                                  "class B extends A { }\n";
@@ -973,17 +1006,17 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void InvalidEqualsOperations()
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t boolean a;\n" +
-                                 "\t int b; b = 10;\n" +
-                                 "\t a = new A() == 42;\n" +
-                                 "\t a = false == b;\n" +
-                                 "\t a = true == new B();\n" +
-                                 "\t a = false == 0;\n" +
-                                 "\t a = new A() == new A[10];\n" +
-                                 "\t a = new A[10] == new B[10];\n" +
-                                 "\t a = new int[10] == new boolean[10];\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "   boolean a;\n" +
+                                 "   int b; b = 10;\n" +
+                                 "   a = new A() == 42;\n" +
+                                 "   a = false == b;\n" +
+                                 "   a = true == new B();\n" +
+                                 "   a = false == 0;\n" +
+                                 "   a = new A() == new A[10];\n" +
+                                 "   a = new A[10] == new B[10]; // arrays are compatible only if they have the same element type\n" +
+                                 "   a = new int[10] == new boolean[10];\n" +
+                                 "  }\n" +
                                  "}\n" +
                                  "class A { }\n" +
                                  "class B extends A { }\n";
@@ -1001,10 +1034,10 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void ValidPolymorphicAssignmentTest()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() {\n" +
-                                 "\t\t A foo;\n" +
-                                 "\t\t foo = new B();\n" +
-                                 "\t}\n" +
+                                 "   public static void main() {\n" +
+                                 "     A foo;\n" +
+                                 "     foo = new B();\n" +
+                                 "  }\n" +
                                  "}\n" +
                                  "class A { }\n" +
                                  "class B extends A { }\n";
@@ -1017,10 +1050,10 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void InvalidPolymorphicAssignmentTest()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() {\n" +
-                                 "\t\t B foo;\n" +
-                                 "\t\t foo = new A();\n" +
-                                 "\t}\n" +
+                                 "   public static void main() {\n" +
+                                 "     B foo;\n" +
+                                 "     foo = new A();\n" +
+                                 "  }\n" +
                                  "}\n" +
                                  "class A { }\n" +
                                  "class B extends A { }\n";
@@ -1036,15 +1069,15 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void ValidPolymorphicMethodCallTest()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() {\n" +
-                                 "\t\t A foo;\n" +
-                                 "\t\t foo = new B();\n" +
-                                 "\t\t int bar;\n" +
-                                 "\t\t bar = foo.foo();\n" +
-                                 "\t}\n" +
+                                 "   public static void main() {\n" +
+                                 "     A foo;\n" +
+                                 "     foo = new B();\n" +
+                                 "     int bar;\n" +
+                                 "     bar = foo.foo();\n" +
+                                 "  }\n" +
                                  "}\n" +
                                  "class A {\n" +
-                                 "\t public int foo() { return 42; }\n" +
+                                 "   public int foo() { return 42; }\n" +
                                  "}\n" +
                                  "class B extends A { }\n";
                 IErrorReporter errors;
@@ -1056,16 +1089,16 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void InvalidPolymorphicMethodCallTest()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() {\n" +
-                                 "\t\t A foo;\n" +
-                                 "\t\t foo = new B();\n" +
-                                 "\t\t int bar;\n" +
-                                 "\t\t bar = foo.foo();\n" +
-                                 "\t}\n" +
+                                 "   public static void main() {\n" +
+                                 "     A foo;\n" +
+                                 "     foo = new B();\n" +
+                                 "     int bar;\n" +
+                                 "     bar = foo.foo();\n" +
+                                 "  }\n" +
                                  "}\n" +
                                  "class A { }\n" +
                                  "class B extends A {\n" +
-                                 "\t public int foo() { return 42; }\n" +
+                                 "   public int foo() { return 42; }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -1078,7 +1111,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void ArraysAreNonPolymorphicInAssignments()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() { A[] foo; foo = new B[10]; }\n" +
+                                 "   public static void main() { A[] foo; foo = new B[10]; }\n" +
                                  "}\n" +
                                  "class A { }\n" +
                                  "class B extends A { }\n";
@@ -1094,10 +1127,10 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void ArraysAreNonPolymorphicInMethodCalls()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() { int foo; foo = new A().arrayLen(new B[10]); }\n" +
+                                 "   public static void main() { int foo; foo = new A().arrayLen(new B[10]); }\n" +
                                  "}\n" +
                                  "class A {\n" +
-                                 "\t public int arrayLen(A[] array) { return array.length; }\n" +
+                                 "   public int arrayLen(A[] array) { return array.length; }\n" +
                                  " }\n" +
                                  "class B extends A { }\n";
                 IErrorReporter errors;
@@ -1116,7 +1149,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void VoidMethodCannotHaveAReturnStatement()
             {   // Note: MiniJava does not define an empty return statement.
                 string program = "class Foo{\n" +
-                                 "\t public static void main() { return 42; }\n" +
+                                 "   public static void main() { return 42; }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -1129,10 +1162,10 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void NonVoidMethodRequiresAReturnStatement()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() { }\n" +
+                                 "   public static void main() { }\n" +
                                  "}\n" +
                                  "class A {\n" +
-                                 "\t public int foo() { }\n" +
+                                 "   public int foo() { }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -1145,26 +1178,26 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void OkReturnStatements()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() { }\n" +
+                                 "   public static void main() { }\n" +
                                  "}\n" +
                                  "class A {\n" +
-                                 "\t public int foo(boolean bar) {\n" +
-                                 "\t\t int foo;\n" +
-                                 "\t\t foo = 10;\n" +
-                                 "\t\t if (bar) \n" +
-                                 "\t\t\t foo = foo + 1;\n" +
-                                 "\t\t else \n" +
-                                 "\t\t\t foo = foo - 1;\n" +
-                                 "\t\t return foo;\n" +
-                                 "\t }\n" +
-                                 "\t public int bar(boolean foo) {\n" +
-                                 "\t\t int baz;\n" +
-                                 "\t\t baz = 0;\n" +
-                                 "\t\t if (foo) {\n" +
-                                 "\t\t\t baz = baz + 1;\n" +
-                                 "\t\t\t return baz;\n" +
-                                 "\t\t } else \n" +
-                                 "\t\t\t return 0;\n" +
+                                 "   public int foo(boolean bar) {\n" +
+                                 "     int foo;\n" +
+                                 "     foo = 10;\n" +
+                                 "     if (bar) \n" +
+                                 "       foo = foo + 1;\n" +
+                                 "     else \n" +
+                                 "       foo = foo - 1;\n" +
+                                 "     return foo;\n" +
+                                 "   }\n" +
+                                 "   public int bar(boolean foo) {\n" +
+                                 "     int baz;\n" +
+                                 "     baz = 0;\n" +
+                                 "     if (foo) {\n" +
+                                 "       baz = baz + 1;\n" +
+                                 "       return baz;\n" +
+                                 "     } else \n" +
+                                 "       return 0;\n" +
                                  "}\n" +
                                  "}\n";
                 IErrorReporter errors;
@@ -1176,16 +1209,16 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void AllPathsInANonVoidMethodRequireReturnStatements_FaultyIfBranch()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() { }\n" +
+                                 "   public static void main() { }\n" +
                                  "}\n" +
                                  "class A {\n" +
-                                 "\t public int foo(boolean bar) {\n" +
-                                 "\t\t int foo;\n" +
-                                 "\t\t foo = 10;\n" +
-                                 "\t\t if (bar) \n" +
-                                 "\t\t\t foo = foo + 1;\n" +
-                                 "\t\t else\n" +
-                                 "\t\t\t return foo;" +
+                                 "   public int foo(boolean bar) {\n" +
+                                 "     int foo;\n" +
+                                 "     foo = 10;\n" +
+                                 "     if (bar) \n" +
+                                 "       foo = foo + 1;\n" +
+                                 "     else\n" +
+                                 "       return foo;" +
                                  "}\n" +
                                  "}\n";
                 IErrorReporter errors;
@@ -1199,16 +1232,16 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void AllPathsInANonVoidMethodRequireReturnStatements_FaultyElseBranch()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() { }\n" +
+                                 "   public static void main() { }\n" +
                                  "}\n" +
                                  "class A {\n" +
-                                 "\t public int foo(boolean bar) {\n" +
-                                 "\t\t int foo;\n" +
-                                 "\t\t foo = 10;\n" +
-                                 "\t\t if (bar) \n" +
-                                 "\t\t\t return foo;\n" +
-                                 "\t\t else\n" +
-                                 "\t\t\t foo = foo + 1;\n" +
+                                 "   public int foo(boolean bar) {\n" +
+                                 "     int foo;\n" +
+                                 "     foo = 10;\n" +
+                                 "     if (bar) \n" +
+                                 "       return foo;\n" +
+                                 "     else\n" +
+                                 "       foo = foo + 1;\n" +
                                  "}\n" +
                                  "}\n";
                 IErrorReporter errors;
@@ -1222,14 +1255,14 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void AllPathsInANonVoidMethodRequireReturnStatements_IfWithoutAnElseBranch()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() { }\n" +
+                                 "   public static void main() { }\n" +
                                  "}\n" +
                                  "class A {\n" +
-                                 "\t public int foo(boolean bar) {\n" +
-                                 "\t\t int foo;\n" +
-                                 "\t\t foo = 10;\n" +
-                                 "\t\t if (bar) \n" +
-                                 "\t\t\t return foo;\n" +
+                                 "   public int foo(boolean bar) {\n" +
+                                 "     int foo;\n" +
+                                 "     foo = 10;\n" +
+                                 "     if (bar) \n" +
+                                 "       return foo;\n" +
                                  "}\n" +
                                  "}\n";
                 IErrorReporter errors;
@@ -1243,23 +1276,23 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void ReturnStatementChecksTakeAnonymousBlocksIntoAccount()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() { }\n" +
+                                 "   public static void main() { }\n" +
                                  "}\n" +
                                  "class A {\n" +
-                                 "\t public int foo() {\n" +
-                                 "\t\t int foo;\n" +
-                                 "\t\t foo = 42;\n" +
-                                 "\t\t {\n" +
-                                 "\t\t\t {\n" +
-                                 "\t\t\t\t return foo;\n" +
-                                 "\t\t\t }\n" +
-                                 "\t\t }\n" +
+                                 "   public int foo() {\n" +
+                                 "     int foo;\n" +
+                                 "     foo = 42;\n" +
+                                 "     {\n" +
+                                 "       {\n" +
+                                 "         return foo;\n" +
+                                 "       }\n" +
+                                 "     }\n" +
                                  "}\n" +
-                                 "\t public int bar() {\n" +
-                                 "\t\t {\n" +
-                                 "\t\t\t { }\n" +
-                                 "\t\t }\n" +
-                                 "\t\t return 0;\n" +
+                                 "   public int bar() {\n" +
+                                 "     {\n" +
+                                 "       { }\n" +
+                                 "     }\n" +
+                                 "     return 0;\n" +
                                  "}\n" +
                                  "}\n";
                 IErrorReporter errors;
@@ -1271,14 +1304,14 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void BasicValidReturnStatements()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() { }\n" +
+                                 "   public static void main() { }\n" +
                                  "}\n" +
                                  "class A {\n" +
-                                 "\t public int foo() { return 42; }\n" +
-                                 "\t public boolean bar() { return true; }\n" +
+                                 "   public int foo() { return 42; }\n" +
+                                 "   public boolean bar() { return true; }\n" +
                                  "}\n" +
                                  "class B {\n" +
-                                 "\t public A foo() { return new A(); }\n" +
+                                 "   public A foo() { return new A(); }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -1289,10 +1322,10 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void InvalidReturnStatement()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() { }\n" +
+                                 "   public static void main() { }\n" +
                                  "}\n" +
                                  "class A {\n" +
-                                 "\t public int foo() { return false; }\n" +
+                                 "   public int foo() { return false; }\n" +
                                  "}\n" +
                                  "class B { }\n";
                 IErrorReporter errors;
@@ -1307,10 +1340,10 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void ValidPolymorphicReturnStatement()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() { }\n" +
+                                 "   public static void main() { }\n" +
                                  "}\n" +
                                  "class A {\n" +
-                                 "\t public A foo() { return new B(); }\n" +
+                                 "   public A foo() { return new B(); }\n" +
                                  "}\n" +
                                  "class B extends A { }\n";
                 IErrorReporter errors;
@@ -1322,10 +1355,10 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void InvalidPolymorphicReturnStatement()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() { }\n" +
+                                 "   public static void main() { }\n" +
                                  "}\n" +
                                  "class A {\n" +
-                                 "\t public B foo() { return new A(); }\n" +
+                                 "   public B foo() { return new A(); }\n" +
                                  "}\n" +
                                  "class B extends A { }\n";
                 IErrorReporter errors;
@@ -1340,10 +1373,10 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void ArraysAreNonPolymorphicInReturnStatements()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() { }\n" +
+                                 "   public static void main() { }\n" +
                                  "}\n" +
                                  "class A {\n" +
-                                 "\t public A[] foo() { return new B[10]; }\n" +
+                                 "   public A[] foo() { return new B[10]; }\n" +
                                  "}\n" +
                                  "class B extends A { }\n";
                 IErrorReporter errors;
@@ -1358,10 +1391,10 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void ReturnTypeChecksTakeArraysIntoAccountCorrectly()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() { }\n" +
+                                 "   public static void main() { }\n" +
                                  "}\n" +
                                  "class A {\n" +
-                                 "\t public A[] foo() { return new A(); }\n" +
+                                 "   public A[] foo() { return new A(); }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -1379,13 +1412,13 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void CannotOverloadASuperClassMethod()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() { }\n" +
+                                 "   public static void main() { }\n" +
                                  "}\n" +
                                  "class A {\n" +
-                                 "\t public int foo() { return 10; }\n" +
+                                 "   public int foo() { return 10; }\n" +
                                  "}\n" +
                                  "class B extends A {\n" +
-                                 "\t public int foo(int bar) { return bar; }\n" +
+                                 "   public int foo(int bar) { return bar; }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -1398,13 +1431,13 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void OverloadCheckTakesArraysIntoAccountCorrectly()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() { }\n" +
+                                 "   public static void main() { }\n" +
                                  "}\n" +
                                  "class A {\n" +
-                                 "\t public int foo(int[] bar) { return 10; }\n" +
+                                 "   public int foo(int[] bar) { return 10; }\n" +
                                  "}\n" +
                                  "class B extends A {\n" +
-                                 "\t public int foo(int bar) { return bar; }\n" +
+                                 "   public int foo(int bar) { return bar; }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -1417,13 +1450,13 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void CannotOverrideASuperClassMethodWithADifferentReturnType()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() { }\n" +
+                                 "   public static void main() { }\n" +
                                  "}\n" +
                                  "class A {\n" +
-                                 "\t public int foo() { return 10; }\n" +
+                                 "   public int foo() { return 10; }\n" +
                                  "}\n" +
                                  "class B extends A {\n" +
-                                 "\t public boolean foo() { return true; }\n" +
+                                 "   public boolean foo() { return true; }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -1436,13 +1469,13 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void CanOverrideASuperClassMethodWithTheSameReturnType()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() { }\n" +
+                                 "   public static void main() { }\n" +
                                  "}\n" +
                                  "class A {\n" +
-                                 "\t public int foo() { return 10; }\n" +
+                                 "   public int foo() { return 10; }\n" +
                                  "}\n" +
                                  "class B extends A {\n" +
-                                 "\t public int foo() { return 5; }\n" +
+                                 "   public int foo() { return 5; }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -1453,13 +1486,13 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void CanOverrideAVoidSuperClassMethod()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() { }\n" +
+                                 "   public static void main() { }\n" +
                                  "}\n" +
                                  "class A {\n" +
-                                 "\t public void doSomething() { }\n" +
+                                 "   public void doSomething() { }\n" +
                                  "}\n" +
                                  "class B extends A {\n" +
-                                 "\t public void doSomething() { }\n" +
+                                 "   public void doSomething() { }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -1478,13 +1511,13 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void ReturnTypeCovarianceIsNOTAllowedInOverridingMethods()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() { }\n" +
+                                 "   public static void main() { }\n" +
                                  "}\n" +
                                  "class A {\n" +
-                                 "\t public A foo() { return new A(); }\n" +
+                                 "   public A foo() { return new A(); }\n" +
                                  "}\n" +
                                  "class B extends A {\n" +
-                                 "\t public B foo() { return new B(); }\n" +
+                                 "   public B foo() { return new B(); }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -1498,13 +1531,13 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void IgnoresUnresolvedParameterTypeInOverloadCheck()
             {
                 string program = "class Foo{\n" +
-                 "\t public static void main() { }\n" +
+                 "   public static void main() { }\n" +
                  "}\n" +
                  "class A {\n" +
-                 "\t public int foo(C foo) { return 10; }\n" +
+                 "   public int foo(C foo) { return 10; }\n" +
                  "}\n" +
                  "class B extends A {\n" +
-                 "\t public int foo(int foo) { return 0; }\n" +
+                 "   public int foo(int foo) { return 0; }\n" +
                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -1516,13 +1549,13 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void ReturnTypeContravarianceIsNotAllowedInOverridingMethods()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() { }\n" +
+                                 "   public static void main() { }\n" +
                                  "}\n" +
                                  "class A {\n" +
-                                 "\t public B foo() { return new B(); }\n" +
+                                 "   public B foo() { return new B(); }\n" +
                                  "}\n" +
                                  "class B extends A {\n" +
-                                 "\t public A foo() { return new A(); }\n" +
+                                 "   public A foo() { return new A(); }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -1539,16 +1572,16 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void ValidAssertions()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() {\n" +
-                                 "\t\t assert(true);\n" +
-                                 "\t\t assert(false);\n" +
-                                 "\t\t boolean foo;\n" +
-                                 "\t\t foo = true;\n" +
-                                 "\t\t assert(foo && true && !(10 == 9));\n" +
-                                 "\t\t int bar;\n" +
-                                 "\t\t bar = 10;\n" +
-                                 "\t\t assert(bar > 9);\n" +
-                                 "\t\t assert(bar == 10);\n" +
+                                 "   public static void main() {\n" +
+                                 "     assert(true);\n" +
+                                 "     assert(false);\n" +
+                                 "     boolean foo;\n" +
+                                 "     foo = true;\n" +
+                                 "     assert(foo && true && !(10 == 9));\n" +
+                                 "     int bar;\n" +
+                                 "     bar = 10;\n" +
+                                 "     assert(bar > 9);\n" +
+                                 "     assert(bar == 10);\n" +
                                  "}\n" +
                                  "}\n";
                 IErrorReporter errors;
@@ -1560,8 +1593,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void InvalidIntAssertion()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() {\n" +
-                                 "\t\t assert(10 + 1);" +
+                                 "   public static void main() {\n" +
+                                 "     assert(10 + 1);" +
                                  "}\n" +
                                  "}\n";
                 IErrorReporter errors;
@@ -1575,8 +1608,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void InvalidUserDefinedTypeAssertion()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() {\n" +
-                                 "\t\t assert(new A());" +
+                                 "   public static void main() {\n" +
+                                 "     assert(new A());" +
                                  "}\n" +
                                  "}\n" +
                                  "class A { }";
@@ -1591,15 +1624,15 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void ValidWhileLoopConditions()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() {\n" +
-                                 "\t\t while (true) { }\n" +
-                                 "\t\t boolean foo;\n" +
-                                 "\t\t foo = true;\n" +
-                                 "\t\t while (foo) { }\n" +
-                                 "\t\t int bar;\n" +
-                                 "\t\t bar = 10;\n" +
-                                 "\t\t while (bar > 9) { }\n" +
-                                 "\t\t while (bar == 10) { }\n" +
+                                 "   public static void main() {\n" +
+                                 "     while (true) { }\n" +
+                                 "     boolean foo;\n" +
+                                 "     foo = true;\n" +
+                                 "     while (foo) { }\n" +
+                                 "     int bar;\n" +
+                                 "     bar = 10;\n" +
+                                 "     while (bar > 9) { }\n" +
+                                 "     while (bar == 10) { }\n" +
                                  "}\n" +
                                  "}\n";
                 IErrorReporter errors;
@@ -1611,8 +1644,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void InvalidWhileLoopCondition()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() {\n" +
-                                 "\t\t while (10 + 1 % 2) { }\n" +
+                                 "   public static void main() {\n" +
+                                 "     while (10 + 1 % 2) { }\n" +
                                  "}\n" +
                                  "}\n";
                 IErrorReporter errors;
@@ -1626,14 +1659,14 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void ValidIfConditions()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() {\n" +
-                                 "\t\t if (true) { }\n" +
-                                 "\t\t boolean foo;\n" +
-                                 "\t\t foo = true;\n" +
-                                 "\t\t if (foo) { }\n" +
-                                 "\t\t int bar;\n" +
-                                 "\t\t bar = 10;\n" +
-                                 "\t\t if (bar > 9 && bar < 15 && !(bar == 14) || bar % 2 == 0) { }\n" +
+                                 "   public static void main() {\n" +
+                                 "     if (true) { }\n" +
+                                 "     boolean foo;\n" +
+                                 "     foo = true;\n" +
+                                 "     if (foo) { }\n" +
+                                 "     int bar;\n" +
+                                 "     bar = 10;\n" +
+                                 "     if (bar > 9 && bar < 15 && !(bar == 14) || bar % 2 == 0) { }\n" +
                                  "}\n" +
                                  "}\n";
                 IErrorReporter errors;
@@ -1645,8 +1678,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void ValidPrintStatements()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() {\n" +
-                                 "\t\t System.out.println(10 + 1 % 2);\n" +
+                                 "   public static void main() {\n" +
+                                 "     System.out.println(10 + 1 % 2);\n" +
                                  "}\n" +
                                  "}\n";
                 IErrorReporter errors;
@@ -1658,8 +1691,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void CannotPrintABooleanValue()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() {\n" +
-                                 "\t\t System.out.println(true);\n" +
+                                 "   public static void main() {\n" +
+                                 "     System.out.println(true);\n" +
                                  "}\n" +
                                  "}\n";
                 IErrorReporter errors;
@@ -1673,8 +1706,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void CannotPrintAnArray()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() {\n" +
-                                 "\t\t System.out.println(new int[10]);\n" +
+                                 "   public static void main() {\n" +
+                                 "     System.out.println(new int[10]);\n" +
                                  "}\n" +
                                  "}\n";
                 IErrorReporter errors;
@@ -1688,8 +1721,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void CannotPrintAUserDefinedType()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() {\n" +
-                                 "\t\t System.out.println(new A());\n" +
+                                 "   public static void main() {\n" +
+                                 "     System.out.println(new A());\n" +
                                  "}\n" +
                                  "}\n" +
                                  "class A { }\n";
@@ -1704,8 +1737,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void InvalidIfCondition()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() {\n" +
-                                 "\t\t if (10 % 2) { }\n" +
+                                 "   public static void main() {\n" +
+                                 "     if (10 % 2) { }\n" +
                                  "}\n" +
                                  "}\n";
                 IErrorReporter errors;
@@ -1719,12 +1752,12 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void ValidMethodCallParameters()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() {\n" +
-                                 "\t\t System.out.println(new A().foo(10, new B(), new B[10]));" +
+                                 "   public static void main() {\n" +
+                                 "     System.out.println(new A().foo(10, new B(), new B[10]));" +
                                  "}\n" +
                                  "}\n" +
                                  "class A {\n" +
-                                 "\t public int foo(int bar, B baz, B[] bs) { return 0; }" +
+                                 "   public int foo(int bar, B baz, B[] bs) { return 0; }" +
                                  "}\n" +
                                  "class B { }\n";
                 IErrorReporter errors;
@@ -1736,12 +1769,12 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void MethodCallParameterChecksTakeArraysIntoAccountCorrectly()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() {\n" +
-                                 "\t\t System.out.println(new A().foo(10, new B(), new B()));" +
+                                 "   public static void main() {\n" +
+                                 "     System.out.println(new A().foo(10, new B(), new B()));" +
                                  "}\n" +
                                  "}\n" +
                                  "class A {\n" +
-                                 "\t public int foo(int bar, B baz, B[] bs) { return 0; }" +
+                                 "   public int foo(int bar, B baz, B[] bs) { return 0; }" +
                                  "}\n" +
                                  "class B { }\n";
                 IErrorReporter errors;
@@ -1755,12 +1788,12 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void InvalidMethodCallParameters()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() {\n" +
-                                 "\t\t System.out.println(new A().foo(10, 11, new B()));\n" +
+                                 "   public static void main() {\n" +
+                                 "     System.out.println(new A().foo(10, 11, new B()));\n" +
                                  "}\n" +
                                  "}\n" +
                                  "class A {\n" +
-                                 "\t public int foo(int bar, B baz, B b) { return 0; }" +
+                                 "   public int foo(int bar, B baz, B b) { return 0; }" +
                                  "}\n" +
                                  "class B { }\n";
                 IErrorReporter errors;
@@ -1774,13 +1807,13 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void IgnoresParametersWithUnresolvedTypesInTypeCheck()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() {\n" +
-                                 "\t\t System.out.println(new A().foo(new C()));\n" +
-                                 "\t\t System.out.println(new A().foo(10));\n" +
+                                 "   public static void main() {\n" +
+                                 "     System.out.println(new A().foo(new C()));\n" +
+                                 "     System.out.println(new A().foo(10));\n" +
                                  "}\n" +
                                  "}\n" +
                                  "class A {\n" +
-                                 "\t public int foo(B bar) { return 0; }" +
+                                 "   public int foo(B bar) { return 0; }" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
@@ -1794,12 +1827,12 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void WrongNumberOfArgumentsToFunctionCall()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() {\n" +
-                                 "\t\t System.out.println(new A().foo(10, new B()));\n" +
+                                 "   public static void main() {\n" +
+                                 "     System.out.println(new A().foo(10, new B()));\n" +
                                  "}\n" +
                                  "}\n" +
                                  "class A {\n" +
-                                 "\t public int foo(int bar, B baz, B b) { return 0; }" +
+                                 "   public int foo(int bar, B baz, B b) { return 0; }" +
                                  "}\n" +
                                  "class B { }\n";
                 IErrorReporter errors;
@@ -1813,12 +1846,12 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void NoArgumentsToMethodCallThatRequiresThem()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() {\n" +
-                                 "\t\t System.out.println(new A().foo());\n" +
+                                 "   public static void main() {\n" +
+                                 "     System.out.println(new A().foo());\n" +
                                  "}\n" +
                                  "}\n" +
                                  "class A {\n" +
-                                 "\t public int foo(int bar, B baz, B b) { return 0; }" +
+                                 "   public int foo(int bar, B baz, B b) { return 0; }" +
                                  "}\n" +
                                  "class B { }\n";
                 IErrorReporter errors;
@@ -1836,11 +1869,11 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void ValidIntegerLiterals()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() {\n" +
-                                 "\t\t int foo;\n" +
-                                 "\t\t foo = 0;\n" +
-                                 "\t\t foo = 999999999;\n" +
-                                 "\t\t foo = 2147483647;\n" +
+                                 "   public static void main() {\n" +
+                                 "     int foo;\n" +
+                                 "     foo = 0;\n" +
+                                 "     foo = 999999999;\n" +
+                                 "     foo = 2147483647;\n" +
                                  "}\n" +
                                  "}\n";
                 IErrorReporter errors;
@@ -1852,9 +1885,9 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void InvalidIntegerLiteral()
             {
                 string program = "class Foo{\n" +
-                                 "\t public static void main() {\n" +
-                                 "\t\t int foo;\n" +
-                                 "\t\t foo = 2147483648;\n" +
+                                 "   public static void main() {\n" +
+                                 "     int foo;\n" +
+                                 "     foo = 2147483648;\n" +
                                  "}\n" +
                                  "}\n";
                 IErrorReporter errors;
@@ -1873,32 +1906,32 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             public void CanRecoverToFindAllTypeAndReferenceErrors()
             {
                 string program = "class Foo {\n" +
-                                 "\tpublic static void main() {\n" +
-                                 "\t\tint foo;\n" +
-                                 "\t\tfoo = 10 + new A().alwaysTrue();\n" +
-                                 "\t\tA foo2;\n" +
-                                 "\t\t foo2 = new C();\n" +
-                                 "\t\tint bar;\n" +
-                                 "\t\tbar = new A();\n" +
-                                 "\t\tbar = 99999999999999999;\n" +
-                                 "\t\tboolean baz; baz = 15 && new A().alwaysTrue(10) || new C() || foo;\n" +
-                                 "\t\tbaz = zzz || foo;\n" +
-                                 "\t\tbaz = foo && zzz;\n" +
-                                 "\t\tbaz = zzz || new C();\n" +
-                                 "\t\tfoo = zzz[zzz];\n" +
-                                 "\t\tassert(zzz);\n" +
-                                 "\t}\n" +
+                                 "  public static void main() {\n" +
+                                 "    int foo;\n" +
+                                 "    foo = 10 + new A().alwaysTrue();\n" +
+                                 "    A foo2;\n" +
+                                 "     foo2 = new C();\n" +
+                                 "    int bar;\n" +
+                                 "    bar = new A();\n" +
+                                 "    bar = 99999999999999999;\n" +
+                                 "    boolean baz; baz = 15 && new A().alwaysTrue(10) || new C() || foo;\n" +
+                                 "    baz = zzz || foo;\n" +
+                                 "    baz = foo && zzz;\n" +
+                                 "    baz = zzz || new C();\n" +
+                                 "    foo = zzz[zzz];\n" +
+                                 "    assert(zzz);\n" +
+                                 "  }\n" +
                                  "}\n" +
                                  "class A {\n" +
-                                 "\tpublic boolean alwaysTrue() {\n" +
-                                 "\t\t if (true) { }\n" +
-                                 "\t\t else { return true; }\n" +
-                                 "\t}\n" +
-                                 "\tpublic void foo() { return 10; }\n" +
-                                 "\tpublic boolean bar() { return true; }\n" +
+                                 "  public boolean alwaysTrue() {\n" +
+                                 "     if (true) { }\n" +
+                                 "     else { return true; }\n" +
+                                 "  }\n" +
+                                 "  public void foo() { return 10; }\n" +
+                                 "  public boolean bar() { return true; }\n" +
                                  "}\n" +
                                  "class B extends A {" +
-                                 "\tpublic boolean alwaysTrue(int foo) { return true; }\n" +
+                                 "  public boolean alwaysTrue(int foo) { return true; }\n" +
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);

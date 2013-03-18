@@ -19,12 +19,13 @@ namespace MiniJavaCompiler.FrontEnd
 
         public FrontEnd(TextReader programText)
         {
-            _errorLog = new ErrorLogger();
+            _errorLog = ErrorReporterFactory.CreateErrorLogger();
             _program = programText;
         }
 
         // In case of analysis failure, this can be used to get a hold of the
-        // list of error messages.
+        // list of error messages. Errors are returned in order of appearance
+        // in code.
         public List<ErrorMessage> GetErrors()
         {
             _errorLog.Errors.Sort(ErrorMessage.CompareByLocation);
@@ -64,13 +65,18 @@ namespace MiniJavaCompiler.FrontEnd
         }
 
         /* Performs semantic analysis on the program. Returns null if any of the phases
-         * fails. If one phase fails, analysis will not continue, but internal recovery
-         * is attempted within each phase of analysis.
+         * fails. If a fatal error is encountered in one phase, analysis will not continue,
+         * but internal recovery is attempted within each phase of analysis.
          * 
          * The phases are:
-         * 1. Passing through class declarations once to get a list of possible types.
-         * 2. Building a symbol table.
-         * 3. Checking that types and references are valid.
+         * 1. Building a symbol table. This checks that there are no name clashes in
+         *    type declarations or cyclic dependencies. Cyclic dependencies are treated
+         *    as fatal errors and will lead to type and reference checks not being run.
+         *    However, the compiler does proceed to the next phase even if name clashes
+         *    are found - though of course this may result in strange error reports.
+         * 2. Semantic checks. This phase checks first the validity of name references
+         *    and then performs type checks on all expressions. References to possibly
+         *    uninitialized variables are also detected.
          * 
          * All errors are logged in the error log.
          */

@@ -46,14 +46,14 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
         public void HandlesVoidTypeRight()
         {
             string program = "class Factorial {\n" +
-                             "\t public static void main () {\n" +
-                             "\t\t System.out.println(42);\n" +
-                             "\t} \n" +
+                             "   public static void main () {\n" +
+                             "     System.out.println(42);\n" +
+                             "  } \n" +
                              "} \n\n" +
                              "class Foo {\n" +
-                             "\t public void foo() {\n" +
-                             "\t\t System.out.println(42);\n" +
-                             "\t} \n" +
+                             "   public void foo() {\n" +
+                             "     System.out.println(42);\n" +
+                             "  } \n" +
                              "} \n\n";
             Assert.True(BuildSymbolTableFor(program));
             var fooClass = (TypeSymbol)_symbolTable.GlobalScope.ResolveType("Foo");
@@ -65,12 +65,12 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
         public void DoesNotAcceptVoidTypeForAVariable()
         {
             string program = "class Factorial {\n" +
-                             "\t public static void main () {\n" +
-                             "\t\t System.out.println(42);\n" +
-                             "\t} \n" +
+                             "   public static void main () {\n" +
+                             "     System.out.println(42);\n" +
+                             "  } \n" +
                              "} \n\n" +
                              "class Foo {\n" +
-                             "\t void foo; \n" +
+                             "   void foo; \n" +
                              "} \n\n";
             Assert.False(BuildSymbolTableFor(program));
             Assert.That(_errors.Errors.First().Content, Is.StringContaining("Unknown type void"));
@@ -80,18 +80,18 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
         public void BuildsSymbolTableRightWithInheritance()
         {
             string program = "class Factorial {\n" +
-                             "\t public static void main () {\n" +
-                             "\t\t System.out.println(42);\n" +
-                             "\t} \n" +
+                             "   public static void main () {\n" +
+                             "     System.out.println(42);\n" +
+                             "  } \n" +
                              "} \n\n" +
                              "class Foo {\n" +
-                             "\t public int foo() {\n" +
-                             "\t\t System.out.println(42); \n" +
-                             "\t\t return 42; \n" +
-                             "\t} \n" +
+                             "   public int foo() {\n" +
+                             "     System.out.println(42); \n" +
+                             "     return 42; \n" +
+                             "  } \n" +
                              "}\n" +
                              "class Bar extends Foo {\n" +
-                             "\t int foo; \n" +
+                             "   int foo; \n" +
                              "} \n";
             Assert.True(BuildSymbolTableFor(program));
             var fooClass = (TypeSymbol)_symbolTable.GlobalScope.ResolveType("Foo");
@@ -104,15 +104,15 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
         public void ClassCannotInheritFromSelf()
         {
             string program = "class Factorial {\n" +
-                             "\t public static void main () {\n" +
-                             "\t\t System.out.println(42);\n" +
-                             "\t} \n" +
+                             "   public static void main () {\n" +
+                             "     System.out.println(42);\n" +
+                             "  } \n" +
                              "} \n\n" +
                              "class Foo extends Foo {\n" +
-                             "\t public int foo() {\n" +
-                             "\t\t System.out.println(42); \n" +
-                             "\t\t return 42; \n" +
-                             "\t} \n" +
+                             "   public int foo() {\n" +
+                             "     System.out.println(42); \n" +
+                             "     return 42; \n" +
+                             "  } \n" +
                              "}\n";
             Assert.False(BuildSymbolTableFor(program));
             Assert.That(_errors.Count, Is.EqualTo(1));
@@ -123,21 +123,21 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
         public void DetectsCyclicInheritance()
         {
             string program = "class Factorial {\n" +
-                             "\t public static void main () {\n" +
-                             "\t\t System.out.println(42);\n" +
-                             "\t} \n" +
+                             "   public static void main () {\n" +
+                             "     System.out.println(42);\n" +
+                             "  } \n" +
                              "} \n\n" +
                              "class Foo extends Baz {\n" +
-                             "\t public int foo() {\n" +
-                             "\t\t System.out.println(42); \n" +
-                             "\t\t return 42; \n" +
-                             "\t} \n" +
+                             "   public int foo() {\n" +
+                             "     System.out.println(42); \n" +
+                             "     return 42; \n" +
+                             "  } \n" +
                              "}\n" +
                              "class Bar extends Foo {\n" +
-                             "\t int foo; \n" +
+                             "   int foo; \n" +
                              "} \n" +
                              "class Baz extends Bar {\n" +
-                             "\t int foo; \n" +
+                             "   int foo; \n" +
                              "} \n";
             Assert.False(BuildSymbolTableFor(program));
             Assert.That(_errors.Count, Is.EqualTo(3));
@@ -150,9 +150,9 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
         public void DetectsAnUnknownTypeInSuperClassDeclaration()
         {
             string program = "class Foo {\n" +
-                 "\t public static void main () {\n" +
-                 "\t\t System.out.println(42);\n" +
-                 "\t} \n" +
+                 "   public static void main () {\n" +
+                 "     System.out.println(42);\n" +
+                 "  } \n" +
                  "} \n\n" +
                  "class Bar extends Baz { } \n\n";
             Assert.False(BuildSymbolTableFor(program));
@@ -164,9 +164,9 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
         public void DetectsAnUnknownTypeInVariableDeclaration()
         {
             string program = "class Foo {\n" +
-                 "\t public static void main () {\n" +
-                 "\t\t System.out.println(42);\n" +
-                 "\t} \n" +
+                 "   public static void main () {\n" +
+                 "     System.out.println(42);\n" +
+                 "  } \n" +
                  "} \n\n" +
                  "class Bar { Baz foo; } \n\n";
             Assert.False(BuildSymbolTableFor(program));
@@ -178,9 +178,9 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
         public void DetectsAnUnknownTypeInMethodDeclaration()
         {
             string program = "class Foo {\n" +
-                 "\t public static void main () {\n" +
-                 "\t\t System.out.println(42);\n" +
-                 "\t} \n" +
+                 "   public static void main () {\n" +
+                 "     System.out.println(42);\n" +
+                 "  } \n" +
                  "} \n\n" +
                  "class Bar { public Baz foo(Buzz foo) { } } \n\n";
             Assert.False(BuildSymbolTableFor(program));
@@ -193,15 +193,15 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
         public void DefiningTheSameNameTwiceResultsInAnError()
         {
             string program = "class Factorial {\n" +
-                             "\t public static void main () {\n" +
-                             "\t\t System.out.println(42);\n" +
-                             "\t} \n" +
+                             "   public static void main () {\n" +
+                             "     System.out.println(42);\n" +
+                             "  } \n" +
                              "} \n\n" +
                              "class Foo {\n" +
-                             "\t int foo; \n" +
-                             "\t int foo; \n" +
-                             "\t public int foo() { } \n" +
-                             "\t public int foo() { } \n" +
+                             "   int foo; \n" +
+                             "   int foo; \n" +
+                             "   public int foo() { } \n" +
+                             "   public int foo() { } \n" +
                              "} \n\n";
             Assert.False(BuildSymbolTableFor(program));
             Assert.AreEqual(2, _errors.Errors.Count);
@@ -215,13 +215,13 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
         public void NameCanBeRedefinedAfterScopeEnds()
         {
             string program = "class Factorial {\n" +
-                             "\t public static void main () {\n" +
-                             "\t\t while (true) {\n" +
-                             "\t\t\t int foo;\n" +
-                             "\t\t\t foo = 0;\n" +
-                             "\t\t }\n" + // scope for foo ends
-                             "\t\t int foo;\n" +
-                             "\t} \n" +
+                             "   public static void main () {\n" +
+                             "     while (true) {\n" +
+                             "       int foo;\n" +
+                             "       foo = 0;\n" +
+                             "     }\n" + // scope for foo ends
+                             "     int foo;\n" +
+                             "  } \n" +
                              "} \n\n";
             Assert.True(BuildSymbolTableFor(program));
         }
@@ -230,12 +230,12 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
         public void CannotRedefineLocalNamesInsideTheSameScopeEvenInsideBlocks()
         {
             string program = "class Factorial {\n" +
-                             "\t public static void main () {\n" +
-                             "\t\t int foo;\n" +
-                             "\t\t while (true) {\n" +
-                             "\t\t\t int foo;\n" + // the original foo is still in scope
-                             "\t\t }\n" +
-                             "\t} \n" +
+                             "   public static void main () {\n" +
+                             "     int foo;\n" +
+                             "     while (true) {\n" +
+                             "       int foo;\n" + // the original foo is still in scope
+                             "     }\n" +
+                             "  } \n" +
                              "} \n\n";
             Assert.False(BuildSymbolTableFor(program));
             Assert.AreEqual(1, _errors.Errors.Count);
@@ -261,18 +261,18 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
         public void RecoversFromMethodAndVariableDefinitionFailure()
         {
             string program = "class Factorial {\n" +
-                             "\t public static void main () {\n" +
-                             "\t\t System.out.println(42);\n" +
-                             "\t} \n" +
+                             "   public static void main () {\n" +
+                             "     System.out.println(42);\n" +
+                             "  } \n" +
                              "} \n\n" +
                              "class Foo {\n" +
-                             "\t int foo; \n" +
-                             "\t int foo; \n" + // first error
-                             "\t public int foo() { } \n" +
-                             "\t public int foo() { int foo; int bar; int bar; } \n" + // second error (method name) and third error
+                             "   int foo; \n" +
+                             "   int foo; \n" + // first error
+                             "   public int foo() { } \n" +
+                             "   public int foo() { int foo; int bar; int bar; } \n" + // second error (method name) and third error
                                                                                        // (two variable declarations with the same name inside method)
-                             "\t public int foo() { } \n" + // fourth error
-                             "\t int foo; \n" + // fifth error
+                             "   public int foo() { } \n" + // fourth error
+                             "   int foo; \n" + // fifth error
                              "} \n\n";
             Assert.False(BuildSymbolTableFor(program));
             Assert.AreEqual(5, _errors.Errors.Count);
@@ -287,20 +287,20 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             // is not defined by the CFG. I have therefore removed it from
             // this code.
             string program = "class Factorial {\n" +
-                             "\t public static void main () {\n" +
-                             "\t\t System.out.println (new Fac ().ComputeFac (10));\n" +
+                             "   public static void main () {\n" +
+                             "     System.out.println (new Fac ().ComputeFac (10));\n" +
                              "} \n\n" +
                              "} \n" +
                              "class Fac { \n" +
-                             "\t public int ComputeFac (int num) {\n" +
-                             "\t\t assert (num > 0 || num == 0);\n" +
-                             "\t\t int num_aux;\n" +
-                             "\t\t if (num == 0)\n" +
-                             "\t\t\t num_aux = 1;\n" +
-                             "\t\t else \n" +
-                             "\t\t\t num_aux = num * this.ComputeFac (num-1);\n" +
-                             "\t\t return num_aux;\n" +
-                             "\t }\n" +
+                             "   public int ComputeFac (int num) {\n" +
+                             "     assert (num > 0 || num == 0);\n" +
+                             "     int num_aux;\n" +
+                             "     if (num == 0)\n" +
+                             "       num_aux = 1;\n" +
+                             "     else \n" +
+                             "       num_aux = num * this.ComputeFac (num-1);\n" +
+                             "     return num_aux;\n" +
+                             "   }\n" +
                              "}\n";
             Assert.True(BuildSymbolTableFor(program));
 
