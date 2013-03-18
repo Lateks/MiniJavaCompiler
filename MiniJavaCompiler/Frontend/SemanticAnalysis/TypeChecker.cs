@@ -208,9 +208,8 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
 
             public override void Exit(MethodDeclaration node)
             {
-                var method = _parent._symbolTable.Scopes[node].ResolveMethod(node.Name);
                 int numReturnStatements = _returnTypes.Count;
-                if (method.Type == VoidType.GetInstance())
+                if (node.Symbol.Type == VoidType.GetInstance())
                 {   // Void methods cannot have return statements
                     // (because Mini-Java does not allow empty return statements).
                     if (numReturnStatements > 0)
@@ -218,7 +217,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                         ReportError(
                             ErrorTypes.TypeError,
                             String.Format("Cannot return a value from a method whose result type is {0}.",
-                            method.Type.Name), node);
+                            node.Symbol.Type.Name), node);
                         _returnTypes.Clear();
                     }
                 }
@@ -227,11 +226,11 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                     ReportError(
                         ErrorTypes.TypeError,
                         String.Format("Missing return statement in method {0}.",
-                        method.Name), node);
+                        node.Symbol.Name), node);
                 }
                 // Return types can be checked even if some branches were missing
                 // a return statement.
-                CheckReturnTypes(node, method);
+                CheckReturnTypes(node, node.Symbol);
             }
         }
     }

@@ -155,6 +155,10 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             _symbolTable.Scopes.Add(node, _symbolTable.GlobalScope);
         }
 
+        // Detects references to unknown types in class inheritance
+        // declarations. If the inherited type cannot be resolved,
+        // InheritedType will remain null (instead of being set
+        // to ErrorType).
         public override void Visit(ClassDeclaration node)
         {   // Resolve inheritance relationships.
             var typeSymbol = CurrentScope.ResolveType(node.Name);
@@ -180,6 +184,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             ExitScope();
         }
 
+        // Detects possible duplicate declaration of a variable identifier.
         public override void Visit(VariableDeclaration node)
         {
             Debug.Assert(CurrentScope is IVariableScope);
@@ -197,98 +202,40 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             }
         }
 
+        // Detects possible duplicate declaration of a method identifier.
+        // A dummy scope is made to stand in for the method scope.
+        // TODO: is this scope handled properly in the following phase?
         public override void Visit(MethodDeclaration node)
         {
             Debug.Assert(CurrentScope is IMethodScope);
 
             node.ReturnType = CheckDeclaredType(node);
             var methodScope = (IMethodScope) CurrentScope;
-            var methodSymbol = new MethodSymbol(node.Name, node.ReturnType, methodScope, node.IsStatic);
-            IScope scope = methodSymbol.Scope;
-            if (!methodScope.Define(methodSymbol))
+            
+            // Note: the symbol is stored on the node even if the attempt
+            // to define it fails. This feature can be used in the type
+            // checking phase to e.g. check return types for even methods
+            // that could not be defined due to a name clash.
+            node.Symbol = new MethodSymbol(node.Name, node.ReturnType, methodScope, node.IsStatic);
+            IScope scope = node.Symbol.Scope;
+            if (!methodScope.Define(node.Symbol))
             {
                 ReportSymbolDefinitionError(node);
                 scope = new ErrorScope(CurrentScope); // Make an error scope to stand in for the method scope for purposes of recovery.
             }                                         // (Both are IVariableScopes.)
 
-            _symbolTable.Declarations.Add(methodSymbol, node);
+            _symbolTable.Declarations.Add(node.Symbol, node);
             _symbolTable.Scopes.Add(node, scope);
 
             EnterScope(scope);
-        }
-
-        private IType CheckDeclaredType(Declaration node)
-        {
-            IType declaredType;
-            if (node.TypeName == MiniJavaInfo.VoidType)
-            {
-                if (node is VariableDeclaration)
-                {
-                    ReportError(ErrorTypes.TypeReference, "Illegal type void in variable declaration.", node);
-                    declaredType = ErrorType.GetInstance();
-                }
-                else if (node.IsArray)
-                {
-                    ReportError(ErrorTypes.TypeReference, "Illegal type void for array elements.", node);
-                    declaredType = ErrorType.GetInstance();
-                }
-                else
-                {
-                    declaredType = VoidType.GetInstance();
-                }
-            }
-            else
-            {
-                var nodeScalarTypeSymbol = _symbolTable.ResolveTypeName(node.TypeName);
-                if (nodeScalarTypeSymbol == null)
-                {   // Note: this error is also reported when a void type is encountered
-                    // for something other than a method declaration.
-                    ReportTypeNameError(node.TypeName, node);
-                    declaredType = ErrorType.GetInstance();
-                }
-                else
-                {
-                    declaredType = BuildType(node, (ScalarType)nodeScalarTypeSymbol.Type);
-                }
-            }
-            return declaredType;
-        }
-
-        private IType BuildType(Declaration node, ScalarType nodeScalarType)
-        {
-            IType actualType;
-            if (node.IsArray)
-            {
-                var arraySymbol = _symbolTable.ResolveTypeName(node.TypeName, node.IsArray);
-                if (arraySymbol == null)
-                {
-                    actualType = DefineArrayType(nodeScalarType);
-                }
-                else
-                {
-                    actualType = arraySymbol.Type;
-                }
-            }
-            else
-            {
-                actualType = nodeScalarType;
-            }
-            return actualType;
-        }
-
-        private IType DefineArrayType(ScalarType nodeScalarType)
-        {
-            var sym = TypeSymbol.MakeArrayTypeSymbol(nodeScalarType, _symbolTable.GlobalScope);
-            sym.SuperClass = _symbolTable.ResolveTypeName(MiniJavaInfo.AnyType, true);
-            _symbolTable.GlobalScope.Define(sym);
-            return sym.Type;
         }
 
         public override void Visit(InstanceCreationExpression node)
         {   // Instance creation expressions are checked here instead of
             // the type checking phase because they might create an array
             // of a type not previously used, so this array type needs to
-            // be added to the symbol table.
+            // be added to the symbol table. This method does not detect
+            // errors.
             if (node.CreatedTypeName != MiniJavaInfo.VoidType)
             {
                 var scalarTypeSymbol = _symbolTable.ResolveTypeName(node.CreatedTypeName);
@@ -299,17 +246,6 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 }
             }
             HandleExpressionOrStatementNode(node);
-        }
-
-        private void ReportSymbolDefinitionError(Declaration node)
-        {
-            string errorMessage = String.Format("Symbol {0} is already defined.", node.Name);
-            ReportError(ErrorTypes.ConflictingDefinitions, errorMessage, node);
-        }
-
-        private void ReportError(ErrorTypes type, string message, SyntaxElement node)
-        {
-            _errorReporter.ReportError(type, message, node);
         }
 
         public override void Exit(MethodDeclaration node)
@@ -323,12 +259,6 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             var blockScope = new LocalScope((IVariableScope) CurrentScope);
             _symbolTable.Scopes.Add(node, blockScope);
             EnterScope(blockScope);
-        }
-
-        private void ReportTypeNameError(string typeName, SyntaxElement node)
-        {
-            ReportError(ErrorTypes.TypeReference,
-                String.Format("Unknown type {0}.", typeName), node);
         }
 
         public override void Exit(BlockStatement node)
@@ -409,6 +339,90 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
         private void HandleExpressionOrStatementNode(ISyntaxTreeNode node)
         {
             _symbolTable.Scopes.Add(node, CurrentScope);
+        }
+
+        private void ReportTypeNameError(string typeName, SyntaxElement node)
+        {
+            ReportError(ErrorTypes.TypeReference,
+                String.Format("Unknown type {0}.", typeName), node);
+        }
+
+        private void ReportSymbolDefinitionError(Declaration node)
+        {
+            string errorMessage = String.Format("Symbol {0} is already defined.", node.Name);
+            ReportError(ErrorTypes.ConflictingDefinitions, errorMessage, node);
+        }
+
+        private void ReportError(ErrorTypes type, string message, SyntaxElement node)
+        {
+            _errorReporter.ReportError(type, message, node);
+        }
+
+        private IType CheckDeclaredType(Declaration node)
+        {
+            IType declaredType;
+            if (node.TypeName == MiniJavaInfo.VoidType)
+            {
+                if (node is VariableDeclaration)
+                {
+                    ReportError(ErrorTypes.TypeReference, "Illegal type void in variable declaration.", node);
+                    declaredType = ErrorType.GetInstance();
+                }
+                else if (node.IsArray)
+                {
+                    ReportError(ErrorTypes.TypeReference, "Illegal type void for array elements.", node);
+                    declaredType = ErrorType.GetInstance();
+                }
+                else // declaration is a void method
+                {
+                    declaredType = VoidType.GetInstance();
+                }
+            }
+            else
+            {
+                var nodeScalarTypeSymbol = _symbolTable.ResolveTypeName(node.TypeName);
+                if (nodeScalarTypeSymbol == null)
+                {   // Note: this error is also reported when a void type is encountered
+                    // for something other than a method declaration.
+                    ReportTypeNameError(node.TypeName, node);
+                    declaredType = ErrorType.GetInstance();
+                }
+                else
+                {
+                    declaredType = BuildType(node, (ScalarType)nodeScalarTypeSymbol.Type);
+                }
+            }
+            return declaredType;
+        }
+
+        private IType BuildType(Declaration node, ScalarType nodeScalarType)
+        {
+            IType actualType;
+            if (node.IsArray)
+            {
+                var arraySymbol = _symbolTable.ResolveTypeName(node.TypeName, node.IsArray);
+                if (arraySymbol == null)
+                {
+                    actualType = DefineArrayType(nodeScalarType);
+                }
+                else
+                {
+                    actualType = arraySymbol.Type;
+                }
+            }
+            else
+            {
+                actualType = nodeScalarType;
+            }
+            return actualType;
+        }
+
+        private IType DefineArrayType(ScalarType nodeScalarType)
+        {
+            var sym = TypeSymbol.MakeArrayTypeSymbol(nodeScalarType, _symbolTable.GlobalScope);
+            sym.SuperClass = _symbolTable.ResolveTypeName(MiniJavaInfo.AnyType, true);
+            _symbolTable.GlobalScope.Define(sym);
+            return sym.Type;
         }
     }
 }

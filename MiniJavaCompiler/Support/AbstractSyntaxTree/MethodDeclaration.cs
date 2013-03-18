@@ -1,4 +1,5 @@
-﻿using MiniJavaCompiler.Support.SymbolTable.Types;
+﻿using MiniJavaCompiler.Support.SymbolTable.Symbols;
+using MiniJavaCompiler.Support.SymbolTable.Types;
 using System;
 using System.Collections.Generic;
 
@@ -12,6 +13,7 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
         public bool IsStatic { get; private set; }
         public ClassDeclaration DeclaringType { get; set; }
         public IType ReturnType { get; set; }
+        public MethodSymbol Symbol { get; set; }
 
         public MethodDeclaration(string name, string type, bool returnTypeIsArray,
             List<VariableDeclaration> formals, List<IStatement> methodBody,
