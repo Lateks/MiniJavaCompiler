@@ -50,12 +50,12 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.That(errors.Count, Is.EqualTo(21));
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot find symbol C"));
-                Assert.That(errors.Errors[1].ToString(), Is.StringContaining("Cannot find symbol C"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Unknown type C"));
+                Assert.That(errors.Errors[1].ToString(), Is.StringContaining("Unknown type C"));
                 Assert.That(errors.Errors[2].ToString(), Is.StringContaining("Cannot find symbol zzz"));
                 Assert.That(errors.Errors[3].ToString(), Is.StringContaining("Cannot find symbol zzz"));
                 Assert.That(errors.Errors[4].ToString(), Is.StringContaining("Cannot find symbol zzz"));
-                Assert.That(errors.Errors[5].ToString(), Is.StringContaining("Cannot find symbol C")); // Note: No error about operands for || because neither one could be resolved.
+                Assert.That(errors.Errors[5].ToString(), Is.StringContaining("Unknown type C")); // Note: No error about operands for || because neither one could be resolved.
                 Assert.That(errors.Errors[6].ToString(), Is.StringContaining("Cannot find symbol zzz")); // Note: No error about array indexing because array expr could not be resolved.
                 Assert.That(errors.Errors[7].ToString(), Is.StringContaining("Cannot find symbol zzz")); // Note: No error about array index type because variable could not be resolved.
                 Assert.That(errors.Errors[8].ToString(), Is.StringContaining("Cannot find symbol zzz")); // Note: No error about invalid argument to assert statement because variable could not be resolved.

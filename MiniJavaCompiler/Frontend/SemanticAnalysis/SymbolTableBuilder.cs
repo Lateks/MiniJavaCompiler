@@ -285,16 +285,18 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
         }
 
         public override void Visit(InstanceCreationExpression node)
-        {
-            var scalarTypeSymbol = _symbolTable.ResolveTypeName(node.CreatedTypeName);
-            if (scalarTypeSymbol == null)
+        {   // Instance creation expressions are checked here instead of
+            // the type checking phase because they might create an array
+            // of a type not previously used, so this array type needs to
+            // be added to the symbol table.
+            if (node.CreatedTypeName != MiniJavaInfo.VoidType)
             {
-                ReportTypeNameError(node.CreatedTypeName, node);
-            }
-            else if (node.IsArrayCreation && _symbolTable.ResolveTypeName(
-                node.CreatedTypeName, node.IsArrayCreation) == null)
-            {
-                DefineArrayType((ScalarType) scalarTypeSymbol.Type);
+                var scalarTypeSymbol = _symbolTable.ResolveTypeName(node.CreatedTypeName);
+                if (scalarTypeSymbol != null && node.IsArrayCreation &&
+                    _symbolTable.ResolveTypeName(node.CreatedTypeName, node.IsArrayCreation) == null)
+                {
+                    DefineArrayType((ScalarType)scalarTypeSymbol.Type);
+                }
             }
             HandleExpressionOrStatementNode(node);
         }

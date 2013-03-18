@@ -274,7 +274,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot find symbol C"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Unknown type C"));
                 // And no errors about method call parameters...
             }
 

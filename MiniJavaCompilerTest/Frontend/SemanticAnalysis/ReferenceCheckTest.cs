@@ -440,7 +440,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(2, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot find symbol A"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Unknown type A"));
                 Assert.That(errors.Errors[1].ToString(), Is.StringContaining("Cannot find symbol foo"));
             }
 
@@ -454,8 +454,22 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.Throws<CompilationError>(checker.RunCheck);
                 Assert.AreEqual(2, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot find symbol A"));
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Unknown type A"));
                 Assert.That(errors.Errors[1].ToString(), Is.StringContaining("Cannot find symbol length")); // method cannot be resolved because type could not be found
+            }
+
+            [Test]
+            public void CannotCreateArrayOfVoidType()
+            {
+                string program = "class Foo {\n" +
+                                 "  public static void main() { int foo; foo = new void[10].length; }\n" +
+                                 "}\n";
+                IErrorReporter errors;
+                var checker = SetUpTypeAndReferenceChecker(program, out errors);
+                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.AreEqual(2, errors.Count);
+                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Illegal type void for array elements."));
+                Assert.That(errors.Errors[1].ToString(), Is.StringContaining("Cannot find symbol length"));
             }
         }
     }

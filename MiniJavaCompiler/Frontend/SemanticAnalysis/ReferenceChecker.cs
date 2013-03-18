@@ -43,7 +43,9 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             public override void Visit(AssignmentStatement node)
             {
                 if (node.LeftHandSide is ILValueExpression)
-                {
+                {   // Whether an lvalue expression is being used "as an address"
+                    // or just as a regular reference matters in both reference checks
+                    // (reference to uninitialized variable) and code generation.
                     ((ILValueExpression)node.LeftHandSide).UsedAsAddress = true;
                 }
             }
@@ -59,29 +61,31 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                         CultureInfo.CurrentCulture.TextInfo.ToTitleCase(methodOwnerType.Name)),
                         node);
                     node.Type = ErrorType.GetInstance();
-                    return;
-                }
-                
-                MethodSymbol method = ResolveMethod(node, methodOwnerType);
-                if (method != null)
-                {
-                    if (_parent._symbolTable.Declarations.ContainsKey(method))
-                    { // there is no AST node declaration for built-in methods (namely, array length).
-                        node.ReferencedMethod = (MethodDeclaration)_parent._symbolTable.Declarations[method];
-                    }
-                    node.Type = method.Type;
                 }
                 else
                 {
-                    ReportError(ErrorTypes.MethodReference,
-                        String.Format("Cannot find symbol {0}.", node.MethodName), node);
-                    node.Type = ErrorType.GetInstance();
+                    MethodSymbol method = ResolveMethod(node, methodOwnerType);
+                    if (method != null)
+                    {
+                        // TODO: store declarations in symbols
+                        if (_parent._symbolTable.Declarations.ContainsKey(method))
+                        {   // There is no AST node declaration for built-in methods (namely, array length).
+                            node.ReferencedMethod = (MethodDeclaration)_parent._symbolTable.Declarations[method];
+                        }
+                        node.Type = method.Type;
+                    }
+                    else
+                    {
+                        ReportError(ErrorTypes.MethodReference,
+                            String.Format("Cannot find symbol {0}.", node.MethodName), node);
+                        node.Type = ErrorType.GetInstance();
+                    }
                 }
             }
 
             public override void Visit(InstanceCreationExpression node)
             {
-                node.Type = CheckCreatedType(node) ?? ErrorType.GetInstance();
+                node.Type = CheckCreatedType(node);
             }
 
             public override void Visit(UnaryOperatorExpression node)
@@ -166,24 +170,33 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
 
             private IType CheckCreatedType(InstanceCreationExpression node)
             {
-                var createdTypeSymbol = _parent._symbolTable.ResolveTypeName(node.CreatedTypeName, node.IsArrayCreation);
                 IType createdType;
-                if (createdTypeSymbol == null)
+                if (node.CreatedTypeName == MiniJavaInfo.VoidType)
                 {
-                    if (!_parent._errors.HasErrorReportForNode(ErrorTypes.TypeReference, node))
-                    {
-                        ReportError(ErrorTypes.TypeReference,
-                            String.Format("Cannot find symbol {0}.", node.CreatedTypeName), node);
-                    }
-                    else
-                    {
-                        _checkOK = false;
-                    }
-                    createdType = null;
+                    Debug.Assert(node.IsArrayCreation); // otherwise this should not have passed the parser
+                    ReportError(ErrorTypes.TypeError, String.Format("Illegal type void for array elements."), node);
+                    createdType = ErrorType.GetInstance();
                 }
                 else
                 {
-                    createdType = createdTypeSymbol.Type;
+                    var createdTypeSymbol = _parent._symbolTable.ResolveTypeName(node.CreatedTypeName, node.IsArrayCreation);
+                    if (createdTypeSymbol == null)
+                    {
+                        if (!_parent._errors.HasErrorReportForNode(ErrorTypes.TypeReference, node))
+                        {
+                            ReportError(ErrorTypes.TypeReference,
+                                String.Format("Unknown type {0}.", node.CreatedTypeName), node);
+                        }
+                        else
+                        {
+                            _checkOK = false;
+                        }
+                        createdType = ErrorType.GetInstance();
+                    }
+                    else
+                    {
+                        createdType = createdTypeSymbol.Type;
+                    }
                 }
                 return createdType;
             }
