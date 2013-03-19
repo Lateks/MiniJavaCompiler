@@ -378,7 +378,7 @@ The Scopes package inside the Support module defines objects that represent lexi
     \item IVariableScope, which represents a scope where VariableSymbols can be defined. This interface is implemented by LocalScope (the scope implementation used for code blocks), MethodScope (the scope used for method bodies, including their parameter lists), ClassScope and ErrorScope.
 \end{itemize}
 
-        The only difference between MethodScope and LocalScope is that LocalScope can be defined inside any IVariableScope but a MethodScope can only appear inside an IMethodScope. An ErrorScope can be defined inside any IScope. In practice it is used when the symbol table building phase fails to define a method due to a name clash and a ''dummy scope'' is needed to stand in the MethodScope's place.
+The only difference between MethodScope and LocalScope is that LocalScope can be defined inside any IVariableScope but a MethodScope can only appear inside an IMethodScope. An ErrorScope can be defined inside any IScope. In practice it is used when the symbol table building phase fails to define a method due to a name clash and a ''dummy scope'' is needed to stand in the MethodScope's place.
 
 The IVariableScope interface also provides a method for resolving a local variable. In this case, the search will not proceed to the class level. This is used when a variable is defined in an IVariableScope: the variable can only be defined if a local variable with the same name cannot be found in the scope or one of its enclosing scopes, up to the method scope level. Class variables can still have the same name as a local variable.
 
@@ -388,11 +388,31 @@ The IVariableScope interface also provides a method for resolving a local variab
 \caption{The Symbols package}
 \end{figure}
 
+The Symbols package defines the abstract class Symbol and the concrete symbol types TypeSymbol, MethodSymbol and VariableSymbol. The Symbol class contains a lot of information: the name of the symbol, the type (IType, described below), the scope it is defined in (an IScope) and also its Declaration in the abstract syntax tree. This can be used to gain access e.g. to a MethodSymbol's MethodDeclaration and its formal parameter declarations, so these do not need to be duplicated in the Symbol object. The most important part of a symbol is the name. TypeSymbols also contain information on the superclass type and can represent either Array or Scalar types.
+
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.7\textwidth]{types.pdf}
 \caption{The Types package}
 \end{figure}
+
+The Types package defines the IType interface that is used to represent types that are not necessarily bound to a type symbol. E.g. the void type is never defined in the symbol table\footnote{There is no reason it could not be defined there as well as any other built-in type, but I have kept it this way to catch programming errors related to handling the void type more easily.}. ScalarType and ArrayType should be self-explanatory: ScalarType represents types that are not arrays (e.g. int) and ArrayType represents types that are (e.g. int[ ]). An ArrayType has a reference to a ScalarType that represents its element type. ErrorType is used when the type of a variable, method return type or an expression cannot be deduced.
+
+ErrorType and VoidType are defined as singletons because I think this is the only way the implementation can make sense semantically: there is only a single type called void, and there is no point in having several instances of ErrorType either. Similarly, there are never several instances of the ScalarType class with the same type name, nor are there several instances of the ArrayType class with the same element type. This is enforced by having ScalarType and ArrayType instances be created only by the static factory methods MakeArrayTypeSymbol and MakeScalarTypeSymbol in the TypeSymbol class. These symbols cannot be defined in the global scope more than once.
+
+The IType interface defines only a single method: IsAssignableTo(IType other). This is implemented by all type classes in such a way, that any type is assignable to ErrorType and ErrorType is assignable to any other type. This helps avoid some special cases when handling ErrorTypes in the semantic analysis phase.
+
+The rules of assignability are as follows: IType T can be assigned to another IType E if and only if
+\begin{itemize}
+    \item T is the ErrorType instance or
+    \item E is the ErrorType instance or
+    \item T and E are ScalarType instances and T is defined as a subclass of E or
+    \item T = E.
+\end{itemize}
+
+This implies that ArrayType instances are only compatible if their element types are the same type. Covariance of array types is therefore not allowed. This is consistent with the MiniJava specification that says ''array types are only compatible if they have the same element type''. This is unlike in Java where arrays are covariant. Of course if T and E are ScalarTypes and T is a subclass of E, T can be assigned into an index of an array of type E[ ].
+
+VoidType can never be assigned to any other type. There is never a case where VoidType is legally the left-hand side of an expression and this situation cannot arise in semantic analysis even through recovery processes.
 
 \subsection{Lexical analysis}
 
