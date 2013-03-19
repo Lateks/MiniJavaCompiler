@@ -44,7 +44,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             {
                 node.DeclaringType = GetSurroundingClass(node);
                 Debug.Assert(node.DeclaringType != null);
-                if (node.ReturnType is ErrorType)
+                if (node.Type is ErrorType)
                 {
                     _checkOK = false;
                 }

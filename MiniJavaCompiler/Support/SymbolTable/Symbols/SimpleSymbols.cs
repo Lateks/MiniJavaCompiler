@@ -17,13 +17,11 @@ namespace MiniJavaCompiler.Support.SymbolTable.Symbols
     {
         // Note: only the main method is static in MiniJava.
         public bool IsStatic { get; private set; }
-        public List<TypeSymbol> Parameters { get; private set; }
 
         public MethodSymbol(string name, IType returnType, IMethodScope enclosingScope, bool isStatic = false)
             : base(name, returnType, new MethodBodyScope(enclosingScope))
         {
             IsStatic = isStatic;
-            Parameters = new List<TypeSymbol>();
         }
     }
 }

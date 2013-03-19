@@ -54,6 +54,10 @@ namespace MiniJavaCompiler
             {
                 RunBackEnd(abstractSyntaxTree, args.Count() > 1 ? args[1] : null);
             }
+            else
+            {
+                Environment.Exit(1);
+            }
         }
 
         private static bool RunFrontEnd(string fileName, StreamReader fileStream, out Program abstractSyntaxTree)

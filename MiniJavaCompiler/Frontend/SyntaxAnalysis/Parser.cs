@@ -15,7 +15,7 @@ namespace MiniJavaCompiler.FrontEnd.SyntaxAnalysis
     public abstract class ParserBase
     {
         public bool DebugMode { get; protected set; }
-        public bool ParsingFailed { get; protected set; }
+        public bool ParsingFailed { get; set; }
         protected IParserInputReader Input { get; set; }
         protected readonly IErrorReporter ErrorReporter;
 

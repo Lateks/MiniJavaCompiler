@@ -15,7 +15,6 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
         public Kind VariableKind { get; private set; }
         public short LocalIndex { get; set; }
         public bool IsInitialized { get; set; }
-        public IType Type { get; set; }
 
         public VariableDeclaration(string name, string type, bool isArray,
             Kind kind, short localIndex, int row, int col)

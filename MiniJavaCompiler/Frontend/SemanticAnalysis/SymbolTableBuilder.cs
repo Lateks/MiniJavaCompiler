@@ -205,14 +205,14 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
         {
             Debug.Assert(CurrentScope is IMethodScope);
 
-            node.ReturnType = CheckDeclaredType(node);
+            node.Type = CheckDeclaredType(node);
             var methodScope = (IMethodScope) CurrentScope;
             
             // Note: the symbol is stored on the node even if the attempt
             // to define it fails. This feature can be used in the type
             // checking phase to e.g. check return types for even methods
             // that could not be defined due to a name clash.
-            node.Symbol = new MethodSymbol(node.Name, node.ReturnType, methodScope, node.IsStatic);
+            node.Symbol = new MethodSymbol(node.Name, node.Type, methodScope, node.IsStatic);
             IScope scope = node.Symbol.Scope;
             if (!methodScope.Define(node.Symbol))
             {

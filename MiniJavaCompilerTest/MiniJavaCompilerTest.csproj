@@ -48,6 +48,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BackEnd\CodeGenTest.cs" />
     <Compile Include="FrontEnd\Parsing\OperatorPrecedenceTest.cs" />
     <Compile Include="FrontEnd\Parsing\ParserRecoveryTest.cs" />
     <Compile Include="FrontEnd\Parsing\ParserTest.cs" />
@@ -82,9 +83,7 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="BackEnd\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

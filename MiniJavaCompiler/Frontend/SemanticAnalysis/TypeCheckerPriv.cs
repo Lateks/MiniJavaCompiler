@@ -29,7 +29,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 // Subclass methods CANNOT have covariant return types with respect to overridden
                 // superclass methods, though this is allowed in Java. This is because the .NET runtime
                 // does not natively support them. (Reference link can be found in tests and docs.)
-                if (node.ReturnType != superClassMethodDeclaration.ReturnType)
+                if (node.Type != superClassMethodDeclaration.Type)
                 {
                     var msg = String.Format(
                         "Method {0} in class {1} has a different return type from overridden method in class {2}.",

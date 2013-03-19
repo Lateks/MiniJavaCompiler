@@ -12,7 +12,6 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
         public List<IStatement> MethodBody { get; private set; }
         public bool IsStatic { get; private set; }
         public TypeSymbol DeclaringType { get; set; }
-        public IType ReturnType { get; set; }
         public MethodSymbol Symbol { get; set; }
 
         public MethodDeclaration(string name, string type, bool returnTypeIsArray,
