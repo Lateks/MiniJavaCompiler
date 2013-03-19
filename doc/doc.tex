@@ -151,7 +151,7 @@ In this section I describe on an abstract level the interfaces and classes imple
 
 \subsubsection{An example tree}
 
-The following figure is a partial example of an abstract syntax tree for the sample program with the unary minus eliminated.
+The following figure is a partial example of an abstract syntax tree for the sample program with the unary minus eliminated. The child nodes of the if statement have been left out to conserve space.
 
 \begin{verbatim}
 class Factorial {
@@ -172,7 +172,7 @@ class Fac {
 }
 \end{verbatim}
 
-\includegraphics[width=1.0\textwidth]{ast.pdf}
+\includegraphics[width=1.0\textwidth]{syntaxtree.pdf}
 
 \subsubsection{Interfaces}
 \begin{description}
@@ -264,11 +264,24 @@ The FrontEnd class implements the whole front end compilation pipeline with the 
 
 The idea is to have a separate back end module that will also have a single class that is parameterised with the output of the front end phases to bring together the whole back end pipeline. The whole compiler can then be put together by running these two modules on the program code in succession.
 
-\includegraphics[width=1.0\textwidth]{frontend.pdf}
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.7\textwidth]{frontend.pdf}
+\end{figure}
 
-\subsubsection{Simplified view of the support module}
+\subsubsection{The support module}
 
 \includegraphics[width=1.0\textwidth]{support.pdf}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.7\textwidth]{scopes.pdf}
+\end{figure}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.7\textwidth]{types.pdf}
+\end{figure}
 
 \subsection{Lexical analysis}
 
