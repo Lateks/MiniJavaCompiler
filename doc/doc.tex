@@ -21,8 +21,8 @@
   linkcolor=Blue
 }
 \begin{document}
-\title{Mini-Java compiler front end}
-\author{Laura Leppänen \\ Compiler Project 2012}
+\title{Mini-Java compiler}
+\author{Laura Leppänen \\ Compiler Project 2013}
 \date{\today}
 \maketitle
 \thispagestyle{empty}
@@ -170,9 +170,18 @@ class Fac {
 }
 \end{verbatim}
 
+\begin{figure}[h!]
+\centering
 \includegraphics[width=1.0\textwidth]{syntaxtree.pdf}
+\caption{An example syntax tree}
+\end{figure}
 
 \subsubsection{Interfaces}
+
+In the following description \emph{italic text} is used for descriptions, normal text is used for type names and \textbf{bold text} is used for type names that describe the nodes' relationships with each other. E.g. a ClassDeclaration \emph{has many} \textbf{Declaration}s (child nodes) but \emph{has a} string \emph{and an} IScope (not a node, just data fields of the types string and IScope).
+
+When the listing in the previous version of this document was put together, I stored much of the type and scope information used by the semantic analysis phase in a separate object --- and instance of the class SymbolTable. This class no longer exists. In the current version I have stored this information in the nodes, so that the semantic analysis phase can simply ''decorate the tree'' with the relevant information. The listing is therefore somewhat more complex than before, and now also includes some information utilized only by the code generation phase.
+
 \begin{description}
     \item[ISyntaxTreeNode] \emph{is a node that can be visited (by an} INodeVisitor\emph{)} \\
         \emph{It has an} IScope \emph{(representing a scope). Some nodes define their own scopes (e.g.} \textbf{ClassDeclaration}\emph{s do). If the node does not, its} IScope \emph{property will refer to the scope it is defined in.}
@@ -228,8 +237,9 @@ class Fac {
     \item[VariableDeclaration] \emph{is a} Declaration \emph{and an} IStatement
       \begin{itemize}
         \item \emph{has a} Kind (enum) \emph{indicating its type which can be Formal (parameter), Local or Class}
-        \item \emph{has a local index} (short int) \emph{which indicates the position of a Formal variable declaration in a parameter list or the position of a Local variable declaration inside its scope. Local index is always 0 for class variables. This information is used in code generation.}
+        \item \emph{has a local index} (int) \emph{which indicates the position of a Formal variable declaration in a parameter list or the position of a Local variable declaration inside its scope. Local index is always 0 for class variables. This information is used in code generation.}
         \item \emph{has a} boolean \emph{indicating whether it is initialized (used and produced by the semantic analysis phase)}
+        \item \emph{inconsistently with} MethodDeclaration \emph{does not have a reference to the corresponding} VariableSymbol. \emph{It could be added, but I did not find a use for it, so I left it out. This is also the case with} ClassDeclaration \emph{which could have the corresponding} TypeSymbol.
       \end{itemize}
     \item[AssertStatement] \emph{is a} SyntaxElement \emph{and an} IStatement
       \begin{itemize}
@@ -314,41 +324,74 @@ class Fac {
 
 \section{Compiler implementation}
 
-This section covers the general architecture of the compiler, testing, error handling as well as the building and running instuctions.
+This section covers the general architecture of the compiler, testing, error handling as well as the building and running instructions.
 
 \subsection{Architecture}
 
-The front end module is divided into three sub-modules, one for each major phase of compilation: lexical analysis, syntax analysis and semantic analysis. In addition, I have collected some things possibly needed by both the front end and the back end into the Support module. These include:
-\begin{itemize}
-\item The abstract syntax tree representation and the related INodeVisitor interface.
-\item The symbol table.
-\item Static information on the language such as listings of keywords, punctuation characters, operators and operator semantics, precedences etc. This can be expanded to include possible semantic information needed by the back end later.
-\item Error handling: an error reporter interface and a basic implementation for it.
-\end{itemize}
+The front end module is divided into three sub-modules, one for each major phase of compilation: lexical analysis, syntax analysis and semantic analysis. In addition, I have collected some things possibly needed by both the front end and the back end into the Support module.
 
 \subsubsection{Simplified view of the front end module}
 
 The FrontEnd class implements the whole front end compilation pipeline with the help of the aforementioned sub-modules that implement the different phases of compilation. These submodules are descibed starting in the next section.
 
-The idea is to have a separate back end module that will also have a single class that is parameterised with the output of the front end phases to bring together the whole back end pipeline. The whole compiler can then be put together by running these two modules on the program code in succession.
-
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.7\textwidth]{frontend.pdf}
+\caption{The Support module}
 \end{figure}
 
 \subsubsection{The support module}
 
 \includegraphics[width=1.0\textwidth]{support.pdf}
 
+The support module contains the following parts which are described in more detail below:
+\begin{itemize}
+\item The abstract syntax tree representation, as described above, and the related INodeVisitor interface.
+\item Error handling: an error reporter interface and a basic implementation for it.
+\item Static semantic and syntactic information on the language.
+\item Symbols, scopes and types
+\end{itemize}
+
+The INodeVisitor interface defines Visit methods for all ISyntaxTreeNodes. For some nodes, several entry points are defined. For example, for ClassDeclaration and MethodDeclaration nodes both Visit and Exit methods are provided. In this case, the Visit method is called before any of the nodes children are visited --- the semantic analysis uses this to define and enter the class's or method's scope --- and the Exit method is called after all children have been handled. The latter method is then used e.g. to exit the scope or check that a method's return statements were in order.
+
+More complex visit method groups are defined for IfStatement, WhileStatement and BinaryOperatorExpression which require special treatment in the code generation phase due to the required jump commands and jump labels. In the case of BinaryOperatorExpression, these are used to implement boolean operator short circuiting, which also requires jumps. For example, an IfStatement can be visited after the condition has been evaluated (and before the then branch begins), after the then branch has been evaluated (and before the possible else branch begins) and upon exiting the node (after else branch).
+
+The abstract class NodeVisitorBase provides empty virtual implementations for all methods of the INodeVisitor interface, so each implementing class can just inherit this class and override the methods they need. For clarity, I have drawn all class diagrams so that visitor implementers are marked as implementing INodeVisitor directly, but all of them actually use NodeVisitorBase as their base class.
+
+The IErrorReporter interface provides several methods for reporting and querying for reported errors. E.g. a module can ask whether an error of a certain type (e.g. an error concerning a reference to an unidentified type) has already been reported for a certain syntax tree node. This feature is not extensively utilized by the compiler, but some phases of semantic analysis make use of it. Most notably, when a reference to a possibly uninitialized variable is encountered, the semantic analysis component checks to see whether this type of error has already been reported for the variable declaration node that the reference attempts to access. This way even if several successive statements refer to the same uninitialized variable, the error will still be reported only once.
+
+ErrorLogger provides a basic implementation of the IErrorReporter interface that only logs the errors in a list which can later be e.g. printed by the compiler.
+
+The MiniJavaInfo class holds language information such as listings of keywords, punctuation characters, operators, operator precedences etc. This also includes ''attribute grammar style'' semantic information on MiniJava operators. This is implemented simply as a mapping from operator symbols (actually enum values) to structs that contain the operand type name and the result type name. The semantic analysis phase can utilize this information to check that the operands given for an operator are of the correct type and to deduce the type of expression produced by a particular operator. The class has static methods that can be used to query operator information, check whether a string is a keyword or a built-in type etc.
+
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.7\textwidth]{scopes.pdf}
+\caption{The interfaces of the Scopes package}
+\end{figure}
+
+The Scopes package inside the Support module defines objects that represent lexical and class scopes. The package defines the following interfaces:
+\begin{itemize}
+    \item IScope, which declares methods for resolving all types of symbols by name. An IScope also has an enclosing scope, which can be null as is in the case of the global scope.
+    \item ITypeScope, which represents a scope where 
+    \item IMethodScope, which represents a scope where MethodSymbols can be defined. This interface is implemented by ClassScope.
+    \item IVariableScope, which represents a scope where VariableSymbols can be defined. This interface is implemented by LocalScope (the scope implementation used for code blocks), MethodScope (the scope used for method bodies, including their parameter lists), ClassScope and ErrorScope.
+\end{itemize}
+
+        The only difference between MethodScope and LocalScope is that LocalScope can be defined inside any IVariableScope but a MethodScope can only appear inside an IMethodScope. An ErrorScope can be defined inside any IScope. In practice it is used when the symbol table building phase fails to define a method due to a name clash and a ''dummy scope'' is needed to stand in the MethodScope's place.
+
+The IVariableScope interface also provides a method for resolving a local variable. In this case, the search will not proceed to the class level. This is used when a variable is defined in an IVariableScope: the variable can only be defined if a local variable with the same name cannot be found in the scope or one of its enclosing scopes, up to the method scope level. Class variables can still have the same name as a local variable.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.7\textwidth]{symbols.pdf}
+\caption{The Symbols package}
 \end{figure}
 
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.7\textwidth]{types.pdf}
+\caption{The Types package}
 \end{figure}
 
 \subsection{Lexical analysis}
@@ -544,6 +587,8 @@ The easiest way to build the compiler is probably opening it in Visual Studio an
 The main program runs the compiler as far as possible, prints error messages or ``Program OK.'' and exits.
 
 Note: the program code and the \LaTeX{} and svg sources for this documentation are also available on \href{https://github.com/Lateks/MiniJavaCompiler}{my GitHub account page} where the repository can be cloned.
+
+\subsection{Shortcomings and potential points of improvement}
 
 \appendix
 \section{Project definition}
