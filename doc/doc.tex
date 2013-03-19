@@ -41,7 +41,7 @@ Defined using regular expressions with Java style character classes. These token
 
 \begin{description}
 \item[Identifiers] $\backslash\text{p\{IsAlphabetic\}} [ \backslash\text{p\{IsAlphabetic\}}\backslash\text{p\{IsDigit\}\_ } ]^{*}$ \\ \emph{Except simple types and keywords.}
-\item[Integer literals] $\backslash\text{p\{IsDigit\}}^{+}$
+\item[Integer literals] $\backslash\text{p\{IsDigit\}}^{+}$ \\ \emph{Note that this allows literals with leading zeros such as 00115. Literals like this would be interpreted as octal numbers in Java. This implementation interprets these literals as decimal integers, so 00115 would be decimal integer 115.}
 \item[Simple type] int | boolean | void
 \item[Keyword] class | public | static | main | extends | assert | if | else | \\ while | System | out | println | return | new | length | this | true | false
 \item[Operator] \&\& | || | < | > | == | + | - | *  | / | \% | = | !
@@ -50,7 +50,7 @@ Defined using regular expressions with Java style character classes. These token
 
 \subsection{Modified grammar for recursive descent parsing (non-LL(1))}
 
-In the grammar below, I have solved operator precedences using the ``classical'' method of making a separate production rule for each level of operator precedence. This is very easy to implement in the case of Mini-Java especially since all the defined binary operators are left-associative and there is only one unary operator. In a more complex case something like the Shunting Yard algorithm would probably work better.\footnote{Note: A program example on the course's grammar page also uses a unary minus operator, but this is not reflected in the grammar that was given, so I have left it out.}
+In the grammar below, I have solved operator precedences by making a separate production rule for each level of operator precedence. This is very easy to implement in the case of Mini-Java especially since all the defined binary operators are left-associative and there is only one unary operator.\footnote{Note: A program example on the course's grammar page also uses a unary minus operator, but this is not reflected in the grammar that was given, so I have left it out.} Different solutions to the operator precedence problem are described on Theodore Norvell's website \url{http://www.engr.mun.ca/~theo/Misc/exp_parsing.htm}. I used the so called ''classic solution'' as a basis from my implementation. Norvell does not give a source for the algorithm but mentions that Niklaus Wirth used it in his Pascal compilers. 
 
 A look-ahead of more than one token is needed e.g. when the parser sees an identifier in the input and is trying to parse a statement. In this case the result could be a local variable declaration for either a user defined type or an array of a user defined type or a statement that starts with an expression that begins with a variable reference.
 
@@ -143,11 +143,9 @@ A look-ahead of more than one token is needed e.g. when the parser sees an ident
 
 \end{verbatim}
 
-\newpage
-
 \subsection{Abstract syntax trees}
 
-In this section I describe on an abstract level the interfaces and classes implementing the abstract syntax tree representation and their relationships in the syntax tree.
+In this section I describe the interfaces and classes implementing the abstract syntax tree representation and their relationships in the syntax tree. Due to the large number of classes the syntax tree node hierarchy would be difficult to describe as an UML diagram, so I have opted for a textual representation.
 
 \subsubsection{An example tree}
 
@@ -176,72 +174,142 @@ class Fac {
 
 \subsubsection{Interfaces}
 \begin{description}
-\item[ISyntaxTreeNode] \emph{is a node that can be visited.}
-\item[IStatement] \emph{is an} ISyntaxTreeNode \emph{and represents a Mini-Java statement}
-\item[IExpression] \emph{is an} ISyntaxTreeNode \emph{and represents a Mini-Java expression}
+    \item[ISyntaxTreeNode] \emph{is a node that can be visited (by an} INodeVisitor\emph{)} \\
+        \emph{It has an} IScope \emph{(representing a scope). Some nodes define their own scopes (e.g.} \textbf{ClassDeclaration}\emph{s do). If the node does not, its} IScope \emph{property will refer to the scope it is defined in.}
+    \item[IStatement] \emph{is an} ISyntaxTreeNode \emph{and represents a Mini-Java statement}
+    \item[IExpression] \emph{is an} ISyntaxTreeNode \emph{and represents a Mini-Java expression}
+      \begin{itemize}
+        \item \emph{has an} IType \emph{indicating the type of the expression (this annotation is added in the semantic analysis phase)}
+      \end{itemize}
+    \item[ILValueExpression] \emph{is an} IExpression \emph{and represents a Mini-Java expression that can appear as the left-hand side of an assignment.}
 \end{description}
 
 \subsubsection{Interface implementers}
 \begin{description}
-\item[Program] \emph{is an} ISyntaxTreeNode \\
-\emph{is a root node.} \\
-\emph{has a} \textbf{MainClassDeclaration} \\
-\emph{has many} \textbf{ClassDeclaration}s
-\\
-\item[SyntaxElement] \emph{is an abstract} ISyntaxTreeNode \\
-\emph{stores source code row and column information for nodes.}
-\\
-\item[MainClassDeclaration] \emph{is a} SyntaxElement \\
-\emph{has a} \textbf{MethodDeclaration} \emph{which is the main method.} \\
-\emph{defines a scope in the semantic analysis phase.}
-\item[ClassDeclaration] \emph{is a} SyntaxElement \\
-\emph{has many} \textbf{Declaration}s \\
-\emph{defines a scope in the semantic analysis phase.}
-\\
-\item[Declaration] \emph{is an abstract} SyntaxElement \\
-\emph{stores type information.}
-\item[MethodDeclaration] \emph{is a} Declaration \\
-\emph{has many} \textbf{VariableDeclaration}s \emph{which represent formal parameters.} \\
-\emph{has many} \textbf{IStatement}s \emph{which form the method body.} \\
-\emph{defines a scope in the semantic analysis phase.}
-\item[VariableDeclaration] \emph{is a} Declaration \emph{and an} IStatement
-\\
-\item[AssertStatement] \emph{is a} SyntaxElement \emph{and an} IStatement \\
-\emph{has an} \textbf{IExpression} \emph{which is the boolean argument.}
-\item[BlockStatement] \emph{is a} SyntaxElement \emph{and an IStatement} \\
-\emph{has many} \textbf{IStatement}s \emph{which form the body of the block.} \\
-\emph{defines a scope in the semantic analysis phase.}
-\item[IfStatement] \emph{is a} SyntaxElement \emph{and an} IStatement \\
-\emph{has an} \textbf{IExpression} \emph{which represents the condition.} \\
-\emph{has a} \textbf{BlockStatement} \emph{which is the then branch.} \\
-\emph{has optionally a} \textbf{BlockStatement} \emph{which is the else branch.}
-\item[WhileStatement] \emph{is a} SyntaxElement \emph{and an} IStatement \\
-\emph{has an} \textbf{IExpression} \emph{which represents the condition.} \\
-\emph{has a} \textbf{BlockStatement} \emph{which is the loop body}
-\item[PrintStatement] \emph{is a} SyntaxElement \emph{and an} IStatement \\
-\emph{has an} \textbf{IExpression} \emph{which is the integer argument.}
-\item[ReturnStatement] \emph{is a} SyntaxElement \emph{and an} IStatement \\
-\emph{has an} \textbf{IExpression} \emph{which is the expression to return.}
-\item[MethodInvocation] \emph{is a} SyntaxElement \emph{and an} IStatement \emph{and an} IExpression \\
-\emph{has an} \textbf{IExpression} \emph{which is the method owner} \\
-\emph{has many} \textbf{IExpression}s \emph{which are the call parameters.}
-\\
-\item[ArrayIndexingExpression] \emph{is a} SyntaxElement \emph{and an} IExpression \\
-\emph{has an} \textbf{IExpression} \emph{which is the array reference.} \\
-\emph{has an} \textbf{IExpression} \emph{which is the index.}
-\item[InstanceCreationExpression] \emph{is a} SyntaxElement \emph{and an} IExpression \\
-\emph{has optionally an} \textbf{IExpression} \emph{which is the array size if this is an array creation.} \\
-\emph{represents the 'new' expression.}
-\item[ThisExpression] \emph{is a} SyntaxElement \emph{and an} IExpression \\
-\emph{represents the reference to 'this' class.}
-\item[VariableReferenceExpression] \emph{is a} SyntaxElement \emph{and an} IExpression
-\item[UnaryOperatorExpression] \emph{is a} SyntaxElement \emph{and an} IExpression \\
-\emph{has an} \textbf{IExpression} \emph{which is the operand.}
-\item[BinaryOperatorExpression] \emph{is a} SyntaxElement \emph{and an} IExpression \\
-\emph{has an} \textbf{IExpression} \emph{that is the left operand.} \\
-\emph{has an} \textbf{IExpression} \emph{that is the right operand.}
-\item[BooleanLiteralExpression] \emph{is a} SyntaxElement \emph{and an} IExpression
-\item[IntegerLiteralExpression] \emph{is a} SyntaxElement \emph{and an} IExpression
+    \item[Program] \emph{is an} ISyntaxTreeNode
+      \begin{itemize}
+        \item \emph{is the root node of the tree.}
+        \item \emph{has a} \textbf{ClassDeclaration} \emph{representing the main class}
+        \item \emph{has many} \textbf{ClassDeclaration}s \emph{representing other classes}
+        \item \emph{its} IScope \emph{is the global scope which is an} ITypeScope \emph{(can hold type symbol definitions)}
+      \end{itemize}
+    \item[SyntaxElement] \emph{is an abstract} ISyntaxTreeNode
+      \begin{itemize}
+        \item \emph{is on a row} (int)
+        \item \emph{starts at a column} (int)
+      \end{itemize}
+    \item[ClassDeclaration] \emph{is a} SyntaxElement
+      \begin{itemize}
+        \item \emph{has a name} string
+        \item \emph{has a} boolean \emph{indicating whether the class is the main class}
+        \item \emph{has many} \textbf{Declaration}s
+        \item \emph{it defines a scope}
+        \item \emph{its} IScope \emph{is an} IVariableScope \emph{and an} IMethodScope \emph{(can hold method and variable symbol definitions)}
+      \end{itemize}
+    \item[Declaration] \emph{is an abstract} SyntaxElement
+      \begin{itemize}
+        \item \emph{has a name} string
+        \item \emph{has a type name} string \emph{(method return type or variable type)}
+        \item \emph{has a} boolean \emph{indicating whether the type is an array}
+        \item \emph{an} IType \emph{indicating the type in the semantic analysis phase}
+      \end{itemize}
+    \item[MethodDeclaration] \emph{is a} Declaration
+      \begin{itemize}
+        \item \emph{has many} \textbf{VariableDeclaration}s \emph{which represent formal parameters.}
+        \item \emph{has many} \textbf{IStatement}s \emph{which form the method body.}
+        \item \emph{it defines a scope}
+        \item \emph{its} IScope \emph{is an} IVariableScope \emph{(can hold variable symbol definitions)}
+        \item \emph{has a} boolean \emph{indicating whether the method is the program's entry point (main method)}
+        \item \emph{has a} boolean \emph{indicating whether the method is static}\footnote{In MiniJava this is kind of redundant since only the main method can be static. But it could be used if other static methods were added to the language...}
+        \item \emph{has the following information used and produced by the semantic analysis phase:}
+        \item \emph{a} TypeSymbol \emph{indicating the declaring type (or class)}
+        \item \emph{a} MethodSymbol \emph{indicating the corresponding symbol defined in the scope}
+      \end{itemize}
+    \item[VariableDeclaration] \emph{is a} Declaration \emph{and an} IStatement
+      \begin{itemize}
+        \item \emph{has a} Kind (enum) \emph{indicating its type which can be Formal (parameter), Local or Class}
+        \item \emph{has a local index} (short int) \emph{which indicates the position of a Formal variable declaration in a parameter list or the position of a Local variable declaration inside its scope. Local index is always 0 for class variables. This information is used in code generation.}
+        \item \emph{has a} boolean \emph{indicating whether it is initialized (used and produced by the semantic analysis phase)}
+      \end{itemize}
+    \item[AssertStatement] \emph{is a} SyntaxElement \emph{and an} IStatement
+      \begin{itemize}
+        \item \emph{has an} \textbf{IExpression} \emph{which is the boolean argument.}
+      \end{itemize}
+    \item[BlockStatement] \emph{is a} SyntaxElement \emph{and an IStatement}
+      \begin{itemize}
+        \item \emph{has many} \textbf{IStatement}s \emph{which form the body of the block.}
+        \item \emph{defines a scope in the semantic analysis phase.}
+        \item \emph{its} IScope \emph{is an} IVariableScope
+        \item \emph{may have a} System.Reflection.Emit.Label \emph{(block start jump label) used and produced by the code generation phase}
+      \end{itemize}
+    \item[IfStatement] \emph{is a} SyntaxElement \emph{and an} IStatement
+      \begin{itemize}
+        \item \emph{has an} \textbf{IExpression} \emph{which represents the condition.}
+        \item \emph{has a} \textbf{BlockStatement} \emph{which is the then branch.}
+        \item \emph{may have a} \textbf{BlockStatement} \emph{which is the else branch.}
+        \item \emph{may have a} System.Reflection.Emit.Label \emph{(exit point jump label) used and produced by the code generation phase}
+      \end{itemize}
+    \item[WhileStatement] \emph{is a} SyntaxElement \emph{and an} IStatement
+      \begin{itemize}
+        \item \emph{has an} \textbf{IExpression} \emph{which represents the condition.}
+        \item \emph{has a} \textbf{BlockStatement} \emph{which is the loop body}
+        \item \emph{may have a} System.Reflection.Emit.Label \emph{(condition evaluation point jump label) used and produced by the code generation phase}
+      \end{itemize}
+    \item[PrintStatement] \emph{is a} SyntaxElement \emph{and an} IStatement
+      \begin{itemize}
+        \item \emph{has an} \textbf{IExpression} \emph{which is the integer argument.}
+      \end{itemize}
+    \item[ReturnStatement] \emph{is a} SyntaxElement \emph{and an} IStatement
+      \begin{itemize}
+        \item \emph{has an} \textbf{IExpression} \emph{which is the expression to return.}
+      \end{itemize}
+    \item[MethodInvocation] \emph{is a} SyntaxElement \emph{and an} IStatement \emph{and an} IExpression
+      \begin{itemize}
+        \item \emph{has a method name} (string)
+        \item \emph{has an} \textbf{IExpression} \emph{which is the method owner}
+        \item \emph{has many} \textbf{IExpression}s \emph{which are the call parameters.}
+        \item \emph{has a} \textbf{MethodDeclaration} \emph{which is the referenced method (this is set and used by the semantic analysis phase).}
+      \end{itemize}
+    \item[ArrayIndexingExpression] \emph{is a} SyntaxElement \emph{and an} ILValueExpression
+      \begin{itemize}
+        \item \emph{has an} \textbf{IExpression} \emph{which is the array reference.}
+        \item \emph{has an} \textbf{IExpression} \emph{which is the index.}
+      \end{itemize}
+    \item[InstanceCreationExpression] \emph{is a} SyntaxElement \emph{and an} IExpression
+      \begin{itemize}
+        \item \emph{has the name of the created type} (string)
+        \item \emph{has a} boolean \emph{indicating whether it creates an array}
+        \item \emph{may have an} \textbf{IExpression} \emph{which is the array size if this is an array creation.}
+        \item \emph{represents the 'new' expression.}
+      \end{itemize}
+    \item[ThisExpression] \emph{is a} SyntaxElement \emph{and an} IExpression
+      \begin{itemize}
+        \item \emph{represents the reference to 'this' class.}
+      \end{itemize}
+    \item[VariableReferenceExpression] \emph{is a} SyntaxElement \emph{and an} ILValueExpression
+      \begin{itemize}
+        \item \emph{has a variable name} (string)
+      \end{itemize}
+    \item[UnaryOperatorExpression] \emph{is a} SyntaxElement \emph{and an} IExpression
+      \begin{itemize}
+        \item \emph{has an} Operator \emph{(an enum defined in MiniJavaInfo defines the types of operators --- in practice this is the unary logical not operator...)}
+        \item \emph{has an} \textbf{IExpression} \emph{which is the operand.}
+      \end{itemize}
+    \item[BinaryOperatorExpression] \emph{is a} SyntaxElement \emph{and an} IExpression
+      \begin{itemize}
+        \item \emph{has an} Operator \emph{(enum value)}
+        \item \emph{has an} \textbf{IExpression} \emph{that is the left operand.}
+        \item \emph{has an} \textbf{IExpression} \emph{that is the right operand.}
+      \end{itemize}
+    \item[BooleanLiteralExpression] \emph{is a} SyntaxElement \emph{and an} IExpression
+      \begin{itemize}
+        \item \emph{has a} boolean \emph{indicating the value of the literal (this can be deduced at parsing time because boolean literal values are reserved words anyway...)}
+      \end{itemize}
+    \item[IntegerLiteralExpression] \emph{is a} SyntaxElement \emph{and an} IExpression
+      \begin{itemize}
+        \item \emph{has a} string \emph{representing the integer literal value}
+        \item \emph{has an} int \emph{representing the value (after semantic analysis phase)}
+      \end{itemize}
 \end{description}
 
 \section{Compiler implementation}
