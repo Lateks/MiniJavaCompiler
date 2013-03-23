@@ -124,10 +124,18 @@ namespace MiniJavaCompiler
 
         private static void RunBackEnd(Program abstractSyntaxTree, string fileName)
         {
+            if (fileName.Contains("\\"))
+            {
+                string[] splitPath = fileName.Split('\\');
+                var pathName = splitPath.Take<string>(splitPath.Length - 1)
+                    .Aggregate("", (acc, pathElem) => acc += pathElem + "\\");
+                Directory.SetCurrentDirectory(pathName);
+                fileName = splitPath[splitPath.Length - 1];
+            }
             var backEnd = new CodeGenerator(abstractSyntaxTree, "MainModule$0");
             if (fileName != null)
             {
-                if (fileName.Substring(fileName.Length - 4, 4) != ".exe")
+                if (fileName.Length <= 4 || fileName.Substring(fileName.Length - 4, 4) != ".exe")
                 {
                     fileName += ".exe";
                 }

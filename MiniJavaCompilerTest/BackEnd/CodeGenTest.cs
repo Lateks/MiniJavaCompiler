@@ -11,32 +11,9 @@ namespace MiniJavaCompilerTest.BackEnd
     class CodeGenTest
     {
         string PEVerifyPath = @"C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\Bin\PEVerify.exe";
-        string compilerPath = @"MiniJavaCompiler\bin\Debug\MiniJavaCompiler.exe";
-        string testCodePath = @"testcode";
-        string testExePath =  @"test.exe";
-
-        [TestFixtureSetUp]
-        public void SetUp()
-        {
-            Directory.SetCurrentDirectory(@"..\..\..");
-        }
-
-        private System.Diagnostics.Process GetProcess(string programPath, string args = null)
-        {
-            System.Diagnostics.Process process = new System.Diagnostics.Process();
-            System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
-            startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
-            startInfo.FileName = programPath;
-            startInfo.RedirectStandardOutput = true;
-            startInfo.RedirectStandardError = true;
-            startInfo.UseShellExecute = false;
-            if (args != null)
-            {
-                startInfo.Arguments = args;
-            }
-            process.StartInfo = startInfo;
-            return process;
-        }
+        string compilerPath = @"..\..\..\MiniJavaCompiler\bin\Debug\MiniJavaCompiler.exe";
+        string testCodePath = @"..\..\..\testcode";
+        string testExePath =  @"..\..\..\test.exe";
 
         [Test]
         public void TestArraySum()
@@ -50,7 +27,7 @@ namespace MiniJavaCompilerTest.BackEnd
         public void TestArrayPolymorphism()
         {
             CheckCompilationOK("arraytest.mjava");
-            CheckSingleLineOutput(""); // no output
+            CheckSingleLineOutput(""); // no output (if no assertion errors occurred)
             CheckPEVerifyOutput();
         }
 
@@ -179,6 +156,23 @@ namespace MiniJavaCompilerTest.BackEnd
             var output = peverifyProcess.StandardOutput.ReadToEnd().Split(
                 new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries).Last();
             Assert.AreEqual(String.Format("All Classes and Methods in {0} Verified.", testExePath), output);
+        }
+
+        private System.Diagnostics.Process GetProcess(string programPath, string args = null)
+        {
+            System.Diagnostics.Process process = new System.Diagnostics.Process();
+            System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
+            startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+            startInfo.FileName = programPath;
+            startInfo.RedirectStandardOutput = true;
+            startInfo.RedirectStandardError = true;
+            startInfo.UseShellExecute = false;
+            if (args != null)
+            {
+                startInfo.Arguments = args;
+            }
+            process.StartInfo = startInfo;
+            return process;
         }
     }
 }
