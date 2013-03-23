@@ -505,7 +505,23 @@ The semantic analysis module is implemented by two classes that are run in succe
 
 TypeSetBuilder, a nested private class of the SymbolTableBuilder class, collects all the user defined types (class names) in the program and reports name clashes using an IErrorReporter, again given as a parameter to the constructor. The TypeSetBuilder checks clashes with both user-defined and built-in types, although the latter should never happen since having a keyword appear in the place of an identifier should have resulted in a syntax error. If any name clashes are found, the BuildTypeSet method returns false.
 
-TypeSetBuilder used to be a separate module (and class) but is now incorporated as a nested class into the SymbolTableBuilder. Still, if the building of the type set fails, the compiler will not continue even into the rest of the symbol table building phase.
+TypeSetBuilder used to be a separate module (and class) but is now incorporated as a nested class into the SymbolTableBuilder. Still, if the building of the type set fails, the compiler will not continue even into the rest of the symbol table building phase. This is consistent with the behavior of the actual Java compiler. E.g. the following code compiled with the Java compiler will only result in an error about duplicate classes (\verb,SomeClass,) but will not detect the duplicate method symbol definition or the reference to an unknown type A\footnote{I discovered this by testing programs like these with the Java compiler. Interestingly some IDEs like IntelliJ IDEA \emph{do} detect all of these errors in real time while editing the source even though the compiler does not.}:
+\begin{verbatim}
+public class SomeClass { }
+
+public class SomeClass { // defined in another file...
+  public int foo()
+  {
+    A a; // unknown type is not detected!
+    return 0;
+  }
+
+  public int foo() // duplicate method declaration is not detected!
+  {
+    return 0;
+  }
+}
+\end{verbatim}
 
 The types collected by the TypeSetBuilder as well as all built-in types (int and boolean but not void\footnote{See section \ref{support} for discussion on why the void type is not defined in the symbol table/global scope.}) are defined in the global scope as the first step. The result of this phase is a decoration of the syntax tree with the following information:
 
