@@ -48,7 +48,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.That(errors.Count, Is.EqualTo(21));
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Unknown type C"));
                 Assert.That(errors.Errors[1].ToString(), Is.StringContaining("Unknown type C"));

@@ -27,7 +27,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "class B extends A { }\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.DoesNotThrow(checker.RunCheck);
+                Assert.True(checker.RunCheck());
             }
 
             [Test]
@@ -43,7 +43,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "class B extends A { }\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Incompatible types").
                     And.StringContaining("found A").And.StringContaining("expected B"));
@@ -66,7 +66,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "class B extends A { }\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.DoesNotThrow(checker.RunCheck);
+                Assert.True(checker.RunCheck());
             }
 
             [Test]
@@ -86,7 +86,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot find").
                     And.StringContaining("foo"));
@@ -102,7 +102,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "class B extends A { }\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Incompatible types").
                     And.StringContaining("found B[]").And.StringContaining("expected A[]"));
@@ -120,7 +120,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "class B extends A { }\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Wrong type of argument").
                     And.StringContaining("B[]").And.StringContaining("A[]"));

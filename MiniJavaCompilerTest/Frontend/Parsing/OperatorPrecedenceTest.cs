@@ -15,7 +15,12 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
             var scanner = new MiniJavaScanner(new StringReader(program));
             var errorLog = new ErrorLogger();
             var parser = new Parser(scanner, errorLog, true);
-            return parser.Parse();
+            Program ast;
+            if (parser.TryParse(out ast))
+            {
+                return ast;
+            }
+            return null;
         }
 
         [Test]
@@ -29,6 +34,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
                           "}\n" +
                           "class A { public int foo() { return 7; } }\n";
             var tree = ParseProgram(program);
+            Assert.NotNull(tree);
             var arithmeticExpression = (BinaryOperatorExpression) ((AssignmentStatement)
                 ((MethodDeclaration)tree.MainClass.Declarations[0]).MethodBody[1]).RightHandSide;
 
@@ -90,6 +96,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
                           "}\n" +
                           "class A { public int foo() { return 10; } }\n";
             var tree = ParseProgram(program);
+            Assert.NotNull(tree);
             var booleanExpression = (BinaryOperatorExpression)((AssignmentStatement)
                 ((MethodDeclaration) tree.MainClass.Declarations[0]).MethodBody[4]).RightHandSide;
             

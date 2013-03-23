@@ -34,15 +34,12 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
 
         // Throws an exception at the end of analysis if there is a problem
         // with types or references.
-        public void RunCheck()
+        public bool RunCheck()
         {
             var success = true;
             success &= new ReferenceChecker(this).RunCheck();
             success &= new TypeChecker(this).RunCheck();
-            if (!success)
-            {
-                throw new CompilationError();
-            }
+            return success;
         }
 
     }

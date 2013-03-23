@@ -26,7 +26,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot index into"));
             }
@@ -43,7 +43,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Invalid array index"));
             }
@@ -56,7 +56,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Array size must be numeric"));
             }
@@ -69,7 +69,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.DoesNotThrow(checker.RunCheck);
+                Assert.True(checker.RunCheck());
             }
         }
     }

@@ -17,7 +17,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             var scanner = new MiniJavaScanner(reader);
             var errors = new ErrorLogger();
             var parser = new Parser(scanner, errors, true);
-            Program syntaxTree = parser.Parse();
+            Program syntaxTree;
+            parser.TryParse(out syntaxTree);
             reader.Close();
             Assert.That(errors.Errors, Is.Empty);
 

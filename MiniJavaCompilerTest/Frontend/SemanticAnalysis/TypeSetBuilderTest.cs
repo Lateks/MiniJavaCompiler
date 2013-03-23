@@ -23,7 +23,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
 
             var errorReporter = new ErrorLogger();
             var builder = new SymbolTableBuilder(program, errorReporter);
-            Assert.Throws<CompilationError>(() => builder.BuildSymbolTable());
+            Assert.AreEqual(SymbolTableBuilder.ExitCode.FatalError, builder.BuildSymbolTable());
             var errors = errorReporter.Errors;
             Assert.AreEqual(3, errors.Count);
             Assert.AreEqual("Conflicting definitions for int.", errors[0].Content);
@@ -45,7 +45,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
 
             var errorReporter = new ErrorLogger();
             var builder = new SymbolTableBuilder(program, errorReporter);
-            Assert.Throws<CompilationError>(() => builder.BuildSymbolTable());
+            Assert.AreEqual(SymbolTableBuilder.ExitCode.FatalError, builder.BuildSymbolTable());
             var errors = errorReporter.Errors;
             Assert.AreEqual(errors.Count, 1);
             Assert.AreEqual("Conflicting definitions for Foo.", errors[0].Content);
@@ -64,7 +64,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
 
             var errorReporter = new ErrorLogger();
             var builder = new SymbolTableBuilder(program, errorReporter);
-            Assert.Throws<CompilationError>(() => builder.BuildSymbolTable());
+            Assert.AreEqual(SymbolTableBuilder.ExitCode.FatalError, builder.BuildSymbolTable());
             var errors = errorReporter.Errors;
             Assert.AreEqual(errors.Count, 1);
             Assert.AreEqual("Conflicting definitions for Bar.", errors[0].Content);

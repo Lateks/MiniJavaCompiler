@@ -36,11 +36,11 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
             programTokens = new Queue<IToken>();
         }
 
-        private Program GetProgramTree()
+        private bool GetProgramTree(out Program tree)
         {
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new StubScanner(programTokens), errorReporter);
-            return parser.Parse();
+            return parser.TryParse(out tree);
         }
 
         [Test]
@@ -77,7 +77,9 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
 
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new StubScanner(programTokens), errorReporter);
-            var classDecl = parser.Parse().Classes[0];
+            Program ast;
+            parser.TryParse(out ast);
+            var classDecl = ast.Classes[0];
             Assert.That(classDecl.InheritedClassName, Is.EqualTo("OtherClass"));
             Assert.That(classDecl.Name, Is.EqualTo("ClassName"));
             Assert.NotNull(classDecl.Declarations);
@@ -105,7 +107,9 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
 
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new StubScanner(programTokens), errorReporter);
-            var classDecl = parser.Parse().Classes[0];
+            Program ast;
+            Assert.True(parser.TryParse(out ast));
+            var classDecl = ast.Classes[0];
             Assert.IsNull(classDecl.InheritedClassName);
             Assert.NotNull(classDecl.Declarations);
             Assert.That(classDecl.Declarations.Count, Is.EqualTo(2));
@@ -123,7 +127,9 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
 
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new StubScanner(programTokens), errorReporter);
-            var variableDecl = (VariableDeclaration) ((MethodDeclaration) parser.Parse().
+            Program ast;
+            Assert.True(parser.TryParse(out ast));
+            var variableDecl = (VariableDeclaration) ((MethodDeclaration) ast.
                 MainClass.Declarations[0]).MethodBody[0];
             Assert.False(variableDecl.IsArray);
             Assert.That(variableDecl.Name, Is.EqualTo("foo"));
@@ -142,8 +148,10 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
 
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new StubScanner(programTokens), errorReporter);
+            Program ast;
+            Assert.True(parser.TryParse(out ast));
             var variableDecl = (VariableDeclaration) ((MethodDeclaration)
-                parser.Parse().MainClass.Declarations[0]).MethodBody[0];
+                ast.MainClass.Declarations[0]).MethodBody[0];
             Assert.False(variableDecl.IsArray);
             Assert.That(variableDecl.Name, Is.EqualTo("foo"));
             Assert.That(variableDecl.TypeName, Is.EqualTo("SomeType"));
@@ -163,8 +171,10 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
 
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new StubScanner(programTokens), errorReporter);
+            Program ast;
+            Assert.True(parser.TryParse(out ast));
             var variableDecl = (VariableDeclaration)((MethodDeclaration)
-                parser.Parse().MainClass.Declarations[0]).MethodBody[0];
+                ast.MainClass.Declarations[0]).MethodBody[0];
             Assert.True(variableDecl.IsArray);
             Assert.That(variableDecl.Name, Is.EqualTo("foo"));
             Assert.That(variableDecl.TypeName, Is.EqualTo("int"));
@@ -184,7 +194,9 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
 
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new StubScanner(programTokens), errorReporter);
-            var statement = ((MethodDeclaration) parser.Parse().MainClass.Declarations[0]).MethodBody[0];
+            Program ast;
+            Assert.True(parser.TryParse(out ast));
+            var statement = ((MethodDeclaration) ast.MainClass.Declarations[0]).MethodBody[0];
             Assert.That(statement, Is.InstanceOf<AssertStatement>());
             Assert.That(((AssertStatement)statement).Condition, Is.InstanceOf<BooleanLiteralExpression>());
         }
@@ -207,7 +219,9 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
 
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new StubScanner(programTokens), errorReporter);
-            var statement = ((MethodDeclaration) parser.Parse().MainClass.Declarations[0]).MethodBody[0];
+            Program ast;
+            Assert.True(parser.TryParse(out ast));
+            var statement = ((MethodDeclaration) ast.MainClass.Declarations[0]).MethodBody[0];
             Assert.That(statement, Is.InstanceOf<PrintStatement>());
             Assert.That(((PrintStatement)statement).Argument, Is.InstanceOf<IntegerLiteralExpression>());
         }
@@ -230,7 +244,9 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
 
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new StubScanner(programTokens), errorReporter);
-            var statement = ((MethodDeclaration) parser.Parse().MainClass.Declarations[0]).MethodBody[0];
+            Program ast;
+            Assert.True(parser.TryParse(out ast));
+            var statement = ((MethodDeclaration) ast.MainClass.Declarations[0]).MethodBody[0];
             Assert.That(statement, Is.InstanceOf<WhileStatement>());
             var whileStatement = (WhileStatement)statement;
             Assert.That(whileStatement.LoopCondition, Is.InstanceOf<BooleanLiteralExpression>());
@@ -250,7 +266,9 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
 
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new StubScanner(programTokens), errorReporter);
-            var statement = ((MethodDeclaration)parser.Parse().MainClass.Declarations[0]).MethodBody[0];
+            Program ast;
+            Assert.True(parser.TryParse(out ast));
+            var statement = ((MethodDeclaration)ast.MainClass.Declarations[0]).MethodBody[0];
             Assert.That(statement, Is.InstanceOf<ReturnStatement>());
             Assert.That(((ReturnStatement)statement).ReturnValue, Is.InstanceOf<VariableReferenceExpression>());
         }
@@ -270,7 +288,9 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
 
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new StubScanner(programTokens), errorReporter);
-            var statement = ((MethodDeclaration)parser.Parse().MainClass.Declarations[0]).MethodBody[0];
+            Program ast;
+            Assert.True(parser.TryParse(out ast));
+            var statement = ((MethodDeclaration)ast.MainClass.Declarations[0]).MethodBody[0];
             Assert.That(statement, Is.InstanceOf<MethodInvocation>());
             var invocation = (MethodInvocation)statement;
             Assert.That(invocation.MethodName, Is.EqualTo("bar"));
@@ -294,7 +314,9 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
 
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new StubScanner(programTokens), errorReporter);
-            var statement = ((MethodDeclaration)parser.Parse().MainClass.Declarations[0]).MethodBody[0];
+            Program ast;
+            Assert.True(parser.TryParse(out ast));
+            var statement = ((MethodDeclaration)ast.MainClass.Declarations[0]).MethodBody[0];
             Assert.That(statement, Is.InstanceOf<VariableDeclaration>());
             Assert.True(((VariableDeclaration)statement).IsArray);
         }
@@ -315,7 +337,9 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
 
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new StubScanner(programTokens), errorReporter);
-            var statement = ((MethodDeclaration)parser.Parse().MainClass.Declarations[0]).MethodBody[0];
+            Program ast;
+            Assert.True(parser.TryParse(out ast));
+            var statement = ((MethodDeclaration)ast.MainClass.Declarations[0]).MethodBody[0];
             Assert.That(statement, Is.InstanceOf<AssignmentStatement>());
             var assignment = (AssignmentStatement)statement;
             Assert.That(assignment.RightHandSide, Is.InstanceOf<BooleanLiteralExpression>());
@@ -337,7 +361,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
 
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new StubScanner(programTokens), errorReporter);
-            Assert.Throws<CompilationError>(() => parser.Parse());
+            Program ast;
+            Assert.False(parser.TryParse(out ast));
             Assert.That(errorReporter.Errors, Is.Not.Empty);
         }
 
@@ -352,7 +377,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
 
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new StubScanner(programTokens), errorReporter);
-            Assert.Throws<CompilationError>(() => parser.Parse());
+            Program ast;
+            Assert.False(parser.TryParse(out ast));
             Assert.That(errorReporter.Errors, Is.Not.Empty);
         }
 
@@ -373,7 +399,9 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
 
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new StubScanner(programTokens), errorReporter);
-            var expression = ((MethodDeclaration)parser.Parse().MainClass.Declarations[0]).MethodBody[0];
+            Program ast;
+            Assert.True(parser.TryParse(out ast));
+            var expression = ((MethodDeclaration)ast.MainClass.Declarations[0]).MethodBody[0];
             Assert.That(expression, Is.InstanceOf<AssignmentStatement>());
             var assignment = (AssignmentStatement)expression;
             Assert.That(assignment.RightHandSide, Is.InstanceOf<BinaryOperatorExpression>());
@@ -402,7 +430,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
 
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new StubScanner(programTokens), errorReporter);
-            Assert.Throws<CompilationError>(() => parser.Parse());
+            Program ast;
+            Assert.False(parser.TryParse(out ast));
             Assert.That(errorReporter.Count, Is.GreaterThan(0));
         }
 
@@ -431,7 +460,9 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
 
             var errorReporter = new ErrorLogger();
             var parser = new Parser(new StubScanner(programTokens), errorReporter);
-            var expression = ((MethodDeclaration)parser.Parse().MainClass.Declarations[0]).MethodBody[0];
+            Program ast;
+            Assert.True(parser.TryParse(out ast));
+            var expression = ((MethodDeclaration)ast.MainClass.Declarations[0]).MethodBody[0];
             Assert.That(expression, Is.InstanceOf<AssignmentStatement>());
             var assignment = (AssignmentStatement)expression;
             Assert.That(assignment.RightHandSide, Is.InstanceOf<BinaryOperatorExpression>());
@@ -473,7 +504,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
             ClosingCurlyBrace(); ClosingCurlyBrace();
             EndFile();
 
-            Program programTree = GetProgramTree();
+            Program programTree;
+            Assert.True(GetProgramTree(out programTree));
 
             Assert.That(programTree.Classes.Count, Is.EqualTo(0));
             Assert.That(programTree.MainClass.Name, Is.EqualTo("ThisIsTheMainClass"));
@@ -499,7 +531,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
             ClosingCurlyBrace(); ClosingCurlyBrace();
             EndFile();
 
-            var programTree = GetProgramTree();
+            Program programTree;
+            Assert.True(GetProgramTree(out programTree));
             var mainMethod = (MethodDeclaration) programTree.MainClass.Declarations[0];
 
             Assert.That(programTree.Classes.Count, Is.EqualTo(0));
@@ -539,7 +572,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
             ClosingCurlyBrace(); ClosingCurlyBrace();
             EndFile();
 
-            var programTree = GetProgramTree();
+            Program programTree;
+            Assert.True(GetProgramTree(out programTree));
 
             Assert.That(programTree.Classes.Count, Is.EqualTo(0));
 
@@ -584,7 +618,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
             programTokens.Enqueue(new PunctuationToken("{", 0, 0));
             EndFile();
 
-            Assert.Throws<CompilationError>(() => GetProgramTree());
+            Program ast;
+            Assert.False(GetProgramTree(out ast));
         }
 
         [Test]
@@ -607,7 +642,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
             ClosingCurlyBrace(); ClosingCurlyBrace();
             EndFile();
 
-            var programTree = GetProgramTree();
+            Program programTree;
+            Assert.True(GetProgramTree(out programTree));
 
             Assert.That(programTree.Classes.Count, Is.EqualTo(1));
             var testClass = (ClassDeclaration)programTree.Classes[0];
@@ -637,7 +673,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
             ClosingCurlyBrace(); ClosingCurlyBrace();
             EndFile();
 
-            var programTree = GetProgramTree();
+            Program programTree;
+            Assert.True(GetProgramTree(out programTree));
 
             var mainMethod = (MethodDeclaration) programTree.MainClass.Declarations[0];
             Assert.That(mainMethod.MethodBody.Count, Is.EqualTo(1));
@@ -665,7 +702,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
             ClosingCurlyBrace(); ClosingCurlyBrace();
             EndFile();
 
-            var programTree = GetProgramTree();
+            Program programTree;
+            Assert.True(GetProgramTree(out programTree));
 
             var mainMethod = (MethodDeclaration)programTree.MainClass.Declarations[0];
             Assert.That(mainMethod.MethodBody.Count, Is.EqualTo(1));
@@ -700,7 +738,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
             ClosingCurlyBrace(); ClosingCurlyBrace();
             EndFile();
 
-            var programTree = GetProgramTree();
+            Program programTree;
+            Assert.True(GetProgramTree(out programTree));
 
             Assert.That(programTree.Classes.Count, Is.EqualTo(1));
             var testClass = (ClassDeclaration)programTree.Classes[0];
@@ -757,7 +796,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
             ClosingCurlyBrace(); ClosingCurlyBrace();
             EndFile();
 
-            var programTree = GetProgramTree();
+            Program programTree;
+            Assert.True(GetProgramTree(out programTree));
 
             Assert.That(programTree.Classes.Count, Is.EqualTo(1));
             var testClass = (ClassDeclaration)programTree.Classes[0];
@@ -812,7 +852,8 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
             ClosingCurlyBrace(); ClosingCurlyBrace();
             EndFile();
 
-            var programTree = GetProgramTree();
+            Program programTree;
+            Assert.True(GetProgramTree(out programTree));
 
             var mainMethod = (MethodDeclaration)programTree.MainClass.Declarations[0];
             Assert.That(mainMethod.MethodBody.Count, Is.EqualTo(1));
@@ -849,7 +890,9 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
             ClosingCurlyBrace(); ClosingCurlyBrace();
             EndFile();
 
-            var mainMethod = ((MethodDeclaration) GetProgramTree().MainClass.Declarations[0]).MethodBody;
+            Program programTree;
+            Assert.True(GetProgramTree(out programTree));
+            var mainMethod = ((MethodDeclaration) programTree.MainClass.Declarations[0]).MethodBody;
             Assert.That(mainMethod.Count, Is.EqualTo(1));
             Assert.That(mainMethod[0], Is.InstanceOf<IfStatement>());
             var ifStatement = (IfStatement)mainMethod[0];
@@ -890,7 +933,9 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
             ClosingCurlyBrace(); ClosingCurlyBrace();
             EndFile();
 
-            var mainMethod = ((MethodDeclaration) GetProgramTree().MainClass.Declarations[0]).MethodBody;
+            Program programTree;
+            Assert.True(GetProgramTree(out programTree));
+            var mainMethod = ((MethodDeclaration) programTree.MainClass.Declarations[0]).MethodBody;
             Assert.That(mainMethod.Count, Is.EqualTo(1));
             Assert.That(mainMethod[0], Is.InstanceOf<IfStatement>());
             var ifStatement = (IfStatement)mainMethod[0];

@@ -40,7 +40,7 @@ namespace MiniJavaCompiler.FrontEnd
             {
                 return false;
             }
-            return ConstructSymbolTableAndCheckProgram(abstractSyntaxTree) && _errorLog.Count == 0;
+            return ConstructSymbolTableAndCheckProgram(abstractSyntaxTree);
         }
 
         /* Performs lexical and semantic analysis. Returns null if either phase fails.
@@ -52,11 +52,12 @@ namespace MiniJavaCompiler.FrontEnd
         {
             var scanner = new MiniJavaScanner(_program);
             var parser = new Parser(scanner, _errorLog);
-            try
+            Program program;
+            if (parser.TryParse(out program))
             {
-                return parser.Parse();
+                return program;
             }
-            catch (CompilationError)
+            else
             {
                 return null;
             }
@@ -80,16 +81,13 @@ namespace MiniJavaCompiler.FrontEnd
          */
         private bool ConstructSymbolTableAndCheckProgram(Program abstractSyntaxTree)
         {
-            try
+            var symbolTableSuccess = new SymbolTableBuilder(abstractSyntaxTree, _errorLog).BuildSymbolTable();
+            bool semanticCheckSuccess = true;
+            if (symbolTableSuccess != SymbolTableBuilder.ExitCode.FatalError)
             {
-                new SymbolTableBuilder(abstractSyntaxTree, _errorLog).BuildSymbolTable();
-                new SemanticsChecker(abstractSyntaxTree, _errorLog).RunCheck();
-                return true;
+                semanticCheckSuccess = new SemanticsChecker(abstractSyntaxTree, _errorLog).RunCheck();
             }
-            catch (CompilationError)
-            {
-                return false;
-            }
+            return (symbolTableSuccess == SymbolTableBuilder.ExitCode.Success) && semanticCheckSuccess;
         }
     }
 }

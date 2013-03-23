@@ -12,11 +12,18 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
 {
     public partial class SymbolTableBuilder : NodeVisitorBase
     {
+        public enum ExitCode
+        {
+            Success,
+            NonFatalError,
+            FatalError
+        }
         private readonly GlobalScope _globalScope;
         private readonly Program _syntaxTree;
         private readonly IErrorReporter _errorReporter;
         private readonly Stack<IScope> _scopeStack;
         private IEnumerable<string> _scalarTypeNames;
+        private bool _error;
 
         private IScope CurrentScope
         {
@@ -42,7 +49,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             _scopeStack = new Stack<IScope>();
         }
 
-        public void BuildSymbolTable()
+        public ExitCode BuildSymbolTable()
         {
             bool fatalError;
             if (GetTypes())
@@ -57,9 +64,17 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 fatalError = true;
             }
 
-            if (fatalError) // does not throw a compilation error unless error is fatal
+            if (fatalError)
             {
-                throw new CompilationError();
+                return ExitCode.FatalError;
+            }
+            else if (_error)
+            {
+                return ExitCode.NonFatalError;
+            }
+            else
+            {
+                return ExitCode.Success;
             }
         }
 
@@ -352,6 +367,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
         private void ReportError(ErrorTypes type, string message, SyntaxElement node)
         {
             _errorReporter.ReportError(type, message, node);
+            _error = true;
         }
 
         private IType CheckDeclaredType(Declaration node)

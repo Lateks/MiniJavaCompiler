@@ -36,7 +36,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "class B extends A { }\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.DoesNotThrow(checker.RunCheck);
+                Assert.True(checker.RunCheck());
             }
 
             [Test]
@@ -59,7 +59,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "class B extends A { }\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.That(errors.Count, Is.EqualTo(7));
             }
         }

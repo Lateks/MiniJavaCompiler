@@ -28,7 +28,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Overloading is not allowed"));
             }
@@ -47,7 +47,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Overloading is not allowed"));
             }
@@ -66,7 +66,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("different return type"));
             }
@@ -85,7 +85,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.DoesNotThrow(checker.RunCheck);
+                Assert.True(checker.RunCheck());
             }
 
             [Test]
@@ -102,7 +102,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.DoesNotThrow(checker.RunCheck);
+                Assert.True(checker.RunCheck());
             }
 
             // Note: this differs from Java specification. Return type covariance
@@ -127,7 +127,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].Content,
                     Is.StringContaining("different return type"));
@@ -147,7 +147,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(0, errors.Count);
             }
 
@@ -165,7 +165,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("different return type"));
             }

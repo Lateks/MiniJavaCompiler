@@ -24,7 +24,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("foo"));
             }
@@ -40,7 +40,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                   "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("foo might not have been initialized"));
             }
@@ -57,7 +57,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                   "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("foo might not have been initialized"));
             }
@@ -78,7 +78,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                   "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.DoesNotThrow(checker.RunCheck);
+                Assert.True(checker.RunCheck());
                 Assert.AreEqual(0, errors.Count);
             }
 
@@ -94,7 +94,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot find symbol bar"));
             }
@@ -112,7 +112,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Void cannot be dereferenced"));
             }
@@ -129,7 +129,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot find symbol bar"));
             }
@@ -146,7 +146,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.DoesNotThrow(checker.RunCheck);
+                Assert.True(checker.RunCheck());
             }
 
             [Test]
@@ -170,7 +170,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "}";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.DoesNotThrow(checker.RunCheck);
+                Assert.True(checker.RunCheck());
             }
 
             [Test]
@@ -198,7 +198,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "}";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("find").
                     And.StringContaining("bar"));
@@ -227,7 +227,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.DoesNotThrow(checker.RunCheck);
+                Assert.True(checker.RunCheck());
             }
 
             [Test]
@@ -250,7 +250,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.DoesNotThrow(checker.RunCheck);
+                Assert.True(checker.RunCheck());
             }
 
             [Test]
@@ -268,7 +268,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("bar"));
             }
@@ -292,7 +292,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.DoesNotThrow(checker.RunCheck);
+                Assert.True(checker.RunCheck());
             }
 
             [Test]
@@ -314,9 +314,10 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot find").And.StringContaining("foo"));
+                Assert.That(errors.Errors[0].ToString(),
+                    Is.StringContaining("Cannot find").And.StringContaining("foo"));
             }
 
             [Test]
@@ -329,7 +330,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot find").And.StringContaining("foo"));
 
@@ -347,7 +348,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "} \n\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot find symbol foo"));
             }
@@ -364,7 +365,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "} \n\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot find symbol foo"));
             }
@@ -382,7 +383,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "} \n\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot find symbol foo"));
             }
@@ -404,7 +405,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("main").And.StringContaining("static"));
             }
@@ -427,7 +428,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.DoesNotThrow(checker.RunCheck);
+                Assert.True(checker.RunCheck());
             }
 
             [Test]
@@ -443,7 +444,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(2, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Unknown type A.")); // instance creation error (no error about "A foo;" because declarations are checked in symbol table building phase)
                 Assert.That(errors.Errors[1].ToString(), Is.StringContaining("Variable foo might not have been initialized."));
@@ -459,7 +460,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Unknown type A"));
             }
@@ -472,7 +473,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Unknown type A"));
             }
@@ -485,7 +486,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Illegal type void for array elements."));
             }

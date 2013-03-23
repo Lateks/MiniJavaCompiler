@@ -9,7 +9,7 @@ namespace MiniJavaCompiler.FrontEnd.SyntaxAnalysis
 {
     public interface IParser
     {
-        ast.Program Parse();
+        bool TryParse(out ast.Program program);
     }
 
     public abstract class ParserBase
@@ -42,14 +42,10 @@ namespace MiniJavaCompiler.FrontEnd.SyntaxAnalysis
         public Parser(ITokenizer input, IErrorReporter reporter, bool debugMode = false)
             : base(new ParserInputReader(input, reporter), reporter, debugMode) { }
 
-        public ast.Program Parse()
+        public bool TryParse(out ast.Program program)
         {
-            var program = Program();
-            if (ParsingFailed) // This exception is thrown if either lexical or syntactic errors are found in the token stream.
-            {
-                throw new CompilationError();
-            }
-            return program;
+            program = Program();
+            return !ParsingFailed;
         }
 
         private ast.Program Program()
@@ -65,7 +61,8 @@ namespace MiniJavaCompiler.FrontEnd.SyntaxAnalysis
             {
                 if (DebugMode) throw;
                 ErrorReporter.ReportError(ErrorTypes.Lexical, e.Message, e.Row, e.Col);
-                throw new CompilationError();
+                ParsingFailed = true;
+                return null;
             }
 
             // Invariant:

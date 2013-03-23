@@ -20,10 +20,6 @@ namespace MiniJavaCompiler.Support
         UninitializedLocal
     }
 
-    // This error can be used in all stages of compilation
-    // to indicate failure.
-    public class CompilationError : Exception { }
-
     // And exception with row and column information.
     // Used as a base class for different frontend exceptions
     // that require row and column information.

@@ -26,7 +26,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(2, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot apply operator").And.StringContaining("int"));
                 Assert.That(errors.Errors[1].ToString(), Is.StringContaining("Cannot apply operator").And.StringContaining("Foo"));
@@ -45,7 +45,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.DoesNotThrow(checker.RunCheck);
+                Assert.True(checker.RunCheck());
             }
         }
     }

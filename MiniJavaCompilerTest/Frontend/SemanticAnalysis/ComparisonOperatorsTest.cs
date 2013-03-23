@@ -29,7 +29,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "class A { }";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot apply operator").
                     And.StringContaining("A"));
@@ -46,7 +46,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot apply operator").
                     And.StringContaining("boolean"));
@@ -64,7 +64,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "class A { }\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Cannot apply operator").
                     And.StringContaining("boolean").And.StringContaining("A"));
@@ -82,7 +82,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "class A { }\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.DoesNotThrow(checker.RunCheck);
+                Assert.True(checker.RunCheck());
             }
         }
     }

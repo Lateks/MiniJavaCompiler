@@ -42,7 +42,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "class B extends A { }\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.DoesNotThrow(checker.RunCheck);
+                Assert.True(checker.RunCheck());
             }
 
             [Test]
@@ -59,7 +59,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "class B { }\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Incompatible types").And.
                     StringContaining("A").And.StringContaining("B"));
@@ -81,7 +81,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Incompatible types").And.
                     StringContaining("int").And.StringContaining("boolean"));
@@ -99,7 +99,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "class A { }\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Incompatible types").And.
                     StringContaining("A").And.StringContaining("boolean"));
@@ -117,7 +117,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "class A { }\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Incompatible types").And.
                     StringContaining("A").And.StringContaining("A[]"));
@@ -135,7 +135,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "class A { }\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Incompatible types").And.
                     StringContaining("expected A").And.StringContaining("found A[]"));
@@ -154,7 +154,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "class B { }\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Incompatible types").And.
                     StringContaining("A").And.StringContaining("B"));
@@ -171,7 +171,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "class A { }\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("is not assignable"));
             }
@@ -187,7 +187,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                                  "class A { public void foo() { } }\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.Throws<CompilationError>(checker.RunCheck);
+                Assert.False(checker.RunCheck());
                 Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Incompatible types").
                     And.StringContaining("expected int").And.StringContaining("found void"));
