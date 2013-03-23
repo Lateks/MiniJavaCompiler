@@ -9,12 +9,9 @@ namespace MiniJavaCompiler.FrontEnd.SyntaxAnalysis
 {
     public interface IParserInputReader
     {
-        // Returns the next token without consuming it.
-        IToken Peek();
-
-        // Attempts to peek some steps forward (steps must be a positive number).
+        // Attempts to peek some steps forward (steps must be >= 0).
         // Will throw an OutOfInput exception if there is not enough input.
-        IToken PeekForward(int steps);
+        IToken Peek(int steps = 0);
 
         /* Checks that the current input token is of the expected type and matches the expected value.
          * If the check succeeds, the token is consumed and returned. Otherwise a syntax error or a
@@ -83,7 +80,7 @@ namespace MiniJavaCompiler.FrontEnd.SyntaxAnalysis
             }
 
             // Note: this may throw an OutOfInput exception.
-            public IToken PeekForward(int tokens)
+            public IToken Peek(int tokens)
             {
                 Debug.Assert(tokens >= 0);
                 RefreshInputToken();
@@ -133,18 +130,13 @@ namespace MiniJavaCompiler.FrontEnd.SyntaxAnalysis
         }
 
         // Throws an exception if called after input is completely consumed.
-        public IToken Peek()
-        {
-            return _tokenStream.CurrentToken;
-        }
-
-        public IToken PeekForward(int steps)
+        public IToken Peek(int steps = 0)
         {
             if (steps < 0)
             {
                 throw new ArgumentOutOfRangeException("Cannot peek backwards.");
             }
-            return _tokenStream.PeekForward(steps);
+            return _tokenStream.Peek(steps);
         }
 
         public TExpectedType MatchAndConsume<TExpectedType>(string expectedValue)

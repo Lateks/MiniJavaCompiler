@@ -194,10 +194,10 @@ namespace MiniJavaCompiler.FrontEnd.SyntaxAnalysis
         {
             if (Input.NextTokenIs<IdentifierToken>())
             {
-                var peekOne = Input.PeekForward(1);
+                var peekOne = Input.Peek(1);
                 if (peekOne is PunctuationToken && peekOne.Lexeme == "[")
                 {
-                    var peekTwo = Input.PeekForward(2);
+                    var peekTwo = Input.Peek(2);
                     if (peekTwo is PunctuationToken && peekTwo.Lexeme == "]") // The statement is a local array variable declaration.
                     {
                         return ParseLocalVariableDeclaration(true);

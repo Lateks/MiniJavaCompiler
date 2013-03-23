@@ -54,13 +54,13 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
             programTokens.Enqueue(new PunctuationToken("}", 0, 0));
             EndFile();
             var parserInputReader = new ParserInputReader(new StubScanner(programTokens), new ErrorLogger());
-            Assert.That(parserInputReader.PeekForward(1).Lexeme, Is.EqualTo("ClassName"));
-            Assert.That(parserInputReader.PeekForward(2).Lexeme, Is.EqualTo("extends"));
+            Assert.That(parserInputReader.Peek(1).Lexeme, Is.EqualTo("ClassName"));
+            Assert.That(parserInputReader.Peek(2).Lexeme, Is.EqualTo("extends"));
             Assert.That(parserInputReader.Consume<IToken>().Lexeme, Is.EqualTo("class"));
             Assert.That(parserInputReader.Consume<IToken>().Lexeme, Is.EqualTo("ClassName"));
             Assert.That(parserInputReader.Consume<IToken>().Lexeme, Is.EqualTo("extends"));
             Assert.That(parserInputReader.Consume<IToken>().Lexeme, Is.EqualTo("OtherClass"));
-            Assert.Throws<OutOfInput>(() => parserInputReader.PeekForward(3));
+            Assert.Throws<OutOfInput>(() => parserInputReader.Peek(3));
         }
 
         [Test]
