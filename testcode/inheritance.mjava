@@ -22,7 +22,7 @@ class Test
     AnimalFactory fac2;
     fac2 = new CatFactory();
     Animal c;
-    c = fac2.build(); // this erroneously calls the build method in class AnimalFactory
+    c = fac2.build();
     assert(c.getIdentity() == 1 && c.getWeight() == 8 && c.isMammal());
     assert(c.calculateValue() == 8);
     c.say(); // prints 42

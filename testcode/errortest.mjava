@@ -2,6 +2,7 @@
 class Foo {
   public static void main() {
     int foo;
+    System.out.println(foo);
     foo = 10 + new A().alwaysTrue(); A foo2; foo2 = new C(); int bar;
     bar = new A();
     bar = 99999999999999999;

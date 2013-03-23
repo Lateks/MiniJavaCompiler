@@ -41,17 +41,135 @@ namespace MiniJavaCompilerTest.BackEnd
         [Test]
         public void TestArraySum()
         {
-            var compileProcess = GetProcess(compilerPath,
-                String.Format("{0}\\{1} {2}", testCodePath, "arraysum.mjava", testExePath));
+            CheckCompilationOK("arraysum.mjava");
+            CheckSingleLineOutput("45");
+            CheckPEVerifyOutput();
+        }
+
+        [Test]
+        public void TestArrayPolymorphism()
+        {
+            CheckCompilationOK("arraytest.mjava");
+            CheckSingleLineOutput(""); // no output
+            CheckPEVerifyOutput();
+        }
+
+        [Test]
+        public void TestBooleans()
+        {
+            CheckCompilationOK("booleans.mjava");
+            CheckMultiLineOutput(new string[] { "1", "0", "1", "0", "1", "0", "1", "0", "1", "0" });
+            CheckPEVerifyOutput();
+        }
+
+        [Test]
+        public void TestErrors()
+        {
+            var compileProcess = GetProcess(compilerPath, FormatParams("errortest.mjava"));
+            compileProcess.Start();
+            var output = compileProcess.StandardOutput.ReadToEnd()
+                .Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+            Assert.AreEqual(1, compileProcess.ExitCode);
+            Assert.AreEqual(3 * 21 + 1, output.Count()); // 21 errors with two code output lines for each of them
+        }
+
+        [Test]
+        public void TestFactorial()
+        {
+            CheckCompilationOK("factorial.mjava");
+            CheckSingleLineOutput("3628800"); // 10! = 3628800
+            CheckPEVerifyOutput();
+        }
+
+        [Test]
+        public void TestClassFields()
+        {
+            CheckCompilationOK("fieldtest.mjava");
+            CheckSingleLineOutput("0"); // prints 0 if class int fields are initialized to 0 by default
+            CheckPEVerifyOutput();
+        }
+
+        [Test]
+        public void TestInheritanceAndPolymorphism()
+        {
+            CheckCompilationOK("inheritance.mjava");
+            CheckMultiLineOutput(new string[] { "0", "5555", "42", "0" });
+            CheckPEVerifyOutput();
+        }
+
+        [Test]
+        public void TestMethodInvocationsWithArguments()
+        {
+            CheckCompilationOK("methodinvocation.mjava");
+            CheckMultiLineOutput(new string[] { "8", "4", "7", "13" });
+            CheckPEVerifyOutput();
+        }
+
+        [Test]
+        public void TestOpcodeGeneration() // Note: this does not check the actual opcodes produced.
+        {
+            CheckCompilationOK("opcode_test.mjava");
+            CheckMultiLineOutput(new string[] { "0", "1", "2", "3", "4", "5", "6", "7",
+                "8", "9", "1", "2", "3", "4", "5", "6", "7", "1", "2", "3", "4", "5", "0", "0" });
+            CheckPEVerifyOutput();
+        }
+
+        [Test]
+        public void TestBooleanOperatorShortCircuiting()
+        {
+            CheckCompilationOK("shortcircuit.mjava");
+            CheckMultiLineOutput(new string[] { "1", "1",
+                "Exception occurred: AssertionError at Test2.makeAssertion(31,5)" });
+            CheckPEVerifyOutput();
+        }
+
+        [Test]
+        public void TestIfStatement()
+        {
+            CheckCompilationOK("trivial.mjava");
+            CheckSingleLineOutput("1");
+            CheckPEVerifyOutput();
+        }
+
+        [Test]
+        public void TestVariableNameHiding()
+        {
+            CheckCompilationOK("variablenamehiding.mjava");
+            CheckMultiLineOutput(new string[] { "1", "1", "2", "0", "2", "2", "1", "3", "10",
+                "Exception occurred: AssertionError at Test.main(20,5)" });
+            CheckPEVerifyOutput();
+        }
+
+        private void CheckSingleLineOutput(string expected)
+        {
+            Assert.AreEqual(expected, GetOutput().Trim());
+        }
+
+        private void CheckMultiLineOutput(string[] expected)
+        {
+            var output = GetOutput().Split(new string[] { Environment.NewLine },
+                StringSplitOptions.RemoveEmptyEntries);
+            CollectionAssert.AreEqual(expected, output);
+        }
+
+        private string GetOutput()
+        {
+            var runProcess = GetProcess(testExePath);
+            runProcess.Start();
+            return runProcess.StandardOutput.ReadToEnd();
+        }
+
+        private void CheckCompilationOK(string inputFileName)
+        {
+            var compileProcess = GetProcess(compilerPath, FormatParams(inputFileName));
             compileProcess.Start();
             compileProcess.WaitForExit();
             Assert.AreEqual(0, compileProcess.ExitCode);
-            var runProcess = GetProcess(testExePath);
-            runProcess.Start();
-            var output = runProcess.StandardOutput.ReadToEnd().Trim();
-            Assert.AreEqual("45", output);
+        }
 
-            CheckPEVerifyOutput();
+        private string FormatParams(string inputFileName)
+        {
+            return String.Format("{0}\\{1} {2}", testCodePath, inputFileName, testExePath);
         }
 
         private void CheckPEVerifyOutput()

@@ -16,10 +16,11 @@ class Test
       System.out.println(1);
     }
     if (10 % 2 == 0 && // true
-        a.makeAssertion()) // makeAssertion is called and assert fails at (30,5)
+        a.makeAssertion()) // makeAssertion is called and assert fails at (31,5)
     {
       System.out.println(0);
     }
+    System.out.println(0); // does not get here because the assertion failed
   }
 }
 

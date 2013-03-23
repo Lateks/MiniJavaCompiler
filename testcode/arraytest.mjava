@@ -1,3 +1,4 @@
+// This test has only assertions. Should not produce any output.
 class Test
 {
   public static void main()
