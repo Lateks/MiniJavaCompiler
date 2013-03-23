@@ -550,47 +550,48 @@ Internally the phase is divided into two passes through the abstract syntax tree
 This phase can detect the following types of errors:
 \begin{enumerate}
 \item A method overloads a method in its superclass. Mini-Java allows only overriding, not overloading.
-\item If a method overrides a superclass method, the declared return types of the methods are checked. Return type covariance is allowed but anything else results in an error.
-\item The arguments to built-in functions or operators (or something similar) are of the wrong type. Examples of these type checks are:
+\item If a method overrides a superclass method, the declared return types of the methods are checked. The return types must be exactly the same or an error is reported. Originally I intended to implement covariant return types similarly to the Java specification\footnote{\url{http://docs.oracle.com/javase/specs/jls/se7/html/jls-8.html\#jls-8.4.5}} but as it turns out, the CLR does not natively support return type covariance, which --- according to Eric Lippert\footnote{See Eric Lippert's post at \\ \url{http://stackoverflow.com/questions/5709034/does-c-sharp-support-return-type-covariance/5709191\#5709191}} --- is the reason C$^\sharp$ does not implement return type covariance either. I have therefore also decided to disallow return type covariance in MiniJava.
+\item The arguments to built-in functions or operators (or something similar) are of the wrong type. A ''type grammar'' (attribute grammar style) for operator type checks is defined in the MiniJavaInfo class. Examples of these type requirements are:
 \begin{itemize}
 \item A print statement requires a single int argument.
-\item The argument to an assert statement and the conditional expressions in if and while statements need to be boolean values.
+\item The argument to an assert statement and the conditional expressions in \verb,if, and \verb,while, statements need to be boolean values.
 \item Arithmetic operators and comparison operators require two int arguments.
 \item Logical binary operators require two boolean arguments and the unary not operator '!' a single boolean argument.
 \item Array sizes and indexing expressions must be int values.
-\item The equal to operator ('==') accepts any type but both sides must be compatible with each other. Int, boolean and array types require that the other operand is of the same type. For user defined types subtypes are also allowed.
+\item The equals operator ('==') accepts any type but both sides must be compatible with each other. Int, boolean and array types require that the other operand is of the same type. For user defined types subtypes are also allowed.
 \end{itemize}
 \item An attempt is made to index into a variable that is not an array.
-\item The left-hand side of an assignment statement is not an L-value. In Mini-Java this means that the left-hand side must be either a reference to a variable (VariableReferenceExpression) or a pointer to an array index (ArrayIndexingExpression).
+\item The left-hand side of an assignment statement is not an L-value. In Mini-Java this means that the left-hand side must be either a reference to a variable (VariableReferenceExpression) or an array element (ArrayIndexingExpression).
 \item The assigned value in an assignment statement is not compatible with the type of the L-value it is assigned to. The rules are detailed below this error type list.
-\item A method invoked for a user defined type cannot be resolved.
-\item A method is invoked for a built-in type or an array.\footnote{Note: internally the compiler treats the length property of arrays as a method invocation to avoid having to define it as a special case. This is the only ``method invocation'' allowed for arrays.}
+\item A method invoked for a user defined type cannot be found.
+\item A method is invoked for a built-in type or an array.\footnote{Note: internally the compiler treats the length property of arrays as a method invocation to avoid having to define it as a special case, because it is the only public field in MiniJava. This is the only ``method invocation'' allowed for arrays.}
 \item A method is invoked with the wrong number of arguments.
 \item A wrong type of argument is passed to a method invocation. Type checks for method invocations follow the same rules as type checks for assignment statements, as detailed below.
 \item An integer literal is too large to be represented by a 32-bit integer type, which is the only built-in numeric type in Mini-Java.
-\item A reference is made to a variable that cannot be resolved or is in the same scope but has not been introduced yet.
-\item A void method has return statements. Empty return statements are not defined in the Mini-Java specification, so this is not allowed.
-\item At least some paths in a non-void method do not return a value.
-\item Return statements return values of a type different from the one declared in the method signature. Again, covariance is allowed, so subtypes of the declared type can be returned.
-\item An instance creation expression refers to a type that cannot be resolved. Note: an attempt to instantiate a built-in type using a ``new'' expression is detected already in the parsing phase.
-\item A static method cannot be called on an instance of the defining class. The only static method in Mini-Java is the main method. In my implementation, the main method cannot be called at all because references to the name of the class are not allowed outside type declarations and instance creations. I did not see the reason to implement such a feature since there is no use for calling the main method from inside the program, though the specification is unclear on whether this should be allowed.
+\item A reference is made to a variable that cannot be found or a local variable that is in the same scope but has not been introduced yet.
+\item A reference is made to a local variable that might not have been initialized.
+\item A \textbf{void} method has return statements. Empty return statements are not defined in the Mini-Java specification, so this is not allowed.
+\item At least some paths in a non-\textbf{void} method do not return a value.
+\item Return statements return values of a type different from the one declared in the method signature. Covariance is allowed, so subtypes of the declared type can be returned.
+\item An instance creation expression refers to a type name that cannot be found or is an attempt to create a \textbf{void} array (this is allowed by the grammar). Note: an attempt to instantiate a built-in type using a ''new'' expression is detected already in the parsing phase.
+\item A static method cannot be called. The only static method in Mini-Java is the main method. In my implementation, the main method cannot be called at all because references to the name of the class are not allowed outside type declarations and instance creations. I did not see the reason to implement such a feature since there is no use for calling the main method from inside the program, though the MiniJava specification is unclear on whether this should be allowed.
 \end{enumerate}
 
 The rules for assignment type checking are as follows:
 \begin{itemize}
 \item An argument of type void cannot be assigned to any L-value.
-\item If the L-value is a built-in type, the assigned value must be of the same type. E.g. an index of an int array has type int, so that is the only type of value that can be assigned to it.
+\item If the L-value is a built-in type, the assigned value must be of the same type. E.g. an element of an int array has type int, so that is the only type of value that can be assigned to it.
 \item If the L-value is an array, the assigned value must also be an array and have the same element type. Unlike in Java, covariance of reference types is not allowed here according to the specification given on the course web site (or appendix B).
 \item If the L-value is a user defined (reference) type, the assigned value must be the of the same type or a type derived from it.
 \end{itemize}
 
-The same rules apply when checking method invocation argument types: just substitute formal parameter type for L-value.
+The same rules apply when checking method invocation argument types: just substitute ''formal parameter'' for ''L-value'' in the rules above.
 
 Internally, a type is anything that implements the IType interface. The IType interface requires that the implementer implements a method IsAssignableTo(IType other). BuiltInTypeSymbol and UserDefinedTypeSymbol (SimpleTypeSymbols) both implement this interface. In addition, there are non-Symbol types: MiniJavaArrayType that is parameterised with a SimpleTypeSymbol (multidimensional arrays are not allowed) and the singleton type VoidType that represents the void return type for methods.
 
-Recovery from errors is needed when the type of an expression cannot be resolved. Type checks are done using an operand type stack, so a placeholder for unresolved types --- the singleton class ErrorType --- is needed. When a method, variable or the type of an instance creation expression cannot be resolved or a non-array variable is indexed, the ErrorType singleton is pushed into the operand stack.
+Recovery from errors is needed when the type of an expression cannot be resolved. As mentioned before, the abstract syntax tree is decorated with type information, so for unresolved types the singleton class ErrorType is used. When a method, variable or the type of an instance creation expression cannot be resolved or a non-array variable is indexed, the ErrorType singleton is marked as the type of that syntax tree node.
 
-Every IType is required to implement its IsAssignableTo method in such a way, that everything appears to be assignable to an ErrorType -- even the void return type. Similarly, ErrorType is assignable to every other type as well as itself. This way unnecessary type errors related to unresolved types are avoided without having to explicitly check for the ErrorType at every turn. E.g. a program with the line \verb,A foo = new B();, where \verb,B, cannot be resolved results in an error saying that symbol B could not be resolved but not an error saying that an ErrorType cannot be assigned to a variable of type A.
+Every IType is required to implement its IsAssignableTo method in such a way that everything appears to be assignable to an ErrorType -- even the void return type. Similarly, ErrorType is assignable to every other type as well as itself. This way unnecessary type errors related to unresolved types are avoided without having to explicitly check for the ErrorType at every turn. E.g. a program with the lines \verb,A foo; foo = new B();, where \verb,B, cannot be resolved results in an error saying that symbol B could not be resolved but not an error saying that an ErrorType cannot be assigned to a variable of type A.
 
 \subsection{Back-end}
 
