@@ -238,7 +238,6 @@ When the listing in the previous version of this document was put together, I st
       \begin{itemize}
         \item \emph{has a} Kind (enum) \emph{indicating its type which can be Formal (parameter), Local or Class}
         \item \emph{has a local index} (int) \emph{which indicates the position of a Formal variable declaration in a parameter list or the position of a Local variable declaration inside its scope. Local index is always 0 for class variables. This information is used in code generation.}
-        \item \emph{has a} boolean \emph{indicating whether it is initialized (used and produced by the semantic analysis phase)}
         \item \emph{inconsistently with} MethodDeclaration \emph{does not have a reference to the corresponding} VariableSymbol. \emph{It could be added, but I did not find a use for it, so I left it out. This is also the case with} ClassDeclaration \emph{which could have the corresponding} TypeSymbol.
       \end{itemize}
     \item[AssertStatement] \emph{is a} SyntaxElement \emph{and an} IStatement
@@ -363,7 +362,7 @@ More complex visit method groups are defined for IfStatement, WhileStatement and
 
 The abstract class NodeVisitorBase provides empty virtual implementations for all methods of the INodeVisitor interface, so each implementing class can just inherit this class and override the methods they need. For clarity, I have drawn all class diagrams so that visitor implementers are marked as implementing INodeVisitor directly, but all of them actually use NodeVisitorBase as their base class.
 
-The IErrorReporter interface provides several methods for reporting and querying for reported errors. E.g. a module can ask whether an error of a certain type (e.g. an error concerning a reference to an unidentified type) has already been reported for a certain syntax tree node. This feature is not extensively utilized by the compiler, but some phases of semantic analysis make use of it. Most notably, when a reference to a possibly uninitialized variable is encountered, the semantic analysis component checks to see whether this type of error has already been reported for the variable declaration node that the reference attempts to access. This way even if several successive statements refer to the same uninitialized variable, the error will still be reported only once.
+The IErrorReporter interface provides several methods for reporting and querying for reported errors. E.g. a module can ask whether an error of a certain type (e.g. an error concerning a reference to an unidentified type) has already been reported for a certain syntax tree node. This feature is not extensively utilized by the compiler, but some phases of semantic analysis make use of it.
 
 ErrorLogger provides a basic implementation of the IErrorReporter interface that only logs the errors in a list which can later be e.g. printed by the compiler.
 
@@ -545,7 +544,9 @@ Cyclic inheritance and multiple declarations of the same typename are treated as
 
 This phase is implemented by the SemanticsChecker class. It produces no output in addition to possible errors, again reported using an IErrorReporter instance. The boolean return value of the RunCheck method signals success (\verb,true,) or failure (\verb,false,).
 
-Internally the phase is divided into two passes through the abstract syntax tree. The first pass (implemented by the ReferenceChecker class) checks references and decorates the tree with type information. The second pass (implemented by the TypeChecker class) performs type checks and checks that that local variables are initialized before reference. Both types of checks could be accomplished in a single pass but this separation of concerns makes the implementation easier to follow. Both classes define a RunCheck method that returns a boolean value indicating success or failure similar to the parent class that utilizes them. Both passes are always run regardless of errors detected in the first pass.
+Internally the phase is divided into two passes through the abstract syntax tree. The first pass (implemented by the ReferenceChecker class) checks references and decorates the tree with type information. The second pass (implemented by the TypeChecker class) performs type checks. Both types of checks could be accomplished in a single pass but this separation of concerns makes the implementation easier to follow. Both classes define a RunCheck method that returns a boolean value indicating success or failure similar to the parent class that utilizes them. Both passes are always run regardless of errors detected in the first pass.
+
+I originally intended to implement checks for references to uninitialized variables but in the end had to leave these checks out due to the rather complicated nature of definite assignment analysis and time constraints.\footnote{See e.g. Nicu G. Fruja's article on such checks in C\#, \emph{The Correctness of the Definite Assignment Analysis in C\#}, that can be found at \url{http://www.jot.fm/issues/issue_2004_10/article2/article2.pdf}.} Local variables are therefore treated like class fields when it comes to initialization: \textbf{int} variables are initialized to 0, \textbf{boolean} variables are initialized to \textbf{false} and reference type variables are initialized to \textbf{null}\footnote{This is actually done by default by the CLR.}. Attempts to call methods on uninitialized reference type variables will, of course, result in a NullReferenceException being thrown by CLR at runtime.
 
 This phase can detect the following types of errors:
 \begin{enumerate}
@@ -564,12 +565,11 @@ This phase can detect the following types of errors:
 \item The left-hand side of an assignment statement is not an L-value. In Mini-Java this means that the left-hand side must be either a reference to a variable (VariableReferenceExpression) or an array element (ArrayIndexingExpression).
 \item The assigned value in an assignment statement is not compatible with the type of the L-value it is assigned to. The rules are detailed below this error type list.
 \item A method invoked for a user defined type cannot be found.
-\item A method is invoked for a built-in type or an array.\footnote{Note: internally the compiler treats the length property of arrays as a method invocation to avoid having to define it as a special case, because it is the only public field in MiniJava. This is the only ``method invocation'' allowed for arrays.}
+\item A method is invoked for a built-in type or an array.\footnote{Note: internally the compiler treats the length property of arrays as a method invocation to avoid having to define it as a special case, because it is the only public field in MiniJava. This is the only ''method invocation'' allowed for arrays.}
 \item A method is invoked with the wrong number of arguments.
 \item A wrong type of argument is passed to a method invocation. Type checks for method invocations follow the same rules as type checks for assignment statements, as detailed below.
 \item An integer literal is too large to be represented by a 32-bit integer type, which is the only built-in numeric type in Mini-Java.
 \item A reference is made to a variable that cannot be found or a local variable that is in the same scope but has not been introduced yet.
-\item A reference is made to a local variable that might not have been initialized.
 \item A \textbf{void} method has return statements. Empty return statements are not defined in the Mini-Java specification, so this is not allowed.
 \item At least some paths in a non-\textbf{void} method do not return a value.
 \item Return statements return values of a type different from the one declared in the method signature. Covariance is allowed, so subtypes of the declared type can be returned.
