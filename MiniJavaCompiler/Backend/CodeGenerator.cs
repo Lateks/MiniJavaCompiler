@@ -45,7 +45,7 @@ namespace MiniJavaCompiler.BackEnd
 
         public void GenerateCode(string outputFileName = "out.exe")
         {
-            new AssemblyCreator(this).SetUpAssembly(outputFileName); // Sets up _asmBuilder, _moduleBuilder and _constructors.
+            new AssemblyGenerator(this).SetUpAssembly(outputFileName); // Sets up _asmBuilder, _moduleBuilder and _constructors.
             new InstructionGenerator(this).GenerateInstructions();
             _moduleBuilder.CreateGlobalFunctions();
             FinalizeTypes();

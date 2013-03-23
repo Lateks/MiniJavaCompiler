@@ -15,7 +15,7 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
         public class ReferenceCheckTest
         {
             [Test]
-            public void ReferenceToUndeclaredVariableReferenceCausesError()
+            public void ReferenceToUndeclaredVariableCausesError()
             {
                 string program = "class Foo {\n" +
                                  "  public static void main() {\n" +

@@ -12,13 +12,13 @@ namespace MiniJavaCompiler.BackEnd
 {
     public partial class CodeGenerator
     {
-        private class AssemblyCreator : NodeVisitorBase
+        private class AssemblyGenerator : NodeVisitorBase
         {
             private CodeGenerator _parent;
             private TypeBuilder _currentType;
             private MethodBuilder _currentMethod;
 
-            public AssemblyCreator(CodeGenerator parent)
+            public AssemblyGenerator(CodeGenerator parent)
             {
                 _parent = parent;
             }
