@@ -491,7 +491,7 @@ If syntax analysis fails, the front end module will not continue compilation int
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.8\textwidth]{semantic_analysis.pdf}
-\caption{The semantic analysis module}
+\caption{The semantic analysis module. The two-way composition lines mean that one of the classes is defined as a private nested class of the other class and holds a reference to the parent class. E.g. ReferenceChecker is a private nested class of SemanticsChecker. SemanticsChecker creates a ReferenceChecker and a TypeChecker and gives itself as a parameter to these classes constructors.} \label{fig:semantic_analysis}
 \end{figure}
 
 The semantic analysis module is implemented by two classes that are run in succession, each producing input for the next phase. Each internal phase passes once through the abstract syntax tree. The phases are:
@@ -609,7 +609,27 @@ Recovery from errors is needed when the type of an expression cannot be resolved
 
 Every IType is required to implement its IsAssignableTo method in such a way that everything appears to be assignable to an ErrorType -- even the void return type. Similarly, ErrorType is assignable to every other type as well as itself. This way unnecessary type errors related to unresolved types are avoided without having to explicitly check for the ErrorType at every turn. E.g. a program with the lines \verb,A foo; foo = new B();, where \verb,B, cannot be resolved results in an error saying that symbol B could not be resolved but not an error saying that an ErrorType cannot be assigned to a variable of type A.
 
-\subsection{Back-end}
+\subsection{The back-end}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.8\textwidth]{backend.pdf}
+\caption{The back-end module. See the caption of figure \ref{fig:semantic_analysis} for an explanation on the two-way composition lines.}
+\end{figure}
+
+The back-end is a much simpler module than the front-end. This implementation does not do any particular code optimization and the code generated is very straightforward.
+
+For code generation, the methods provided by the System.Reflection.Emit namespace are used. This simplifies some tasks like defining assemblies, types and methods while making some things possibly more difficult --- at least for such a simple language as MiniJava. For example, the CodeGenerator must store all System.Reflection.Emit.MethodBuilder objects into a map structure to make method calls possible because it is not possible to query incomplete types for methods by name --- and all user-defined types are incomplete until code generation is complete.
+
+On the other hand, the tools provided by the System.Reflection.Emit namespace take care of things like keeping track of the maximum stack size in a method. The generated assembly is written straight into an \verb,exe, file by the Save method of the AssemblyBuilder class and so does not require running the produced IL code through a separate assembler.
+
+The module is implemented by a single class and its nested INodeVisitor implementations AssemblyGenerator and InstructionGenerator. AssemblyGenerator is used to set up the .NET assembly and and the contained main module. It has the following responsibilities:
+\begin{itemize}
+    \item It defines the TypeBuilder objects for all user-defined types and stores them in a string to TypeBuilder mapping stored in the parent CodeGenerator object. TypeBuilders need to be stored so they can be finalized after code generation by calling the CreateType() method of the TypeBuilder class.
+    \item It defines the ConstructorBuilder objects for all user-defined types. For types that do not have an \verb,extends, declaration, the default constructor that calls the Object class constructor is defined. For types that do have a user-defined superclass, a generic constructor is defined. This constructor does not have a body until it is emitted by the InstructionGenerator. All contructors are stored in a Type to ConstructorBuilder mapping in the parent CodeGenerator object. ConstructorBuilders are needed for generating calls to constructors.
+    \item It defines the MethodBuilder objects for all methods inside user-defined classes and stores them in a MethodSymbol to MethodBuilder mapping stored in the parent CodeGenerator object. These need to be stored to make generating calls to methods possible.
+    \item It defines the local variables, formal parameters and class fields. Formal parameters and local variables can be referred to by their index, so their builder objects do not need to be stored. FieldBuilders do need to be stored because the ILGenerator.Emit() method requires a FieldBuilder as the second parameter when emitting the opcodes Ldfld (load field) and Stfld (store field).
+\end{itemize}
 
 \subsection{Testing}
 
