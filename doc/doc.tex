@@ -322,11 +322,12 @@ When the listing in the previous version of this document was put together, I st
       \end{itemize}
 \end{description}
 
+\newpage
 \section{Compiler implementation}
 
 This section covers the general architecture of the compiler, testing, error handling as well as the building and running instructions.
 
-\subsection{Architecture}
+\subsection{Front-end architecture}
 
 The front end module is divided into three sub-modules, one for each major phase of compilation: lexical analysis, syntax analysis and semantic analysis. In addition, I have collected some things possibly needed by both the front end and the back end into the Support module.
 
@@ -337,12 +338,16 @@ The FrontEnd class implements the whole front end compilation pipeline with the 
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.7\textwidth]{frontend.pdf}
-\caption{The Support module}
+\caption{The front-end module}
 \end{figure}
 
-\subsubsection{The support module}
+\subsubsection{The support module} \label{support}
 
+\begin{figure}[h!]
+\centering
 \includegraphics[width=1.0\textwidth]{support.pdf}
+\caption{The Support module}
+\end{figure}
 
 The support module contains the following parts which are described in more detail below:
 \begin{itemize}
@@ -421,11 +426,12 @@ VoidType can never be assigned to any other type. There is never a case where Vo
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.7\textwidth]{lexical_analysis.pdf}
+\caption{The lexical analysis module}
 \end{figure}
 
 The MiniJavaScanner can read input from either a string or a file: it is parameterised with a TextReader (either a StringReader or a StreamReader) for the program code. It offers a very simple interface: it can be asked for the next token in the input stream. At the end of input, a call to NextToken returns an EndOfFile token. If NextToken is still called after that, an OutOfInput exception will be thrown.
 
-In an earlier implementation I had the scanner return EndOfFile indefinitely, but this required special handling in the parser in some places where the parser loops to find e.g. a list of declarations. This way it is more difficult to accidentally construct the parser in such a way that it goes into an infinite loop in some special situations. In practice this exception is handled by the parser which proceeds to throw a CompilationError, which then is handled by the FrontEnd.
+In an earlier implementation I had the scanner return EndOfFile indefinitely, but this required special handling in the parser in some places where the parser loops to find e.g. a list of declarations. This way it is more difficult to accidentally construct the parser in such a way that it goes into an infinite loop in some special situations. In practice this exception is handled by the parser.
 
 The MiniJavaScanner passes through the code once when instantiated and builds the queue of tokens. This is done so no one can close the TextReader before the whole token stream is ready. The scanner leaves the TextReader open because it is given as a parameter, so it could in theory still be used by the caller.
 
@@ -448,11 +454,12 @@ These errors are represented by ErrorToken instances in the token queue. Unlike 
 \begin{figure}[h!]
 \centering
 \includegraphics[width=1.0\textwidth]{syntax_analysis.pdf}
+\caption{The syntax analysis module}
 \end{figure}
 
 This module is used by instantiating a Parser that takes an ITokenizer and an IErrorReporter as inputs. The error reporter is used to report errors and because it is given as a parameter, a single instance can be shared by several classes and across compilation phases. The default implementation for the IErrorReporter logs the errors in a list of ErrorMessages which can then be handled by the higher level module that has access to the reporter instance. A custom implementation could e.g. print error messages into standard output in real time when they are reported.
 
-The Parser offers a Parse() method that either returns a Program node (the root of the abstract syntax tree) or throws a CompilationError. In the latter case the list of errors can be accessed through the error reporter. This is the whole interface needed by the caller.
+The Parser offers a TryParse() method that returns a boolean value signaling success (\verb,true,) or failure (\verb,false,). In the latter case the list of errors can be accessed through the error reporter. This is the whole interface needed by the caller.
 
 Internally the parser is split into several parts. The main parser creates a new ExpressionParser instance every time it starts parsing an expression. The ExpressionParser takes care of handling e.g. operator precedences using information provided by the MiniJavaInfo support class. This takes some unnecessary complexity out of the main parser class. In theory, the parser could be further split up into e.g. statement and class parsers.
 
@@ -474,7 +481,7 @@ Expression recovery is especially problematic since the follow set for expressio
 
 For many common kinds of syntax errors this basic strategy works fine but some pathological cases can cause a stream of uninformative errors following the one actual error\footnote{Examples with explanations can be found in the recovery test code.}.
 
-If no errors are found, parsing ends with the EndOfFile token being consumed and the Program node is returned. If any errors (lexical or syntactic) have been found, a CompilationError is thrown to be handled by the caller.
+If no errors are found, parsing ends with the EndOfFile token being consumed, the root node of the abstract syntax tree is assigned into the output parameter and the return value is \verb,true,. If any errors (lexical or syntactic) have been found, the TryParse method returns \verb,false,.
 
 If syntax analysis fails, the front end module will not continue compilation into the semantic analysis phase. In my experience experimenting with Java, the actual Java compiler is similarly rigid and does not do semantic analysis if syntax analysis fails.\footnote{By including several different semantic errors in the same project one can even discern that semantic analysis is probably divided into clear phases in the Java compiler. Often certain semantic errors cause other types of semantic errors to not be reported at all. A similar approach is taken in this implementation, though I have attempted to make the error recovery in the semantic analysis phase as good as possible.}
 
@@ -485,6 +492,7 @@ If syntax analysis fails, the front end module will not continue compilation int
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.8\textwidth]{semantic_analysis.pdf}
+\caption{The semantic analysis module}
 \end{figure}
 
 The semantic analysis module is implemented by two classes that are run in succession, each producing input for the next phase. Each internal phase passes once through the abstract syntax tree. The phases are:
@@ -496,11 +504,11 @@ The semantic analysis module is implemented by two classes that are run in succe
 
 \subsubsection{Building the symbol table}
 
-TypeSetBuilder collects all the user defined types (class names) in the program and reports name clashes using an IErrorReporter, again given as a parameter to the constructor. The TypeSetBuilder checks clashes even with built-in types, though this should never happen since having a keyword appear in the place of an identifier would have resulted in a syntax error. If any name clashes are found, the BuildSymbolTable method returns false.
+TypeSetBuilder, a nested private class of the SymbolTableBuilder class, collects all the user defined types (class names) in the program and reports name clashes using an IErrorReporter, again given as a parameter to the constructor. The TypeSetBuilder checks clashes with both user-defined and built-in types, although the latter should never happen since having a keyword appear in the place of an identifier should have resulted in a syntax error. If any name clashes are found, the BuildTypeSet method returns false.
 
-TypeSetBuilder used to be a separate module but is now incorporated into the SymbolTableBuilder. Still, if the building of the type set fails, the compiler will not continue even into rest of the type set building phase.
+TypeSetBuilder used to be a separate module (and class) but is now incorporated as a nested class into the SymbolTableBuilder. Still, if the building of the type set fails, the compiler will not continue even into the rest of the symbol table building phase.
 
-The types collected by the TypeSetBuilder as well as all built-in types (int and boolean) are defined in the global scope as the first step. The result of this phase is a decoration of the syntax tree with the following information:
+The types collected by the TypeSetBuilder as well as all built-in types (int and boolean but not void\footnote{See section \ref{support} for discussion on why the void type is not defined in the symbol table/global scope.}) are defined in the global scope as the first step. The result of this phase is a decoration of the syntax tree with the following information:
 
 \begin{itemize}
     \item Each ISyntaxTreeNode receives a scope. For class and method declarations as well as block scopes this is the scope they define themselves. For all other nodes this is the scope they are defined in.
@@ -509,11 +517,11 @@ The types collected by the TypeSetBuilder as well as all built-in types (int and
     \item MethodDeclarations and VariableDeclarations have a Type (or ErrorType if it could not be resolved).
 \end{itemize}
 
-The types of Symbols are described in the Support module section.
+The different types of Symbols are described in the Support module section.
 
 Several types of errors can be detected in this phase:
 \begin{enumerate}
-    \item An attempt to define a symbol when the same type of symbol with the same name is already defined in that scope.
+    \item A symbol definition failure occurs. The rules are detailed below.
     \item A variable or method with an unknown type is declared.
     \item A variable of type void is declared.
     \item A variable or method of type void[ ] is declared.
@@ -521,13 +529,23 @@ Several types of errors can be detected in this phase:
     \item A class depends on itself through the inheritance hierarchy (cyclic inheritance).
 \end{enumerate}
 
-Same types of symbols from surrounding scopes can be hidden by symbols with the same name, and the same scope can contain e.g. a variable and a method with the same name, so these cases will not result in an error. If an attempt to define a method fails due to a name clash, a LocalScope is instantiated to stand in place of the IMethodScope object that would normally be created, so checks can continue. This is the only recovery strategy required in this phase.
+The rules of when symbols can and cannot be declared are the following:
+\begin{itemize}
+    \item A type symbol named A can only be declared if the global scope does not already contain a type symbol with name A.
+    \item A variable symbol named A on the class level (a field) can only be declared if the class level scope does not already contain a variable symbol named A. A superclass scope is, of course, allowed to declare a variable with the same name, 
+    \item A method symbol named A can only be declared if the class level scope does not already contain a method symbol named A. A superclass scope can contain a method symbol with the same name because overriding is allowed.
+    \item A variable symbol named A inside a local scope (an anonymous block) or a method scope can only be declared if the same local/method scope or any of its surrounding local/method scopes does not contain a variable symbol named A. Note: a class field name can be reused as a local variable name or formal parameter name inside a method scope \emph{but} this makes it impossible to refer to the class field from inside that local/method scope because the MiniJava grammar does not allow the use of the \verb,this, keyword when referring to a variable --- it can only be used in method invocations (or when referring to the \verb,length, field of an array) and by itself.
+\end{itemize}
 
-Cyclic inheritance is treated as a fatal error. If it happens, semantic analysis cannot continue. However, other types of errors can be recovered from and the compiler can continue into the type checking phase. If a fatal error is encountered (cyclic inheritance or type name clashes), a CompilationError is thrown.
+Same types of symbols from surrounding scopes can be hidden by symbols with the same name, and the same scope can contain e.g. a variable and a method with the same name, so these cases will not result in an error. If an attempt to define a method fails due to a name clash, an ErrorScope is instantiated to stand in place of the IMethodScope object that would normally be created, so checks can continue. This is the only recovery strategy required in this phase.
+
+Cyclic inheritance and multiple declarations of the same typename are treated as a fatal errors. If these errors occur, semantic analysis cannot continue. However, other types of errors can be recovered from and the compiler can continue into the type checking phase. This phase returns an ExitCode enum value (defined inside SymbolTableBuilder) instead of a boolean value. If a fatal error is encountered (cyclic inheritance or type name clashes), the return value is ExitCode.FatalError. If the error is non-fatal, the return value is ExitCode.NonFatalError and otherwise ExitCode.Success.
 
 \subsubsection{Checking types and the validity of references}
 
-This phase is implemented by the TypeChecker class. It produces no output in addition to possible errors, again reported using an IErrorReporter instance. A CompilationError is thrown at the end of the check if any errors are found.
+This phase is implemented by the SemanticsChecker class. It produces no output in addition to possible errors, again reported using an IErrorReporter instance. The boolean return value of the RunCheck method signals success (\verb,true,) or failure (\verb,false,).
+
+Internally the phase is divided into two passes through the abstract syntax tree. The first pass (implemented by the ReferenceChecker class) checks references and decorates the tree with type information. The second pass (implemented by the TypeChecker class) performs type checks and checks that that local variables are initialized before reference. Both types of checks could be accomplished in a single pass but this separation of concerns makes the implementation easier to follow. Both classes define a RunCheck method that returns a boolean value indicating success or failure similar to the parent class that utilizes them. Both passes are always run regardless of errors detected in the first pass.
 
 This phase can detect the following types of errors:
 \begin{enumerate}
