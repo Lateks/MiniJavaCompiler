@@ -167,22 +167,6 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             {
                 var variableSymbol = node.Scope.ResolveVariable(node.Name);
                 if (variableSymbol == null) return; // resolving error has already been reported
-
-                var declaration = (VariableDeclaration)variableSymbol.Declaration;
-                if (declaration.VariableKind != VariableDeclaration.Kind.Local)
-                    return;
-
-                if (node.UsedAsAddress)
-                {
-                    declaration.IsInitialized = true;
-                }
-                else if (!declaration.IsInitialized && !ErrorsAlreadyReported(node, declaration))
-                {   // This error is reported only once per variable declaration.
-                    ReportError(
-                        ErrorTypes.UninitializedLocal,
-                        String.Format("Variable {0} might not have been initialized.",
-                        node.Name), node, declaration);
-                }
             }
 
             public override void Visit(IntegerLiteralExpression node)

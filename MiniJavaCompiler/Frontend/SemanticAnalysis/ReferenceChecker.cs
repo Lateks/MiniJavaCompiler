@@ -54,8 +54,7 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
             {
                 if (node.LeftHandSide is ILValueExpression)
                 {   // Whether an lvalue expression is being used "as an address"
-                    // or just as a regular reference matters in both reference checks
-                    // (reference to uninitialized variable) and code generation.
+                    // or just as a regular reference matters in code generation.
                     ((ILValueExpression)node.LeftHandSide).UsedAsAddress = true;
                 }
             }

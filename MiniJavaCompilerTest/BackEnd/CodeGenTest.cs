@@ -47,7 +47,7 @@ namespace MiniJavaCompilerTest.BackEnd
             var output = compileProcess.StandardOutput.ReadToEnd()
                 .Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
             Assert.AreEqual(1, compileProcess.ExitCode);
-            Assert.AreEqual(3 * 21 + 1, output.Count()); // 21 errors with two code output lines for each of them
+            Assert.AreEqual(3 * 20 + 1, output.Count()); // 21 errors with two code output lines for each of them
         }
 
         [Test]

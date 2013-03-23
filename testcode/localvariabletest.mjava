@@ -1,0 +1,24 @@
+// Checks that local variables are initialized to sensible defaults.
+// (This is unlike in Java where local variables would
+// be uninitialized by default.)
+class Test
+{
+  public static void main()
+  {
+    int foo;
+    System.out.println(foo); // prints 0
+    if (!(new A().foo()))
+      System.out.println(1); // prints 1
+    A bar;
+    bar.foo(); // crashes because of a NullReferenceException
+  }
+}
+
+class A
+{
+  public boolean foo()
+  {
+    boolean a;
+    return a; 
+  }
+}

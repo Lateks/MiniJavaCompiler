@@ -30,39 +30,6 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
             }
 
             [Test]
-            public void LocalVariableMustBeInitializedBeforeReference()
-            {
-                string program = "class Foo {\n" +
-                  "  public static void main() {\n" +
-                  "    int foo;\n" +
-                  "    System.out.println(foo);\n" +
-                  "  }\n" +
-                  "}\n";
-                IErrorReporter errors;
-                var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.False(checker.RunCheck());
-                Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("foo might not have been initialized"));
-            }
-
-            [Test]
-            public void LocalVariableInitializationErrorIsOnlyReportedOnce()
-            {
-                string program = "class Foo {\n" +
-                  "  public static void main() {\n" +
-                  "     int[] foo;\n" +
-                  "     foo[0] = 0;\n" +
-                  "     foo[1] = 1;\n" +
-                  "  }\n" +
-                  "}\n";
-                IErrorReporter errors;
-                var checker = SetUpTypeAndReferenceChecker(program, out errors);
-                Assert.False(checker.RunCheck());
-                Assert.AreEqual(1, errors.Count);
-                Assert.That(errors.Errors[0].ToString(), Is.StringContaining("foo might not have been initialized"));
-            }
-
-            [Test]
             public void ClassVariableIsInitializedAutomaticallyAndCanBeReferenced()
             {
                 string program = "class Foo {\n" +
@@ -437,17 +404,16 @@ namespace MiniJavaCompilerTest.FrontEndTest.SemanticAnalysis
                 string program = "class Foo {\n" +
                   "  public static void main()\n" +
                   "  {\n" +
-                  "    new A().foo();\n" +
                   "    A foo;\n" +
+                  "    foo = new A();\n" +
                   "    foo.foo();\n" +
                   "  }\n" +
                  "}\n";
                 IErrorReporter errors;
                 var checker = SetUpTypeAndReferenceChecker(program, out errors);
                 Assert.False(checker.RunCheck());
-                Assert.AreEqual(2, errors.Count);
+                Assert.AreEqual(1, errors.Count);
                 Assert.That(errors.Errors[0].ToString(), Is.StringContaining("Unknown type A.")); // instance creation error (no error about "A foo;" because declarations are checked in symbol table building phase)
-                Assert.That(errors.Errors[1].ToString(), Is.StringContaining("Variable foo might not have been initialized."));
                 // No errors about symbol foo() not being found because the compiler
                 // does not even know where to start looking...
             }
