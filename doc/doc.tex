@@ -237,7 +237,7 @@ When the listing in the previous version of this document was put together, I st
     \item[VariableDeclaration] \emph{is a} Declaration \emph{and an} IStatement
       \begin{itemize}
         \item \emph{has a} Kind (enum) \emph{indicating its type which can be Formal (parameter), Local or Class}
-        \item \emph{has a local index} (int) \emph{which indicates the position of a Formal variable declaration in a parameter list or the position of a Local variable declaration inside its scope. Local index is always 0 for class variables. This information is used in code generation.}
+        \item \emph{has a local index} (short) \emph{which indicates the position of a Formal variable declaration in a parameter list or the position of a Local variable declaration inside its scope. Local index is always 0 for class variables. This information is used and produced by the code generation phase.}
         \item \emph{inconsistently with} MethodDeclaration \emph{does not have a reference to the corresponding} VariableSymbol. \emph{It could be added, but I did not find a use for it, so I left it out. This is also the case with} ClassDeclaration \emph{which could have the corresponding} TypeSymbol.
       \end{itemize}
     \item[AssertStatement] \emph{is a} SyntaxElement \emph{and an} IStatement
@@ -562,7 +562,9 @@ This phase is implemented by the SemanticsChecker class. It produces no output i
 
 Internally the phase is divided into two passes through the abstract syntax tree. The first pass (implemented by the ReferenceChecker class) checks references and decorates the tree with type information. The second pass (implemented by the TypeChecker class) performs type checks. Both types of checks could be accomplished in a single pass but this separation of concerns makes the implementation easier to follow. Both classes define a RunCheck method that returns a boolean value indicating success or failure similar to the parent class that utilizes them. Both passes are always run regardless of errors detected in the first pass.
 
-I originally intended to implement checks for references to uninitialized variables but in the end had to leave these checks out due to the rather complicated nature of definite assignment analysis and time constraints.\footnote{See e.g. Nicu G. Fruja's article on such checks in C\#, \emph{The Correctness of the Definite Assignment Analysis in C\#}, that can be found at \url{http://www.jot.fm/issues/issue_2004_10/article2/article2.pdf}.} Local variables are therefore treated like class fields when it comes to initialization: \textbf{int} variables are initialized to 0, \textbf{boolean} variables are initialized to \textbf{false} and reference type variables are initialized to \textbf{null}\footnote{This is actually done by default by the CLR.}. Attempts to call methods on uninitialized reference type variables will, of course, result in a NullReferenceException being thrown by CLR at runtime.
+I originally intended to implement checks for references to uninitialized variables but in the end had to leave these checks out due to the rather complicated nature of definite assignment analysis and time constraints.\footnote{See e.g. Nicu G. Fruja's article on such checks in C\#, \emph{The Correctness of the Definite Assignment Analysis in C\#}, that can be found at \url{http://www.jot.fm/issues/issue_2004_10/article2/article2.pdf}.} If implemented, this could be done as an additional pass in the semantic analysis phase.
+
+Because definite assignment is not implemented, local variables are treated like class fields when it comes to initialization: \textbf{int} variables are initialized to 0, \textbf{boolean} variables are initialized to \textbf{false} and reference type variables are initialized to \textbf{null}\footnote{This is actually done by default by the CLR.}. Attempts to call methods on uninitialized reference type variables will, of course, result in a NullReferenceException being thrown by CLR at runtime.
 
 This phase can detect the following types of errors:
 \begin{enumerate}
@@ -628,18 +630,22 @@ The module is implemented by a single class and its nested INodeVisitor implemen
     \item It defines the TypeBuilder objects for all user-defined types and stores them in a string to TypeBuilder mapping stored in the parent CodeGenerator object. TypeBuilders need to be stored so they can be finalized after code generation by calling the CreateType() method of the TypeBuilder class.
     \item It defines the ConstructorBuilder objects for all user-defined types. For types that do not have an \verb,extends, declaration, the default constructor that calls the Object class constructor is defined. For types that do have a user-defined superclass, a generic constructor is defined. This constructor does not have a body until it is emitted by the InstructionGenerator. All contructors are stored in a Type to ConstructorBuilder mapping in the parent CodeGenerator object. ConstructorBuilders are needed for generating calls to constructors.
     \item It defines the MethodBuilder objects for all methods inside user-defined classes and stores them in a MethodSymbol to MethodBuilder mapping stored in the parent CodeGenerator object. These need to be stored to make generating calls to methods possible.
-    \item It defines the local variables, formal parameters and class fields. Formal parameters and local variables can be referred to by their index, so their builder objects do not need to be stored. FieldBuilders do need to be stored because the ILGenerator.Emit() method requires a FieldBuilder as the second parameter when emitting the opcodes Ldfld (load field) and Stfld (store field).
+    \item It defines the local variables, formal parameters and class fields. Formal parameters and local variables can be referred to by their index, so their builder objects do not need to be stored. FieldBuilders do need to be stored because the ILGenerator.Emit() method requires a FieldBuilder as the second parameter when emitting the opcodes Ldfld (load field) and Stfld (store field). \\Location indices for formal parameters and local variables are set up already during parsing, though this could also be left to the code generation phase. The index is stored on the node. Note that the first parameter in the formal parameter list of a non-static method is always at index 1 because the implicit \verb,this, reference takes up the index 0.
 \end{itemize}
 
-InstructionGenerator generates the actual code of the method and constructor bodies. Though no code optimization is done, the InstructionGenerator chooses the optimal opcodes for references to variables integer loads. For example, for integer literal loads from 0 to 8, the opcodes \verb,ldc.i4.0, through \verb,ldc.i4.8, are used. For integer literals between 9 and 127 (in the signed byte range), the opcode \verb,ldc.i4.s, is used. For integer literals larger than that, the opcode \verb,ldc.i4, is used. The opcodes for local variable loads (\verb,ldloc.0, through \verb,ldloc.3,, \verb,ldloc.s, for the unsigned byte range, \verb,ldloc, for larger local variable indices) and stores (the corresponding \verb,stloc, codes) and method argument loads and stores (the corresponding \verb,ldarg, codes and \verb,starg.s, for the unsigned byte range and \verb,starg, for larger argument indices) are handled similarly.
+InstructionGenerator generates the actual code of the method and constructor bodies. Though no code optimization is done, the InstructionGenerator chooses the optimal opcodes for references to variables integer loads.
+
+For example, for integer literal loads from 0 to 8, the opcodes \verb,ldc.i4.0, through \verb,ldc.i4.8, are used. For integer literals between 9 and 127 (in the signed byte range), the opcode \verb,ldc.i4.s, is used. For integer literals larger than that, the opcode \verb,ldc.i4, is used. The opcodes for local variable loads (\verb,ldloc.0, through \verb,ldloc.3,, \verb,ldloc.s, for the unsigned byte range, \verb,ldloc, for larger local variable indices) and stores (the corresponding \verb,stloc, codes) and method argument loads and stores (the corresponding \verb,ldarg, codes and \verb,starg.s, for the unsigned byte range and \verb,starg, for larger argument indices) are handled similarly.
+
+For loading boolean literals, the implementation uses \verb,ldc.i4.0, for false and \verb,ldc.i4.1, for true. These are the same opcodes that are used by the C$^\sharp$ compiler. Note that these load integer values represented by four bytes, not a single byte.
 
 In general, for choice in opcodes, I have used the behaviour of the C$^\sharp$ compiler as a reference. I have used the \href{http://ilspy.net/}{ILSpy} .NET decompiler to inspect test programs and figure out how the C$^\sharp$ compiler handles certain situations. As an introduction to the CIL I used the tutorials \href{http://www.codeproject.com/Articles/362076/Understanding-Common-Intermediate-Language-CIL}{Understanding Common Intermediate Language (CIL)} and \href{http://www.codeproject.com/Articles/3778/Introduction-to-IL-Assembly-Language}{Introduction to IL Assembly Language}.
 
 For the most part, code generation for binary operators is straightforward, because the CIL has corresponding opcodes for most of them. These include \verb,add,, \verb,sub,, \verb,mul,, \verb,div,, \verb,clt, (the \verb,<, operator), \verb,cgt, (the \verb,>, operator), \verb,ceq, (the \verb,==, operator) and \verb,rem, (the \verb,%, operator). When the opcode \verb,==, is applied to reference types, the opcode \verb,ceq, handily compares the object references on the evaluation stack, resulting in the correct behavior.
 
-Boolean operators require a bit more effort. The \verb,not, opcode offered by CIL is a bitwise not operation. Because the CIL needs to represent boolean values as 32-bit integers (boolean literals are loaded using the opcodes \verb,ldc.i4.0, and \verb,ldc.i4.1,), this cannot be used as a boolean not operation. I have used the same strategy as used by the C$^\sharp$ compiler: emitting an \verb,ldc.i4.0, load opcode and an \verb,ceq, opcode, effectively comparing the boolean value on the stack with false, which results in the same truth table as the boolean not operator.
+Boolean operators require a bit more effort. The \verb,not, opcode offered by CIL is a bitwise operation. Because the CIL needs to represent boolean values as integers, this cannot be used as a boolean not operation --- the bitwise complement of \textbf{true} would not be \textbf{false}. I have used the same strategy as used by the C$^\sharp$ compiler: emitting an \verb,ldc.i4.0, load opcode and an \verb,ceq, opcode, effectively comparing the boolean value on the stack with false, which results in the same truth table as the boolean not operator.
 
-The CIL does offer opcodes \verb,and, and \verb,or, but in practice these cannot be used because boolean operators need to be short-circuited. This requires jump labels. The implementation of operator short-circuiting is best explained with an example. As an example, the following MiniJava code (a part of the test file \verb,shortcircuit.mjava, that can be found under \verb,testcode/, in the code directory):
+The CIL does offer (bitwise) opcodes \verb,and, and \verb,or, but in practice these cannot be used because boolean operators need to be short-circuited. This is implemented using jump labels. The implementation of operator short-circuiting is best explained with an example. As an example, the following MiniJava code (a part of the test file \verb,shortcircuit.mjava, that can be found under \verb,testcode/, in the code directory):
 \begin{verbatim}
 // ... inside the main method
     Test2 a;
@@ -662,7 +668,7 @@ class Test2
 }
 \end{verbatim}
 
-The MiniJava compiler produces the following CIL code for the if statement condition:
+The MiniJava compiler produces the following CIL code for the if statement condition (generated without optimization for branching opcodes):
 \begin{verbatim}
 // First operand:
 IL_0006: ldc.i4.s 20
@@ -699,17 +705,19 @@ IL_002f: ldc.i4.0 // boolean not
 IL_0030: ceq
 \end{verbatim}
 
-This is similar to what the C$^\sharp$ compiler produces for boolean binary operators with the exception that it inverts some of the boolean values, but this has no effect on the functionality.
+This is similar to what the C$^\sharp$ compiler produces for boolean binary operators.
 
 \subsection{Testing}
 
-All modules have been tested using the NUnit test library with a code coverage of nearly 100\%. Only trivial parts have been left untested. Some parts of the program have been unit-tested but most parts should be involved in integration tests as well.
+All modules have been tested using the NUnit test library with a code coverage of nearly 100\%. Mostly trivial parts have been left untested. In practice especially error recovery tests for combinations of errors probably miss some cases, but these are difficult tests to write in general, because the possibilities for different combinations of errors are almost limitless. Some parts of the program have been unit-tested but most parts should be involved in integration tests as well.
 
 I have attempted to test the recovery paths in the parsing and semantic analysis phases as well as I have been able to, but thorough testing of recovery routines is difficult due to the large number of different paths through recursive parsers and visitors. These are probably the most likely source of bugs.
 
 If bugs remain in the system (as some almost certainly do), the best case scenario is that they will only lead to bad error messages in some cases. The worst case scenario for the parser is being stuck in an infinite loop when attempting to recover. During development I have found a few such bugs and managed to fix them but I would not be very surprised if some untested recovery path still led to such a problem, since the parser is rather difficult to reason about.
 
 At the moment, however, I do not know of any existing bugs in the compiler.
+
+The code generation part is tested by running test programs through the whole compilation pipeline and checking the produced programs' output against a reference result. All programs are also run through the PEVerify tool and its output is also automatically tested. The actual instruction generation is not tested (that is, the programs are not disassembled to automatically inspect the instructions generated), but I have checked the IL code generated for all test programs manually and corrected all of the bugs that I have found.
 
 The Compiler class that handles file IO and prints out error messages was a last minute addition to make quick tests during e.g. the code review possible, so it may have bugs. The error message handler especially is not very well-tested or robust --- it does not handle very long lines of code in any special way -- but it should be sufficient for basic hands-on testing if needed.
 
