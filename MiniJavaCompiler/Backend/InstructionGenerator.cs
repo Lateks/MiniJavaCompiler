@@ -344,6 +344,10 @@ namespace MiniJavaCompiler.BackEnd
                 {
                     IL.Emit(_int32LoadOpcodes[node.IntValue]);
                 }
+                else if (node.IntValue <= SByte.MaxValue)
+                {
+                    IL.Emit(OpCodes.Ldc_I4_S, Convert.ToSByte(node.IntValue));
+                }
                 else
                 {
                     IL.Emit(OpCodes.Ldc_I4, node.IntValue);
@@ -387,7 +391,7 @@ namespace MiniJavaCompiler.BackEnd
                 }
                 if (index <= Byte.MaxValue)
                 {
-                    IL.Emit(OpCodes.Ldarg_S, (Byte) index);
+                    IL.Emit(OpCodes.Ldarg_S, Convert.ToByte(index));
                 }
                 else
                 {
@@ -399,7 +403,7 @@ namespace MiniJavaCompiler.BackEnd
             {
                 if (index <= Byte.MaxValue)
                 {
-                    IL.Emit(OpCodes.Starg_S, (Byte) index);
+                    IL.Emit(OpCodes.Starg_S, Convert.ToByte(index));
                 }
                 else
                 {
@@ -428,7 +432,7 @@ namespace MiniJavaCompiler.BackEnd
                 }
                 if (index <= Byte.MaxValue)
                 {
-                    IL.Emit(OpCodes.Ldloc_S, (Byte) index);
+                    IL.Emit(OpCodes.Ldloc_S, Convert.ToByte(index));
                 }
                 else
                 {
@@ -457,7 +461,7 @@ namespace MiniJavaCompiler.BackEnd
                 }
                 if (index <= Byte.MaxValue)
                 {
-                    IL.Emit(OpCodes.Stloc_S, (Byte) index);
+                    IL.Emit(OpCodes.Stloc_S, Convert.ToByte(index));
                 }
                 else
                 {

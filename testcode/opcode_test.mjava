@@ -12,7 +12,10 @@ class Test
     System.out.println(6); //           ldc.i4.6
     System.out.println(7); //           ldc.i4.7
     System.out.println(8); //           ldc.i4.8
-    System.out.println(9); //           ldc.i4 9
+    System.out.println(9); //           ldc.i4.S 9
+    System.out.println(255); //         ldc.i4.S 255
+    System.out.println(256); //         ldc.i4 256
+    System.out.println(1000); //        ldc.i4 1000
 
     int a1;
     int a2;
