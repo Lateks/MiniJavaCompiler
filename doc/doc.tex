@@ -480,7 +480,9 @@ Both types of errors are reported using the IErrorReporter. When an error is enc
 
 Expression recovery is especially problematic since the follow set for expressions combined is large. Some of these problems could possibly be avoided by careful parameterisation of the recovery routines depending on the exact place where a parse error happened but this would make the parser quite a bit more complex and I am not sure whether the exception based error handling technique used in the current implementation is easily compatible with these kinds of strategies. In a real compiler this could not be allowed, but the parser implementation would probably require some redesign to get a really working implementation.
 
-For many common kinds of syntax errors this basic strategy works fine but some pathological cases can cause a stream of uninformative errors following the one actual error\footnote{Examples with explanations can be found in the recovery test code.}.
+For many common kinds of syntax errors this basic strategy works fine but some pathological cases can cause a (usually minor) stream of uninformative errors following the one actual error\footnote{Examples with explanations can be found in the recovery test code.}.
+
+For example, when recovering from term parsing, the problem is that the follow set for terms includes e.g. the symbols \verb,[, and \verb,], (used in indexing an array) as well as \verb,),, but these symbols can also appear as a part of a term, e.g. in instance creation expressions (\verb,new int[expr], or \verb,new A(),). As an example, the erroneous code \verb,foo = new int();, will result in two errors: one concerning the symbol \verb,(, when \verb,[, was expected, and one concerning the symbol \verb,),, because recovery assumes that this symbol is already outside the expression and fails to disregard it. However, mostly the recovery strategies appear pretty well-behaved.
 
 If no errors are found, parsing ends with the EndOfFile token being consumed, the root node of the abstract syntax tree is assigned into the output parameter and the return value is \verb,true,. If any errors (lexical or syntactic) have been found, the TryParse method returns \verb,false,.
 
@@ -751,21 +753,18 @@ At the moment, however, I do not know of any existing bugs in the compiler.
 
 The code generation part is tested by running test programs through the whole compilation pipeline and checking the produced programs' output against a reference result. All programs are also run through the PEVerify tool and its output is also automatically tested. The actual instruction generation is not tested (that is, the programs are not disassembled to automatically inspect the instructions generated), but I have checked the IL code generated for all test programs manually and corrected all of the bugs that I have found.
 
-Note that the code generation tests require a path to the PEVerify.exe program.
+Note that the code generation tests require a path to the PEVerify.exe program. This can be set by editing the class variable PEVerifyPath in CodeGenTest.cs.
 
-The Compiler class that handles file IO and prints out error messages was a last minute addition to make quick tests during e.g. the code review possible, so it may have bugs. The error message handler especially is not very well-tested or robust --- it does not handle very long lines of code in any special way -- but it should be sufficient for basic hands-on testing if needed.
-
-The easiest way to run the NUnit tests on the department systems with Visual Studio 2010 is to use the NUnit GUI runner, included in the project package as a zip file. The NUnit GUI runner cannot, for some reason, be run from a networked drive, so it must be extracted to e.g. the user's home directory (C:\textbackslash Users\textbackslash username).
-
+% TODO: write instructions for VS 2012 if it is in use at the department
 After extracting NUnit, compile the MiniJavaCompiler solution in e.g. Visual Studio, find \verb,nunit-x86.exe, in the \verb,bin, directory of the extracted archive and run it. Select ``Open project'' from the File menu, navigate to the \verb,\bin\Release, directory under the MiniJavaCompilerTest project directory and select \verb,MiniJavaCompilerTest.dll,. Now the tests can be run by pressing the Run button.
 
 If using Visual Studio 2012, you can also install the \href{http://nunit.org/index.php?p=vsTestAdapter&r=2.6.1}{NUnit test adapter} which enables NUnit tests to be run straight from the test menu.
 
 \subsection{Building and running the compiler}
 
-The easiest way to build the compiler is probably opening it in Visual Studio and building it in Release mode to disable assertions and to get optimised code. After this the resulting \verb,MiniJavaCompiler.exe, under \verb,bin\Release, can be run by giving it the path to the source file as a parameter: \verb,./MiniJavaCompiler.exe path/to/source/file,.
+The easiest way to build the compiler is probably opening it in Visual Studio and building it in Release mode to disable assertions and to get optimised code. After this the resulting \verb,MiniJavaCompiler.exe, under \verb,bin\Release, can be run by giving it the path to the source file as a parameter: \verb,./MiniJavaCompiler.exe path/to/source/file [path/to/output/file],.
 
-The main program runs the compiler as far as possible, prints error messages or ``Program OK.'' and exits.
+The program is currently targeted for .NET 4.5 to get access to System.Tuple, so it probably cannot be run on e.g. the department Windows server.
 
 Note: the program code and the \LaTeX{} sources for this documentation are also available on \href{https://github.com/Lateks/MiniJavaCompiler}{my GitHub account page} where the repository can be cloned.
 
