@@ -643,7 +643,7 @@ In general, for choice in opcodes, I have used the behaviour of the C$^\sharp$ c
 
 For the most part, code generation for binary operators is straightforward, because the CIL has corresponding opcodes for most of them. These include \verb,add,, \verb,sub,, \verb,mul,, \verb,div,, \verb,clt, (the \verb,<, operator), \verb,cgt, (the \verb,>, operator), \verb,ceq, (the \verb,==, operator) and \verb,rem, (the \verb,%, operator). When the opcode \verb,==, is applied to reference types, the opcode \verb,ceq, handily compares the object references on the evaluation stack, resulting in the correct behavior.
 
-Boolean operators require a bit more effort. The \verb,not, opcode offered by CIL is a bitwise operation. Because the CIL needs to represent boolean values as integers, this cannot be used as a boolean not operation --- the bitwise complement of \textbf{true} would not be \textbf{false}. I have used the same strategy as used by the C$^\sharp$ compiler: emitting an \verb,ldc.i4.0, load opcode and an \verb,ceq, opcode, effectively comparing the boolean value on the stack with false, which results in the same truth table as the boolean not operator.
+Boolean operators require a bit more effort. The \verb,not, opcode offered by CIL is a bitwise operation. Because the CIL needs to represent boolean values as integers, this cannot be used as a boolean not operation --- the bitwise complement of \textbf{true} would not be \textbf{false}. I have used the same strategy as used by the C$^\sharp$ compiler: emitting an \verb,ldc.i4.0, load opcode and an \verb,ceq, opcode, effectively comparing the boolean value on the stack with \textbf{false}, which results in the same truth table as the boolean not operator.
 
 The CIL does offer (bitwise) opcodes \verb,and, and \verb,or, but in practice these cannot be used because boolean operators need to be short-circuited. This is implemented using jump labels. The implementation of operator short-circuiting is best explained with an example. As an example, the following MiniJava code (a part of the test file \verb,shortcircuit.mjava, that can be found under \verb,testcode/, in the code directory):
 \begin{verbatim}
@@ -705,7 +705,19 @@ IL_002f: ldc.i4.0 // boolean not
 IL_0030: ceq
 \end{verbatim}
 
-This is similar to what the C$^\sharp$ compiler produces for boolean binary operators.
+This is almost the same code that the C$^\sharp$ compiler produces for boolean binary operators. The difference between logical \verb,and, and \verb,or, operators is mostly that when \verb,and, uses \verb,brfalse, (if the condition is false, jump over other operands), \verb,or, uses \verb,brtrue, (if the condition is true, jump over other operands). Of course the boolean value loaded onto the stack after the jump also differs between the two.
+
+In addition to optimizing the codes used for integer literal loads as well as argument and local loads and stores, I have also performed optimization on the opcodes used for branching. After the instructions in a method body have been generated, the MethodBodyEmitter passes through this code and performs the following substitutions before actually emitting the code:
+\begin{itemize}
+    \item The opcodes \verb,ldloc.i4.0,, \verb,ceq, (a logical not operation) and either \verb,brtrue, or \verb,brfalse, are replaced with the the opposite comparison branch operator. That is, e.g. the instruction sequence \verb,ldloc.i4.0,, \verb,ceq,, \verb,brtrue, is replaced with a single instruction, \verb,brfalse,. Because the opcodes emitted for a logical not operation are the same as for an integer comparison to zero, this has the slightly peculiar looking effect of also optimizing these integer comparisons in the same way.
+    \item The opcodes \verb,ceq, and \verb,brtrue, in sequence are replaced with \verb,beq,.
+    \item The opcodes \verb,clt, and \verb,brtrue, in sequence are replaced with \verb,blt,.
+    \item The opcodes \verb,cgt, and \verb,brtrue, in sequence are replaced with \verb,bgt,.
+    \item The opcodes \verb,clt, and \verb,brfalse, in sequence are replaced with \verb,bge, (branch if greater than or equal to).
+    \item The opcodes \verb,cgt, and \verb,brfalse, in sequence are replaced with \verb,ble, (branch if smaller than or equal to).
+\end{itemize}
+
+Jumps are not optimized, although, for example, the jump after a \verb,then, branch in an \verb,if, statement is omitted if the \verb,if, statement has no \verb,else, branch. The .NET JIT compiler probably handles jump optimizations because the C$^\sharp$ compiler does not appear to do these optimizations either.
 
 \subsection{Testing}
 
