@@ -752,13 +752,11 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
             var formal1 = methodDeclaration.Formals[0];
             Assert.That(formal1.Name, Is.EqualTo("foo"));
             Assert.That(formal1.TypeName, Is.EqualTo("int"));
-            Assert.That(formal1.LocalIndex, Is.EqualTo(0));
             Assert.False(formal1.IsArray);
 
             var formal2 = methodDeclaration.Formals[1];
             Assert.That(formal2.Name, Is.EqualTo("bar"));
             Assert.That(formal2.TypeName, Is.EqualTo("myOwnType"));
-            Assert.That(formal2.LocalIndex, Is.EqualTo(1));
             Assert.False(formal2.IsArray);
         }
 
@@ -806,30 +804,24 @@ namespace MiniJavaCompilerTest.FrontEndTest.Parsing
 
             var var1 = (VariableDeclaration)testClass.Declarations[0];
             Assert.That(var1.VariableKind, Is.EqualTo(VariableDeclaration.Kind.Class));
-            Assert.True(var1.LocalIndex == 0);
 
             var var2 = (VariableDeclaration)testClass.Declarations[1];
             Assert.That(var2.VariableKind, Is.EqualTo(VariableDeclaration.Kind.Class));
-            Assert.True(var2.LocalIndex == 0);
 
             var methodDeclaration = (MethodDeclaration)testClass.Declarations[2];
             Assert.That(methodDeclaration.Formals.Count, Is.EqualTo(2));
 
             Assert.That(methodDeclaration.Formals[0].VariableKind, Is.EqualTo(VariableDeclaration.Kind.Formal));
-            Assert.True(methodDeclaration.Formals[0].LocalIndex == 0);
 
             Assert.That(methodDeclaration.Formals[1].VariableKind, Is.EqualTo(VariableDeclaration.Kind.Formal));
-            Assert.That(methodDeclaration.Formals[1].LocalIndex == 1);
 
             Assert.That(methodDeclaration.MethodBody.Count, Is.EqualTo(2));
 
             var localVar1 = (VariableDeclaration)methodDeclaration.MethodBody[0];
             Assert.That(localVar1.VariableKind, Is.EqualTo(VariableDeclaration.Kind.Local));
-            Assert.True(localVar1.LocalIndex == 0);
 
             var localVar2 = (VariableDeclaration)methodDeclaration.MethodBody[1];
             Assert.That(localVar2.VariableKind, Is.EqualTo(VariableDeclaration.Kind.Local));
-            Assert.True(localVar2.LocalIndex == 1);
         }
 
         [Test]

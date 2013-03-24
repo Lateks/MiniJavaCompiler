@@ -50,15 +50,6 @@ namespace MiniJavaCompiler.FrontEnd.SemanticAnalysis
                 }
             }
 
-            public override void Visit(AssignmentStatement node)
-            {
-                if (node.LeftHandSide is ILValueExpression)
-                {   // Whether an lvalue expression is being used "as an address"
-                    // or just as a regular reference matters in code generation.
-                    ((ILValueExpression)node.LeftHandSide).UsedAsAddress = true;
-                }
-            }
-
             public override void Visit(MethodInvocation node)
             {
                 MethodSymbol method = ResolveMethod(node, node.MethodOwner.Type);

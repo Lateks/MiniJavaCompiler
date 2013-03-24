@@ -11,6 +11,7 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
         public List<IExpression> CallParameters { get; private set; }
         public IType Type { get; set; }
         public MethodDeclaration ReferencedMethod { get; set; }
+        public bool UsedAsStatement { get; set; }
 
         public MethodInvocation(IExpression methodOwner, string methodName,
             List<IExpression> callParameters, int row, int col)
@@ -19,6 +20,7 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
             MethodOwner = methodOwner;
             MethodName = methodName;
             CallParameters = callParameters;
+            UsedAsStatement = false;
         }
 
         public override void Accept(INodeVisitor visitor)

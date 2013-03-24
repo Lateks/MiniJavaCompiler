@@ -214,6 +214,7 @@ namespace MiniJavaCompiler.BackEnd
 
             public override void Visit(MethodInvocation node)
             {
+                bool returnTypeIsVoid = false;
                 if (node.MethodOwner.Type is ArrayType)
                 {
                     AddInstruction(OpCodes.Ldlen);
@@ -222,7 +223,12 @@ namespace MiniJavaCompiler.BackEnd
                 {
                     var calledMethod = _parent._methods[node.ReferencedMethod.Symbol];
                     AddInstruction(OpCodes.Callvirt, calledMethod);
+                    returnTypeIsVoid = calledMethod.ReturnType == typeof(void);
                 }
+                if (!returnTypeIsVoid && node.UsedAsStatement)
+                {
+                    AddInstruction(OpCodes.Pop); // The return value is discarded because it is
+                }                                // never used.
             }
 
             public override void Visit(InstanceCreationExpression node)
@@ -391,6 +397,10 @@ namespace MiniJavaCompiler.BackEnd
                             {
                                 IL.Emit(opcode, (byte)instruction.Item2);
                             }
+                            else if (instruction.Item2 is short)
+                            {
+                                IL.Emit(opcode, (short)instruction.Item2);
+                            }
                             else if (instruction.Item2 is int)
                             {
                                 IL.Emit(opcode, (int)instruction.Item2);
@@ -528,7 +538,7 @@ namespace MiniJavaCompiler.BackEnd
                 }
             }
 
-            private void AddArgLoadInstr(int index)
+            private void AddArgLoadInstr(short index)
             {
                 switch (index)
                 {
@@ -557,7 +567,7 @@ namespace MiniJavaCompiler.BackEnd
                 }
             }
 
-            private void AddArgStoreInstr(int index)
+            private void AddArgStoreInstr(short index)
             {
                 if (index <= Byte.MaxValue)
                 {
@@ -569,7 +579,7 @@ namespace MiniJavaCompiler.BackEnd
                 }
             }
 
-            private void AddLocalLoadInstr(int index)
+            private void AddLocalLoadInstr(short index)
             {
                 switch (index)
                 {
@@ -598,7 +608,7 @@ namespace MiniJavaCompiler.BackEnd
                 }
             }
 
-            private void AddLocalStoreInstr(int index)
+            private void AddLocalStoreInstr(short index)
             {
                 switch (index)
                 {

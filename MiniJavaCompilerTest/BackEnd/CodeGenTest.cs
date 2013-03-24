@@ -40,6 +40,14 @@ namespace MiniJavaCompilerTest.BackEnd
         }
 
         [Test]
+        public void TestManyLocals()
+        {
+            CheckCompilationOK("manylocals.mjava");
+            CheckMultiLineOutput(new string[] { "1", "2", "3", "4" });
+            CheckPEVerifyOutput();
+        }
+
+        [Test]
         public void TestErrors()
         {
             var compileProcess = GetProcess(compilerPath, FormatParams("errortest.mjava"));

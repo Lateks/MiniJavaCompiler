@@ -45,6 +45,7 @@ namespace MiniJavaCompiler.BackEnd
 
         public void GenerateCode(string outputFileName = "out.exe")
         {
+            new CodeGenAnalyser(_astRoot).Analyse();
             new AssemblyGenerator(this).SetUpAssembly(outputFileName); // Sets up _asmBuilder, _moduleBuilder and _constructors.
             new InstructionGenerator(this).GenerateInstructions();
             _moduleBuilder.CreateGlobalFunctions();
@@ -62,9 +63,9 @@ namespace MiniJavaCompiler.BackEnd
 
         // If the method is not static, parameter 0 is a reference to the object
         // and this needs to be taken into account.
-        private static int GetParameterIndex(VariableDeclaration node, MethodBuilder method)
+        private static short GetParameterIndex(VariableDeclaration node, MethodBuilder method)
         {
-            return method.IsStatic ? node.LocalIndex : node.LocalIndex + 1;
+            return method.IsStatic ? node.LocalIndex : (short) (node.LocalIndex + 1);
         }
 
         private Type BuildType(string typeName, bool isArray)

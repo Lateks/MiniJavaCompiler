@@ -49,6 +49,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BackEnd\AssemblyGenerator.cs" />
+    <Compile Include="BackEnd\CodeGenAnalyser.cs" />
     <Compile Include="BackEnd\CodeGenerator.cs" />
     <Compile Include="BackEnd\InstructionGenerator.cs" />
     <Compile Include="FrontEnd\FrontEnd.cs" />
