@@ -741,7 +741,31 @@ Jumps are not systematically optimized, although, for example, the jump after a 
 
 \subsection{Shortcomings and potential points of improvement}
 
-\subsection{Testing}
+Most of these points have already been mentioned, but this part gives a brief summary.
+
+\subsubsection{Recovery strategies}
+
+As far as recovery strategies go, there is probably almost infinite room for improvement. For example, the symbol table building phase could probably pretty easily be made to recover from multiple declarations of the same typename to check for other symbol declaration errors.
+
+However, as said before, I have used the behavior of the actual Java compiler as a guideline for the recovery implementation. The Java compiler does not recover from this situation either. I would guess that this has to do with the fact that recovery over many compilation phases increases the complexity of required tests quite a lot.
+
+\subsubsection{Unimplemented semantic checks}
+
+Some slightly more complicated checks in the semantic analysis phase were left out of this implementation. These include definite assignment checks and unreachable code checks. Both would cause a compile-time error in Java. Neither of these has an effect on the semantics of a program, so I did not implement them due to a lack of time. Both of these could be implemented as an additional pass in the semantic analysis phase.
+
+\subsubsection{Code optimization}
+
+Obviously code optimization was left out because it was not required in the assignment.
+
+Simple code optimizations that could be implemented include at least the following:
+\begin{itemize}
+    \item An additional pass in the code generation phase could replace calculations made with literals with a single literal expression (e.g. \verb,42 % 2, could be replaced with \verb,0, or \verb,42 % 2 == 0, with \verb,true,).
+    \item Removal of code that does nothing, for example calls to methods with empty bodies, or \verb,if, or \verb,while, statements with empty bodies. This can only be done in rather simple cases, because e.g. a parameter or \verb,if, or \verb,while, statement conditions can have side effects.
+    \item Methods that are never called could be skipped in code generation because MiniJava programs will definitely not be dynamically linked with any external code that could call these methods...
+    \item Similarly variables that are never used could be skipped in code generation. At least the C$^\sharp$ compiler does not appear to do this, though. It may be that the .NET JIT compiler prunes these out as well.
+\end{itemize}
+
+\section{Testing}
 
 All modules have been tested using the NUnit test library with a code coverage of nearly 100\%. Mostly trivial parts have been left untested. In practice especially error recovery tests for combinations of errors probably miss some cases, but these are difficult tests to write in general, because the possibilities for different combinations of errors are almost limitless. Some parts of the program have been unit-tested but most parts should be involved in integration tests as well.
 
@@ -760,7 +784,7 @@ After extracting NUnit, compile the MiniJavaCompiler solution in e.g. Visual Stu
 
 If using Visual Studio 2012, you can also install the \href{http://nunit.org/index.php?p=vsTestAdapter&r=2.6.1}{NUnit test adapter} which enables NUnit tests to be run straight from the test menu.
 
-\subsection{Building and running the compiler}
+\section{Building and running the compiler}
 
 The easiest way to build the compiler is probably opening it in Visual Studio and building it in Release mode to disable assertions and to get optimised code. After this the resulting \verb,MiniJavaCompiler.exe, under \verb,bin\Release, can be run by giving it the path to the source file as a parameter: \verb,./MiniJavaCompiler.exe path/to/source/file [path/to/output/file],.
 
