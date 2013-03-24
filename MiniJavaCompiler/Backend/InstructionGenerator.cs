@@ -186,7 +186,10 @@ namespace MiniJavaCompiler.BackEnd
 
             public override void VisitAfterThenBranch(IfStatement node)
             {
-                AddInstruction(OpCodes.Br, node.ExitLabel);
+                if (node.ElseBranch != null)
+                {
+                    AddInstruction(OpCodes.Br, node.ExitLabel);
+                }
             }
 
             public override void Exit(IfStatement node)
