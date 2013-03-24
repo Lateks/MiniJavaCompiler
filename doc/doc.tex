@@ -777,6 +777,8 @@ At the moment, however, I do not know of any existing bugs in the compiler.
 
 The code generation part is tested by running test programs through the whole compilation pipeline and checking the produced programs' output against a reference result. All programs are also run through the PEVerify tool and its output is also automatically tested. The actual instruction generation is not tested (that is, the programs are not disassembled to automatically inspect the instructions generated), but I have checked the IL code generated for all test programs manually and corrected all of the bugs that I have found.
 
+The directory \verb,testcode/, under the main code directory contains example programs that can be compiled with MiniJavaCompiler.exe and run through PEVerify. These are also used in the automated code generation tests.
+
 Note that the code generation tests require a path to the PEVerify.exe program. This can be set by editing the class variable PEVerifyPath in CodeGenTest.cs.
 
 % TODO: write instructions for VS 2012 if it is in use at the department
