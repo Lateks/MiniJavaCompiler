@@ -10,7 +10,7 @@ namespace MiniJavaCompilerTest.BackEnd
     [TestFixture]
     class CodeGenTest
     {
-        string PEVerifyPath = @"C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\Bin\PEVerify.exe";
+        string PEVerifyPath = @"C:\Program Files (x86)\Microsoft SDKs\Windows\v8.0A\bin\NETFX 4.0 Tools\x64\PEVerify.exe";
         string compilerPath = @"..\..\..\MiniJavaCompiler\bin\Debug\MiniJavaCompiler.exe";
         string testCodePath = @"..\..\..\testcode";
         string testExePath =  @"..\..\..\test.exe";

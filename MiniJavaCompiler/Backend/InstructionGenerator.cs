@@ -17,8 +17,8 @@ namespace MiniJavaCompiler.BackEnd
         private class InstructionGenerator : NodeVisitorBase
         {
             private CodeGenerator _parent;
-            private TypeBuilder _currentType;
-            private MethodBuilder _currentMethod;
+            MethodBuilder _currentMethod;
+            private readonly Dictionary<MethodBuilder, List<Tuple<OpCode?, object>>> _methodBodies;
             private ILGenerator IL
             {
                 get { return _currentMethod.GetILGenerator(); }
@@ -56,6 +56,7 @@ namespace MiniJavaCompiler.BackEnd
             public InstructionGenerator(CodeGenerator parent)
             {
                 _parent = parent;
+                _methodBodies = new Dictionary<MethodBuilder, List<Tuple<OpCode?, object>>>();
             }
 
             public void GenerateInstructions()
@@ -66,7 +67,6 @@ namespace MiniJavaCompiler.BackEnd
             public override void Visit(ClassDeclaration node)
             {
                 TypeBuilder thisType = _parent._types[node.Name];
-                _currentType = thisType;
                 if (node.InheritedClassName != null)
                 {   // Emit non-default constructor body.
                     var superType = _parent._types[node.InheritedClassName];
@@ -79,13 +79,13 @@ namespace MiniJavaCompiler.BackEnd
 
             public override void Visit(MethodDeclaration node)
             {
-                var sym = node.Symbol;
-                _currentMethod = _parent._methods[sym];
+                _currentMethod = _parent._methods[node.Symbol];
+                _methodBodies[_currentMethod] = new List<Tuple<OpCode?, object>>();
             }
 
             public override void Visit(PrintStatement node)
             {
-                IL.Emit(OpCodes.Call, GetPrintMethod<Int32>());
+                AddInstruction(OpCodes.Call, GetPrintMethod<Int32>());
             }
 
             private static MethodInfo GetPrintMethod<T>()
@@ -93,35 +93,41 @@ namespace MiniJavaCompiler.BackEnd
                 return typeof(System.Console).GetMethod("WriteLine", new Type[] { typeof(T) });
             }
 
+            private void AddInstruction(OpCode? instr, Object param = null)
+            {
+                _methodBodies[_currentMethod].Add(
+                    Tuple.Create<OpCode?, object>(instr, param));
+            }
+
             public override void Visit(ReturnStatement node)
             {
-                IL.Emit(OpCodes.Ret);
+                AddInstruction(OpCodes.Ret);
             }
 
             public override void Visit(BlockStatement node)
             {
                 if (node.Label.HasValue)
                 {
-                    IL.MarkLabel(node.Label.Value);
+                    AddInstruction(null, node.Label.Value);
                 }
             }
 
             public override void Visit(AssertStatement node)
             {
                 var jumpLabel = IL.DefineLabel();
-                IL.Emit(OpCodes.Brtrue, jumpLabel); // assertion ok
+                AddInstruction(OpCodes.Brtrue, jumpLabel); // assertion ok
 
-
-                IL.Emit(OpCodes.Ldstr, String.Format("Exception occurred: AssertionError at {0}.{1}({2},{3})",
-                    _currentMethod.DeclaringType.Name, _currentMethod.Name, node.Row, node.Col));
-                IL.Emit(OpCodes.Call, GetPrintMethod<String>());
+                var errStr = String.Format("Exception occurred: AssertionError at {0}.{1}({2},{3})",
+                    _currentMethod.DeclaringType.Name, _currentMethod.Name, node.Row, node.Col);
+                AddInstruction(OpCodes.Ldstr, errStr);
+                AddInstruction(OpCodes.Call, GetPrintMethod<String>());
 
                 MethodInfo exitMethod = typeof(System.Environment).GetMethod(
                     "Exit", new Type[] { typeof(Int32) });
-                IL.Emit(OpCodes.Ldc_I4_1); // failure status
-                IL.Emit(OpCodes.Call, exitMethod);
+                AddInstruction(OpCodes.Ldc_I4_1); // failure status
+                AddInstruction(OpCodes.Call, exitMethod);
 
-                IL.MarkLabel(jumpLabel);
+                AddInstruction(null, jumpLabel);
             }
 
             public override void Visit(AssignmentStatement node)
@@ -135,13 +141,13 @@ namespace MiniJavaCompiler.BackEnd
                     switch (decl.VariableKind)
                     {
                         case VariableDeclaration.Kind.Class:
-                            IL.Emit(OpCodes.Stfld, _parent._fields[variable]);
+                            AddInstruction(OpCodes.Stfld, _parent._fields[variable]);
                             break;
                         case VariableDeclaration.Kind.Local:
-                            EmitLocalStore(decl.LocalIndex);
+                            AddLocalStoreInstr(decl.LocalIndex);
                             break;
                         case VariableDeclaration.Kind.Formal:
-                            EmitArgStore(GetParameterIndex(decl, _currentMethod));
+                            AddArgStoreInstr(GetParameterIndex(decl, _currentMethod));
                             break;
                     }
                 }
@@ -151,15 +157,15 @@ namespace MiniJavaCompiler.BackEnd
                     var rhsType = node.RightHandSide.Type;
                     if (rhsType.Name == MiniJavaInfo.IntType)
                     {
-                        IL.Emit(OpCodes.Stelem_I4);
+                        AddInstruction(OpCodes.Stelem_I4);
                     }
                     else if (rhsType.Name == MiniJavaInfo.BoolType)
                     {
-                        IL.Emit(OpCodes.Stelem_I1);
+                        AddInstruction(OpCodes.Stelem_I1);
                     }
                     else
                     {
-                        IL.Emit(OpCodes.Stelem_Ref);
+                        AddInstruction(OpCodes.Stelem_Ref);
                     }
                 }
             }
@@ -170,22 +176,22 @@ namespace MiniJavaCompiler.BackEnd
                 if (node.ElseBranch != null)
                 {
                     node.ElseBranch.Label = IL.DefineLabel();
-                    IL.Emit(OpCodes.Brfalse, node.ElseBranch.Label.Value);
+                    AddInstruction(OpCodes.Brfalse, node.ElseBranch.Label.Value);
                 }
                 else
                 {
-                    IL.Emit(OpCodes.Brfalse, node.ExitLabel);
+                    AddInstruction(OpCodes.Brfalse, node.ExitLabel);
                 }
             }
 
             public override void VisitAfterThenBranch(IfStatement node)
             {
-                IL.Emit(OpCodes.Br, node.ExitLabel);
+                AddInstruction(OpCodes.Br, node.ExitLabel);
             }
 
             public override void Exit(IfStatement node)
             {
-                IL.MarkLabel(node.ExitLabel);
+                AddInstruction(null, node.ExitLabel);
             }
 
             public override void Visit(WhileStatement node)
@@ -193,29 +199,29 @@ namespace MiniJavaCompiler.BackEnd
                 Label test = IL.DefineLabel();
                 node.ConditionLabel = test;
                 node.LoopBody.Label = IL.DefineLabel();
-                IL.Emit(OpCodes.Br, test); // unconditional branch to loop test
+                AddInstruction(OpCodes.Br, test); // unconditional branch to loop test
             }
 
             public override void VisitAfterBody(WhileStatement node)
             {
-                IL.MarkLabel(node.ConditionLabel);
+                AddInstruction(null, node.ConditionLabel);
             }
 
             public override void Exit(WhileStatement node)
             {
-                IL.Emit(OpCodes.Brtrue, node.LoopBody.Label.Value);
+                AddInstruction(OpCodes.Brtrue, node.LoopBody.Label.Value);
             }
 
             public override void Visit(MethodInvocation node)
             {
                 if (node.MethodOwner.Type is ArrayType)
                 {
-                    IL.Emit(OpCodes.Ldlen);
+                    AddInstruction(OpCodes.Ldlen);
                 }
                 else
                 {
                     var calledMethod = _parent._methods[node.ReferencedMethod.Symbol];
-                    IL.Emit(OpCodes.Callvirt, calledMethod);
+                    AddInstruction(OpCodes.Callvirt, calledMethod);
                 }
             }
 
@@ -224,33 +230,33 @@ namespace MiniJavaCompiler.BackEnd
                 Type type = _parent.BuildType(node.CreatedTypeName, false);
                 if (node.IsArrayCreation)
                 {   // arraysize is on top of the stack
-                    IL.Emit(OpCodes.Newarr, type);
+                    AddInstruction(OpCodes.Newarr, type);
                 }
                 else
                 {
-                    IL.Emit(OpCodes.Newobj, _parent._constructors[type]);
+                    AddInstruction(OpCodes.Newobj, _parent._constructors[type]);
                 }
             }
 
             public override void Visit(UnaryOperatorExpression node)
             {
-                EmitOperator(node.Operator);
+                AddOperatorInstr(node.Operator);
             }
 
             public override void VisitAfterLHS(BinaryOperatorExpression node)
             {
                 if (!MiniJavaInfo.IsLogicalOperator(node.Operator))
                     return;
-                // Emit the first jump code required for boolean operator short circuit.
+                // The first jump code required for boolean operator short circuit.
                 var jumpLabel = IL.DefineLabel();
                 node.AfterLabel = jumpLabel;
                 switch (node.Operator)
                 {
                     case MiniJavaInfo.Operator.Or:
-                        IL.Emit(OpCodes.Brtrue, jumpLabel);
+                        AddInstruction(OpCodes.Brtrue, jumpLabel);
                         break;
                     case MiniJavaInfo.Operator.And:
-                        IL.Emit(OpCodes.Brfalse, jumpLabel);
+                        AddInstruction(OpCodes.Brfalse, jumpLabel);
                         break;
                     default:
                         break;
@@ -259,52 +265,52 @@ namespace MiniJavaCompiler.BackEnd
 
             public override void Visit(BinaryOperatorExpression node)
             {
-                EmitOperator(node.Operator);
+                AddOperatorInstr(node.Operator);
                 if (MiniJavaInfo.IsLogicalOperator(node.Operator))
-                {   // Emit the second jump code and jump labels required
+                {   // The second jump code and jump labels required
                     // for boolean operator short circuit.
                     var rhsJumpLabel = IL.DefineLabel();
-                    IL.Emit(OpCodes.Br, rhsJumpLabel);
-                    IL.MarkLabel(node.AfterLabel.Value);
+                    AddInstruction(OpCodes.Br, rhsJumpLabel);
+                    AddInstruction(null, node.AfterLabel.Value);
                     var successCode = node.Operator == MiniJavaInfo.Operator.And ?
                         OpCodes.Ldc_I4_0 : OpCodes.Ldc_I4_1;
-                    IL.Emit(successCode);
-                    IL.MarkLabel(rhsJumpLabel); // We jump here if rhs was evaluated.
+                    AddInstruction(successCode);
+                    AddInstruction(null, rhsJumpLabel); // We jump to this label if rhs was evaluated.
                 }
             }
 
-            private void EmitOperator(MiniJavaInfo.Operator op)
+            private void AddOperatorInstr(MiniJavaInfo.Operator op)
             {
                 foreach (var opcode in _operatorOpCodes[op])
                 {
-                    IL.Emit(opcode);
+                    AddInstruction(opcode);
                 }
             }
 
             public override void Visit(BooleanLiteralExpression node)
             {
-                IL.Emit(node.Value ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
+                AddInstruction(node.Value ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
             }
 
             public override void Visit(ThisExpression node)
             {
-                IL.Emit(OpCodes.Ldarg_0);
+                AddInstruction(OpCodes.Ldarg_0);
             }
 
             public override void Visit(ArrayIndexingExpression node)
             {
-                if (node.UsedAsAddress) return; // no need to load anything, index is already on the stack?
+                if (node.UsedAsAddress) return; // no need to load anything, index is already on the stack
                 if (node.Type.Name == MiniJavaInfo.IntType)
                 {
-                    IL.Emit(OpCodes.Ldelem_I4);
+                    AddInstruction(OpCodes.Ldelem_I4);
                 }
                 else if (node.Type.Name == MiniJavaInfo.BoolType)
                 {
-                    IL.Emit(OpCodes.Ldelem_I1);
+                    AddInstruction(OpCodes.Ldelem_I1);
                 }
                 else
                 {
-                    IL.Emit(OpCodes.Ldelem_Ref);
+                    AddInstruction(OpCodes.Ldelem_Ref);
                 }
             }
 
@@ -318,7 +324,7 @@ namespace MiniJavaCompiler.BackEnd
                 {
                     if (definition.VariableKind == VariableDeclaration.Kind.Class)
                     {   // Load a "this" reference.
-                        IL.Emit(OpCodes.Ldarg_0);
+                        AddInstruction(OpCodes.Ldarg_0);
                     }
                     return;
                 }
@@ -326,14 +332,14 @@ namespace MiniJavaCompiler.BackEnd
                 switch (definition.VariableKind)
                 {
                     case VariableDeclaration.Kind.Class:
-                        IL.Emit(OpCodes.Ldarg_0);
-                        IL.Emit(OpCodes.Ldfld, _parent._fields[variable]);
+                        AddInstruction(OpCodes.Ldarg_0);
+                        AddInstruction(OpCodes.Ldfld, _parent._fields[variable]);
                         break;
                     case VariableDeclaration.Kind.Formal:
-                        EmitArgLoad(GetParameterIndex(definition, _currentMethod));
+                        AddArgLoadInstr(GetParameterIndex(definition, _currentMethod));
                         break;
                     case VariableDeclaration.Kind.Local:
-                        EmitLocalLoad(definition.LocalIndex);
+                        AddLocalLoadInstr(definition.LocalIndex);
                         break;
                 }
             }
@@ -342,21 +348,16 @@ namespace MiniJavaCompiler.BackEnd
             {
                 if (node.IntValue >= 0 && node.IntValue < _int32LoadOpcodes.Length)
                 {
-                    IL.Emit(_int32LoadOpcodes[node.IntValue]);
+                    AddInstruction(_int32LoadOpcodes[node.IntValue]);
                 }
                 else if (node.IntValue <= SByte.MaxValue)
                 {
-                    IL.Emit(OpCodes.Ldc_I4_S, Convert.ToSByte(node.IntValue));
+                    AddInstruction(OpCodes.Ldc_I4_S, Convert.ToSByte(node.IntValue));
                 }
                 else
                 {
-                    IL.Emit(OpCodes.Ldc_I4, node.IntValue);
+                    AddInstruction(OpCodes.Ldc_I4, node.IntValue);
                 }
-            }
-
-            public override void Exit(ClassDeclaration node)
-            {
-                _currentType = null;
             }
 
             public override void Exit(MethodDeclaration node)
@@ -365,107 +366,264 @@ namespace MiniJavaCompiler.BackEnd
                 if (node.MethodBody.Count == 0 ||
                     !(node.MethodBody.Last() is ReturnStatement))
                 {
-                    IL.Emit(OpCodes.Ret);
+                    AddInstruction(OpCodes.Ret);
                 }
+                OptimizeMethodBody();
+                EmitMethodBody();
                 _currentMethod = null;
             }
 
-            private void EmitArgLoad(int index)
+            private void EmitMethodBody()
+            {
+                var methodBody = _methodBodies[_currentMethod];
+                foreach (var instruction in methodBody)
+                {
+                    if (instruction.Item1.HasValue)
+                    {
+                        if (instruction.Item2 != null)
+                        {
+                            var opcode = instruction.Item1.Value;
+                            if (instruction.Item2 is sbyte)
+                            {
+                                IL.Emit(opcode, (sbyte)instruction.Item2);
+                            }
+                            else if (instruction.Item2 is byte)
+                            {
+                                IL.Emit(opcode, (byte)instruction.Item2);
+                            }
+                            else if (instruction.Item2 is int)
+                            {
+                                IL.Emit(opcode, (int)instruction.Item2);
+                            }
+                            else if (instruction.Item2 is ConstructorInfo)
+                            {
+                                IL.Emit(opcode, (ConstructorInfo)instruction.Item2);
+                            }
+                            else if (instruction.Item2 is MethodInfo)
+                            {
+                                IL.Emit(opcode, (MethodInfo)instruction.Item2);
+                            }
+                            else if (instruction.Item2 is Label)
+                            {
+                                IL.Emit(opcode, (Label)instruction.Item2);
+                            }
+                            else if (instruction.Item2 is string)
+                            {
+                                IL.Emit(opcode, (string)instruction.Item2);
+                            }
+                            else if (instruction.Item2 is FieldInfo)
+                            {
+                                IL.Emit(opcode, (FieldInfo)instruction.Item2);
+                            }
+                            else if (instruction.Item2 is TypeInfo)
+                            {
+                                IL.Emit(opcode, (TypeInfo)instruction.Item2);
+                            }
+                            else
+                            {
+                                throw new ArgumentException("Unknown parameter type for opcode.");
+                            }
+                        }
+                        else
+                        {
+                            IL.Emit(instruction.Item1.Value);
+                        }
+                    }
+                    else if (instruction.Item2 is Label)
+                    {
+                        IL.MarkLabel((Label)instruction.Item2);
+                    }
+                    else
+                    {
+                        throw new ArgumentException("Unknown instruction.");
+                    }
+                }
+            }
+
+            private void OptimizeMethodBody()
+            {
+                var methodBody = _methodBodies[_currentMethod];
+                for (int i = 0; i < methodBody.Count; i++)
+                {
+                    if (!methodBody[i].Item1.HasValue)
+                    {
+                        continue;
+                    }
+                    MergeNotWithJump(methodBody, i);
+                    MergeComparisonWithJump(methodBody, i);
+                }
+            }
+
+            private static void MergeComparisonWithJump(List<Tuple<OpCode?, object>> methodBody, int i)
+            {
+                if (i == 0)
+                    return;
+                OpCode? replacementOpcode = null;
+                if (methodBody[i - 1].Item1.HasValue)
+                {
+                    if (methodBody[i].Item1.Value == OpCodes.Brtrue)
+                    {
+                        if (methodBody[i - 1].Item1.Value == OpCodes.Ceq)
+                        {
+                            replacementOpcode = OpCodes.Beq;
+                        }
+                        else if (methodBody[i - 1].Item1.Value == OpCodes.Clt)
+                        {
+                            replacementOpcode = OpCodes.Blt;
+                        }
+                        else if (methodBody[i - 1].Item1.Value == OpCodes.Cgt)
+                        {
+                            replacementOpcode = OpCodes.Bgt;
+                        }
+                    }
+                    else if (methodBody[i].Item1.Value == OpCodes.Brfalse)
+                    {
+                        if (methodBody[i - 1].Item1.Value == OpCodes.Clt)
+                        {
+                            replacementOpcode = OpCodes.Bge;
+                        }
+                        else if (methodBody[i - 1].Item1.Value == OpCodes.Cgt)
+                        {
+                            replacementOpcode = OpCodes.Ble;
+                        }
+                    }
+                }
+                if (replacementOpcode.HasValue)
+                {
+                    var replacementInstruction = Tuple.Create<OpCode?, object>(replacementOpcode, methodBody[i].Item2);
+                    methodBody.RemoveAt(i);
+                    methodBody.RemoveAt(i - 1);
+                    methodBody.Insert(i - 1, replacementInstruction);
+                }
+            }
+
+            private static void MergeNotWithJump(List<Tuple<OpCode?, object>> methodBody, int i)
+            {
+                if (i <= 1)
+                    return;
+
+                OpCode? newOpcode = null;
+                if (methodBody[i - 2].Item1.HasValue &&
+                    methodBody[i - 2].Item1.Value == OpCodes.Ldc_I4_0 &&
+                    methodBody[i - 1].Item1.HasValue &&
+                    methodBody[i - 1].Item1.Value == OpCodes.Ceq)
+                {
+                    if (methodBody[i].Item1.Value == OpCodes.Brtrue)
+                    {
+                        newOpcode = OpCodes.Brfalse;
+                    }
+                    else if (methodBody[i].Item1.Value == OpCodes.Brfalse)
+                    {
+                        newOpcode = OpCodes.Brtrue;
+                    }
+                }
+
+                if (newOpcode.HasValue)
+                {
+                    var jumpLabel = methodBody[i].Item2;
+                    methodBody.RemoveAt(i);
+                    methodBody.RemoveAt(i - 1);
+                    methodBody.RemoveAt(i - 2);
+                    methodBody.Insert(i - 2, Tuple.Create<OpCode?, object>(newOpcode, jumpLabel));
+                }
+            }
+
+            private void AddArgLoadInstr(int index)
             {
                 switch (index)
                 {
                     case 0:
-                        IL.Emit(OpCodes.Ldarg_0);
+                        AddInstruction(OpCodes.Ldarg_0);
                         return;
                     case 1:
-                        IL.Emit(OpCodes.Ldarg_1);
+                        AddInstruction(OpCodes.Ldarg_1);
                         return;
                     case 2:
-                        IL.Emit(OpCodes.Ldarg_2);
+                        AddInstruction(OpCodes.Ldarg_2);
                         return;
                     case 3:
-                        IL.Emit(OpCodes.Ldarg_3);
+                        AddInstruction(OpCodes.Ldarg_3);
                         return;
                     default:
                         break;
                 }
                 if (index <= Byte.MaxValue)
                 {
-                    IL.Emit(OpCodes.Ldarg_S, Convert.ToByte(index));
+                    AddInstruction(OpCodes.Ldarg_S, Convert.ToByte(index));
                 }
                 else
                 {
-                    IL.Emit(OpCodes.Ldarg, index);
+                    AddInstruction(OpCodes.Ldarg, index);
                 }
             }
 
-            private void EmitArgStore(int index)
+            private void AddArgStoreInstr(int index)
             {
                 if (index <= Byte.MaxValue)
                 {
-                    IL.Emit(OpCodes.Starg_S, Convert.ToByte(index));
+                    AddInstruction(OpCodes.Starg_S, Convert.ToByte(index));
                 }
                 else
                 {
-                    IL.Emit(OpCodes.Starg, index);
+                    AddInstruction(OpCodes.Starg, index);
                 }
             }
 
-            private void EmitLocalLoad(int index)
+            private void AddLocalLoadInstr(int index)
             {
                 switch (index)
                 {
                     case 0:
-                        IL.Emit(OpCodes.Ldloc_0);
+                        AddInstruction(OpCodes.Ldloc_0);
                         return;
                     case 1:
-                        IL.Emit(OpCodes.Ldloc_1);
+                        AddInstruction(OpCodes.Ldloc_1);
                         return;
                     case 2:
-                        IL.Emit(OpCodes.Ldloc_2);
+                        AddInstruction(OpCodes.Ldloc_2);
                         return;
                     case 3:
-                        IL.Emit(OpCodes.Ldloc_3);
+                        AddInstruction(OpCodes.Ldloc_3);
                         return;
                     default:
                         break;
                 }
                 if (index <= Byte.MaxValue)
                 {
-                    IL.Emit(OpCodes.Ldloc_S, Convert.ToByte(index));
+                    AddInstruction(OpCodes.Ldloc_S, Convert.ToByte(index));
                 }
                 else
                 {
-                    IL.Emit(OpCodes.Ldloc, index);
+                    AddInstruction(OpCodes.Ldloc, index);
                 }
             }
 
-            private void EmitLocalStore(int index)
+            private void AddLocalStoreInstr(int index)
             {
                 switch (index)
                 {
                     case 0:
-                        IL.Emit(OpCodes.Stloc_0);
+                        AddInstruction(OpCodes.Stloc_0);
                         return;
                     case 1:
-                        IL.Emit(OpCodes.Stloc_1);
+                        AddInstruction(OpCodes.Stloc_1);
                         return;
                     case 2:
-                        IL.Emit(OpCodes.Stloc_2);
+                        AddInstruction(OpCodes.Stloc_2);
                         return;
                     case 3:
-                        IL.Emit(OpCodes.Stloc_3);
+                        AddInstruction(OpCodes.Stloc_3);
                         return;
                     default:
                         break;
                 }
                 if (index <= Byte.MaxValue)
                 {
-                    IL.Emit(OpCodes.Stloc_S, Convert.ToByte(index));
+                    AddInstruction(OpCodes.Stloc_S, Convert.ToByte(index));
                 }
                 else
                 {
-                    IL.Emit(OpCodes.Stloc, index);
+                    AddInstruction(OpCodes.Stloc, index);
                 }
             }
         }
