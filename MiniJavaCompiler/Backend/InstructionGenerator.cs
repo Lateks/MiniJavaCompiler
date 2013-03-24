@@ -18,7 +18,7 @@ namespace MiniJavaCompiler.BackEnd
         {
             private CodeGenerator _parent;
             MethodBuilder _currentMethod;
-            private readonly Dictionary<MethodBuilder, List<Tuple<OpCode?, object>>> _methodBodies;
+            private List<Tuple<OpCode?, object>> _methodBody;
             private ILGenerator IL
             {
                 get { return _currentMethod.GetILGenerator(); }
@@ -56,7 +56,6 @@ namespace MiniJavaCompiler.BackEnd
             public InstructionGenerator(CodeGenerator parent)
             {
                 _parent = parent;
-                _methodBodies = new Dictionary<MethodBuilder, List<Tuple<OpCode?, object>>>();
             }
 
             public void GenerateInstructions()
@@ -80,7 +79,7 @@ namespace MiniJavaCompiler.BackEnd
             public override void Visit(MethodDeclaration node)
             {
                 _currentMethod = _parent._methods[node.Symbol];
-                _methodBodies[_currentMethod] = new List<Tuple<OpCode?, object>>();
+                _methodBody = new List<Tuple<OpCode?, object>>();
             }
 
             public override void Visit(PrintStatement node)
@@ -95,8 +94,7 @@ namespace MiniJavaCompiler.BackEnd
 
             private void AddInstruction(OpCode? instr, Object param = null)
             {
-                _methodBodies[_currentMethod].Add(
-                    Tuple.Create<OpCode?, object>(instr, param));
+                _methodBody.Add(Tuple.Create<OpCode?, object>(instr, param));
             }
 
             public override void Visit(ReturnStatement node)
@@ -377,168 +375,10 @@ namespace MiniJavaCompiler.BackEnd
                 {
                     AddInstruction(OpCodes.Ret);
                 }
-                OptimizeMethodBody();
-                EmitMethodBody();
+                var emitter = new MethodBodyEmitter(_currentMethod, _methodBody);
+                emitter.OptimizeAndEmitMethodBody();
                 _currentMethod = null;
-            }
-
-            private void EmitMethodBody()
-            {
-                var methodBody = _methodBodies[_currentMethod];
-                foreach (var instruction in methodBody)
-                {
-                    if (instruction.Item1.HasValue)
-                    {
-                        if (instruction.Item2 != null)
-                        {
-                            var opcode = instruction.Item1.Value;
-                            if (instruction.Item2 is sbyte)
-                            {
-                                IL.Emit(opcode, (sbyte)instruction.Item2);
-                            }
-                            else if (instruction.Item2 is byte)
-                            {
-                                IL.Emit(opcode, (byte)instruction.Item2);
-                            }
-                            else if (instruction.Item2 is short)
-                            {
-                                IL.Emit(opcode, (short)instruction.Item2);
-                            }
-                            else if (instruction.Item2 is int)
-                            {
-                                IL.Emit(opcode, (int)instruction.Item2);
-                            }
-                            else if (instruction.Item2 is ConstructorInfo)
-                            {
-                                IL.Emit(opcode, (ConstructorInfo)instruction.Item2);
-                            }
-                            else if (instruction.Item2 is MethodInfo)
-                            {
-                                IL.Emit(opcode, (MethodInfo)instruction.Item2);
-                            }
-                            else if (instruction.Item2 is Label)
-                            {
-                                IL.Emit(opcode, (Label)instruction.Item2);
-                            }
-                            else if (instruction.Item2 is string)
-                            {
-                                IL.Emit(opcode, (string)instruction.Item2);
-                            }
-                            else if (instruction.Item2 is FieldInfo)
-                            {
-                                IL.Emit(opcode, (FieldInfo)instruction.Item2);
-                            }
-                            else if (instruction.Item2 is TypeInfo)
-                            {
-                                IL.Emit(opcode, (TypeInfo)instruction.Item2);
-                            }
-                            else
-                            {
-                                throw new ArgumentException("Unknown parameter type for opcode.");
-                            }
-                        }
-                        else
-                        {
-                            IL.Emit(instruction.Item1.Value);
-                        }
-                    }
-                    else if (instruction.Item2 is Label)
-                    {
-                        IL.MarkLabel((Label)instruction.Item2);
-                    }
-                    else
-                    {
-                        throw new ArgumentException("Unknown instruction.");
-                    }
-                }
-            }
-
-            private void OptimizeMethodBody()
-            {
-                var methodBody = _methodBodies[_currentMethod];
-                for (int i = 0; i < methodBody.Count; i++)
-                {
-                    if (!methodBody[i].Item1.HasValue)
-                    {
-                        continue;
-                    }
-                    MergeNotWithJump(methodBody, i);
-                    MergeComparisonWithJump(methodBody, i);
-                }
-            }
-
-            private static void MergeComparisonWithJump(List<Tuple<OpCode?, object>> methodBody, int i)
-            {
-                if (i == 0)
-                    return;
-                OpCode? replacementOpcode = null;
-                if (methodBody[i - 1].Item1.HasValue)
-                {
-                    if (methodBody[i].Item1.Value == OpCodes.Brtrue)
-                    {
-                        if (methodBody[i - 1].Item1.Value == OpCodes.Ceq)
-                        {
-                            replacementOpcode = OpCodes.Beq;
-                        }
-                        else if (methodBody[i - 1].Item1.Value == OpCodes.Clt)
-                        {
-                            replacementOpcode = OpCodes.Blt;
-                        }
-                        else if (methodBody[i - 1].Item1.Value == OpCodes.Cgt)
-                        {
-                            replacementOpcode = OpCodes.Bgt;
-                        }
-                    }
-                    else if (methodBody[i].Item1.Value == OpCodes.Brfalse)
-                    {
-                        if (methodBody[i - 1].Item1.Value == OpCodes.Clt)
-                        {
-                            replacementOpcode = OpCodes.Bge;
-                        }
-                        else if (methodBody[i - 1].Item1.Value == OpCodes.Cgt)
-                        {
-                            replacementOpcode = OpCodes.Ble;
-                        }
-                    }
-                }
-                if (replacementOpcode.HasValue)
-                {
-                    var replacementInstruction = Tuple.Create<OpCode?, object>(replacementOpcode, methodBody[i].Item2);
-                    methodBody.RemoveAt(i);
-                    methodBody.RemoveAt(i - 1);
-                    methodBody.Insert(i - 1, replacementInstruction);
-                }
-            }
-
-            private static void MergeNotWithJump(List<Tuple<OpCode?, object>> methodBody, int i)
-            {
-                if (i <= 1)
-                    return;
-
-                OpCode? newOpcode = null;
-                if (methodBody[i - 2].Item1.HasValue &&
-                    methodBody[i - 2].Item1.Value == OpCodes.Ldc_I4_0 &&
-                    methodBody[i - 1].Item1.HasValue &&
-                    methodBody[i - 1].Item1.Value == OpCodes.Ceq)
-                {
-                    if (methodBody[i].Item1.Value == OpCodes.Brtrue)
-                    {
-                        newOpcode = OpCodes.Brfalse;
-                    }
-                    else if (methodBody[i].Item1.Value == OpCodes.Brfalse)
-                    {
-                        newOpcode = OpCodes.Brtrue;
-                    }
-                }
-
-                if (newOpcode.HasValue)
-                {
-                    var jumpLabel = methodBody[i].Item2;
-                    methodBody.RemoveAt(i);
-                    methodBody.RemoveAt(i - 1);
-                    methodBody.RemoveAt(i - 2);
-                    methodBody.Insert(i - 2, Tuple.Create<OpCode?, object>(newOpcode, jumpLabel));
-                }
+                _methodBody = null;
             }
 
             private void AddArgLoadInstr(short index)
