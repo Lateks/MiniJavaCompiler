@@ -631,6 +631,76 @@ The module is implemented by a single class and its nested INodeVisitor implemen
     \item It defines the local variables, formal parameters and class fields. Formal parameters and local variables can be referred to by their index, so their builder objects do not need to be stored. FieldBuilders do need to be stored because the ILGenerator.Emit() method requires a FieldBuilder as the second parameter when emitting the opcodes Ldfld (load field) and Stfld (store field).
 \end{itemize}
 
+InstructionGenerator generates the actual code of the method and constructor bodies. Though no code optimization is done, the InstructionGenerator chooses the optimal opcodes for references to variables integer loads. For example, for integer literal loads from 0 to 8, the opcodes \verb,ldc.i4.0, through \verb,ldc.i4.8, are used. For integer literals between 9 and 127 (in the signed byte range), the opcode \verb,ldc.i4.s, is used. For integer literals larger than that, the opcode \verb,ldc.i4, is used. The opcodes for local variable loads (\verb,ldloc.0, through \verb,ldloc.3,, \verb,ldloc.s, for the unsigned byte range, \verb,ldloc, for larger local variable indices) and stores (the corresponding \verb,stloc, codes) and method argument loads and stores (the corresponding \verb,ldarg, codes and \verb,starg.s, for the unsigned byte range and \verb,starg, for larger argument indices) are handled similarly.
+
+In general, for choice in opcodes, I have used the behaviour of the C$^\sharp$ compiler as a reference. I have used the \href{http://ilspy.net/}{ILSpy} .NET decompiler to inspect test programs and figure out how the C$^\sharp$ compiler handles certain situations. As an introduction to the CIL I used the tutorials \href{http://www.codeproject.com/Articles/362076/Understanding-Common-Intermediate-Language-CIL}{Understanding Common Intermediate Language (CIL)} and \href{http://www.codeproject.com/Articles/3778/Introduction-to-IL-Assembly-Language}{Introduction to IL Assembly Language}.
+
+For the most part, code generation for binary operators is straightforward, because the CIL has corresponding opcodes for most of them. These include \verb,add,, \verb,sub,, \verb,mul,, \verb,div,, \verb,clt, (the \verb,<, operator), \verb,cgt, (the \verb,>, operator), \verb,ceq, (the \verb,==, operator) and \verb,rem, (the \verb,%, operator). When the opcode \verb,==, is applied to reference types, the opcode \verb,ceq, handily compares the object references on the evaluation stack, resulting in the correct behavior.
+
+Boolean operators require a bit more effort. The \verb,not, opcode offered by CIL is a bitwise not operation. Because the CIL needs to represent boolean values as 32-bit integers (boolean literals are loaded using the opcodes \verb,ldc.i4.0, and \verb,ldc.i4.1,), this cannot be used as a boolean not operation. I have used the same strategy as used by the C$^\sharp$ compiler: emitting an \verb,ldc.i4.0, load opcode and an \verb,ceq, opcode, effectively comparing the boolean value on the stack with false, which results in the same truth table as the boolean not operator.
+
+The CIL does offer opcodes \verb,and, and \verb,or, but in practice these cannot be used because boolean operators need to be short-circuited. This requires jump labels. The implementation of operator short-circuiting is best explained with an example. As an example, the following MiniJava code (a part of the test file \verb,shortcircuit.mjava, that can be found under \verb,testcode/, in the code directory):
+\begin{verbatim}
+// ... inside the main method
+    Test2 a;
+    a = new Test2();
+    if (!(20 % 2 == 0 && // true
+          2 + 2 == 5 &&  // false, short circuits
+          a.makeAssertion())) // makeAssertion is never called
+    {
+      System.out.println(1);
+    }
+
+// after the main class:
+class Test2
+{
+  public boolean makeAssertion()
+  {
+    assert(false);
+    return true;
+  }
+}
+\end{verbatim}
+
+The MiniJava compiler produces the following CIL code for the if statement condition:
+\begin{verbatim}
+// First operand:
+IL_0006: ldc.i4.s 20
+IL_0008: ldc.i4.2
+IL_0009: rem       // 20 % 2
+IL_000a: ldc.i4.0
+IL_000b: ceq       // == 0, pushes true on the stack
+IL_000d: brfalse IL_001d // skip evaluating the other operand if false
+                         // consumes the false value on top of the stack!
+// Second operand:
+IL_0012: ldc.i4.2
+IL_0013: ldc.i4.2
+IL_0014: add      // 2 + 2
+IL_0015: ldc.i4.5
+IL_0016: ceq      // == 5, pushes false on the stack
+IL_0018: br IL_001e // unconditional branch jumps over the first operand's
+                    // short-circuit jump label
+
+IL_001d: ldc.i4.0 // this would re-load false onto the stack if the first operand
+                  // had evaluated as false
+IL_001e: brfalse IL_002e // jumps over the third operand if one of the
+                         // previous operands evaluated as false (as the second
+                         // one did)
+
+// Third operand:
+IL_0023: ldloc.0  // this code is never reached, so the assertion does not fail
+IL_0024: callvirt instance bool Test2::makeAssertion()
+IL_0029: br IL_002f // unconditional branch
+
+IL_002e: ldc.i4.0 // re-loads false onto the stack when one of
+                  // the earlier operands evaluated as false
+
+IL_002f: ldc.i4.0 // boolean not
+IL_0030: ceq
+\end{verbatim}
+
+This is similar to what the C$^\sharp$ compiler produces for boolean binary operators with the exception that it inverts some of the boolean values, but this has no effect on the functionality.
+
 \subsection{Testing}
 
 All modules have been tested using the NUnit test library with a code coverage of nearly 100\%. Only trivial parts have been left untested. Some parts of the program have been unit-tested but most parts should be involved in integration tests as well.
