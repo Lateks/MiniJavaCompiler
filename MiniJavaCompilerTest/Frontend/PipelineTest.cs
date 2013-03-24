@@ -251,9 +251,9 @@ namespace MiniJavaCompilerTest.FrontEndTest
             Assert.AreEqual(5, errors.Count);
             Assert.That(errors[0].ToString(), Is.StringContaining("Incompatible types")
                 .And.StringContaining("int").And.StringContaining("boolean"));
-            Assert.That(errors[1].ToString(), Is.StringContaining("Missing return statement in method get"));
-            Assert.That(errors[2].ToString(), Is.StringContaining("Cannot convert expression of type boolean to int"));
-            Assert.That(errors[3].ToString(), Is.StringContaining("already defined"));
+            Assert.That(errors[1].ToString(), Is.StringContaining("already defined"));
+            Assert.That(errors[2].ToString(), Is.StringContaining("Missing return statement in method get"));
+            Assert.That(errors[3].ToString(), Is.StringContaining("Cannot convert expression of type boolean to int"));
             Assert.That(errors[4].ToString(), Is.StringContaining("Unknown type OtherClass"));
             reader.Close();
         }
