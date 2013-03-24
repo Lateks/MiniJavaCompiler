@@ -50,7 +50,7 @@ Defined using regular expressions with Java style character classes. These token
 
 \subsection{Modified grammar for recursive descent parsing (non-LL(1))}
 
-In the grammar below, I have solved operator precedences by making a separate production rule for each level of operator precedence. This is very easy to implement in the case of Mini-Java especially since all the defined binary operators are left-associative and there is only one unary operator.\footnote{Note: A program example on the course's grammar page also uses a unary minus operator, but this is not reflected in the grammar that was given, so I have left it out.} Different solutions to the operator precedence problem are described on Theodore Norvell's website \url{http://www.engr.mun.ca/~theo/Misc/exp_parsing.htm}. I used the so called ''classic solution'' as a basis from my implementation. Norvell does not give a source for the algorithm but mentions that Niklaus Wirth used it in his Pascal compilers. 
+In the grammar below, I have solved operator precedences by making a separate production rule for each level of operator precedence. This is very easy to implement in the case of Mini-Java especially since all the defined binary operators are left-associative and there is only one unary operator.\footnote{Note: A program example on the course's grammar page also uses a unary minus operator, but this is not reflected in the grammar that was given, so I have left it out.} Different solutions to the operator precedence problem are described on Theodore Norvell's website \url{http://www.engr.mun.ca/~theo/Misc/exp_parsing.htm}. I used the so called ''classic solution'' described on Norvell's site a basis for my implementation. Norvell does not give a source for the algorithm but mentions that Niklaus Wirth used it in his Pascal compilers. 
 
 A look-ahead of more than one token is needed e.g. when the parser sees an identifier in the input and is trying to parse a statement. In this case the result could be a local variable declaration for either a user defined type or an array of a user defined type or a statement that starts with an expression that begins with a variable reference.
 
@@ -149,7 +149,7 @@ In this section I describe the interfaces and classes implementing the abstract 
 
 \subsubsection{An example tree}
 
-The following figure is a partial example of an abstract syntax tree for the sample program with the unary minus eliminated. The child nodes of the if statement have been left out to conserve space.
+The figure \ref{fig:ast} is a partial example of an abstract syntax tree for the sample program with the unary minus eliminated. The child nodes of the \verb,if, statement have been left out to conserve space.
 
 \begin{verbatim}
 class Factorial {
@@ -173,7 +173,7 @@ class Fac {
 \begin{figure}[h!]
 \centering
 \includegraphics[width=1.0\textwidth]{syntaxtree.pdf}
-\caption{An example syntax tree}
+\caption{An example syntax tree} \label{fig:ast}
 \end{figure}
 
 \subsubsection{Interfaces}
@@ -278,6 +278,7 @@ When the listing in the previous version of this document was put together, I st
         \item \emph{has an} \textbf{IExpression} \emph{which is the method owner}
         \item \emph{has many} \textbf{IExpression}s \emph{which are the call parameters.}
         \item \emph{has a} \textbf{MethodDeclaration} \emph{which is the referenced method (this is set and used by the semantic analysis phase).}
+        \item \emph{has a} boolean value \emph{indicating whether the method invocation is used as a stand-alone statement}. This is used and set by the code generation phase which needs to know when a the return value of a method declaration needs to be discarded.
       \end{itemize}
     \item[ArrayIndexingExpression] \emph{is a} SyntaxElement \emph{and an} ILValueExpression
       \begin{itemize}
@@ -324,23 +325,9 @@ When the listing in the previous version of this document was put together, I st
 \newpage
 \section{Compiler implementation}
 
-This section covers the general architecture of the compiler, testing, error handling as well as the building and running instructions.
+This section covers the general architecture of the compiler, testing, error handling as well as the building and running instructions. The compiler is divided into three primary namespaces: FrontEnd, BackEnd and Support, which contains classes that may be used by both the front-end and the back-end.
 
-\subsection{Front-end architecture}
-
-The front end module is divided into three sub-modules, one for each major phase of compilation: lexical analysis, syntax analysis and semantic analysis. In addition, I have collected some things possibly needed by both the front end and the back end into the Support module.
-
-\subsubsection{Simplified view of the front end module}
-
-The FrontEnd class implements the whole front end compilation pipeline with the help of the aforementioned sub-modules that implement the different phases of compilation. These submodules are descibed starting in the next section.
-
-\begin{figure}[h!]
-\centering
-\includegraphics[width=0.7\textwidth]{frontend.pdf}
-\caption{The front-end module}
-\end{figure}
-
-\subsubsection{The support module} \label{support}
+\subsection{The support module} \label{support}
 
 \begin{figure}[h!]
 \centering
@@ -417,6 +404,21 @@ The rules of assignability are as follows: IType T can be assigned to another IT
 This implies that ArrayType instances are only compatible if their element types are the same type. Covariance of array types is therefore not allowed. This is consistent with the MiniJava specification that says ''array types are only compatible if they have the same element type''. This is unlike in Java where arrays are covariant. Of course if T and E are ScalarTypes and T is a subclass of E, T can be assigned into an index of an array of type E[ ].
 
 VoidType can never be assigned to any other type. There is never a case where VoidType is legally the left-hand side of an expression and this situation cannot arise in semantic analysis even through recovery processes.
+
+\subsection{Front-end architecture}
+
+The front end module is divided into three sub-modules, one for each major phase of compilation: lexical analysis, syntax analysis and semantic analysis.
+
+\subsubsection{Simplified view of the front end module}
+
+The FrontEnd class implements the whole front end compilation pipeline with the help of the aforementioned sub-modules that implement the different phases of compilation. These submodules are descibed starting in the next section.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.7\textwidth]{frontend.pdf}
+\caption{The front-end module}
+\end{figure}
+
 
 \subsection{Lexical analysis}
 
@@ -562,7 +564,7 @@ This phase is implemented by the SemanticsChecker class. It produces no output i
 
 Internally the phase is divided into two passes through the abstract syntax tree. The first pass (implemented by the ReferenceChecker class) checks references and decorates the tree with type information. The second pass (implemented by the TypeChecker class) performs type checks. Both types of checks could be accomplished in a single pass but this separation of concerns makes the implementation easier to follow. Both classes define a RunCheck method that returns a boolean value indicating success or failure similar to the parent class that utilizes them. Both passes are always run regardless of errors detected in the first pass.
 
-I originally intended to implement checks for references to uninitialized variables but in the end had to leave these checks out due to the rather complicated nature of definite assignment analysis and time constraints.\footnote{See e.g. Nicu G. Fruja's article on such checks in C\#, \emph{The Correctness of the Definite Assignment Analysis in C\#}, that can be found at \url{http://www.jot.fm/issues/issue_2004_10/article2/article2.pdf}.} If implemented, this could be done as an additional pass in the semantic analysis phase.
+I originally intended to implement checks for references to uninitialized variables but in the end had to leave these checks out due to the rather complicated nature of definite assignment analysis and time constraints.\footnote{E.g. Nicu G. Fruja's article on such checks in C\# describes an approach that would be usable here. The article, \emph{The Correctness of the Definite Assignment Analysis in C\#}, can be found at \url{http://www.jot.fm/issues/issue_2004_10/article2/article2.pdf}.} If implemented, this could be done as an additional pass in the semantic analysis phase.
 
 Because definite assignment is not implemented, local variables are treated like class fields when it comes to initialization: \textbf{int} variables are initialized to 0, \textbf{boolean} variables are initialized to \textbf{false} and reference type variables are initialized to \textbf{null}\footnote{This is actually done by default by the CLR.}. Attempts to call methods on uninitialized reference type variables will, of course, result in a NullReferenceException being thrown by CLR at runtime.
 
@@ -619,13 +621,23 @@ Every IType is required to implement its IsAssignableTo method in such a way tha
 \caption{The back-end module. See the caption of figure \ref{fig:semantic_analysis} for an explanation on the two-way composition lines.}
 \end{figure}
 
-The back-end is a much simpler module than the front-end. This implementation does not do any particular code optimization and the code generated is very straightforward.
+The back-end is a somewhat simpler module than the front-end. This implementation does not do any particular code optimization and the code generated is mostly straightforward.
 
-For code generation, the methods provided by the System.Reflection.Emit namespace are used. This simplifies some tasks like defining assemblies, types and methods while making some things possibly more difficult --- at least for such a simple language as MiniJava. For example, the CodeGenerator must store all System.Reflection.Emit.MethodBuilder objects into a map structure to make method calls possible because it is not possible to query incomplete types for methods by name --- and all user-defined types are incomplete until code generation is complete.
+For code generation, the methods provided by the System.Reflection.Emit namespace are used. This simplifies some tasks like defining assemblies, types and methods while making some things possibly more difficult --- at least for such a simple language as MiniJava. For example, the CodeGenerator must store all System.Reflection.Emit.MethodBuilder objects in a map structure to make method calls possible because it is not possible to query incomplete types for methods by name --- and all user-defined types are incomplete until code generation is complete.
 
 On the other hand, the tools provided by the System.Reflection.Emit namespace take care of things like keeping track of the maximum stack size in a method. The generated assembly is written straight into an \verb,exe, file by the Save method of the AssemblyBuilder class and so does not require running the produced IL code through a separate assembler.
 
-The module is implemented by a single class and its nested INodeVisitor implementations AssemblyGenerator and InstructionGenerator. AssemblyGenerator is used to set up the .NET assembly and and the contained main module. It has the following responsibilities:
+The module is implemented by a single class and its nested INodeVisitor implementations AssemblyGenerator, CodeGenAnalyser and InstructionGenerator. Additionally, InstructionGenerator uses a MethodBodyEmitter instance to emit the actual code of method bodies and to optimize the produced code by performing substitutions on the instruction sequence. These substitutions are described later.
+
+\subsubsection{Additional code analysis.}
+
+CodeGenAnalyser is run prior to any of the other phases. It passes through the tree and decorates it with information required by the code generation phase, such as local indices of local variables and formal parameters.
+
+The CodeGenAnalyser labels LValueExpression nodes (VariableReferenceExpressions and ArrayIndexingExpressions) that are used as the left-hand side of an assignment, so the code generation phase knows when to load the value referred to by the expression and when to just use it as an address. Additionally, it marks whether MethodInvocation nodes are used as stand-alone statements. The InstructionGenerator uses this information to pop unused method return values out of the stack.
+
+\subsubsection{Assembly setup}
+
+AssemblyGenerator is used to set up the .NET assembly and and the contained main module. It has the following responsibilities:
 \begin{itemize}
     \item It defines the TypeBuilder objects for all user-defined types and stores them in a string to TypeBuilder mapping stored in the parent CodeGenerator object. TypeBuilders need to be stored so they can be finalized after code generation by calling the CreateType() method of the TypeBuilder class.
     \item It defines the ConstructorBuilder objects for all user-defined types. For types that do not have an \verb,extends, declaration, the default constructor that calls the Object class constructor is defined. For types that do have a user-defined superclass, a generic constructor is defined. This constructor does not have a body until it is emitted by the InstructionGenerator. All contructors are stored in a Type to ConstructorBuilder mapping in the parent CodeGenerator object. ConstructorBuilders are needed for generating calls to constructors.
@@ -633,13 +645,15 @@ The module is implemented by a single class and its nested INodeVisitor implemen
     \item It defines the local variables, formal parameters and class fields. Formal parameters and local variables can be referred to by their index, so their builder objects do not need to be stored. FieldBuilders do need to be stored because the ILGenerator.Emit() method requires a FieldBuilder as the second parameter when emitting the opcodes Ldfld (load field) and Stfld (store field). \\Location indices for formal parameters and local variables are set up already during parsing, though this could also be left to the code generation phase. The index is stored on the node. Note that the first parameter in the formal parameter list of a non-static method is always at index 1 because the implicit \verb,this, reference takes up the index 0.
 \end{itemize}
 
-InstructionGenerator generates the actual code of the method and constructor bodies. Though no code optimization is done, the InstructionGenerator chooses the optimal opcodes for references to variables integer loads.
+\subsubsection{Instruction generation}
 
-For example, for integer literal loads from 0 to 8, the opcodes \verb,ldc.i4.0, through \verb,ldc.i4.8, are used. For integer literals between 9 and 127 (in the signed byte range), the opcode \verb,ldc.i4.s, is used. For integer literals larger than that, the opcode \verb,ldc.i4, is used. The opcodes for local variable loads (\verb,ldloc.0, through \verb,ldloc.3,, \verb,ldloc.s, for the unsigned byte range, \verb,ldloc, for larger local variable indices) and stores (the corresponding \verb,stloc, codes) and method argument loads and stores (the corresponding \verb,ldarg, codes and \verb,starg.s, for the unsigned byte range and \verb,starg, for larger argument indices) are handled similarly.
+InstructionGenerator generates the actual opcodes of the method and constructor bodies. Method bodies are first generated as a list of OpCode-Object pairs (using Tuple<OpCode?, Object>)\footnote{The OpCode value here is nullable so this listing can also handle label positions in the code. These are stored as a tuple with only the label as the Object value.}. After the complete list of instructions for a single method's body is generated, the InstructionGenerator passes the instruction list to MethodBodyEmitter that performs further optimizations on the instruction list and finally emits the actual opcodes.
+
+Though no code optimization is done, the InstructionGenerator chooses the optimal opcodes for references to variables integer loads. For example, for integer literal loads from 0 to 8, the opcodes \verb,ldc.i4.0, through \verb,ldc.i4.8, are used. For integer literals between 9 and 127 (in the signed byte range), the opcode \verb,ldc.i4.s, is used. For integer literals larger than that, the opcode \verb,ldc.i4, is used. The opcodes for local variable loads (\verb,ldloc.0, through \verb,ldloc.3,, \verb,ldloc.s, for the unsigned byte range, \verb,ldloc, for larger local variable indices) and stores (the corresponding \verb,stloc, codes) and method argument loads and stores (the corresponding \verb,ldarg, codes and \verb,starg.s, for the unsigned byte range and \verb,starg, for larger argument indices) are handled similarly.
 
 For loading boolean literals, the implementation uses \verb,ldc.i4.0, for false and \verb,ldc.i4.1, for true. These are the same opcodes that are used by the C$^\sharp$ compiler. Note that these load integer values represented by four bytes, not a single byte.
 
-In general, for choice in opcodes, I have used the behaviour of the C$^\sharp$ compiler as a reference. I have used the \href{http://ilspy.net/}{ILSpy} .NET decompiler to inspect test programs and figure out how the C$^\sharp$ compiler handles certain situations. As an introduction to the CIL I used the tutorials \href{http://www.codeproject.com/Articles/362076/Understanding-Common-Intermediate-Language-CIL}{Understanding Common Intermediate Language (CIL)} and \href{http://www.codeproject.com/Articles/3778/Introduction-to-IL-Assembly-Language}{Introduction to IL Assembly Language}.
+In general, for choice in opcodes, I have used the behaviour of the C$^\sharp$ compiler as a reference. I have used the \href{http://ilspy.net/}{ILSpy} .NET decompiler to inspect test programs\footnote{ILSpy formats assembly code in a nicer way than Microsoft's ILDAsm, but it tends to crash when the code is badly malformed, so ILDAsm is sometimes better for debugging problems in code generation.} and figure out how the C$^\sharp$ compiler handles certain situations. As an introduction to the CIL I used the tutorials \href{http://www.codeproject.com/Articles/362076/Understanding-Common-Intermediate-Language-CIL}{Understanding Common Intermediate Language (CIL)} and \href{http://www.codeproject.com/Articles/3778/Introduction-to-IL-Assembly-Language}{Introduction to IL Assembly Language}.
 
 For the most part, code generation for binary operators is straightforward, because the CIL has corresponding opcodes for most of them. These include \verb,add,, \verb,sub,, \verb,mul,, \verb,div,, \verb,clt, (the \verb,<, operator), \verb,cgt, (the \verb,>, operator), \verb,ceq, (the \verb,==, operator) and \verb,rem, (the \verb,%, operator). When the opcode \verb,==, is applied to reference types, the opcode \verb,ceq, handily compares the object references on the evaluation stack, resulting in the correct behavior.
 
@@ -707,7 +721,11 @@ IL_0030: ceq
 
 This is almost the same code that the C$^\sharp$ compiler produces for boolean binary operators. The difference between logical \verb,and, and \verb,or, operators is mostly that when \verb,and, uses \verb,brfalse, (if the condition is false, jump over other operands), \verb,or, uses \verb,brtrue, (if the condition is true, jump over other operands). Of course the boolean value loaded onto the stack after the jump also differs between the two.
 
-In addition to optimizing the codes used for integer literal loads as well as argument and local loads and stores, I have also performed optimization on the opcodes used for branching. After the instructions in a method body have been generated, the MethodBodyEmitter passes through this code and performs the following substitutions before actually emitting the code:
+If and while statements also produce nearly identical code to the C$^\sharp$ compiler. Assert statements are in practice implemented similarly to if statements. A \verb,brtrue, instruction is generated for jumping over the ''assertion body'' when the condition evaluates as \textbf{true}. The ''body'' prints a message of the format \verb|Exception occurred: AssertionError at <className>.<methodName>| \verb|(<row>,<column>)| which imitates the message produced by Java. Additionally it produces a call to Environment.Exit with the value 1 as a parameter to indicate failure.
+
+\subsubsection{Optimizations performed by the MethodBodyEmitter}
+
+In addition to optimizing the codes used for integer literal loads as well as argument and local loads and stores, I have also performed optimization on the opcodes used for branching. These are done by the MethodBodyEmitter before emitting the instructions that constitute a method body. It performs the following substitutions:
 \begin{itemize}
     \item The opcodes \verb,ldloc.i4.0,, \verb,ceq, (a logical not operation) and either \verb,brtrue, or \verb,brfalse, are replaced with the the opposite comparison branch operator. That is, e.g. the instruction sequence \verb,ldloc.i4.0,, \verb,ceq,, \verb,brtrue, is replaced with a single instruction, \verb,brfalse,. Because the opcodes emitted for a logical not operation are the same as for an integer comparison to zero, this has the slightly peculiar looking effect of also optimizing these integer comparisons in the same way.
     \item The opcodes \verb,ceq, and \verb,brtrue, in sequence are replaced with \verb,beq,.
@@ -717,7 +735,9 @@ In addition to optimizing the codes used for integer literal loads as well as ar
     \item The opcodes \verb,cgt, and \verb,brfalse, in sequence are replaced with \verb,ble, (branch if smaller than or equal to).
 \end{itemize}
 
-Jumps are not optimized, although, for example, the jump after a \verb,then, branch in an \verb,if, statement is omitted if the \verb,if, statement has no \verb,else, branch. The .NET JIT compiler probably handles jump optimizations because the C$^\sharp$ compiler does not appear to do these optimizations either.
+Jumps are not systematically optimized, although, for example, the jump after a \verb,then, branch in an \verb,if, statement is omitted (already by InstructionGenerator) if the \verb,if, statement has no \verb,else, branch. The .NET JIT compiler probably handles jump optimizations because the C$^\sharp$ compiler does not appear to do these optimizations either.
+
+\subsection{Shortcomings and potential points of improvement}
 
 \subsection{Testing}
 
@@ -730,6 +750,8 @@ If bugs remain in the system (as some almost certainly do), the best case scenar
 At the moment, however, I do not know of any existing bugs in the compiler.
 
 The code generation part is tested by running test programs through the whole compilation pipeline and checking the produced programs' output against a reference result. All programs are also run through the PEVerify tool and its output is also automatically tested. The actual instruction generation is not tested (that is, the programs are not disassembled to automatically inspect the instructions generated), but I have checked the IL code generated for all test programs manually and corrected all of the bugs that I have found.
+
+Note that the code generation tests require a path to the PEVerify.exe program.
 
 The Compiler class that handles file IO and prints out error messages was a last minute addition to make quick tests during e.g. the code review possible, so it may have bugs. The error message handler especially is not very well-tested or robust --- it does not handle very long lines of code in any special way -- but it should be sufficient for basic hands-on testing if needed.
 
@@ -745,9 +767,8 @@ The easiest way to build the compiler is probably opening it in Visual Studio an
 
 The main program runs the compiler as far as possible, prints error messages or ``Program OK.'' and exits.
 
-Note: the program code and the \LaTeX{} and svg sources for this documentation are also available on \href{https://github.com/Lateks/MiniJavaCompiler}{my GitHub account page} where the repository can be cloned.
+Note: the program code and the \LaTeX{} sources for this documentation are also available on \href{https://github.com/Lateks/MiniJavaCompiler}{my GitHub account page} where the repository can be cloned.
 
-\subsection{Shortcomings and potential points of improvement}
 
 \appendix
 \section{Project definition}
