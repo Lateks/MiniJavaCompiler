@@ -209,7 +209,7 @@ namespace MiniJavaCompiler.BackEnd
             // The return value indicates change in method body length.
             private int MergeNotWithJump(int i)
             {
-                if (i <= 1) return 0;
+                if (i < 2) return 0;
 
                 OpCode? newOpcode = null;
                 if (_methodBody[i - 2].Item1.HasValue &&
