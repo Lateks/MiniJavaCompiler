@@ -596,7 +596,7 @@ This phase can detect the following types of errors:
 \item At least some paths in a non-\textbf{void} method do not return a value.
 \item Return statements return values of a type different from the one declared in the method signature. Covariance is allowed, so subtypes of the declared type can be returned.
 \item An instance creation expression refers to a type name that cannot be found or is an attempt to create a \textbf{void} array (this is allowed by the grammar). Note: an attempt to instantiate a built-in type using a ''new'' expression is detected already in the parsing phase.
-\item A static method cannot be called. The only static method in Mini-Java is the main method. In my implementation, the main method cannot be called at all because references to the name of the class are not allowed outside type declarations and instance creations. I did not see the reason to implement such a feature since there is no use for calling the main method from inside the program, though the MiniJava specification is unclear on whether this should be allowed.
+\item A static method cannot be called. The only static method in Mini-Java is the main method. In my implementation, calls to the main method have been prevented. I did not see the reason to implement such a feature since there is no use for calling the main method from inside the program, though the MiniJava specification is unclear on whether this should be allowed.
 \end{enumerate}
 
 The rules for assignment type checking are as follows:
@@ -637,6 +637,10 @@ CodeGenAnalyser is run prior to any of the other phases. It passes through the t
 
 The CodeGenAnalyser labels LValueExpression nodes (VariableReferenceExpressions and ArrayIndexingExpressions) that are used as the left-hand side of an assignment, so the code generation phase knows when to load the value referred to by the expression and when to just use it as an address. Additionally, it marks whether MethodInvocation nodes are used as stand-alone statements. The InstructionGenerator uses this information to pop unused method return values out of the stack.
 
+The CodeGenAnalyser also detects local variables that are never referenced and takes this into account when calculating indices for locals. The later parts of the back-end will then skip these variables in code generation.\footnote{Opimizations like this can be turned off for e.g. debugging purposes. See running instructions for more information.}
+
+In formal parameter numbering, note that the first parameter in the parameter list of a non-static method is always at index 1 because the implicit \verb,this, reference takes up the index 0.
+
 \subsubsection{Assembly setup}
 
 AssemblyGenerator is used to set up the .NET assembly and and the contained main module. It has the following responsibilities:
@@ -644,7 +648,8 @@ AssemblyGenerator is used to set up the .NET assembly and and the contained main
     \item It defines the TypeBuilder objects for all user-defined types and stores them in a string to TypeBuilder mapping stored in the parent CodeGenerator object. TypeBuilders need to be stored so they can be finalized after code generation by calling the CreateType() method of the TypeBuilder class.
     \item It defines the ConstructorBuilder objects for all user-defined types. For types that do not have an \verb,extends, declaration, the default constructor that calls the Object class constructor is defined. For types that do have a user-defined superclass, a generic constructor is defined. This constructor does not have a body until it is emitted by the InstructionGenerator. All contructors are stored in a Type to ConstructorBuilder mapping in the parent CodeGenerator object. ConstructorBuilders are needed for generating calls to constructors.
     \item It defines the MethodBuilder objects for all methods inside user-defined classes and stores them in a MethodSymbol to MethodBuilder mapping stored in the parent CodeGenerator object. These need to be stored to make generating calls to methods possible.
-    \item It defines the local variables, formal parameters and class fields. Formal parameters and local variables can be referred to by their index, so their builder objects do not need to be stored. FieldBuilders do need to be stored because the ILGenerator.Emit() method requires a FieldBuilder as the second parameter when emitting the opcodes Ldfld (load field) and Stfld (store field). \\Location indices for formal parameters and local variables are set up already during parsing, though this could also be left to the code generation phase. The index is stored on the node. Note that the first parameter in the formal parameter list of a non-static method is always at index 1 because the implicit \verb,this, reference takes up the index 0.
+    \item It defines the local variables, formal parameters and class fields. Formal parameters and local variables can be referred to by their index, so their builder objects do not need to be stored. FieldBuilders do need to be stored because the ILGenerator.Emit() method requires a FieldBuilder as the second parameter when emitting the opcodes Ldfld (load field) and Stfld (store field). \\
+        Local variables are not generated if they were marked as unused by the CodeGenAnalyser.
 \end{itemize}
 
 \subsubsection{Instruction generation}
@@ -684,7 +689,7 @@ class Test2
 }
 \end{verbatim}
 
-The MiniJava compiler produces the following CIL code for the if statement condition (generated without optimization for branching opcodes):
+The MiniJava compiler produces the following CIL code for the if statement condition (generated without optimizations for branching opcodes):
 \begin{verbatim}
 // First operand:
 IL_0006: ldc.i4.s 20
@@ -721,9 +726,9 @@ IL_002f: ldc.i4.0 // boolean not
 IL_0030: ceq
 \end{verbatim}
 
-This is almost the same code that the C$^\sharp$ compiler produces for boolean binary operators. The difference between logical \verb,and, and \verb,or, operators is mostly that when \verb,and, uses \verb,brfalse, (if the condition is false, jump over other operands), \verb,or, uses \verb,brtrue, (if the condition is true, jump over other operands). Of course the boolean value loaded onto the stack after the jump also differs between the two.
+This is almost the same code that the C$^\sharp$ compiler produces for boolean binary operators when the program is compiled without optimizations (e.g. in Debug mode). The difference between logical \verb,and, and \verb,or, operators is mostly that when \verb,and, uses \verb,brfalse, (if the condition is false, jump over other operands), \verb,or, uses \verb,brtrue, (if the condition is true, jump over other operands). Of course the boolean value loaded onto the stack after the jump also differs between the two.
 
-If and while statements also produce nearly identical code to the C$^\sharp$ compiler. Assert statements are in practice implemented similarly to if statements. A \verb,brtrue, instruction is generated for jumping over the ''assertion body'' when the condition evaluates as \textbf{true}. The ''body'' prints a message of the format \verb|Exception occurred: AssertionError at <className>.<methodName>| \verb|(<row>,<column>)| which imitates the message produced by Java. Additionally it produces a call to Environment.Exit with the value 1 as a parameter to indicate failure.
+If and while statements also produce similar code to the C$^\sharp$ compiler. Assert statements are in practice implemented similarly to \verb,if, statements. A \verb,brtrue, instruction is generated for jumping over the ''assertion body'' when the condition evaluates as \textbf{true}. The ''body'' prints a message of the format \verb|Exception occurred: AssertionError at <className>.<methodName>| \verb|(<row>,<column>)| which imitates the message produced by Java (although of course Java actually throws an exception). Additionally it produces a call to Environment.Exit with the value 1 as a parameter to indicate failure.
 
 \subsubsection{Optimizations performed by the MethodBodyEmitter}
 
@@ -737,7 +742,7 @@ In addition to optimizing the codes used for integer literal loads as well as ar
     \item The opcodes \verb,cgt, and \verb,brfalse, in sequence are replaced with \verb,ble, (branch if smaller than or equal to).
 \end{itemize}
 
-Jumps are not systematically optimized, although, for example, the jump after a \verb,then, branch in an \verb,if, statement is omitted (already by InstructionGenerator) if the \verb,if, statement has no \verb,else, branch. The .NET JIT compiler probably handles jump optimizations because the C$^\sharp$ compiler does not appear to do these optimizations either.
+Jumps are not systematically optimized, although, for example, the jump after a \verb,then, branch in an \verb,if, statement is omitted (already by InstructionGenerator) if the \verb,if, statement has no \verb,else, branch.
 
 \subsection{Shortcomings and potential points of improvement}
 
@@ -751,7 +756,9 @@ However, as said before, I have used the behavior of the actual Java compiler as
 
 \subsubsection{Unimplemented semantic checks}
 
-Some slightly more complicated checks in the semantic analysis phase were left out of this implementation. These include definite assignment checks and unreachable code checks. Both would cause a compile-time error in Java. Neither of these has an effect on the semantics of a program, so I did not implement them due to a lack of time. Both of these could be implemented as an additional pass in the semantic analysis phase.
+Some slightly more complicated checks in the semantic analysis phase were left out of this implementation. These include definite assignment checks and unreachable code checks. Both would cause a compile-time error in Java. Neither of these has an effect on the semantics of a program, so I did not implement them due to a lack of time. As mentioned earlier, the CLR default-initializes local variables similarly to instance fields, so local int variables are initialized to 0, local boolean variables to false and local reference type variables to \textbf{null}.
+
+Both of these checks could be implemented as an additional pass in the semantic analysis phase.
 
 \subsubsection{Code optimization}
 
@@ -760,10 +767,16 @@ Obviously code optimization was left out because it was not required in the assi
 Simple code optimizations that could be implemented include at least the following:
 \begin{itemize}
     \item An additional pass in the code generation phase could replace calculations made with literals with a single literal expression (e.g. \verb,42 % 2, could be replaced with \verb,0, or \verb,42 % 2 == 0, with \verb,true,).
-    \item Removal of code that does nothing, for example calls to methods with empty bodies, or \verb,if, or \verb,while, statements with empty bodies. This can only be done in rather simple cases, because e.g. a parameter or \verb,if, or \verb,while, statement conditions can have side effects.
+    \item Removal of code that does nothing, for example calls to methods with empty bodies, or \verb,if, or \verb,while, statements with empty bodies. This can only be done in rather simple cases, because e.g. a method call parameter or \verb,if, or \verb,while, statement conditions can have side effects.
     \item Methods that are never called could be skipped in code generation because MiniJava programs will definitely not be dynamically linked with any external code that could call these methods...
-    \item Similarly variables that are never used could be skipped in code generation. At least the C$^\sharp$ compiler does not appear to do this, though. It may be that the .NET JIT compiler prunes these out as well.
+    \item Currently the code generator marks all user-defined methods (other than main) as virtual and calls them with the \verb,callvirt, instruction to enable overriding. This could be optimized by finding out which methods are actually overridden and marking those methods as virtual, while keeping other methods non-virtual and calling them with the \verb,call, instruction.
 \end{itemize}
+
+\subsubsection{Checks in the code generation phase}
+
+The code generation phase does not check that the number of local variables or formal parameters does not exceed the maximum number allowed. In .NET, there can be max System.UInt16.MaxValue = 65535 local variables or formal parameters (including the \verb,this, reference in non-static methods)\footnote{See e.g. \url{http://msdn.microsoft.com/en-us/library/system.reflection.emit.opcodes.ldloc.aspx}}.
+
+In practice, I doubt anyone would define this many local variables or parameters inside a method, and the check would be practically trivial to implement in the pre-code-generation analysis phase implemented by CodeGenAnalyser. This would require giving the back-end component the ability to report errors, which is does not currently have, although it would be simple to add.
 
 \section{Testing}
 
@@ -775,24 +788,23 @@ If bugs remain in the system (as some almost certainly do), the best case scenar
 
 At the moment, however, I do not know of any existing bugs in the compiler.
 
-The code generation part is tested by running test programs through the whole compilation pipeline and checking the produced programs' output against a reference result. All programs are also run through the PEVerify tool and its output is also automatically tested. The actual instruction generation is not tested (that is, the programs are not disassembled to automatically inspect the instructions generated), but I have checked the IL code generated for all test programs manually and corrected all of the bugs that I have found.
+The code generation part is tested by running test programs through the whole compilation pipeline and checking the produced programs' output against a reference result. All programs are also verified with the PEVerify tool and its output is also automatically tested. The actual instruction generation is not tested (that is, the programs are not disassembled to automatically inspect the instructions generated), but I have checked the IL code generated for all test programs manually and corrected all of the bugs that I have found.
 
-The directory \verb,testcode/, under the main code directory contains example programs that can be compiled with MiniJavaCompiler.exe and run through PEVerify. These are also used in the automated code generation tests.
+The directory \verb,testcode/, under the main code directory contains example programs that can be compiled with MiniJavaCompiler.exe and verified with PEVerify. These are also used in the automated code generation tests.
 
-Note that the code generation tests require a path to the PEVerify.exe program. This can be set by editing the class variable PEVerifyPath in CodeGenTest.cs.
+Note that the code generation tests require a path to the PEVerify.exe program. This can be set by editing the class variable PEVerifyPath in CodeGenTest.cs, but at least on the department machines I tested, the path to PEVerify.exe was the same as on my computer (the default path), so these should run fine without any edits.
 
-% TODO: write instructions for VS 2012 if it is in use at the department
-After extracting NUnit, compile the MiniJavaCompiler solution in e.g. Visual Studio, find \verb,nunit-x86.exe, in the \verb,bin, directory of the extracted archive and run it. Select ``Open project'' from the File menu, navigate to the \verb,\bin\Release, directory under the MiniJavaCompilerTest project directory and select \verb,MiniJavaCompilerTest.dll,. Now the tests can be run by pressing the Run button.
-
-If using Visual Studio 2012, you can also install the \href{http://nunit.org/index.php?p=vsTestAdapter&r=2.6.1}{NUnit test adapter} which enables NUnit tests to be run straight from the test menu.
+On department systems with Visual Studio 2012, NUnit can be installed through the package manager, to make the test project compile. Installing the \href{http://nunit.org/index.php?p=vsTestAdapter&r=2.6.1}{NUnit test adapter} enables these tests to be run using the test menu/test explorer of Visual Studio. If the test adapter cannot be found using the built-in package manager, it can also be \href{http://visualstudiogallery.msdn.microsoft.com/6ab922d0-21c0-4f06-ab5f-4ecd1fe7175d}{downloaded from here}.
 
 \section{Building and running the compiler}
 
-The easiest way to build the compiler is probably opening it in Visual Studio and building it in Release mode to disable assertions and to get optimised code. After this the resulting \verb,MiniJavaCompiler.exe, under \verb,bin\Release, can be run by giving it the path to the source file as a parameter: \verb,./MiniJavaCompiler.exe path/to/source/file [path/to/output/file],.
+The easiest way to build the compiler solution is opening it in Visual Studio and building it in Release mode to disable assertions and to get optimised code. Note that the test project requires NUnit to build successfully, as described in the previous section.
 
-The program is currently targeted for .NET 4.5 to get access to System.Tuple, so it probably cannot be run on e.g. the department Windows server.
+After this the resulting \verb,MiniJavaCompiler.exe, under \verb,bin\Release, can be run by giving it the path to the source file as a parameter (and optionally a path to an output file): \verb,./MiniJavaCompiler.exe path/to/source/file [path/to/output/file],.
 
-Note: the program code and the \LaTeX{} sources for this documentation are also available on \href{https://github.com/Lateks/MiniJavaCompiler}{my GitHub account page} where the repository can be cloned.
+The solution is targeted for .NET 4.5 to get access to System.Tuple, so it probably cannot be run on e.g. the department Windows server that still runs Visual Studio 2010.
+
+The program code and the \LaTeX{} sources for this documentation are also available on \href{https://github.com/Lateks/MiniJavaCompiler}{my GitHub account page} where the repository can be cloned.
 
 
 \appendix
