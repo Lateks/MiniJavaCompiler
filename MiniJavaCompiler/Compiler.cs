@@ -43,7 +43,7 @@ namespace MiniJavaCompiler
             }
             catch (FileNotFoundException e)
             {
-                Console.WriteLine(String.Format("Could not open file {0}: {1}.", inputPath, e.Message));
+                Console.WriteLine(String.Format("Could not open file {0}: {1}", inputPath, e.Message));
                 return;
             }
             catch (DirectoryNotFoundException e)
@@ -144,12 +144,21 @@ namespace MiniJavaCompiler
             var backEnd = new CodeGenerator(abstractSyntaxTree, "MainModule$0", optimize);
             if (fileName != null)
             {
-                if (fileName.Contains("\\"))
+                if (fileName.Contains('\\') || fileName.Contains('/'))
                 {
-                    string[] splitPath = fileName.Split('\\');
+                    string[] splitPath = fileName.Split(new char[] { '\\', '/' },
+                        StringSplitOptions.RemoveEmptyEntries);
                     var pathName = splitPath.Take<string>(splitPath.Length - 1)
                         .Aggregate("", (acc, pathElem) => acc += pathElem + "\\");
-                    Directory.SetCurrentDirectory(pathName);
+                    try
+                    {
+                        Directory.SetCurrentDirectory(pathName);
+                    }
+                    catch (DirectoryNotFoundException e)
+                    {
+                        Console.WriteLine(String.Format("Could not open directory: {0}", e.Message));
+                        return;
+                    }
                     fileName = splitPath[splitPath.Length - 1];
                 }
 
