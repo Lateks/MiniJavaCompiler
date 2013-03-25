@@ -91,6 +91,14 @@ namespace MiniJavaCompilerTest.BackEnd
         }
 
         [Test]
+        public void JumpTest()
+        {
+            CheckCompilationOK("jumptest.mjava");
+            CheckMultiLineOutput(new string[] { "11", "12", "13", "14", "15", "16", "17", "18", "19", "20" });
+            CheckPEVerifyOutput();
+        }
+
+        [Test]
         public void TestOverriding()
         {
             CheckCompilationOK("overriding.mjava");

@@ -1,0 +1,30 @@
+class Test
+{
+  public static void main()
+  {
+    A a;
+    a = new A();
+    int i;
+    i = 10;
+    if (a.foo(10))
+      while (i < 20)
+      {
+        System.out.println(i + 1);
+        i = i + 1;
+      }
+    else
+      while (i > 0)
+      {
+        System.out.println(i - 1);
+        i = i - 1;
+      }
+  }
+}
+
+class A
+{
+  public boolean foo(int i)
+  {
+    return i % 2 == 0;
+  }
+}
