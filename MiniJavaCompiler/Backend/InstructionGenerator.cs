@@ -278,11 +278,13 @@ namespace MiniJavaCompiler.BackEnd
                     // for boolean operator short circuit.
                     var rhsJumpLabel = IL.DefineLabel();
                     AddInstruction(OpCodes.Br, rhsJumpLabel);
+
                     AddInstruction(null, node.AfterLabel.Value);
+                    // Re-load the result of the lhs evaluation onto the stack.
                     var successCode = node.Operator == MiniJavaInfo.Operator.And ?
                         OpCodes.Ldc_I4_0 : OpCodes.Ldc_I4_1;
                     AddInstruction(successCode);
-                    AddInstruction(null, rhsJumpLabel); // We jump to this label if rhs was evaluated.
+                    AddInstruction(null, rhsJumpLabel); // We jump straight to this label if rhs was evaluated.
                 }
             }
 
