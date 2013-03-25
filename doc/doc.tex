@@ -387,7 +387,7 @@ The Symbols package defines the abstract class Symbol and the concrete symbol ty
 \caption{The Types package}
 \end{figure}
 
-The Types package defines the IType interface that is used to represent types that are not necessarily bound to a type symbol. E.g. the void type is never defined in the symbol table\footnote{There is no reason it could not be defined there as well as any other built-in type, but I have kept it this way to catch programming errors related to handling the void type more easily.}. ScalarType and ArrayType should be self-explanatory: ScalarType represents types that are not arrays (e.g. int) and ArrayType represents types that are (e.g. int[ ]). An ArrayType has a reference to a ScalarType that represents its element type. ErrorType is used when the type of a variable, method return type or an expression cannot be deduced.
+The Types package defines the IType interface that is used to represent types that are not necessarily bound to a type symbol. E.g. the void type is never defined in the symbol table\footnote{There is no reason it could not be defined there as well as any other built-in type, but I have kept it this way to catch programming errors related to handling the void type more easily.}. ScalarType and ArrayType should be self-explanatory: ScalarType represents types that are not arrays (e.g. \textbf{int}) and ArrayType represents types that are (e.g. \textbf{int}[ ]). An ArrayType has a reference to a ScalarType that represents its element type. ErrorType is used when the type of a variable, method return type or an expression cannot be deduced.
 
 ErrorType and VoidType are defined as singletons because I think this is the only way the implementation can make sense semantically: there is only a single type called void, and there is no point in having several instances of ErrorType either. Similarly, there are never several instances of the ScalarType class with the same type name, nor are there several instances of the ArrayType class with the same element type. This is enforced by having ScalarType and ArrayType instances be created only by the static factory methods MakeArrayTypeSymbol and MakeScalarTypeSymbol in the TypeSymbol class. These symbols cannot be defined in the global scope more than once.
 
@@ -460,7 +460,7 @@ These errors are represented by ErrorToken instances in the token queue. Unlike 
 
 This module is used by instantiating a Parser that takes an ITokenizer and an IErrorReporter as inputs. The error reporter is used to report errors and because it is given as a parameter, a single instance can be shared by several classes and across compilation phases. The default implementation for the IErrorReporter logs the errors in a list of ErrorMessages which can then be handled by the higher level module that has access to the reporter instance. A custom implementation could e.g. print error messages into standard output in real time when they are reported.
 
-The Parser offers a TryParse() method that returns a boolean value signaling success (\verb,true,) or failure (\verb,false,). In the latter case the list of errors can be accessed through the error reporter. This is the whole interface needed by the caller.
+The Parser offers a TryParse() method that returns a boolean value signaling success (\textbf{true}) or failure (\textbf{false}). In the latter case the list of errors can be accessed through the error reporter. This is the whole interface needed by the caller.
 
 Internally the parser is split into several parts. The main parser creates a new ExpressionParser instance every time it starts parsing an expression. The ExpressionParser takes care of handling e.g. operator precedences using information provided by the MiniJavaInfo support class. This takes some unnecessary complexity out of the main parser class. In theory, the parser could be further split up into e.g. statement and class parsers.
 
@@ -484,7 +484,7 @@ For many common kinds of syntax errors this basic strategy works fine but some p
 
 For example, when recovering from term parsing, the problem is that the follow set for terms includes e.g. the symbols \verb,[, and \verb,], (used in indexing an array) as well as \verb,),, but these symbols can also appear as a part of a term, e.g. in instance creation expressions (\verb,new int[expr], or \verb,new A(),). As an example, the erroneous code \verb,foo = new int();, will result in two errors: one concerning the symbol \verb,(, when \verb,[, was expected, and one concerning the symbol \verb,),, because recovery assumes that this symbol is already outside the expression and fails to disregard it. However, mostly the recovery strategies appear pretty well-behaved.
 
-If no errors are found, parsing ends with the EndOfFile token being consumed, the root node of the abstract syntax tree is assigned into the output parameter and the return value is \verb,true,. If any errors (lexical or syntactic) have been found, the TryParse method returns \verb,false,.
+If no errors are found, parsing ends with the EndOfFile token being consumed, the root node of the abstract syntax tree is assigned into the output parameter and the return value is \textbf{true}. If any errors (lexical or syntactic) have been found, the TryParse method returns \textbf{false}.
 
 If syntax analysis fails, the front end module will not continue compilation into the semantic analysis phase. In my experience experimenting with Java, the actual Java compiler is similarly rigid and does not do semantic analysis if syntax analysis fails.\footnote{By including several different semantic errors in the same project one can even discern that semantic analysis is probably divided into clear phases in the Java compiler. Often certain semantic errors cause other types of semantic errors to not be reported at all. A similar approach is taken in this implementation, though I have attempted to make the error recovery in the semantic analysis phase as good as possible.}
 
@@ -527,7 +527,7 @@ public class SomeClass { // defined in another file...
 }
 \end{verbatim}
 
-The types collected by the TypeSetBuilder as well as all built-in types (int and boolean but not void\footnote{See section \ref{support} for discussion on why the void type is not defined in the symbol table/global scope.}) are defined in the global scope as the first step. The result of this phase is a decoration of the syntax tree with the following information:
+The types collected by the TypeSetBuilder as well as all built-in types (\textbf{int} and \textbf{boolean} but not \textbf{void}\footnote{See section \ref{support} for discussion on why the void type is not defined in the symbol table/global scope.}) are defined in the global scope as the first step. The result of this phase is a decoration of the syntax tree with the following information:
 
 \begin{itemize}
     \item Each ISyntaxTreeNode receives a scope. For class and method declarations as well as block scopes this is the scope they define themselves. For all other nodes this is the scope they are defined in.
@@ -562,7 +562,7 @@ Cyclic inheritance and multiple declarations of the same typename are treated as
 
 \subsubsection{Checking types and the validity of references}
 
-This phase is implemented by the SemanticsChecker class. It produces no output in addition to possible errors, again reported using an IErrorReporter instance. The boolean return value of the RunCheck method signals success (\verb,true,) or failure (\verb,false,).
+This phase is implemented by the SemanticsChecker class. It produces no output in addition to possible errors, again reported using an IErrorReporter instance. The boolean return value of the RunCheck method signals success (\textbf{true}) or failure (\textbf{false}).
 
 Internally the phase is divided into two passes through the abstract syntax tree. The first pass (implemented by the ReferenceChecker class) checks references and decorates the tree with type information. The second pass (implemented by the TypeChecker class) performs type checks. Both types of checks could be accomplished in a single pass but this separation of concerns makes the implementation easier to follow. Both classes define a RunCheck method that returns a boolean value indicating success or failure similar to the parent class that utilizes them. Both passes are always run regardless of errors detected in the first pass.
 
@@ -576,11 +576,11 @@ This phase can detect the following types of errors:
 \item If a method overrides a superclass method, the declared return types of the methods are checked. The return types must be exactly the same or an error is reported. Originally I intended to implement covariant return types similarly to the Java specification\footnote{\url{http://docs.oracle.com/javase/specs/jls/se7/html/jls-8.html\#jls-8.4.5}} but as it turns out, the CLR does not natively support return type covariance, which --- according to Eric Lippert\footnote{See Eric Lippert's post at \\ \url{http://stackoverflow.com/questions/5709034/does-c-sharp-support-return-type-covariance/5709191\#5709191}} --- is the reason C$^\sharp$ does not implement return type covariance either. I have therefore also decided to disallow return type covariance in MiniJava.
 \item The arguments to built-in functions or operators (or something similar) are of the wrong type. A ''type grammar'' (attribute grammar style) for operator type checks is defined in the MiniJavaInfo class. Examples of these type requirements are:
 \begin{itemize}
-\item A print statement requires a single int argument.
-\item The argument to an assert statement and the conditional expressions in \verb,if, and \verb,while, statements need to be boolean values.
-\item Arithmetic operators and comparison operators require two int arguments.
-\item Logical binary operators require two boolean arguments and the unary not operator '!' a single boolean argument.
-\item Array sizes and indexing expressions must be int values.
+\item A print statement requires a single \textbf{int} argument.
+\item The argument to an assert statement and the conditional expressions in \verb,if, and \verb,while, statements need to be \textbf{boolean} values.
+\item Arithmetic operators and comparison operators require two \textbf{int} arguments.
+\item Logical binary operators require two \textbf{boolean} arguments and the unary not operator \verb,!, a single \textbf{boolean} argument.
+\item Array sizes and indexing expressions must be \textbf{int} values.
 \item The equals operator ('==') accepts any type but both sides must be compatible with each other. Int, boolean and array types require that the other operand is of the same type. For user defined types subtypes are also allowed.
 \end{itemize}
 \item An attempt is made to index into a variable that is not an array.
@@ -602,7 +602,7 @@ This phase can detect the following types of errors:
 The rules for assignment type checking are as follows:
 \begin{itemize}
 \item An argument of type void cannot be assigned to any L-value.
-\item If the L-value is a built-in type, the assigned value must be of the same type. E.g. an element of an int array has type int, so that is the only type of value that can be assigned to it.
+\item If the L-value is a built-in type, the assigned value must be of the same type. E.g. an element of an \textbf{int} array has type \textbf{int}, so that is the only type of value that can be assigned to it.
 \item If the L-value is an array, the assigned value must also be an array and have the same element type. Unlike in Java, covariance of reference types is not allowed here according to the specification given on the course web site (or appendix B).
 \item If the L-value is a user defined (reference) type, the assigned value must be the of the same type or a type derived from it.
 \end{itemize}
@@ -658,13 +658,13 @@ InstructionGenerator generates the actual opcodes of the method and constructor 
 
 Though no code optimization is done, the InstructionGenerator chooses the optimal opcodes for references to variables integer loads. For example, for integer literal loads from 0 to 8, the opcodes \verb,ldc.i4.0, through \verb,ldc.i4.8, are used. For integer literals between 9 and 127 (in the signed byte range), the opcode \verb,ldc.i4.s, is used. For integer literals larger than that, the opcode \verb,ldc.i4, is used. The opcodes for local variable loads (\verb,ldloc.0, through \verb,ldloc.3,, \verb,ldloc.s, for the unsigned byte range, \verb,ldloc, for larger local variable indices) and stores (the corresponding \verb,stloc, codes) and method argument loads and stores (the corresponding \verb,ldarg, codes and \verb,starg.s, for the unsigned byte range and \verb,starg, for larger argument indices) are handled similarly.
 
-For loading boolean literals, the implementation uses \verb,ldc.i4.0, for false and \verb,ldc.i4.1, for true. These are the same opcodes that are used by the C$^\sharp$ compiler. Note that these load integer values represented by four bytes, not a single byte.
+For loading \textbf{boolean} literals, the implementation uses \verb,ldc.i4.0, for \textbf{false} and \verb,ldc.i4.1, for \textbf{true}. These are the same opcodes that are used by the C$^\sharp$ compiler. Note that these load integer values represented by four bytes, not a single byte.
 
 In general, for choice in opcodes, I have used the behaviour of the C$^\sharp$ compiler as a reference. I have used the \href{http://ilspy.net/}{ILSpy} .NET decompiler to inspect test programs\footnote{ILSpy formats assembly code in a nicer way than Microsoft's ILDAsm, but it tends to crash when the code is badly malformed, so ILDAsm is sometimes better for debugging problems in code generation.} and figure out how the C$^\sharp$ compiler handles certain situations. As an introduction to the CIL I used the tutorials \href{http://www.codeproject.com/Articles/362076/Understanding-Common-Intermediate-Language-CIL}{Understanding Common Intermediate Language (CIL)} and \href{http://www.codeproject.com/Articles/3778/Introduction-to-IL-Assembly-Language}{Introduction to IL Assembly Language}.
 
 For the most part, code generation for binary operators is straightforward, because the CIL has corresponding opcodes for most of them. These include \verb,add,, \verb,sub,, \verb,mul,, \verb,div,, \verb,clt, (the \verb,<, operator), \verb,cgt, (the \verb,>, operator), \verb,ceq, (the \verb,==, operator) and \verb,rem, (the \verb,%, operator). When the opcode \verb,==, is applied to reference types, the opcode \verb,ceq, handily compares the object references on the evaluation stack, resulting in the correct behavior.
 
-Boolean operators require a bit more effort. The \verb,not, opcode offered by CIL is a bitwise operation. Because the CIL needs to represent boolean values as integers, this cannot be used as a boolean not operation --- the bitwise complement of \textbf{true} would not be \textbf{false}. I have used the same strategy as used by the C$^\sharp$ compiler: emitting an \verb,ldc.i4.0, load opcode and an \verb,ceq, opcode, effectively comparing the boolean value on the stack with \textbf{false}, which results in the same truth table as the boolean not operator.
+Boolean operators require a bit more effort. The \verb,not, opcode offered by CIL is a bitwise operation. Because the CIL needs to represent \textbf{boolean} values as integers, this cannot be used as a boolean not operation --- the bitwise complement of \textbf{true} would not be \textbf{false}. I have used the same strategy as used by the C$^\sharp$ compiler: emitting an \verb,ldc.i4.0, load opcode and an \verb,ceq, opcode, effectively comparing the \textbf{boolean} value on the stack with \textbf{false}, which results in the same truth table as the boolean not operator.
 
 The CIL does offer (bitwise) opcodes \verb,and, and \verb,or, but in practice these cannot be used because boolean operators need to be short-circuited. This is implemented using jump labels. The implementation of operator short-circuiting is best explained with an example. As an example, the following MiniJava code (a part of the test file \verb,shortcircuit.mjava, that can be found under \verb,testcode/, in the code directory):
 \begin{verbatim}
@@ -726,7 +726,7 @@ IL_002f: ldc.i4.0 // boolean not
 IL_0030: ceq
 \end{verbatim}
 
-This is almost the same code that the C$^\sharp$ compiler produces for boolean binary operators when the program is compiled without optimizations (i.e. in Debug mode). The difference between logical \verb,and, and \verb,or, operators is mostly that when \verb,and, uses \verb,brfalse, (if the condition is false, jump over other operands), \verb,or, uses \verb,brtrue, (if the condition is true, jump over other operands). Of course the boolean value loaded onto the stack after the jump also differs between the two.
+This is almost the same code that the C$^\sharp$ compiler produces for boolean binary operators when the program is compiled without optimizations (i.e. in Debug mode). The difference between logical \verb,and, and \verb,or, operators is mostly that when \verb,and, uses \verb,brfalse, (if the condition is false, jump over other operands), \verb,or, uses \verb,brtrue, (if the condition is true, jump over other operands). Of course the \textbf{boolean} value loaded onto the stack after the jump also differs between the two.
 
 If and while statements also produce similar code to the C$^\sharp$ compiler. Assert statements are in practice implemented similarly to \verb,if, statements. A \verb,brtrue, instruction is generated for jumping over the ''assertion body'' when the condition evaluates as \textbf{true}. The ''body'' prints a message of the format \verb|Exception occurred: AssertionError at <className>.<methodName>| \verb|(<row>,<column>)| which imitates the message produced by Java (although of course Java actually throws an exception). Additionally it produces a call to Environment.Exit with the value 1 as a parameter to indicate failure.
 
@@ -798,7 +798,7 @@ However, as said before, I have used the behavior of the actual Java compiler as
 
 \subsubsection{Unimplemented semantic checks}
 
-Some slightly more complicated checks in the semantic analysis phase were left out of this implementation. These include definite assignment checks and unreachable code checks. Both would cause a compile-time error in Java. Neither of these has an effect on the semantics of a program, so I did not implement them due to a lack of time. As mentioned earlier, the CLR default-initializes local variables similarly to instance fields, so local int variables are initialized to 0, local boolean variables to false and local reference type variables to \textbf{null}.
+Some slightly more complicated checks in the semantic analysis phase were left out of this implementation. These include definite assignment checks and unreachable code checks. Both would cause a compile-time error in Java. Neither of these has an effect on the semantics of a program, so I did not implement them due to a lack of time. As mentioned earlier, the CLR default-initializes local variables similarly to instance fields, so local \textbf{int} variables are initialized to 0, local \textbf{boolean} variables to false and local reference type variables to \textbf{null}.
 
 Both of these checks could be implemented as an additional pass in the semantic analysis phase.
 
@@ -808,7 +808,7 @@ Obviously code optimization was left out because it was not required in the assi
 
 Simple code optimizations that could be implemented include at least the following:
 \begin{itemize}
-    \item An additional pass in the code generation phase could replace calculations made with literals with a single literal expression (e.g. \verb,42 % 2, could be replaced with \verb,0, or \verb,42 % 2 == 0, with \verb,true,).
+    \item An additional pass in the code generation phase could replace calculations made with literals with a single literal expression (e.g. \verb,42 % 2, could be replaced with \verb,0, or \verb,42 % 2 == 0, with \textbf{true}).
     \item Removal of code that does nothing, for example calls to methods with empty bodies, or \verb,if, or \verb,while, statements with empty bodies. This could only be done in rather simple cases, because e.g. a method call parameter or \verb,if, or \verb,while, statement conditions can have side effects.
     \item Methods that are never called could be skipped in code generation because MiniJava programs will definitely not be dynamically linked with any external code that could call these methods...
     \item Currently the code generator marks all user-defined methods (other than main) as virtual and calls them with the \verb,callvirt, instruction to enable overriding. This could be optimized by finding out which methods are actually overridden and marking those methods as virtual, while keeping other methods non-virtual and calling them with the \verb,call, instruction.
