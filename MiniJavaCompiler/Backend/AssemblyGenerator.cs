@@ -80,8 +80,11 @@ namespace MiniJavaCompiler.BackEnd
                             ParameterAttributes.In, node.Name);
                         break;
                     case VariableDeclaration.Kind.Local:
-                        _currentMethod.GetILGenerator().DeclareLocal(
-                            _parent.BuildType(node.TypeName, node.IsArray));
+                        if (node.Used) // Do not generate the variable if it is never used.
+                        {
+                            _currentMethod.GetILGenerator().DeclareLocal(
+                                _parent.BuildType(node.TypeName, node.IsArray));
+                        }
                         break;
                     case VariableDeclaration.Kind.Class:
                         var fieldBuilder = _currentType.DefineField(node.Name,

@@ -11,13 +11,21 @@ class Test
 
     B b1;
     B b2;
+    B b3;
+    B b4;
     b1 = new B();
     b2 = new B();
+    b4 = new B();
     b1.setVal(2);
     b2.setVal(3);
     // testing assertions
+    assert(!(b1 == b2));
+    assert(!(b2 == b4));
+    assert(!(b1 == b4));
+    b4 = b1;
+    assert(b4 == b1);
     assert(!(b1.getVal() == b2.getVal())); // ok
-    assert(b1.getVal() == b2.getVal()); // fails (at 20,5)
+    assert(b1.getVal() == b2.getVal()); // fails (at 28,5)
   }
 }
 

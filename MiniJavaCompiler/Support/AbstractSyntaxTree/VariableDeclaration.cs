@@ -14,6 +14,7 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
         }
         public Kind VariableKind { get; private set; }
         public short LocalIndex { get; set; }
+        public bool Used { get; set; }
 
         public VariableDeclaration(string name, string type, bool isArray,
             Kind kind, int row, int col)
@@ -21,6 +22,7 @@ namespace MiniJavaCompiler.Support.AbstractSyntaxTree
         {
             VariableKind = kind;
             LocalIndex = 0;
+            Used = false;
         }
 
         public override void Accept(INodeVisitor visitor)

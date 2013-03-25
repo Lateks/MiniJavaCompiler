@@ -122,7 +122,7 @@ namespace MiniJavaCompilerTest.BackEnd
         {
             CheckCompilationOK("variablenamehiding.mjava");
             CheckMultiLineOutput(new string[] { "1", "1", "2", "0", "2", "2", "1", "3", "10",
-                "Exception occurred: AssertionError at Test.main(20,5)" });
+                "Exception occurred: AssertionError at Test.main(28,5)" });
             CheckPEVerifyOutput();
         }
 
