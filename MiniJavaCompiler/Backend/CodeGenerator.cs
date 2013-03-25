@@ -26,11 +26,12 @@ namespace MiniJavaCompiler.BackEnd
         private readonly Dictionary<String, TypeBuilder> _types;
         private readonly Dictionary<MethodSymbol, MethodBuilder> _methods;
         private readonly Dictionary<VariableSymbol, FieldBuilder> _fields;
+        private bool _optimize;
 
         private AssemblyBuilder _asmBuilder;
         private ModuleBuilder _moduleBuilder;
 
-        public CodeGenerator(Program abstractSyntaxTree, string moduleName)
+        public CodeGenerator(Program abstractSyntaxTree, string moduleName, bool optimize = true)
         {
             if (abstractSyntaxTree.Scope == null)
                 throw new ArgumentException("Global scope is undefined.");
@@ -41,11 +42,12 @@ namespace MiniJavaCompiler.BackEnd
             _types = new Dictionary<string, TypeBuilder>();
             _methods = new Dictionary<MethodSymbol, MethodBuilder>();
             _fields = new Dictionary<VariableSymbol, FieldBuilder>();
+            _optimize = optimize;
         }
 
         public void GenerateCode(string outputFileName = "out.exe")
         {
-            new CodeGenAnalyser(_astRoot).Analyse();
+            new CodeGenAnalyser(_astRoot, _optimize).Analyse();
             new AssemblyGenerator(this).SetUpAssembly(outputFileName); // Sets up _asmBuilder, _moduleBuilder and _constructors.
             new InstructionGenerator(this).GenerateInstructions();
             _moduleBuilder.CreateGlobalFunctions();

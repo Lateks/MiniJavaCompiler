@@ -32,7 +32,7 @@ namespace MiniJavaCompiler.BackEnd
                 EmitMethodBody();
             }
 
-            private void EmitMethodBody()
+            public void EmitMethodBody()
             {
                 var IL = _method.GetILGenerator();
                 foreach (var instruction in _methodBody)

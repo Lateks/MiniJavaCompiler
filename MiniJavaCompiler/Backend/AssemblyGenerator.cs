@@ -80,7 +80,8 @@ namespace MiniJavaCompiler.BackEnd
                             ParameterAttributes.In, node.Name);
                         break;
                     case VariableDeclaration.Kind.Local:
-                        if (node.Used) // Do not generate the variable if it is never used.
+                        // Do not generate the variable if it is never used (if optimization enabled).
+                        if (!_parent._optimize || node.Used)
                         {
                             _currentMethod.GetILGenerator().DeclareLocal(
                                 _parent.BuildType(node.TypeName, node.IsArray));

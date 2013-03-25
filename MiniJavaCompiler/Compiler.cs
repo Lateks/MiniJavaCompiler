@@ -13,20 +13,28 @@ namespace MiniJavaCompiler
 {
     public class Compiler
     {
-        private const string usage = "Usage: ./MiniJavaCompiler.exe path/to/source/file [output/file/path]";
+        private const string usage = "Usage: ./MiniJavaCompiler.exe [-no-opt] path/to/source/file [output/file/path]";
 
         static void Main(string[] args)
         {
-            if (args.Count() == 0)
+            int argn = args.Count();
+            if (argn == 0)
             {
                 Console.WriteLine(usage);
                 return;
             }
+            bool disableOptimizations = args[0] == "-no-opt";
+            if (disableOptimizations && argn == 1)
+            {
+                Console.WriteLine(usage);
+                return;
+            }
+            string inputPath = disableOptimizations ? args[1] : args[0];
             
             StreamReader fileStream;
             try
             {
-                fileStream = new StreamReader(args[0]);
+                fileStream = new StreamReader(inputPath);
             }
             catch (ArgumentException)
             {
@@ -35,7 +43,7 @@ namespace MiniJavaCompiler
             }
             catch (FileNotFoundException e)
             {
-                Console.WriteLine(String.Format("Could not open file {0}: {1}.", args[0], e.Message));
+                Console.WriteLine(String.Format("Could not open file {0}: {1}.", inputPath, e.Message));
                 return;
             }
             catch (DirectoryNotFoundException e)
@@ -50,9 +58,18 @@ namespace MiniJavaCompiler
             }
 
             Program abstractSyntaxTree;
-            if (RunFrontEnd(args[0], fileStream, out abstractSyntaxTree))
+            if (RunFrontEnd(inputPath, fileStream, out abstractSyntaxTree))
             {
-                RunBackEnd(abstractSyntaxTree, args.Count() > 1 ? args[1] : null);
+                string outputPath = null;
+                if (disableOptimizations && argn > 2)
+                {
+                    outputPath = args[2];
+                }
+                else if (!disableOptimizations && argn > 1)
+                {
+                    outputPath = args[1];
+                }
+                RunBackEnd(abstractSyntaxTree, outputPath, !disableOptimizations);
             }
             else
             {
@@ -122,9 +139,9 @@ namespace MiniJavaCompiler
             return index;
         }
 
-        private static void RunBackEnd(Program abstractSyntaxTree, string fileName)
+        private static void RunBackEnd(Program abstractSyntaxTree, string fileName, bool optimize)
         {
-            var backEnd = new CodeGenerator(abstractSyntaxTree, "MainModule$0");
+            var backEnd = new CodeGenerator(abstractSyntaxTree, "MainModule$0", optimize);
             if (fileName != null)
             {
                 if (fileName.Contains("\\"))

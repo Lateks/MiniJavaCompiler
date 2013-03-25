@@ -18,12 +18,14 @@ namespace MiniJavaCompiler.BackEnd
             private ISyntaxTreeNode _astRoot;
             private short _currentLocalIdx;
             private VariableDeclaration.Kind _previousVarKind;
+            private bool _optimize;
 
-            public CodeGenAnalyser(ISyntaxTreeNode astRoot)
+            public CodeGenAnalyser(ISyntaxTreeNode astRoot, bool optimize)
             {
                 _astRoot = astRoot;
                 _currentLocalIdx = 0;
                 _previousVarKind = VariableDeclaration.Kind.Class;
+                _optimize = optimize;
             }
 
             public void Analyse()
@@ -58,7 +60,7 @@ namespace MiniJavaCompiler.BackEnd
                     _currentLocalIdx = 0;
                 }
                 if (node.VariableKind == VariableDeclaration.Kind.Formal ||
-                    (node.VariableKind == VariableDeclaration.Kind.Local && node.Used))
+                    (node.VariableKind == VariableDeclaration.Kind.Local && (!_optimize || node.Used)))
                 {
                     node.LocalIndex = _currentLocalIdx++;
                 }

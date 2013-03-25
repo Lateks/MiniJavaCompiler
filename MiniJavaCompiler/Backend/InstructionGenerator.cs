@@ -376,7 +376,14 @@ namespace MiniJavaCompiler.BackEnd
                     AddInstruction(OpCodes.Ret);
                 }
                 var emitter = new MethodBodyEmitter(_currentMethod, _methodBody);
-                emitter.OptimizeAndEmitMethodBody();
+                if (_parent._optimize)
+                {
+                    emitter.OptimizeAndEmitMethodBody();
+                }
+                else
+                {
+                    emitter.EmitMethodBody();
+                }
                 _currentMethod = null;
                 _methodBody = null;
             }
