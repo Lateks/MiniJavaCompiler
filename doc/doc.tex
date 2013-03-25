@@ -726,7 +726,7 @@ IL_002f: ldc.i4.0 // boolean not
 IL_0030: ceq
 \end{verbatim}
 
-This is almost the same code that the C$^\sharp$ compiler produces for boolean binary operators when the program is compiled without optimizations (e.g. in Debug mode). The difference between logical \verb,and, and \verb,or, operators is mostly that when \verb,and, uses \verb,brfalse, (if the condition is false, jump over other operands), \verb,or, uses \verb,brtrue, (if the condition is true, jump over other operands). Of course the boolean value loaded onto the stack after the jump also differs between the two.
+This is almost the same code that the C$^\sharp$ compiler produces for boolean binary operators when the program is compiled without optimizations (i.e. in Debug mode). The difference between logical \verb,and, and \verb,or, operators is mostly that when \verb,and, uses \verb,brfalse, (if the condition is false, jump over other operands), \verb,or, uses \verb,brtrue, (if the condition is true, jump over other operands). Of course the boolean value loaded onto the stack after the jump also differs between the two.
 
 If and while statements also produce similar code to the C$^\sharp$ compiler. Assert statements are in practice implemented similarly to \verb,if, statements. A \verb,brtrue, instruction is generated for jumping over the ''assertion body'' when the condition evaluates as \textbf{true}. The ''body'' prints a message of the format \verb|Exception occurred: AssertionError at <className>.<methodName>| \verb|(<row>,<column>)| which imitates the message produced by Java (although of course Java actually throws an exception). Additionally it produces a call to Environment.Exit with the value 1 as a parameter to indicate failure.
 
@@ -742,7 +742,49 @@ In addition to optimizing the codes used for integer literal loads as well as ar
     \item The opcodes \verb,cgt, and \verb,brfalse, in sequence are replaced with \verb,ble, (branch if smaller than or equal to).
 \end{itemize}
 
-Jumps are not systematically optimized, although, for example, the jump after a \verb,then, branch in an \verb,if, statement is omitted (already by InstructionGenerator) if the \verb,if, statement has no \verb,else, branch.
+\begin{figure}[h!]
+\caption{Code without jump optimization} \label{fig:code_unopt}
+\begin{verbatim}
+    // ... evaluate a condition ...
+    IL_0011: brfalse IL_0034
+    // ...
+    // an unconditional jump to loop condition:
+    IL_0034: br IL_0045
+    // begin loop
+        // loop body omitted
+
+        // loop condition
+        IL_0045: ldloc.1
+        IL_0046: ldc.i4.0
+        IL_0047: bgt IL_0039
+    // end loop
+\end{verbatim}
+\end{figure}
+
+\begin{figure}[h!]
+\caption{Code with jump optimization} \label{fig:code_opt}
+\begin{verbatim}
+    // ... evaluate a condition ...
+    IL_0011: brfalse IL_0045 // jump address has been changed!
+    // ...
+    // This unconditional jump is still here although
+    // there is actually no way to get to it. Deleting it
+    // would require analysis of all possible paths through
+    // the method body to detect dead code.
+    IL_0034: br IL_0045
+    // begin loop
+        // loop body omitted
+
+        IL_0045: ldloc.1
+        IL_0046: ldc.i4.0
+        IL_0047: bgt IL_0039
+    // end loop
+\end{verbatim}
+\end{figure}
+
+Instruction sequences with unconditional branching instructions as intermediate jump points are also slightly optimised. If any branch instruction jumps to the label of an unconditional branch instruction (\verb,br,), the first jump instruction's label is replaced with the jump label for the latter instruction. As a result, the code shown in figure \ref{fig:code_unopt} (from an \verb,if, statement with a loop in the \verb,else, branch) becomes the code shown in figure \ref{fig:code_opt}.
+
+The usual jump after a \verb,then, branch in an \verb,if, statement is omitted (already by InstructionGenerator) if the \verb,if, statement has no \verb,else, branch.
 
 \subsection{Shortcomings and potential points of improvement}
 
@@ -752,7 +794,7 @@ Most of these points have already been mentioned, but this part gives a brief su
 
 As far as recovery strategies go, there is probably almost infinite room for improvement. For example, the symbol table building phase could probably pretty easily be made to recover from multiple declarations of the same typename to check for other symbol declaration errors.
 
-However, as said before, I have used the behavior of the actual Java compiler as a guideline for the recovery implementation. The Java compiler does not recover from this situation either. I would guess that this has to do with the fact that recovery over many compilation phases increases the complexity of required tests quite a lot.
+However, as said before, I have used the behavior of the actual Java compiler as a guideline for the recovery implementation. The Java compiler does not appear to recover from this situation either. I would guess that this has to do with the fact that recovery over many compilation phases increases the complexity of required tests quite a lot.
 
 \subsubsection{Unimplemented semantic checks}
 
@@ -767,14 +809,14 @@ Obviously code optimization was left out because it was not required in the assi
 Simple code optimizations that could be implemented include at least the following:
 \begin{itemize}
     \item An additional pass in the code generation phase could replace calculations made with literals with a single literal expression (e.g. \verb,42 % 2, could be replaced with \verb,0, or \verb,42 % 2 == 0, with \verb,true,).
-    \item Removal of code that does nothing, for example calls to methods with empty bodies, or \verb,if, or \verb,while, statements with empty bodies. This can only be done in rather simple cases, because e.g. a method call parameter or \verb,if, or \verb,while, statement conditions can have side effects.
+    \item Removal of code that does nothing, for example calls to methods with empty bodies, or \verb,if, or \verb,while, statements with empty bodies. This could only be done in rather simple cases, because e.g. a method call parameter or \verb,if, or \verb,while, statement conditions can have side effects.
     \item Methods that are never called could be skipped in code generation because MiniJava programs will definitely not be dynamically linked with any external code that could call these methods...
     \item Currently the code generator marks all user-defined methods (other than main) as virtual and calls them with the \verb,callvirt, instruction to enable overriding. This could be optimized by finding out which methods are actually overridden and marking those methods as virtual, while keeping other methods non-virtual and calling them with the \verb,call, instruction.
 \end{itemize}
 
 \subsubsection{Checks in the code generation phase}
 
-The code generation phase does not check that the number of local variables or formal parameters does not exceed the maximum number allowed. In .NET, there can be max System.UInt16.MaxValue = 65535 local variables or formal parameters (including the \verb,this, reference in non-static methods)\footnote{See e.g. \url{http://msdn.microsoft.com/en-us/library/system.reflection.emit.opcodes.ldloc.aspx}}.
+The code generation phase does not check that the number of local variables or formal parameters does not exceed the maximum number allowed. In .NET, there can be a maximum of System.UInt16.MaxValue = 65535 local variables or formal parameters in a method, including the \verb,this, reference in non-static methods. For a reference, see e.g. \url{http://msdn.microsoft.com/en-us/library/system.reflection.emit.opcodes.ldloc.aspx} for the local variable case. Documentation for opcodes \verb,starg, or \verb,ldarg, does not mention a limit, but these opcodes also take an UInt16 as a parameter, so it would be reasonable to assume that this is the limit.
 
 In practice, I doubt anyone would define this many local variables or parameters inside a method, and the check would be practically trivial to implement in the pre-code-generation analysis phase implemented by CodeGenAnalyser. This would require giving the back-end component the ability to report errors, which is does not currently have, although it would be simple to add.
 
@@ -801,6 +843,10 @@ On department systems with Visual Studio 2012, NUnit can be installed through th
 The easiest way to build the compiler solution is opening it in Visual Studio and building it in Release mode to disable assertions and to get optimised code. Note that the test project requires NUnit to build successfully, as described in the previous section.
 
 After this the resulting \verb,MiniJavaCompiler.exe, under \verb,bin\Release, can be run by giving it the path to the source file as a parameter (and optionally a path to an output file): \verb,./MiniJavaCompiler.exe path/to/source/file [path/to/output/file],.
+
+An additional parameter \verb,-no-opt, can be given as an optional \emph{first}\footnote{The compiler is strict about the ordering of its parameters.} parameter to the compiler to disable optimizations in the code generation phase. This will generate code for unused variables and leave jump instructions unoptimized.
+
+Running the compiler without any arguments or with the input file name missing prints out the usage instructions as detailed above.
 
 The solution is targeted for .NET 4.5 to get access to System.Tuple, so it probably cannot be run on e.g. the department Windows server that still runs Visual Studio 2010.
 
