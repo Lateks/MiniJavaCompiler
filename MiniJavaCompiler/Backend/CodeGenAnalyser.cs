@@ -59,8 +59,15 @@ namespace MiniJavaCompiler.BackEnd
                 {
                     _currentLocalIdx = 0;
                 }
-                if (node.VariableKind == VariableDeclaration.Kind.Formal ||
-                    (node.VariableKind == VariableDeclaration.Kind.Local && (!_optimize || node.Used)))
+                if (node.VariableKind == VariableDeclaration.Kind.Formal)
+                {
+                    // Note: this does not take static methods into account
+                    // since the only static method in MiniJava is the main
+                    // method and it cannot have parameters.
+                    node.LocalIndex = (short) (1 + _currentLocalIdx++);
+                }
+                else if (node.VariableKind == VariableDeclaration.Kind.Local &&
+                    (!_optimize || node.Used))
                 {
                     node.LocalIndex = _currentLocalIdx++;
                 }

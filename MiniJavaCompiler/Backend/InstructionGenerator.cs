@@ -145,7 +145,7 @@ namespace MiniJavaCompiler.BackEnd
                             AddLocalStoreInstr(decl.LocalIndex);
                             break;
                         case VariableDeclaration.Kind.Formal:
-                            AddArgStoreInstr(GetParameterIndex(decl, _currentMethod));
+                            AddArgStoreInstr(decl.LocalIndex);
                             break;
                     }
                 }
@@ -325,28 +325,28 @@ namespace MiniJavaCompiler.BackEnd
             public override void Visit(VariableReferenceExpression node)
             {
                 var variable = node.Scope.ResolveVariable(node.Name);
-                var definition = (VariableDeclaration)variable.Declaration;
+                var declaration = (VariableDeclaration)variable.Declaration;
 
                 if (node.UsedAsAddress)
                 {
-                    if (definition.VariableKind == VariableDeclaration.Kind.Class)
+                    if (declaration.VariableKind == VariableDeclaration.Kind.Class)
                     {   // Load a "this" reference.
                         AddInstruction(OpCodes.Ldarg_0);
                     }
                     return;
                 }
 
-                switch (definition.VariableKind)
+                switch (declaration.VariableKind)
                 {
                     case VariableDeclaration.Kind.Class:
                         AddInstruction(OpCodes.Ldarg_0);
                         AddInstruction(OpCodes.Ldfld, _parent._fields[variable]);
                         break;
                     case VariableDeclaration.Kind.Formal:
-                        AddArgLoadInstr(GetParameterIndex(definition, _currentMethod));
+                        AddArgLoadInstr(declaration.LocalIndex);
                         break;
                     case VariableDeclaration.Kind.Local:
-                        AddLocalLoadInstr(definition.LocalIndex);
+                        AddLocalLoadInstr(declaration.LocalIndex);
                         break;
                 }
             }

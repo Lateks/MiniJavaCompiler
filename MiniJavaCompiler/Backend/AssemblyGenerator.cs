@@ -76,7 +76,7 @@ namespace MiniJavaCompiler.BackEnd
                 {   // Local and formal variables can be referred to by their index.
                     // Fields need to be stored as FieldBuilders for future reference.
                     case VariableDeclaration.Kind.Formal:
-                        _currentMethod.DefineParameter(GetParameterIndex(node, _currentMethod),
+                        _currentMethod.DefineParameter(node.LocalIndex,
                             ParameterAttributes.In, node.Name);
                         break;
                     case VariableDeclaration.Kind.Local:
