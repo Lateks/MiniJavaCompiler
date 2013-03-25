@@ -91,6 +91,14 @@ namespace MiniJavaCompilerTest.BackEnd
         }
 
         [Test]
+        public void TestOverriding()
+        {
+            CheckCompilationOK("overriding.mjava");
+            CheckMultiLineOutput(new string[] { "2", "1" });
+            CheckPEVerifyOutput();
+        }
+
+        [Test]
         public void TestOpcodeGeneration() // Note: this does not check the actual opcodes produced.
         {
             CheckCompilationOK("opcode_test.mjava");
