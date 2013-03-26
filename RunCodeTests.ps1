@@ -7,9 +7,9 @@ foreach ($item in $test_items)
   Write-Host $item.Name
   Write-Host "=================="
   iex $compile_cmd
-  iex $peverify_cmd
   if (Test-Path 'out.exe')
   {
+    iex $peverify_cmd
     Write-Host "~~~~~~~~~~~~~~~~~~"
     iex './out.exe'
     Remove-Item 'out.exe'

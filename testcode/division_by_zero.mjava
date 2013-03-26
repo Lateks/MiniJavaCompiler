@@ -1,0 +1,10 @@
+class Test
+{
+  public static void main()
+  {
+    /* This results in a System.DivideByZeroException
+     * at runtime. (In Java it would be ArithmeticException.)
+     */
+    System.out.println(5/0);
+  }
+}
