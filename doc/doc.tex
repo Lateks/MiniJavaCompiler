@@ -590,13 +590,13 @@ This phase can detect the following types of errors:
 \item A method is invoked for a built-in type or an array.\footnote{Note: internally the compiler treats the length property of arrays as a method invocation to avoid having to define it as a special case, because it is the only public field in MiniJava. This is the only ''method invocation'' allowed for arrays.}
 \item A method is invoked with the wrong number of arguments.
 \item A wrong type of argument is passed to a method invocation. Type checks for method invocations follow the same rules as type checks for assignment statements, as detailed below.
-\item An integer literal is too large to be represented by a 32-bit integer type, which is the only built-in numeric type in Mini-Java.
+\item An integer literal is too large to be represented by a 32-bit integer type, which is the only built-in numeric type in MiniJava.
 \item A reference is made to a variable that cannot be found or a local variable that is in the same scope but has not been introduced yet.
 \item A \textbf{void} method has return statements. Empty return statements are not defined in the Mini-Java specification, so this is not allowed.
 \item At least some paths in a non-\textbf{void} method do not return a value.
 \item Return statements return values of a type different from the one declared in the method signature. Covariance is allowed, so subtypes of the declared type can be returned.
 \item An instance creation expression refers to a type name that cannot be found or is an attempt to create a \textbf{void} array (this is allowed by the grammar). Note: an attempt to instantiate a built-in type using a ''new'' expression is detected already in the parsing phase.
-\item A static method cannot be called. The only static method in Mini-Java is the main method. In my implementation, calls to the main method have been prevented. I did not see the reason to implement such a feature since there is no use for calling the main method from inside the program, though the MiniJava specification is unclear on whether this should be allowed.
+\item A static method cannot be called. The only static method in MiniJava is the main method. In my implementation, calls to the main method have been prevented. I did not see the reason to implement such a feature since there is no use for calling the main method from inside the program, though the MiniJava specification is unclear on whether this should be allowed.
 \end{enumerate}
 
 The rules for assignment type checking are as follows:
@@ -614,6 +614,8 @@ Internally, a type is anything that implements the IType interface. The IType in
 Recovery from errors is needed when the type of an expression cannot be resolved. As mentioned before, the abstract syntax tree is decorated with type information, so for unresolved types the singleton class ErrorType is used. When a method, variable or the type of an instance creation expression cannot be resolved or a non-array variable is indexed, the ErrorType singleton is marked as the type of that syntax tree node.
 
 Every IType is required to implement its IsAssignableTo method in such a way that everything appears to be assignable to an ErrorType -- even the void return type. Similarly, ErrorType is assignable to every other type as well as itself. This way unnecessary type errors related to unresolved types are avoided without having to explicitly check for the ErrorType at every turn. E.g. a program with the lines \verb,A foo; foo = new B();, where \verb,B, cannot be resolved results in an error saying that symbol B could not be resolved but not an error saying that an ErrorType cannot be assigned to a variable of type A.
+
+Note that division by zero is not a compile-time error in MiniJava --- nor is it in Java --- even if dividing by the literal zero. Division by zero results in .NET's System.DivideByZeroException at runtime in MiniJava. This would be an ArithmeticException in Java.
 
 \subsection{The back-end}
 
