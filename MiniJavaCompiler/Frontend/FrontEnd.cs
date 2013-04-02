@@ -19,7 +19,7 @@ namespace MiniJavaCompiler.FrontEnd
 
         public FrontEnd(TextReader programText)
         {
-            _errorLog = ErrorReporterFactory.CreateErrorLogger();
+            _errorLog = new ErrorLogger();
             _program = programText;
         }
 
